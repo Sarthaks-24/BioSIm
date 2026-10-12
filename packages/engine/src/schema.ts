@@ -41,7 +41,8 @@ export const Source = z.object({
   label: z.string().min(1),
   /** Full citation a teacher could look up. */
   citation: z.string().min(1),
-  url: z.url().optional(),
+  /** http(s) only: the web app renders it as a link, so javascript: or data: must never pass. */
+  url: z.httpUrl().optional(),
   /** Which parts of this file the source backs. */
   fields: z.array(SourceField).min(1),
 })

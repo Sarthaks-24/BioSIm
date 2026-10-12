@@ -16,7 +16,7 @@ Old share links still open. The app tells the viewer the numbers may differ from
 |---|---|
 | Stage | One of mouth, oesophagus (code: `esophagus`), stomach, small intestine, large intestine (code: `largeIntestine`; "colon" in params) |
 | Leftovers | Fibre — the part the body can't digest. Small unabsorbed amounts of sugar, protein or fat are fermented by gut bacteria and don't count |
-| t½, t90 | Time until 50 % / 90 % of the meal has left the stomach, measured by **food energy** (by weight only for water), so a drink added to a meal can't make the meal look faster |
+| t½, t90 | Time until 50 % / 90 % of the meal has left the stomach, measured by **food energy** (by weight only for water), so water added to a meal can't make the meal look faster (a drink with calories can make it look a little faster, because its energy leaves first) |
 | GI | Glycemic index: blood-sugar area after 50 g of a food's carbohydrate, as a % of 50 g glucose |
 | Fibre / fiber | Same thing. The UI uses UK spelling; the code uses US spelling |
 
@@ -49,7 +49,7 @@ Solids must first be ground small, which gives a lag phase. After that they empt
 - **Rate.** 1.4 kcal/min is calibrated so the consensus 255 kcal test meal sits mid-range in the scintigraphy norms (Abell et al. 2008). Those norms are 37–90 % left at 1 h, 30–60 % at 2 h and ≤10 % at 4 h; the model gives 78 %, 45 % and 0 %.
 - **Drinks with the meal.** The kcal of a drink taken with a solid meal use up part of the solids' time budget, so a sugary drink delays the food a little.
 - **Fat, protein and carbohydrate** slow emptying equally per kcal (Hunt & Stubbs 1975). Fatty meals take longer simply because they carry more kcal.
-- **Assumption:** the solid rate is the same for small and big meals. Real stomachs empty a little faster (in kcal/min) after bigger meals, so the model is slow for very large meals. Making the rate depend on meal size is deferred until it can be calibrated without breaking the checks above.
+- **Assumption:** the solid rate is the same for small and big meals. Real stomachs empty a little faster (in kcal/min) after bigger meals, so the model is slow for very large meals, and somewhat slow for everyday ones too (see Known limits). Making the rate depend on meal size is deferred until it can be calibrated without breaking the checks above.
 
 **Meal cap.** The model is meant for meals up to **1500 kcal**. The picker won't build a larger meal. A link with a larger meal opens with a warning. A meal at the cap still empties within ~16 h.
 
@@ -154,11 +154,14 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
+**Graph scales.** Each signal's `displayRange` in the catalog is its default y axis. An organism's registry can override it so everyday meals fill the graph (`apps/web/src/registry/human/organism.ts`). The human registry overrides two: stomach contents 0–600 g (catalog 0–1,000 g) and energy coming in 0–200 kcal/h (catalog 0–400 kcal/h; energy used shares that axis). A scale is the same for every meal and never shrinks. Only a value outside it stretches the axis once, to the next round number (four colas, 1,376 g, give 0–1,400 g), and the graph says so (`apps/web/src/lib/axis.ts`).
+
 ## Known limits
 
 - It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
 - Energy used is a resting formula for one reference adult (see Energy in vs used), not a measurement.
 - Milk clots in the stomach and really empties more slowly than the liquid model shows.
+- Everyday meals leave the stomach more slowly than textbooks say. OpenStax §23.4 gives 2–4 h for the stomach to empty after a meal; with its fixed 1.4 kcal/min solid rate the model takes ~4.5 h to empty 90 % of 2 rotis + dal or a portion of fries, and ~7.9 h for a burger with fries. A test marks this as a known limit; fixing it means a new model version and a physiology reviewer.
 - Fibre isn't modelled on its own. Its effect on blood sugar shows up only through each food's GI.
 - GI values vary between studies and varieties (rice ranges from about 50 to over 90).
 - Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.

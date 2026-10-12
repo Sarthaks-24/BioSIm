@@ -26,7 +26,9 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    always travels inside the organs it is drawn in.
 3. **The URL is the saved state.** `?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=120&lang=hi`.
    `engine/share.ts` encodes it and keeps the model version, so old links open with a note.
-   `hooks/useUrlSync.ts` is the only code that reads or writes it, always through the router.
+   Two hooks read and write it, always through the router, one per screen: `hooks/useUrlSync.ts`
+   on the v1 simulator (`/sim`) and `hooks/useLinkSync.ts` on the v2 stage (`/next`). No other
+   code writes it (only `BodyView` reads the `?debug=fps` flag).
    The format is a contract with every link already shared: only add optional parameters.
    v2 adds `o` (organism: absent means human, forever, and `o=human` is never written; an
    unknown `o` opens human and is reported as `unknownOrganism`), `who` (profile), `layer` and
@@ -50,17 +52,20 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 
 | Folder | Contents |
 |---|---|
-| `pages/` | One page per route: home, simulator, teach, science, error and 404 |
+| `pages/` | One page per route: home, simulator (`/sim`), the v2 stage (`/next`, `Stage.tsx`), teach, science, about, privacy, stats (`/stats`), and the error and 404 pages (`Misc.tsx`). Home and `Misc.tsx` are in the main bundle; the rest load lazily |
 | `components/` | UI pieces: meal picker, verdict line, timeline, stage panel, charts, lesson view, share, feedback |
+| `components/graphs/` | v2 graph column: `StripStack` (the stacked graphs on one time axis; tabs on a phone), `SignalStrip` (one signal: line, band, kept-run ghost, marked moments), `Playhead` (the "now" line and readouts, moved straight from the clock store), `marks.ts` (which moments a graph marks), `HowWeKnow` (the ⓘ sources popover), `layout.ts` |
 | `components/kit/`, `components/stage/` | v2: the flat component kit, and the zones of the one-screen stage at `/next` (`pages/Stage.tsx`): meal bar, food sheet, keep button and kept tag, body pane, layer bar, graph column, notes, dock slider |
 | `anatomy/` | One file per organism (`human.ts`): the gut curves, torso and arm outline, stomach stretch and particle positions shared by 3D and flat views; `bodyState.ts` (what the picture shows at a time, read from the signals the registry's `drives` name), `callouts.ts` + `CalloutOverlay.tsx` (organ labels with leaders that never overlap), `tones.ts` (organ colours) |
-| `registry/` | Organisms, systems and organs as data (`human/`), checked by `registry.test.ts`. A new system is one entry plus a flat and a 3D layer |
+| `registry/` | Organisms, systems and organs as data (`human/`), checked by `registry.test.ts`. A new system is one entry plus a flat and a 3D layer. `human/organism.ts` also overrides two graph scales (docs/MODEL.md, Graph scales); `units.ts` (unit words), `i18nKeys.ts` (the i18n keys built from the catalog and the registry) |
 | `three/` | WebGL scene and organ models (lazy-loaded): `geometry.ts` (one merged digestion mesh), `materials.ts` (opaque lit organs, fresnel rim, ink outline, rim-only skin), `quality.ts` (pixel-ratio cap) |
 | `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
 | `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
+| `state/run.ts` | v2 (`/next`): the run state, one meal and an optional kept run, stored as inputs (`hooks/useRun.ts` recomputes each run) |
 | `state/clock.ts`, `state/motion.ts` | v2 (`/next`): the meal clock (`useClock`, read per frame without re-rendering; `useMealClock` runs playback) and the one reduced-motion flag (`useMotion`) |
 | `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync`; v2: `useRun`, `useLinkSync`, `useBodyClock` (which clock the shared bodies follow) |
 | `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
+| `lib/axis.ts`, `lib/formatSignal.ts` | v2 graphs: the shared x scale (same as the dock's thumb) and each signal's fixed y range, stretched once if a value falls outside; numbers rounded to the signal's display step, in Latin digits, with the unit from i18n |
 | `data/` | Loads the food files at build time (a quick field check in the browser; the full schema runs in CI and `foods.test.ts`) |
 | `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry). English is bundled; Hindi is fetched when first needed |
 
@@ -74,7 +79,8 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
   environment map. `?debug=fps` shows fps, draws, draw calls and triangles (docs/PHONE-CHECK.md).
 - The flat body draws the organs once per active-organ change on one canvas and only the
   stomach and food per frame, on a second canvas the size of the gut.
-- The 3D chunk loads only on the simulator page. The PWA precaches everything for offline use.
+- The 3D chunk loads only on the simulator pages (`/sim` and `/next`, through `BodyView`). The PWA
+  precaches everything for offline use.
 - three.js is bundled from its source modules (`vite.config.ts`), so the flat body's few maths
   classes ride with the page and the rest stays in the lazy 3D chunk, which only a device with
   WebGL downloads. `npm run budget -w @lifepeek/web` checks the route sizes after a build.

@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only token: CI only checks out and tests.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -25,6 +29,7 @@ jobs:
           test -s apps/web/dist/THIRD_PARTY_NOTICES.txt
           grep -q "SIL OPEN FONT LICENSE" apps/web/dist/THIRD_PARTY_NOTICES.txt
           grep -q "three" apps/web/dist/THIRD_PARTY_NOTICES.txt
+          grep -q "^workbox-core " apps/web/dist/THIRD_PARTY_NOTICES.txt
       - name: Size budgets
         run: npm run budget -w @lifepeek/web
       - name: Browser tests (smoke + release-gate projects)
