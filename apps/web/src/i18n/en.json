@@ -248,7 +248,13 @@
     "kcal": "{{n}} kcal",
     "g": "{{n}} g",
     "mgdl": "{{n}} mg/dL",
-    "kcalPerH": "{{n}} kcal/h"
+    "kcalPerH": "{{n}} kcal/h",
+    "words": {
+      "mgdl": "milligrams of sugar in each decilitre (a tenth of a litre) of blood",
+      "g": "grams (1000 g = 1 kg)",
+      "kcal": "kilocalories of food energy",
+      "kcalPerH": "kilocalories of food energy per hour"
+    }
   },
   "anatomy": {
     "liver": "Liver",
@@ -592,5 +598,23 @@
     "already": "This meal is the one kept",
     "tag": "Kept: {{meal}}",
     "remove": "Stop comparing with {{meal}}"
+  },
+  "graph": {
+    "label": "Graph of {{name}}, from eating to 48 hours later",
+    "howFor": "How we know: {{name}}",
+    "unit": "Unit",
+    "unitIs": "{{unit}}: {{words}}",
+    "howSure": "How sure we are",
+    "limits": "Known limits",
+    "sources": "Sources",
+    "foodData": "Food data:",
+    "kept": "Kept",
+    "stretched": "Scale stretched to fit this meal",
+    "range": "{{low}}–{{high}}",
+    "highest": "Highest: {{value}}",
+    "highestTitle": "The ring: highest point",
+    "highestNote": "The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level.",
+    "halfLeft": "Half has left",
+    "halfNote": "The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring."
   }
 }

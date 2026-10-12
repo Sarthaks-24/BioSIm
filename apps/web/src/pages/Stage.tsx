@@ -20,6 +20,8 @@ import Scrubber from '../components/stage/Scrubber.tsx'
  * nothing scrolls on a laptop or a projector; the body takes what the other zones don't need.
  * On a phone the zones stack (plan-ui-ux §3.5): the body shares the first screen with one graph
  * and the dock, which is a grid row of its own, so it can never cover the body.
+ * The graphs and the dock's timeline share one x scale and one left and right edge (WP-12), so
+ * the playhead on every graph stands straight above the timeline's thumb, like a chart recorder.
  */
 export default function Stage() {
   const { t } = useTranslation()
@@ -43,7 +45,9 @@ export default function Stage() {
   }, [])
 
   return (
-    <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto]">
+    // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
+    // dock's timeline (on a phone the Play button and its gap), so graphs and timeline share x.
+    <div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]">
       <h1 className="sr-only">{t('sim.title')}</h1>
       <div className="lg:col-span-2">
         <MealBar />
@@ -52,11 +56,16 @@ export default function Stage() {
         <Notes run={run} kept={kept} />
       </div>
       <BodyPane run={run} />
-      {/* On a phone the graph row has a fixed height; the body gets the rest of the first screen. */}
-      <div className="flex min-h-0 max-lg:h-[12.5rem] [&>section]:flex-1">
-        <GraphColumn />
+      {/*
+       * On a phone the graph row has a fixed height, the same for every tab (so the body never
+       * jumps when the tab changes), sized for the tallest: blood sugar with its medical note.
+       * The body gets the rest of the first screen.
+       */}
+      <div className="flex min-h-0 max-lg:h-[15rem] [&>section]:flex-1">
+        <GraphColumn run={run} kept={kept} />
       </div>
-      <div className="lg:col-span-2">
+      {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
+      <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
         <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />}>
           <Scrubber />
         </Dock>

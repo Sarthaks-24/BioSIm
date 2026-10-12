@@ -1,16 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClock } from '../../state/clock.ts'
-import {
-  HORIZON_MIN,
-  KNEE_FRACTION,
-  KNEE_MIN,
-  TIMELINE_TICKS,
-  TIMELINE_TICKS_NARROW,
-  formatDuration,
-  posToTime,
-  timeToPos,
-} from '../../lib/time.ts'
+import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
+import { posAt } from '../../lib/axis.ts'
 
 /**
  * The dock's plain time slider (WP-11; WP-14 adds the key-moment markers). It uses the same
@@ -21,6 +13,18 @@ import {
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing here.
  * Keys: ← → 10 min (Shift: 1 h), Home / End, PageDown / PageUp next / previous key moment.
  */
+/**
+ * Hour labels that need a wide enough track (the rest always show: 0, 2, 4, 6 and 48 h). The
+ * vertical lines on the graphs stay at every hour either way.
+ */
+const TICK_FITS: Record<number, string> = {
+  60: '@max-[24rem]:hidden',
+  180: '@max-[24rem]:hidden',
+  720: '@max-[40rem]:hidden',
+  1440: '@max-[22rem]:hidden',
+  2160: '@max-[40rem]:hidden',
+}
+
 export default function Scrubber() {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
@@ -29,7 +33,8 @@ export default function Scrubber() {
     const el = track.current
     if (!el) return
     const show = (min: number) => {
-      el.style.setProperty('--pos', String(timeToPos(min)))
+      // The same scale as the graphs' playheads (lib/axis.ts), so the thumb is right under them.
+      el.style.setProperty('--pos', String(posAt(min)))
       el.setAttribute('aria-valuenow', String(Math.round(min)))
       el.setAttribute('aria-valuetext', `${formatDuration(min, t)} ${t('sim.afterEating')}`)
     }
@@ -72,7 +77,9 @@ export default function Scrubber() {
   const knee = `${KNEE_FRACTION * 100}%`
   return (
     // The top padding holds "after 6 h: faster" (from 640 px up); the bottom one the hour ticks.
-    <div className="relative pt-2 pb-5 select-none sm:pt-5">
+    // A size container: which hour labels fit depends on the track's own width (it sits under the
+    // graph column from 1024 px up) in rem, so projector mode and Hindi drop labels sooner.
+    <div className="@container relative pt-2 pb-5 select-none sm:pt-5">
       {/* "after 6 h: faster", over the squeezed part of the bar. */}
       <span
         aria-hidden="true"
@@ -94,8 +101,9 @@ export default function Scrubber() {
         onPointerMove={onPointerMove}
         onKeyDown={onKeyDown}
         // A tall invisible hit area around a thin track; --pos (0…1) is set from the clock.
-        // The focus ring goes on the thumb, not round the whole bar and its labels.
-        className="group relative -my-3 h-8 cursor-pointer touch-none rounded-control [--pos:0] focus-visible:outline-none!"
+        // The focus ring goes on the thumb, not round the whole bar and its labels. Size and layout
+        // containment: moving the thumb every frame re-lays out this box only, not the stage.
+        className="group relative -my-3 h-8 cursor-pointer touch-none rounded-control [contain:size_layout] [--pos:0] focus-visible:outline-none!"
       >
         <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-control bg-ink/20" />
         <span
@@ -104,6 +112,7 @@ export default function Scrubber() {
         />
         <span
           aria-hidden="true"
+          data-thumb=""
           className="absolute top-1/2 left-[calc(var(--pos)*100%)] size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-shelf bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
         />
       </div>
@@ -113,7 +122,7 @@ export default function Scrubber() {
           aria-hidden="true"
           className={`tabular absolute bottom-0 text-caption whitespace-nowrap text-ink-2 ${
             m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
-          } ${TIMELINE_TICKS_NARROW.includes(m) ? (m === 1440 ? 'max-sm:hidden' : '') : 'max-xl:hidden'}`}
+          } ${TICK_FITS[m] ?? ''}`}
           style={{ left: `${timeToPos(m) * 100}%` }}
         >
           {t('units.hShort', { n: m / 60 })}

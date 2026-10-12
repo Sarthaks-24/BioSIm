@@ -6,6 +6,7 @@ import {
   ENERGY_USED,
   INK,
   KEPT,
+  KEPT_DASH,
   LEFT_BODY,
   LINE_GROUPS,
   MEAL_COLOR,
@@ -81,6 +82,10 @@ describe('colour tokens', () => {
     expect(normal['energy-used']).toBe(ENERGY_USED)
     // Graph lines keep their colour on the projector (WP-17 makes them thicker instead).
     for (const name of ['run', 'kept', 'energy-in', 'energy-used']) expect(projector[name], name).toBe(normal[name])
+  })
+
+  it('the graphs dash the kept run with KEPT_DASH', () => {
+    expect(css.match(/--strip-kept-dash:\s*([\d ]+);/)?.[1]).toBe(KEPT_DASH)
   })
 })
 
