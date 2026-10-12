@@ -77,6 +77,9 @@
   --text-control--line-height: 1.35;
   --text-caption: 0.8125rem;
   --text-caption--line-height: 1.35;
+  /* Quiet labels beside a title (a graph's "Calculated from studies"): a step below captions. */
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1.35;
 }
 
 :root {
@@ -147,6 +150,8 @@ html:lang(hi) {
   --text-control--line-height: 1.6;
   --text-caption: 0.875rem;
   --text-caption--line-height: 1.6;
+  --text-micro: 0.875rem;
+  --text-micro--line-height: 1.6;
 }
 
 body {

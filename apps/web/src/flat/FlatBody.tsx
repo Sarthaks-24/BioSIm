@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Vector3, type Curve } from 'three'
 import { activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useBodyClock } from '../hooks/useBodyClock.ts'
 import { useMotion } from '../state/motion.ts'
@@ -18,6 +17,7 @@ import {
   stomachFillRadius,
   tumble,
 } from '../anatomy/human.ts'
+import { Vec3, type Spline3 } from '../anatomy/spline.ts'
 import { bodyStateAt, type BodyState } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Project } from '../anatomy/CalloutOverlay.tsx'
 import { FADE_TONE, ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones.ts'
@@ -192,7 +192,7 @@ function paintMoving(
   ctx.clearRect(0, 0, w, h)
   const { scale, X, Y } = frame(w, h)
   paintStomach(ctx, X, Y, scale, state)
-  const p = new Vector3()
+  const p = new Vec3()
   for (const part of sim.particles) {
     const s = particlePosition(part, time, p)
     if (s <= 0) continue
@@ -209,12 +209,12 @@ const look = (organ: LitOrgan, s: BodyState) => {
 }
 
 /** Polyline samples of the static curves, in scene units, computed once. */
-const samples = new Map<Curve<Vector3>, Float32Array>()
-function sampled(curve: Curve<Vector3>, n: number): Float32Array {
+const samples = new Map<Spline3, Float32Array>()
+function sampled(curve: Spline3, n: number): Float32Array {
   let pts = samples.get(curve)
   if (!pts) {
     pts = new Float32Array((n + 1) * 2)
-    const p = new Vector3()
+    const p = new Vec3()
     for (let i = 0; i <= n; i++) {
       curve.getPointAt(i / n, p)
       pts[i * 2] = p.x
@@ -226,11 +226,11 @@ function sampled(curve: Curve<Vector3>, n: number): Float32Array {
 }
 
 /** Outline of a tube with a radius function, as one closed polygon (front-on). */
-function tubeOutline(curve: Curve<Vector3>, radius: (u: number) => number, n: number): [number, number][] {
+function tubeOutline(curve: Spline3, radius: (u: number) => number, n: number): [number, number][] {
   const left: [number, number][] = []
   const right: [number, number][] = []
-  const p = new Vector3()
-  const t = new Vector3()
+  const p = new Vec3()
+  const t = new Vec3()
   for (let i = 0; i <= n; i++) {
     const u = i / n
     curve.getPointAt(u, p)
@@ -288,7 +288,7 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
     ctx.stroke()
   }
   /** A tube drawn as a wide stroke: the outline colour first, then the organ colour inside it. */
-  const tube = (organ: LitOrgan, curve: Curve<Vector3>, width: number, n: number, colour?: (u: number) => string) => {
+  const tube = (organ: LitOrgan, curve: Spline3, width: number, n: number, colour?: (u: number) => string) => {
     const { active, faded } = look(organ, s)
     const c = tone(organ, faded)
     const pts = sampled(curve, n)

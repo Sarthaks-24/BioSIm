@@ -74,7 +74,7 @@ test('the blood-sugar scale is 60 to 200 mg/dL for cola and for a burger (no res
   }
 })
 
-test('the kept run reads in greyscale: a dashed line labelled "Kept: …"', async ({ page }) => {
+test('the kept run reads in greyscale: a dashed line, named "Kept: …" in the legend', async ({ page }) => {
   // Water keeps blood sugar flat at the before-meal level, so the kept cola's rise stands alone.
   await page.goto('/next?v=2&a=water:1&b=cola:1')
   const strip = await graph(page, 'Blood sugar')
@@ -174,6 +174,9 @@ test('on the projector the graphs show one at a time, each plot at least 120 px 
       await expect(plots).toHaveCount(1)
       const box = await plots.first().boundingBox()
       expect(box!.height, `${tab}: plot height`).toBeGreaterThanOrEqual(120)
+      // The tab names the graph: no title repeating it above the plot ("Energy" twice).
+      const title = page.locator('figure figcaption > span[id]').filter({ visible: true }).first()
+      expect((await title.boundingBox())!.width, `${tab}: title shown only to screen readers`).toBeLessThanOrEqual(1)
     }
   }
 })
@@ -189,7 +192,90 @@ test('at 1440 × 900 the three graphs are stacked, each plot at least 90 px tall
     await expect(page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })).toBeHidden()
     const plots = page.locator('figure svg[role="img"]').filter({ visible: true })
     await expect(plots).toHaveCount(3)
-    for (const box of await Promise.all((await plots.all()).map((p) => p.boundingBox())))
-      expect(box!.height).toBeGreaterThanOrEqual(90)
+    for (const box of await Promise.all((await plots.all()).map((p) => p.boundingBox()))) expect(box!.height).toBeGreaterThanOrEqual(90)
+    // Each graph says once how sure we are, by its title, smaller and lighter than the legend, so
+    // it does not read as one more line of the legend (council SHOULD 10).
+    for (const figure of await page
+      .locator('figure')
+      .filter({ has: page.locator('svg[role="img"]') })
+      .all()) {
+      expect((await figure.locator('figcaption > span[id]').boundingBox())!.width).toBeGreaterThan(1)
+      const status = figure.locator('figcaption > [class*="grid-area:status"] [data-status]')
+      await expect(status).toHaveCount(1)
+      const px = (l: typeof status) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+      // Hindi captions never go below 14 px, so there it is the same size, but not bold.
+      const legend = await px(figure.locator('figcaption [class*="grid-area:read"]').first())
+      if (url.endsWith('lang=hi')) expect(await px(status)).toBeLessThanOrEqual(legend)
+      else expect(await px(status)).toBeLessThan(legend)
+      expect(await status.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('400')
+    }
+  }
+})
+
+test('no words on a graph touch a line, and the legend names both meals (1280 and 390, EN and HI)', async ({ page }) => {
+  onlyIn('desktop')
+  const meals = [
+    'cola:1&b=cheeseburger:1,fries:1',
+    'cheeseburger:1,fries:1&b=cola:1',
+    'roti:2,dal:1&b=white-rice:1',
+    'cola:4&b=cola:1',
+    'water:1&b=orange-juice:1',
+  ]
+  for (const size of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(size)
+    for (const lang of ['en', 'hi']) {
+      for (const meal of meals) {
+        await page.goto(`/next?v=2&a=${meal}&lang=${lang}`)
+        await page.locator('figure [data-line="run"]').first().waitFor()
+        const tabs = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
+        const tabNames = (await tabs.isVisible()) ? await tabs.getByRole('button').allTextContents() : ['']
+        for (const tab of tabNames) {
+          if (tab) await tabs.getByRole('button', { name: tab, exact: true }).click()
+          await page.evaluate(() => document.fonts.ready)
+          const where = `${size.width}px, ${lang}, ${meal}${tab ? `, ${tab}` : ''}`
+          // Every visible piece of text in the graphs, against points every 2 px along every line.
+          const clashes = await page
+            .locator('figure')
+            .filter({ visible: true })
+            .evaluateAll((figures) => {
+              const out: string[] = []
+              for (const fig of figures) {
+                const svg = fig.querySelector('svg[role="img"]')
+                if (!svg) continue
+                const origin = svg.getBoundingClientRect()
+                const points: { x: number; y: number; line: string }[] = []
+                for (const path of svg.querySelectorAll<SVGPathElement>('[data-line="run"], [data-line="kept"], [data-line="second"]')) {
+                  const total = path.getTotalLength()
+                  for (let l = 0; l <= total; l += 2) {
+                    const p = path.getPointAtLength(l)
+                    points.push({ x: origin.x + p.x, y: origin.y + p.y, line: path.dataset.line! })
+                  }
+                }
+                const walker = document.createTreeWalker(fig, NodeFilter.SHOW_TEXT)
+                for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                  const text = n.textContent?.trim()
+                  const el = n.parentElement!
+                  if (!text || el.closest('[hidden], .sr-only') || getComputedStyle(el).visibility === 'hidden') continue
+                  const range = document.createRange()
+                  range.selectNodeContents(n)
+                  for (const r of range.getClientRects()) {
+                    if (r.width === 0 || r.height === 0) continue
+                    const hit = points.find((p) => p.x > r.left - 1 && p.x < r.right + 1 && p.y > r.top - 1 && p.y < r.bottom + 1)
+                    if (hit) out.push(`"${text}" touches the ${hit.line} line`)
+                  }
+                }
+              }
+              return out
+            })
+          expect(clashes, where).toEqual([])
+          // The legend says which line is which meal: never a bare "Kept" or a word at a line's end.
+          const kept = lang === 'en' ? /^Kept: / : /^रखा गया: /
+          await expect(page.locator('figure figcaption').filter({ visible: true }).first().getByText(kept)).toBeVisible()
+        }
+      }
+    }
   }
 })

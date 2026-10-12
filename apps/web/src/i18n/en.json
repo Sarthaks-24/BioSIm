@@ -548,7 +548,8 @@
     "glucoseBand": "The shaded band is a best guess of how much healthy people differ.",
     "energyInAtwater": "Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out.",
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
-    "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it."
+    "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
+    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too."
   },
   "profiles": {
     "adult-ref": {
@@ -608,13 +609,13 @@
     "limits": "Known limits",
     "sources": "Sources",
     "foodData": "Food data:",
-    "kept": "Kept",
     "stretched": "Scale stretched to fit this meal",
     "range": "{{low}}–{{high}}",
     "highest": "Highest: {{value}}",
     "highestTitle": "The ring: highest point",
     "highestNote": "The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level.",
-    "halfLeft": "Half has left",
+    "halfEnergyLeft": "Half the energy has left the stomach",
+    "halfTitle": "The ring: half has left the stomach",
     "halfNote": "The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring.",
     "soFar": "({{value}} so far)"
   }

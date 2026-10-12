@@ -8,16 +8,18 @@ import { formatNumber, formatSignal } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import { LineSwatch } from '../stage/KeptTag.tsx'
 import Playhead from './Playhead.tsx'
+import { lineEndSpots, placeLabel, polyline, ringSpots, type Box } from './labels.ts'
 import { STRIP_ROWS } from './layout.ts'
 
 interface Props {
   series: ChartableSeries
   /** The kept run's series for the same signal: a dashed grey ghost under the live line (G7). */
   kept: Series | null
-  /** The kept meal's name, for the ghost's end label ("Kept: Cola"). */
+  /** The meals' short names: the legend says which line is which ("Cola", "Kept: Cheeseburger + French fries"). */
+  runName: string
   keptName: string
-  /** One moment ringed on the live line, with a short label ("Highest: 121"). */
-  marker: { atMin: number; label: string } | null
+  /** One moment ringed on the live line at `value`, with a short label ("Highest: 121"). */
+  marker: { atMin: number; value: number; label: string } | null
   /** The ⓘ "How we know" button (HowWeKnow). */
   info: ReactNode
   /** A line under the graph (the blood-sugar "not medical advice" note). */
@@ -39,6 +41,8 @@ interface Props {
   title?: string
   /** Read by screen readers after the name: what the graph shows, in one or two sentences. */
   summary?: string
+  /** The graphs show one at a time under tabs (phone, projector, short screen): the tab names it. */
+  tabbed?: boolean
 }
 
 /**
@@ -65,6 +69,11 @@ function useSize<T extends HTMLElement>() {
   return [ref, size] as const
 }
 
+const sameBox = (a: Box | null, b: Box | null) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h)
+
+/** Where a measured plot label goes; until it is placed (or if no spot was found) it is not seen. */
+const labelStyle = (b: Box | null): React.CSSProperties => (b ? { left: b.x, top: b.y } : { left: 0, top: 0, visibility: 'hidden' })
+
 /**
  * One live graph (G1): a catalog signal over the 48 h meal clock, beside the body.
  *
@@ -73,7 +82,9 @@ function useSize<T extends HTMLElement>() {
  * - x is the timeline's squeezed scale, so it lines up with the dock below; y is the signal's
  *   fixed range (`displayRange`), the same for every meal, stretched once only if a value would
  *   not fit. Labels are HTML (they wrap, scale and get Devanagari line height); the SVG holds lines.
- * - The kept run is a dashed grey line with an end label, never told apart by hue alone.
+ * - The kept run is a dashed grey line, never told apart by hue alone: the legend above the plot
+ *   names both meals ("— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g"). No words sit at
+ *   the lines' ends (they landed on the lines, council 2026-10-13).
  * - A second line (energy used at rest, WP-13) shares the axis: orange, named and rated in the
  *   readouts with its own status, labelled on the line itself, never given a kept ghost.
  * - The playhead and the readouts follow the meal clock outside React (Playhead). Dragging on the
@@ -82,6 +93,7 @@ function useSize<T extends HTMLElement>() {
 export default function SignalStrip({
   series,
   kept,
+  runName,
   keptName,
   marker,
   info,
@@ -92,6 +104,7 @@ export default function SignalStrip({
   totals,
   title,
   summary,
+  tabbed = false,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -112,19 +125,52 @@ export default function SignalStrip({
     const y = (v: number) => yAt(v, domain, height)
     const line = (values: Float32Array) => {
       const s = samplesOf(values)
-      return linePath(s.t, s.v, x, y)
+      return { d: linePath(s.t, s.v, x, y), points: polyline(s.t, s.v, x, y) }
     }
-    const end = (values: Float32Array) => ({ x: width, y: y(values[values.length - 1]!) })
+    const run = line(series.values)
+    const keptLine = kept ? line(kept.values) : null
+    const secondLine = second ? line(second.series.values) : null
     return {
-      run: line(series.values),
+      run: run.d,
       band: series.low && series.high ? bandPath(samplesOf(series.high), samplesOf(series.low), x, y) : null,
-      kept: kept ? line(kept.values) : null,
-      keptEnd: kept ? end(kept.values) : null,
-      second: second ? line(second.series.values) : null,
-      secondEnd: second ? end(second.series.values) : null,
-      marker: marker ? { x: x(marker.atMin), y: y(valueAt(series, marker.atMin)) } : null,
+      kept: keptLine?.d ?? null,
+      second: secondLine?.d ?? null,
+      secondEndY: second ? y(second.series.values[second.series.values.length - 1]!) : null,
+      marker: marker ? { x: x(marker.atMin), y: y(marker.value) } : null,
+      // Every drawn line, for keeping the labels off them.
+      points: [run.points, keptLine?.points, secondLine?.points].filter((p) => !!p),
     }
   }, [series, kept, second, marker, width, height, domain])
+
+  // The words on the plot (the ring's label, the second line's name) go where they cross no line.
+  // Measured after layout and placed before paint; hidden until placed, and when nothing fits.
+  const markerLabel = useRef<HTMLSpanElement>(null)
+  const secondLabel = useRef<HTMLSpanElement>(null)
+  const [placed, setPlaced] = useState<{ marker: Box | null; second: Box | null }>({ marker: null, second: null })
+  const markerWords = marker?.label
+  const secondWords = second?.label
+  // A web font arriving late (Devanagari) changes the labels' size: place them again.
+  const [fonts, setFonts] = useState(0)
+  useLayoutEffect(() => {
+    const done = () => setFonts((n) => n + 1)
+    document.fonts?.addEventListener('loadingdone', done)
+    return () => document.fonts?.removeEventListener('loadingdone', done)
+  }, [])
+  useLayoutEffect(() => {
+    const plotSize = { width, height }
+    const sizeOf = (el: HTMLElement | null) => (el && el.offsetWidth > 0 ? { w: el.offsetWidth, h: el.offsetHeight } : null)
+    let secondBox: Box | null = null
+    const s = sizeOf(secondLabel.current)
+    if (paths && s && paths.secondEndY != null) {
+      secondBox = placeLabel(s, lineEndSpots(paths.secondEndY, width, s.w, s.h), plotSize, paths.points)
+    }
+    let markerBox: Box | null = null
+    const m = sizeOf(markerLabel.current)
+    if (paths?.marker && m) {
+      markerBox = placeLabel(m, ringSpots(paths.marker.x, paths.marker.y, m.w, m.h), plotSize, paths.points, secondBox ? [secondBox] : [])
+    }
+    setPlaced((p) => (sameBox(p.marker, markerBox) && sameBox(p.second, secondBox) ? p : { marker: markerBox, second: secondBox }))
+  }, [paths, width, height, rem, markerWords, secondWords, fonts])
 
   // Readout text: the value of this run, the kept run and the second line, and running totals if any.
   const runText = useRef<HTMLSpanElement>(null)
@@ -170,33 +216,55 @@ export default function SignalStrip({
   const named = !!second
   // Phones show name and value only (plan-graphs §3.5): the totals, like the second line's label,
   // need the room of a desktop column; on a phone "How we know" gives them in its summary.
-  const totalSpan = (ref: RefObject<HTMLSpanElement | null>) => totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
+  const totalSpan = (ref: RefObject<HTMLSpanElement | null>) =>
+    totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
   return (
     <figure
       aria-labelledby={titleId}
       aria-describedby={summary ? summaryId : undefined}
-      className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}>
+      className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}
+    >
       {/*
-       * Phones: the tab above already names the graph, so the header is one row: values, status, ⓘ
-       * (a two-line graph: status and ⓘ, then its longer values under them).
-       * From 1024 px up: name, status and ⓘ, then the values under them.
+       * Stacked graphs (from 1024 px up): name, then how sure we are, small and quiet beside it
+       * (it is not a line of the legend), ⓘ at the end; the legend under them, naming both meals.
+       * One graph at a time (tabs): the tab names it, so no title here (it would say "Energy"
+       * twice). Value, status and ⓘ; a two-line graph, or a kept meal on the projector: status and
+       * ⓘ, then the legend; with a kept meal on a phone, its legend entry gets the next row to
+       * itself (the meal bar right above names this meal, with the same line sample).
        */}
       <figcaption
-        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read'] ${named ? "gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']" : "[grid-template-areas:'read_status_info']"}`}
+        className={`grid items-center gap-x-3 ${
+          !tabbed
+            ? "grid-cols-[auto_minmax(0,1fr)_auto] gap-y-0.5 [grid-template-areas:'title_status_info'_'read_read_read']"
+            : named
+              ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
+              : kept
+                ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note'] lg:[grid-template-areas:'status_status_info'_'read_read_read']"
+                : "grid-cols-[minmax(0,1fr)_auto_auto] [grid-template-areas:'read_status_info']"
+        }`}
       >
-        <span id={titleId} className="text-control font-semibold text-ink [grid-area:title] max-lg:sr-only">
+        <span id={titleId} className={tabbed ? 'sr-only' : 'text-control font-semibold text-ink [grid-area:title]'}>
           {name}
         </span>
         <span className="[grid-area:status]">
-          <StatusTag status={meta.status} />
+          <StatusTag status={meta.status} quiet />
         </span>
         <span className="[grid-area:info]">{info}</span>
-        <span className="tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read]">
-          <span className={group}>
+        {/* On a phone with a kept meal, the legend's entries are rows of the header grid (`contents`). */}
+        <span
+          className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${!named && kept ? 'max-lg:contents' : ''}`}
+        >
+          <span className={`${group} max-lg:[grid-area:read]`}>
             <LineSwatch />
-            <span className={named ? 'text-ink-2' : 'sr-only'}>{named ? t(`${meta.i18nKey}.short`) : `${t('stage.thisMeal')}: `}</span>
+            {/*
+             * A two-line graph names the line ("Coming in"); beside a kept meal, the meal names it
+             * (on a phone the meal bar above does). Alone, the graph's name says what the line is.
+             */}
+            <span className={named ? 'text-ink-2' : kept ? 'text-ink-2 max-lg:sr-only' : 'sr-only'}>
+              {named ? t(`${meta.i18nKey}.short`) : kept ? runName : `${t('stage.thisMeal')}: `}
+            </span>
             <span ref={runText} className="font-semibold whitespace-nowrap text-ink" />
             {totalSpan(runTotal)}
           </span>
@@ -206,17 +274,17 @@ export default function SignalStrip({
               {t(`${second.series.meta.i18nKey}.short`)}
               <span ref={secondText} className="font-semibold whitespace-nowrap text-ink" />
               {totalSpan(secondTotal)}
-              <StatusTag status={second.series.meta.status} />
+              <StatusTag status={second.series.meta.status} quiet />
             </span>
           )}
           {kept && (
-            <span className={`${group} text-ink-2`}>
+            <span className={`${group} text-ink-2 max-lg:[grid-area:kept]`}>
               <LineSwatch kept />
-              {t('graph.kept')}
+              <span>{t('keep.tag', { meal: keptName })}</span>
               <span ref={keptText} className="font-semibold whitespace-nowrap" />
             </span>
           )}
-          {stretched && <span className="text-ink-2">{t('graph.stretched')}</span>}
+          {stretched && <span className="text-ink-2 max-lg:[grid-area:note]">{t('graph.stretched')}</span>}
         </span>
       </figcaption>
 
@@ -307,32 +375,26 @@ export default function SignalStrip({
           )}
           {paths?.marker && marker && (
             <span
+              ref={markerLabel}
               aria-hidden="true"
-              className="pointer-events-none absolute text-caption leading-none font-semibold whitespace-nowrap text-ink [text-shadow:var(--strip-halo)]"
-              style={{ left: paths.marker.x + 9, top: paths.marker.y - 9, transform: 'translateY(-100%)' }}
+              data-plot-label="marker"
+              className="pointer-events-none absolute w-max max-w-[max(9rem,45%)] text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
+              style={labelStyle(placed.marker)}
             >
               {marker.label}
             </span>
           )}
-          {paths?.secondEnd && second && (
-            // Over the right end of its line, right of the 6 h knee, where the food energy has
-            // mostly come in already, so the label sits on empty graph paper.
+          {paths?.secondEndY != null && second && (
+            // Near the right end of its line, right of the 6 h knee, where the food energy has
+            // mostly come in already, so the label usually sits on empty graph paper.
             <span
+              ref={secondLabel}
               aria-hidden="true"
-              className="pointer-events-none absolute right-1 max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
-              style={{ bottom: height - paths.secondEnd.y + 5 }}
+              data-plot-label="second"
+              className="pointer-events-none absolute w-max max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
+              style={labelStyle(placed.second)}
             >
               {second.label}
-            </span>
-          )}
-          {/* A second line's label takes the right end; the kept line is then named in the readouts. */}
-          {paths?.keptEnd && !second && (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute right-1 max-w-[80%] text-right text-caption leading-tight text-ink-2 [text-shadow:var(--strip-halo)]"
-              style={{ bottom: height - paths.keptEnd.y + 5 }}
-            >
-              {t('keep.tag', { meal: keptName })}
             </span>
           )}
           <Playhead

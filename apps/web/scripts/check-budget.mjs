@@ -12,6 +12,10 @@
 //   WP-11: three.js is bundled from its source modules and only the 3D body imports most of it
 //   (vite.config.ts); the client no longer ships zod (data/foods.ts); Hindi loads on demand
 //   (i18n/index.ts). Home 151 KB, /sim and /next before 3D 179 KB, 3D body 250 KB.
+//   WP-12b (2026-10-13): WP-12 + WP-16 + WP-13 had taken /next before 3D to 195 KB. The anatomy
+//   curves no longer use three.js (anatomy/spline.ts; three's maths moved into the 3D chunk) and
+//   the "How we know" panel + source list load when first opened: /sim 189.2 → 177.7 KB,
+//   /next 195.0 → 181.4 KB, 3D body 249.2 → 258.9 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

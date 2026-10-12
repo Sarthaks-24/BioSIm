@@ -13,7 +13,6 @@ import {
   TorusGeometry,
   Vector2,
   Vector3,
-  type Curve,
 } from 'three'
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
@@ -36,6 +35,7 @@ import {
   stomachRadius,
   stomachStretchWeight,
 } from '../anatomy/human.ts'
+import type { Spline3 } from '../anatomy/spline.ts'
 import { ILEUM_TONE, JEJUNUM_TONE, LIT_ORGANS, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones.ts'
 
 /**
@@ -70,7 +70,7 @@ const WORLD_X = new Vector3(1, 0, 0)
  * twisting along its length. Each ring closes on itself (no duplicated seam vertex), so the
  * shading has no seam line. The `along` attribute holds u for every vertex.
  */
-export function organTube(curve: Curve<Vector3>, o: TubeOptions): BufferGeometry {
+export function organTube(curve: Spline3, o: TubeOptions): BufferGeometry {
   const radial = o.radial ?? 16
   const flatten = o.flatten ?? 1
   const positions: number[] = []
@@ -353,9 +353,9 @@ function gutSamples(): Float32Array {
 
 function buildPylorus(): BufferGeometry {
   const geo = new TorusGeometry(0.046, 0.014, 10, 24)
-  const tan = STOMACH.getTangentAt(1)
+  const tan = STOMACH.getTangentAt(1, new Vector3())
   const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), tan)
-  geo.applyMatrix4(new Matrix4().compose(STOMACH.getPointAt(1), q, new Vector3(1, 1, 1)))
+  geo.applyMatrix4(new Matrix4().compose(STOMACH.getPointAt(1, new Vector3()), q, new Vector3(1, 1, 1)))
   return geo
 }
 

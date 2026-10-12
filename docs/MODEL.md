@@ -166,6 +166,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 - GI values vary between studies and varieties (rice ranges from about 50 to over 90).
 - Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.
 - After big, fatty meals the model shows a small, slow tail of raised blood sugar (+5–7 mg/dL) while carbohydrate is still trickling out of the stomach. Real bodies usually settle sooner; the chart says so.
+- More of the same food or drink gives the same highest blood sugar, only for longer (cola ×1 and ×4 both peak at about 121 mg/dL). The stomach lets food out at a capped rate (Brener et al. 1983 for sugary drinks) and insulin action brings the curve down before even one serving has left, so the peak depends on the rate, not the amount. Real people usually reach a somewhat higher point with a bigger portion. A test pins this, and "How we know" on the blood-sugar graph says so.
 - The insulin constants, the absorption time constants other than carbohydrate, and the eating pace are calibrated or assumed, not measured. `params.ts` says which.
 
 ## References

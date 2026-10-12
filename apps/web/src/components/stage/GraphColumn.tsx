@@ -5,7 +5,7 @@ import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
-import { mealNames } from './mealText.ts'
+import { shortMealNames } from './mealText.ts'
 
 /**
  * One graph slot: the signals drawn on one shared axis. Neighbouring signals of the same family
@@ -72,6 +72,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
   const { t, i18n } = useTranslation()
   const layer = useRunStore((s) => s.layer)
   const profile = useRunStore((s) => s.profile)
+  const meal = useRunStore((s) => s.meal)
   const keptItems = useRunStore((s) => s.kept?.items)
   const { organism, systems } = ORGANISMS[DEFAULT_ORGANISM]
   const system = systems.find((s) => s.id === layer)
@@ -84,7 +85,9 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
   const [column, tabbed] = useTabbed()
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
   const visible = tabbed ? slots.filter((s) => s.id === shown) : slots
-  const keptName = keptItems ? mealNames(keptItems, i18n.language) : ''
+  // The legend names both meals (council 2026-10-13): "— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g".
+  const runName = shortMealNames(meal, i18n.language)
+  const keptName = keptItems ? shortMealNames(keptItems, i18n.language) : ''
 
   return (
     <section
@@ -116,8 +119,10 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
               range={organism.signalOverrides[id]?.displayRange}
               run={run}
               kept={kept}
+              runName={runName}
               keptName={keptName}
               profile={profile}
+              tabbed={tabbed}
               className="flex-1"
             />
           )

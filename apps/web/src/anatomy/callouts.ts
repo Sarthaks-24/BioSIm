@@ -1,6 +1,6 @@
-import { Vector3 } from 'three'
 import type { StageId } from '@lifepeek/engine'
 import { MOUTH } from './human.ts'
+import type { XYZ } from './spline.ts'
 
 /**
  * Organ labels as small callouts: a dot on the organ, a short leader line, and the name beside
@@ -13,14 +13,14 @@ export type CalloutId = StageId | 'liver' | 'pancreas'
 
 export interface Callout {
   /** The point on the organ the leader starts from (scene units, see human.ts). */
-  anchor: Vector3
+  anchor: XYZ
   /** Where the label's inner edge sits, beside the organ. */
-  at: Vector3
+  at: XYZ
   /** Which way the label extends from `at`: away from the body's midline. */
   side: 'left' | 'right'
 }
 
-const v = (x: number, y: number, z: number) => new Vector3(x, y, z)
+const v = (x: number, y: number, z: number): XYZ => ({ x, y, z })
 
 /**
  * Anchors are on the front of each organ; label points are in empty space next to it (the chest,

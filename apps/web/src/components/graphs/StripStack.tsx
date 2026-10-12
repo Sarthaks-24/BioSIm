@@ -8,7 +8,7 @@ import { StatusTag } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
 import HowWeKnow, { Section } from './HowWeKnow.tsx'
 import SignalStrip from './SignalStrip.tsx'
-import { markedMoment } from './marks.ts'
+import { stripMarker } from './marks.ts'
 
 /**
  * The stack of graphs (G1, G2): one column, one time axis; all of them read the same meal clock,
@@ -34,12 +34,16 @@ interface RunStripProps {
   series: ChartableSeries
   run: Simulation
   kept: Simulation | null
+  /** The meals' short names, for the legend. */
+  runName: string
   keptName: string
   profile: ProfileId
   /** The y range, if the organism's registry overrides the catalog's. */
   range?: Domain
   /** A second line on the same axis (energy used at rest beside energy coming in). */
   second?: Series | null
+  /** The graphs show one at a time, under tabs that name them. */
+  tabbed?: boolean
   className?: string
 }
 
@@ -55,12 +59,12 @@ const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
  * Energy is two lines on one kcal/h axis: coming in (this meal) and used at rest (the same for
  * every meal), each with its running total; it is described, never scored (plan-graphs §3.8).
  */
-export function RunStrip({ series, run, kept, keptName, profile, range, second, className }: RunStripProps) {
+export function RunStrip({ series, run, kept, runName, keptName, profile, range, second, tabbed, className }: RunStripProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   // The run's table holds only active signals.
   const id = series.meta.id as ActiveSignalId
-  const moment = markedMoment(id, run)
+  const ring = stripMarker(id, run)
   const glucose = id === 'blood.glucose'
   const totalOf = (of: ActiveSignalId) => {
     const total = TOTAL_OF[of]
@@ -70,12 +74,10 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
   const totals = runTotal && { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null }
   const title = second ? t('stage.strips.energy') : undefined
 
-  const marker = moment && {
-    atMin: moment.atMin,
-    label:
-      moment.id === 'event.glucosePeak'
-        ? t('graph.highest', { value: formatNumber(series.values[moment.atMin] ?? 0, series.meta, lang) })
-        : t('graph.halfLeft'),
+  const marker = ring && {
+    atMin: ring.atMin,
+    value: ring.value,
+    label: t(ring.labelKey, { value: formatNumber(ring.value, series.meta, lang) }),
   }
 
   // Energy: what came in and what the resting body used in the first 6 h (the same window for
@@ -95,7 +97,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
       <Section title={t('signals.event.glucoseBackToBase.name')}>{t('limits.backToBase')}</Section>
     </>
   ) : id === 'gut.stomach.contentG' ? (
-    <Section title={t('signals.event.stomachHalfEmpty.name')}>{t('graph.halfNote')}</Section>
+    <Section title={t('graph.halfTitle')}>{t('graph.halfNote')}</Section>
   ) : second ? (
     <>
       <p className="text-ink">{summary}</p>
@@ -112,6 +114,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
     <SignalStrip
       series={series}
       kept={kept?.signals.get(id) ?? null}
+      runName={runName}
       keptName={keptName}
       marker={marker}
       className={className}
@@ -120,6 +123,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
       totals={totals}
       title={title}
       summary={summary || undefined}
+      tabbed={tabbed}
       info={
         <HowWeKnow
           meta={series.meta}
@@ -127,6 +131,8 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
           sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
           profile={profile}
           notes={notes}
+          // More of the same food stays up longer at the same highest point (capped release).
+          limits={glucose ? [t('limits.glucoseSameHighest')] : undefined}
         />
       }
       // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).

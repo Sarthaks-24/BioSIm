@@ -17,7 +17,7 @@ Rules for the reviewer:
   `[1]` and `[2]`; `[1]` was added with the reduced-motion setting) and the paragraph under "गलती की रिपोर्ट करना"
   (`privacy.sections[1].intro[0]`) are new wording; please check them closely.
 
-## Renamed lines (BioSim → LifePeek, only the name changed)
+## Renamed lines (old name → LifePeek, only the name changed)
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
@@ -309,13 +309,11 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `graph.limits` | Known limits | ज्ञात सीमाएँ | draft |
 | `graph.sources` | Sources | स्रोत | draft |
 | `graph.foodData` | Food data: | भोजन के आँकड़े: | draft |
-| `graph.kept` | Kept | रखा गया | draft |
 | `graph.stretched` | Scale stretched to fit this meal | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
 | `graph.range` | {{low}}–{{high}} | {{low}}–{{high}} | draft |
 | `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |
 | `graph.highestTitle` | The ring: highest point | गोला: सबसे ऊँचा बिंदु | draft |
 | `graph.highestNote` | The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level. | गोला दिखाता है कि इस भोजन के बाद रक्त शर्करा कब सबसे अधिक होती है। 5 mg/dL या उससे कम बढ़ने पर गोला नहीं बनता: रक्त शर्करा खाने से पहले के स्तर के पास ही रहती है। | draft |
-| `graph.halfLeft` | Half has left | आधा निकल गया | draft |
 | `graph.halfNote` | The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring. | गोला दिखाता है कि भोजन की आधी ऊर्जा कब आमाशय से निकल गई (पानी के लिए: उसका आधा वज़न)। पेय पहले निकलते हैं, इसलिए इस ग्राफ़ पर ग्राम गोले से पहले ही आधे रह सकते हैं। | draft |
 
 ## Energy graph (WP-13)
@@ -327,6 +325,18 @@ add any other word that would make a food sound good or bad, or tell students to
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `graph.soFar` | ({{value}} so far) | (अब तक {{value}}) | draft |
+
+## Graph fixes (WP-12b)
+
+New wording from the review council. `graph.halfEnergyLeft` is the label next to the ring on the
+stomach graph (the ring marks when half the meal's food ENERGY has left; the graph shows grams).
+`limits.glucoseSameHighest` is a known limit shown in "How we know" on the blood-sugar graph.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `graph.halfEnergyLeft` | Half the energy has left the stomach | आधी ऊर्जा आमाशय से निकल गई | draft |
+| `graph.halfTitle` | The ring: half has left the stomach | गोला: आधा भोजन आमाशय से निकल गया | draft |
+| `limits.glucoseSameHighest` | More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too. | यहाँ एक ही भोजन या पेय ज़्यादा लेने से सबसे ऊँचा बिंदु नहीं बढ़ता, केवल यह बढ़ता है कि रक्त शर्करा कितनी देर ऊँची रहती है: आमाशय भोजन को एक स्थिर गति से आगे भेजता है (मीठे पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट), मात्रा चाहे जितनी हो। असली लोगों में बड़ी मात्रा से सबसे ऊँचा बिंदु भी आमतौर पर थोड़ा बढ़ता है। | draft |
 
 ## Sign-off
 

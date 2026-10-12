@@ -81,6 +81,8 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
   stomach and food per frame, on a second canvas the size of the gut.
 - The 3D chunk loads only on the simulator pages (`/sim` and `/next`, through `BodyView`). The PWA
   precaches everything for offline use.
-- three.js is bundled from its source modules (`vite.config.ts`), so the flat body's few maths
-  classes ride with the page and the rest stays in the lazy 3D chunk, which only a device with
-  WebGL downloads. `npm run budget -w @lifepeek/web` checks the route sizes after a build.
+- The anatomy curves, the flat body and the organ labels use no three.js: `anatomy/spline.ts`
+  does three's Catmull-Rom sums in the same order (a test checks them bit for bit), so all of
+  three.js stays in the lazy 3D chunk, which only a device with WebGL downloads. three.js is
+  bundled from its source modules (`vite.config.ts`), so that chunk takes only what it uses.
+  `npm run budget -w @lifepeek/web` checks the route sizes after a build.
