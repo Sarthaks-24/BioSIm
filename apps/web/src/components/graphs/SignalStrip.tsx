@@ -230,9 +230,9 @@ export default function SignalStrip({
        * Stacked graphs (from 1024 px up): name, then how sure we are, small and quiet beside it
        * (it is not a line of the legend), ⓘ at the end; the legend under them, naming both meals.
        * One graph at a time (tabs): the tab names it, so no title here (it would say "Energy"
-       * twice). Value, status and ⓘ; a two-line graph: status and ⓘ, then its legend; with a kept
-       * meal on a phone, its legend entry gets the next row to itself (the meal bar right above
-       * names this meal, with the same line sample).
+       * twice). Value, status and ⓘ; a two-line graph, or a kept meal on the projector: status and
+       * ⓘ, then the legend; with a kept meal on a phone, its legend entry gets the next row to
+       * itself (the meal bar right above names this meal, with the same line sample).
        */}
       <figcaption
         className={`grid items-center gap-x-3 ${
@@ -241,7 +241,7 @@ export default function SignalStrip({
             : named
               ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
               : kept
-                ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note']"
+                ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note'] lg:[grid-template-areas:'status_status_info'_'read_read_read']"
                 : "grid-cols-[minmax(0,1fr)_auto_auto] [grid-template-areas:'read_status_info']"
         }`}
       >
