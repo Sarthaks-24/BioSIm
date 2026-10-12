@@ -17,7 +17,7 @@ import {
 } from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
-import { useSim } from '../state/sim.ts'
+import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/human.ts'
 import { pylorusTransform, sharedGeometry } from './geometry.ts'
 import { prefersReducedMotion } from '../lib/webgl.ts'
@@ -36,7 +36,9 @@ interface Props {
  * so a paused simulation costs nothing on a school laptop's battery.
  */
 export default function BodyCanvas({ sim, label, onContextLost }: Props) {
-  const minute = useSim((s) => Math.round(s.time))
+  // Read outside <Canvas> and passed down, so the scene does not depend on context bridging.
+  const clock = useBodyClock()
+  const minute = clock.useMinute()
   const stage = activeStage(sim, minute)
   const [width, setWidth] = useState(0)
   const specs = useLabels(stage, width)
@@ -67,7 +69,7 @@ export default function BodyCanvas({ sim, label, onContextLost }: Props) {
         }}
       >
         <Lighting />
-        <Body sim={sim} stage={stage} />
+        <Body sim={sim} stage={stage} minute={minute} clock={clock} />
         <OrbitControls
           makeDefault
           enablePan={false}
@@ -78,7 +80,7 @@ export default function BodyCanvas({ sim, label, onContextLost }: Props) {
           maxPolarAngle={Math.PI * 0.8}
         />
         <LabelProjector specs={specs} refs={refs} />
-        <Invalidator sim={sim} />
+        <Invalidator sim={sim} clock={clock} />
       </Canvas>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
         {specs.map((spec) => (
@@ -122,9 +124,9 @@ function Lighting() {
 }
 
 /** Re-render the canvas whenever simulated time or the meal changes. */
-function Invalidator({ sim }: { sim: Simulation }) {
+function Invalidator({ sim, clock }: { sim: Simulation; clock: BodyClock }) {
   const invalidate = useThree((s) => s.invalidate)
-  useEffect(() => useSim.subscribe((s, prev) => s.time !== prev.time && invalidate()), [invalidate])
+  useEffect(() => clock.subscribe(() => invalidate()), [clock, invalidate])
   useEffect(() => invalidate(), [sim, invalidate])
   return null
 }
@@ -159,9 +161,8 @@ const skinMaterial = () =>
 /** Centre the stomach scales around, so it swells and shrinks in place. */
 const STOMACH_PIVOT = STOMACH.getPointAt(0.45)
 
-function Body({ sim, stage }: { sim: Simulation; stage: StageId }) {
+function Body({ sim, stage, minute, clock }: { sim: Simulation; stage: StageId; minute: number; clock: BodyClock }) {
   const geo = sharedGeometry()
-  const minute = useSim((s) => Math.round(s.time))
   const skin = useMemo(skinMaterial, [])
   const pylorus = useMemo(() => {
     const { pos, tan } = pylorusTransform()
@@ -211,7 +212,7 @@ function Body({ sim, stage }: { sim: Simulation; stage: StageId }) {
         empty={!holds.largeIntestine}
       />
 
-      <Swarm sim={sim} />
+      <Swarm sim={sim} clock={clock} />
     </group>
   )
 }
@@ -262,7 +263,7 @@ const tmpMatrix = new Matrix4()
 const PARTICLE_SCALE = 1.8
 const OUTLINE_SCALE = 1.3
 
-function Swarm({ sim }: { sim: Simulation }) {
+function Swarm({ sim, clock }: { sim: Simulation; clock: BodyClock }) {
   const geo = sharedGeometry()
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
   const outlines = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
@@ -277,7 +278,7 @@ function Swarm({ sim }: { sim: Simulation }) {
   }, [sim])
 
   useFrame(() => {
-    const t = useSim.getState().time
+    const t = clock.now()
     for (const kind of NUTRIENT_KINDS) {
       const mesh = meshes.current[kind]
       const outline = outlines.current[kind]

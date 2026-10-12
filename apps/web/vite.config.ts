@@ -46,20 +46,19 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    // three.js from its source modules instead of its one-file build. Then the bundler can split it
+    // per module: the flat body's few maths classes (Vector3, the anatomy curves) ride with the
+    // page, and the rest (renderer, materials, @react-three) stays in the lazy 3D chunk that only
+    // a device with WebGL downloads. With the one-file build, any import of `three` pulled all
+    // of it, and a manual `three` chunk also swallowed React, so every page loaded three.js.
+    alias: [{ find: /^three$/, replacement: 'three/src/Three.js' }],
+  },
   server: {
     proxy: { '/api': 'http://localhost:8787' },
   },
   build: {
     // For scripts/check-budget.mjs (route sizes). Under dist/.vite/, which the service worker does not precache.
     manifest: true,
-    rollupOptions: {
-      output: {
-        // One cacheable 3D chunk (~320 KB gzipped). It only loads on the simulator page; the
-        // home page stays light.
-        manualChunks(id) {
-          if (id.includes('node_modules/three/') || id.includes('@react-three')) return 'three'
-        },
-      },
-    },
   },
 })

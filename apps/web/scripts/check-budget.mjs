@@ -6,12 +6,14 @@
 // fetches only the ones a page uses, after the CSS.
 //
 // "report" rows print but never fail; "enforce" rows exit 1 when over. A later WP flips a row.
-// Today's numbers (2026-10-12, WP-03 build):
-//   Home 426 KB, /sim before 3D 440 KB, three 250 KB, precache 1.82 MB.
-//   Home and /sim are far over: the bundler puts modules that @react-three shares with the rest of
-//   the app (React among them) into the `three` chunk, so the entry imports it and every page
-//   downloads three.js. Both rows stay "report" until that is fixed; Home also needs WP-19 (no
-//   `simulate` on Home).
+// History:
+//   WP-03 (2026-10-12): Home 426 KB, /sim before 3D 440 KB, three 250 KB, precache 1.82 MB. A
+//   manual `three` chunk swallowed React, so the entry imported it and every page loaded three.js.
+//   WP-11: three.js is bundled from its source modules and only the 3D body imports most of it
+//   (vite.config.ts); the client no longer ships zod (data/foods.ts); Hindi loads on demand
+//   (i18n/index.ts). Home 151 KB, /sim and /next before 3D 179 KB, 3D body 250 KB.
+//   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
+//   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -22,8 +24,16 @@ const KB = 1000
 
 const BUDGETS = [
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
-  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'report' },
-  { name: 'three chunk', chunk: 'three', max: 270 * KB, mode: 'enforce' },
+  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'enforce' },
+  { name: '/next before 3D', roots: ['index.html', 'src/pages/Stage.tsx'], max: 190 * KB, mode: 'enforce' },
+  // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
+  {
+    name: '3D body (lazy)',
+    roots: ['src/three/BodyCanvas.tsx'],
+    minus: ['index.html', 'src/pages/Stage.tsx'],
+    max: 270 * KB,
+    mode: 'enforce',
+  },
   { name: 'precache (raw)', precache: true, max: 2600 * KB, mode: 'enforce' },
 ]
 
@@ -62,11 +72,12 @@ function precacheFiles() {
 const rows = BUDGETS.map((b) => {
   let bytes
   if (b.precache) bytes = precacheFiles().reduce((sum, f) => sum + size(f), 0)
-  else if (b.chunk) {
-    const chunk = Object.values(manifest).find((c) => c.name === b.chunk)
-    if (!chunk) throw new Error(`No chunk named ${b.chunk}`)
-    bytes = gzip(chunk.file)
-  } else bytes = staticFiles(b.roots).reduce((sum, f) => sum + gzip(f), 0)
+  else {
+    const already = new Set(b.minus ? staticFiles(b.minus) : [])
+    bytes = staticFiles(b.roots)
+      .filter((f) => !already.has(f))
+      .reduce((sum, f) => sum + gzip(f), 0)
+  }
   const over = bytes > b.max
   return { ...b, bytes, over, failed: over && b.mode === 'enforce' }
 })

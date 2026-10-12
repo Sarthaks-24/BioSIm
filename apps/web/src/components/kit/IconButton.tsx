@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   /** An icon from ./icons.tsx. */
@@ -7,6 +7,8 @@ interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'
   label: string
   /** Hide the words: only for actions everyone knows by their icon (close, add). */
   iconOnly?: boolean
+  /** For a button that opens something and gets focus back (React 19 passes refs as props). */
+  ref?: Ref<HTMLButtonElement>
 }
 
 /**
@@ -14,10 +16,11 @@ interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'
  * As a toggle (pass `aria-pressed`) the pressed state is filled ink with white text, which reads
  * from the back of a classroom. Touch targets: 44 px on phones, 36 px from 1024 px up.
  */
-export default function IconButton({ icon, label, iconOnly = false, className = '', type = 'button', ...rest }: Props) {
+export default function IconButton({ icon, label, iconOnly = false, className = '', type = 'button', ref, ...rest }: Props) {
   const shape = iconOnly ? 'size-11 justify-center lg:size-9' : 'min-h-11 gap-1.5 pr-3 pl-2.5 lg:min-h-9'
   return (
     <button
+      ref={ref}
       type={type}
       aria-label={iconOnly ? label : undefined}
       title={iconOnly ? label : undefined}

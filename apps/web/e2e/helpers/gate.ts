@@ -25,12 +25,18 @@ export interface GateRoute {
 /** v1 simulator with a small, fixed comparison, and the accessible name of its first body. */
 export const V1_SIM = '/sim?v=2&a=cola:1&b=water:1'
 export const V1_BODY = 'Meal A: Cola'
+/** The v2 stage: a bare /next opens the default meal, cola; this is its body's accessible name. */
+export const NEXT_BODY = 'The body, digesting Cola'
+
+/** The accessible name of the (first) body picture on a gate page. */
+export const bodyName = (url: string) => (url.startsWith('/next') ? NEXT_BODY : V1_BODY)
 
 export const GATE_ROUTES = {
   /** No page scroll at 1280×800 and 1440×900 (projects desktop, projector). */
   noScroll: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-11' },
+    { url: '/next', plan: 'enforce' },
+    { url: '/next?lang=hi', plan: 'enforce' },
   ],
   /** Body, one graph and Play in the first phone screen, 390×844 (project phone). */
   firstScreen: [
@@ -45,12 +51,11 @@ export const GATE_ROUTES = {
   /**
    * Reduced motion: no auto-play, and a paused page draws no frames (project reduced).
    * WP-08 built the clock and motion stores (state/clock.ts, state/motion.ts; their unit tests
-   * check that a paused clock asks for no frames). /next is the first page that uses them, so
-   * WP-11 sets this entry to 'enforce'.
+   * check that a paused clock asks for no frames). /next is the first page that uses them (WP-11).
    */
   reducedMotion: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-11' },
+    { url: '/next', plan: 'enforce' },
   ],
   /** 30 fps while playing, flat body, 6× CPU throttle (project perf). */
   fps: [
@@ -60,12 +65,12 @@ export const GATE_ROUTES = {
   /** Works offline after the first visit. */
   offline: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-11' },
+    { url: '/next', plan: 'enforce' },
   ],
-  /** The stage draws a body and plays, in 3D and in the flat fallback (projects desktop, nowebgl). */
+  /** The stage draws a body and plays, in 3D and in the flat fallback (stage.spec.ts projects). */
   stage: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-11' },
+    { url: '/next', plan: 'enforce' },
   ],
   /** axe: no serious or critical issues. v1 pages still fail on critical ones (WP-03). */
   axe: [
@@ -75,7 +80,7 @@ export const GATE_ROUTES = {
     { url: '/science', plan: 'report' },
     { url: '/about', plan: 'report' },
     { url: '/privacy', plan: 'report' },
-    { url: '/next', plan: 'pending:WP-15' },
+    { url: '/next', plan: 'enforce' },
   ],
 } satisfies Record<string, GateRoute[]>
 
