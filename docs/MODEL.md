@@ -154,6 +154,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
+**Graph scales.** Each signal's `displayRange` in the catalog is its default y axis. An organism's registry can override it so everyday meals fill the graph (`apps/web/src/registry/human/organism.ts`). The human registry overrides two: stomach contents 0–600 g (catalog 0–1,000 g) and energy coming in 0–200 kcal/h (catalog 0–400 kcal/h; energy used shares that axis). A scale is the same for every meal and never shrinks. Only a value outside it stretches the axis once, to the next round number (four colas, 1,376 g, give 0–1,400 g), and the graph says so (`apps/web/src/lib/axis.ts`).
+
 ## Known limits
 
 - It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
