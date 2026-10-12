@@ -36,9 +36,19 @@ export async function sendFeedback(input: FeedbackInput): Promise<boolean> {
   }
 }
 
+/**
+ * The template's public warning (.github/ISSUE_TEMPLATE/mistake.md). A `body=` in the link replaces
+ * the template's text, so the warning is put back at the top: hidden once posted, seen while typing.
+ */
+const PUBLIC_WARNING = `<!--
+Issues are public. Don't write your name, school, phone number, email or any health information.
+-->`
+
 /** The report as a GitHub "new issue" link, already filled in (template .github/ISSUE_TEMPLATE/mistake.md). */
 export function feedbackIssueUrl(input: FeedbackInput): string {
   const body = [
+    PUBLIC_WARNING,
+    '',
     `**Where:** ${input.location}`,
     '',
     input.message,

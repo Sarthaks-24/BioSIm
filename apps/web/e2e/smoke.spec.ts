@@ -65,7 +65,7 @@ test('Hindi switch translates the interface and is kept in the link', async ({ p
 })
 
 test('footer shows Made by, Privacy and About on every page', async ({ page }) => {
-  for (const path of ['/', '/sim', '/teach', '/science', '/about', '/privacy', '/stats']) {
+  for (const path of ['/', '/sim', '/next', '/teach', '/science', '/about', '/privacy', '/stats']) {
     await page.goto(path)
     const footer = page.getByRole('contentinfo')
     await expect(footer.getByRole('link', { name: 'Made by Sarthak' }), path).toHaveAttribute('href', 'https://github.com/Sarthaks-24')
@@ -122,6 +122,9 @@ test('report with no API opens GitHub and sends nothing', async ({ page, context
   const params = new URL(popup.url()).searchParams
   expect(params.get('template')).toBe('mistake.md')
   expect(params.get('title')).toBe('Mistake: Milk')
+  // The pre-filled text replaces the template's, so its public warning comes first again.
+  expect(params.get('body')).toMatch(/^<!--\nIssues are public\. Don't write your name/)
+  expect(params.get('body')).toContain('The fat value looks too high.')
   expect(posted).toEqual([])
 })
 

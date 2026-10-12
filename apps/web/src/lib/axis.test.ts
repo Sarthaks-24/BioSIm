@@ -2,20 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { HORIZON_MIN, KNEE_MIN, timeToPos } from './time.ts'
 import { MAX_POINTS, domainFor, minAt, posAt, samplesOf, xAt, yAt, yTicks } from './axis.ts'
 
-/** Where the dock's thumb centre sits: the track's left edge plus --pos (set from posAt) of its width (Scrubber.tsx). */
-const thumbX = (min: number, left: number, width: number) => left + posAt(min) * width
-
+// That the playhead stands over the dock's thumb on screen is checked in pixels by e2e/graphs.spec.ts.
 describe('shared time axis', () => {
-  it('puts the playhead exactly over the dock thumb, at 20 times and 3 widths', () => {
-    const times = Array.from({ length: 20 }, (_, i) => Math.round((i / 19) ** 2 * HORIZON_MIN))
-    for (const width of [302, 466, 548]) {
-      for (const min of times) {
-        // The graph and the track start at the same x (left), so their x within the box must match.
-        expect(xAt(min, width) + 100, `${min} min at ${width}px`).toBeCloseTo(thumbX(min, 100, width), 6)
-      }
-    }
-  })
-
   it('uses the timeline knee: the first 6 h take 60 % of the width', () => {
     expect(xAt(KNEE_MIN, 500)).toBeCloseTo(300)
     expect(xAt(HORIZON_MIN, 500)).toBeCloseTo(500)
