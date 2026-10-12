@@ -10,11 +10,15 @@
   "scripts": {
     "dev": "npm run dev -w @biosim/web",
     "dev:api": "npm run dev -w @biosim/api",
-    "build": "npm run build -w @biosim/engine && npm run build -w @biosim/web",
+    "build": "npm run build -w @biosim/web",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "validate": "npm run validate -w @biosim/engine",
+    "format": "prettier --write .",
     "check": "npm run validate && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.0"
   },
   "engines": {
     "node": ">=20.19"

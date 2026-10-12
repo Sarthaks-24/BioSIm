@@ -55,8 +55,7 @@ export const useSim = create<SimState>((set, get) => ({
     set({
       [meal]: get()[meal].map((i) => (i.foodId === foodId ? { ...i, servings: clampServings(servings) } : i)),
     } as Pick<SimState, MealKey>),
-  removeFood: (meal, foodId) =>
-    set({ [meal]: get()[meal].filter((i) => i.foodId !== foodId) } as Pick<SimState, MealKey>),
+  removeFood: (meal, foodId) => set({ [meal]: get()[meal].filter((i) => i.foodId !== foodId) } as Pick<SimState, MealKey>),
 
   loadFromUrl: (search) => {
     const params = new URLSearchParams(search)

@@ -65,7 +65,8 @@
     "kcal": "{{value}} kcal",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
     "oldLink": "This link was made with an older version of the model, so some numbers may differ slightly from when it was shared.",
-    "keyboardHint": "Keys: Space play/pause, ← → move 10 minutes, Shift + ← → move 1 hour"
+    "keyboardHint": "Keys: Space play/pause, ← → move 10 minutes, Shift + ← → move 1 hour",
+    "follow": "Follow the meal"
   },
   "stages": {
     "mouth": {
@@ -155,7 +156,8 @@
     "print": "Print",
     "meal": "Meal",
     "nutrientsTitle": "What’s in this meal",
-    "per": "Total"
+    "per": "Total",
+    "chemistry": "Chemistry"
   },
   "feedback": {
     "title": "Report a mistake",
@@ -230,5 +232,11 @@
     "min": "{{n}} min",
     "h": "{{n}} h",
     "hm": "{{h}} h {{m}} min"
+  },
+  "anatomy": {
+    "liver": "Liver",
+    "pancreas": "Pancreas",
+    "gallbladder": "Gallbladder",
+    "appendix": "Appendix"
   }
 }

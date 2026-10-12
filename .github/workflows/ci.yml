@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate food files
+        run: npm run validate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Browser smoke tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e -w @biosim/web
+        env:
+          CI: 'true'

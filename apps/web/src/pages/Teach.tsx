@@ -1,0 +1,40 @@
+import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { PRESETS, presetHref } from '../lib/presets.ts'
+
+export default function Teach() {
+  const { t } = useTranslation()
+  const list = (key: string) => t(key, { returnObjects: true }) as string[]
+  return (
+    <article className="mx-auto max-w-3xl px-4 py-10 leading-relaxed">
+      <h1 className="text-4xl font-extrabold tracking-tight">{t('teach.title')}</h1>
+      <p className="mt-4 text-lg text-ink-2">{t('teach.lead')}</p>
+
+      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.plan')}</h2>
+      <ol className="list-decimal space-y-3 pl-6">
+        {list('teach.steps').map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ol>
+      <p className="mt-4">
+        <Link to={presetHref(PRESETS[0]!)} className="font-semibold underline underline-offset-4">
+          {t('home.example.colaBurger')}
+        </Link>
+      </p>
+
+      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.questionsTitle')}</h2>
+      <ul className="list-disc space-y-2 pl-6">
+        {list('teach.questions').map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ul>
+
+      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.tipsTitle')}</h2>
+      <ul className="list-disc space-y-2 pl-6">
+        {list('teach.tips').map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ul>
+    </article>
+  )
+}

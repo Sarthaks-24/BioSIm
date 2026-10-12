@@ -72,6 +72,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* The one orchestrated moment: the home-page emptying curves draw left to right, in time. */
+.race-reveal {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: race-reveal 2.4s cubic-bezier(0.3, 0.1, 0.2, 1) 0.2s both;
+}
+@keyframes race-reveal {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

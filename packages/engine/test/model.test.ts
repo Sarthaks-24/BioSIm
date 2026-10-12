@@ -8,7 +8,13 @@ import { lookup } from './fixtures.ts'
  * ranges below need a citation explaining why they moved. See docs/MODEL.md.
  */
 
-const run = (...ids: string[]) => simulate(buildMeal(ids.map((foodId) => ({ foodId, servings: 1 })), lookup))
+const run = (...ids: string[]) =>
+  simulate(
+    buildMeal(
+      ids.map((foodId) => ({ foodId, servings: 1 })),
+      lookup,
+    ),
+  )
 
 const stomachPct = (sim: Simulation, t: number) => {
   const i = indexAt(sim, t)
@@ -34,9 +40,7 @@ describe('gastric emptying', () => {
   })
 
   it('emptying order: water < sugary drink < light meal < heavy fatty meal', () => {
-    const order = ['water-test', 'glucose-50', 'standard-meal', 'fatty-meal'].map(
-      (id) => run(id).events.stomachHalfEmptyMin!,
-    )
+    const order = ['water-test', 'glucose-50', 'standard-meal', 'fatty-meal'].map((id) => run(id).events.stomachHalfEmptyMin!)
     for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThan(order[i - 1]!)
   })
 

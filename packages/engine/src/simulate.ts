@@ -139,8 +139,7 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
   // --- Glucose -----------------------------------------------------------------------------
   const g = PARAMS.glucose
   const c = meal.total
-  const blunt =
-    c.carbsG > 0 ? Math.max(g.bluntingFloor, 1 / (1 + (g.bluntingK * (2 * c.proteinG + c.fatG)) / c.carbsG)) : 1
+  const blunt = c.carbsG > 0 ? Math.max(g.bluntingFloor, 1 / (1 + (g.bluntingK * (2 * c.proteinG + c.fatG)) / c.carbsG)) : 1
   const typical = new Float64Array(n)
   const low = new Float64Array(n)
   const high = new Float64Array(n)
@@ -267,12 +266,7 @@ function hashString(s: string): number {
 /** Water is so heavy it would drown out everything else visually; count it at a quarter weight. */
 const VISUAL_WEIGHT: Record<NutrientKind, number> = { carbs: 1, protein: 1, fat: 1, fiber: 1, water: 0.25 }
 
-function makeParticles(
-  meal: Meal,
-  curves: Record<FoodPhase, EmptyingCurve>,
-  arrival: number,
-  count: number,
-): Particle[] {
+function makeParticles(meal: Meal, curves: Record<FoodPhase, EmptyingCurve>, arrival: number, count: number): Particle[] {
   if (meal.items.length === 0 || count <= 0) return []
   const rand = mulberry32(hashString(meal.items.map((i) => `${i.food.id}:${i.servings}`).join(',')))
 

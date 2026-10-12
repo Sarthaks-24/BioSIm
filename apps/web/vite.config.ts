@@ -38,8 +38,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // One cacheable 3D chunk (~320 KB gzipped). It only loads on the simulator page; the
+        // home page stays light.
         manualChunks(id) {
-          if (id.includes('node_modules/three') || id.includes('@react-three')) return 'three'
+          if (id.includes('node_modules/three/') || id.includes('@react-three')) return 'three'
         },
       },
     },

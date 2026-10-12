@@ -2,11 +2,23 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls } from '@react-three/drei'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Color, DoubleSide, Euler, InstancedMesh, Matrix4, Quaternion, ShaderMaterial, Vector3, type BufferGeometry } from 'three'
-import { NUTRIENT_KINDS, activeStage, type NutrientKind, type Simulation, type StageId } from '@biosim/engine'
+import {
+  Color,
+  DoubleSide,
+  Euler,
+  InstancedMesh,
+  Matrix4,
+  PMREMGenerator,
+  Quaternion,
+  ShaderMaterial,
+  Vector3,
+  type BufferGeometry,
+} from 'three'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@biosim/engine'
 import { useSim } from '../state/sim.ts'
-import { LIVER, PANCREAS, STAGE_LABEL_ANCHOR, particlePosition } from '../anatomy/anatomy.ts'
-import { sharedGeometry } from './geometry.ts'
+import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/anatomy.ts'
+import { pylorusTransform, sharedGeometry } from './geometry.ts'
 import { NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
 
 interface Props {
@@ -24,26 +36,50 @@ export default function BodyCanvas({ sim, label }: Props) {
     <Canvas
       frameloop="demand"
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0.5, 7.6], fov: 32 }}
+      camera={{ position: [0, 0.7, 8.9], fov: 32 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
       aria-label={label}
       role="img"
+      onCreated={(state) => {
+        if (import.meta.env.DEV) ((window as unknown as { __scenes?: unknown[] }).__scenes ??= []).push(state.scene)
+      }}
     >
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[3, 5, 6]} intensity={1.4} />
-      <directionalLight position={[-4, -2, 3]} intensity={0.4} />
+      <Lighting />
       <Body sim={sim} />
       <OrbitControls
         makeDefault
         enablePan={false}
-        minDistance={4}
+        minDistance={3.5}
         maxDistance={11}
-        target={[0, 0.55, 0]}
+        target={[0, 0.7, 0]}
         minPolarAngle={Math.PI * 0.2}
         maxPolarAngle={Math.PI * 0.8}
       />
       <Invalidator sim={sim} />
     </Canvas>
+  )
+}
+
+/** Soft studio light from a procedural room — no HDR download, so it works offline. */
+function Lighting() {
+  const gl = useThree((s) => s.gl)
+  const scene = useThree((s) => s.scene)
+  useEffect(() => {
+    const pmrem = new PMREMGenerator(gl)
+    const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    scene.environment = env
+    return () => {
+      scene.environment = null
+      env.dispose()
+      pmrem.dispose()
+    }
+  }, [gl, scene])
+  return (
+    <>
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[2.5, 4, 6]} intensity={1.2} />
+      <directionalLight position={[-4, -1, 2]} intensity={0.35} color="#cfe3ff" />
+    </>
   )
 }
 
@@ -55,12 +91,13 @@ function Invalidator({ sim }: { sim: Simulation }) {
   return null
 }
 
-const rimMaterial = (color: string, strength: number) =>
+/** X-ray style skin: transparent face-on, visible at the silhouette edges. */
+const skinMaterial = () =>
   new ShaderMaterial({
     transparent: true,
     depthWrite: false,
     side: DoubleSide,
-    uniforms: { uColor: { value: new Color(color) }, uStrength: { value: strength } },
+    uniforms: { uColor: { value: new Color('#3d4c6b') }, uStrength: { value: 0.6 } },
     vertexShader: /* glsl */ `
       varying vec3 vNormal;
       varying vec3 vView;
@@ -77,34 +114,51 @@ const rimMaterial = (color: string, strength: number) =>
       varying vec3 vView;
       void main() {
         float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vView)));
-        gl_FragColor = vec4(uColor, pow(rim, 2.2) * uStrength + 0.025);
+        gl_FragColor = vec4(uColor, pow(rim, 2.4) * uStrength + 0.03);
       }`,
   })
 
+/** Centre the stomach scales around, so it swells and shrinks in place. */
+const STOMACH_PIVOT = STOMACH.getPointAt(0.45)
+
 function Body({ sim }: { sim: Simulation }) {
   const geo = sharedGeometry()
-  const time = useSim((s) => Math.round(s.time))
-  const stage = activeStage(sim, time)
-  const skin = useMemo(() => rimMaterial('#46536e', 0.55), [])
+  const minute = useSim((s) => Math.round(s.time))
+  const stage = activeStage(sim, minute)
+  const skin = useMemo(skinMaterial, [])
+  const pylorus = useMemo(() => {
+    const { pos, tan } = pylorusTransform()
+    const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), tan)
+    return { pos, q }
+  }, [])
+
+  // A full stomach is visibly bigger than an empty one (≈ 0.85× empty → 1.15× after a big meal).
+  const i = indexAt(sim, minute)
+  const inStomach = sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!
+  const swell = 0.86 + 0.3 * Math.min(1, inStomach / 650)
 
   return (
     <group>
-      <mesh geometry={geo.torso} material={skin} renderOrder={10} />
-      <mesh geometry={geo.head} material={skin} renderOrder={10} />
+      <mesh geometry={geo.body} material={skin} renderOrder={20} />
 
-      <mesh position={LIVER.center} scale={LIVER.scale} rotation={[0, 0, -0.25]}>
-        <primitive object={geo.liver} attach="geometry" />
-        <meshStandardMaterial color="#8c3b36" transparent opacity={0.18} depthWrite={false} />
-      </mesh>
-      <mesh position={PANCREAS.center} scale={PANCREAS.scale} rotation={[0, 0, 0.15]}>
-        <primitive object={geo.pancreas} attach="geometry" />
-        <meshStandardMaterial color="#d8b25a" transparent opacity={0.3} depthWrite={false} />
-      </mesh>
+      <Tissue geometry={geo.liver} color="#7b2d2a" opacity={0.4} />
+      <Tissue geometry={geo.gallbladder} color="#5f8a3c" opacity={0.45} />
+      <Tissue geometry={geo.spleen} color="#7a2f45" opacity={0.3} />
+      <Tissue geometry={geo.pancreas} color="#e2b45f" opacity={0.5} />
+      <Tissue geometry={geo.appendix} color={ORGAN_COLOR.largeIntestine} opacity={0.45} />
 
-      <Organ stage="esophagus" active={stage === 'esophagus'} geometry={geo.esophagus} />
-      <Organ stage="stomach" active={stage === 'stomach'} geometry={geo.stomach} />
-      <Organ stage="smallIntestine" active={stage === 'smallIntestine'} geometry={geo.smallIntestine} />
-      <Organ stage="largeIntestine" active={stage === 'largeIntestine'} geometry={geo.largeIntestine} />
+      <Tissue geometry={geo.pharynx} color={ORGAN_COLOR.esophagus} stage="esophagus" active={stage === 'mouth' || stage === 'esophagus'} />
+      <Tissue geometry={geo.esophagus} color={ORGAN_COLOR.esophagus} stage="esophagus" active={stage === 'esophagus'} />
+      <group position={STOMACH_PIVOT} scale={swell}>
+        <group position={STOMACH_PIVOT.clone().negate()}>
+          <Tissue geometry={geo.stomach} color={ORGAN_COLOR.stomach} stage="stomach" active={stage === 'stomach'} />
+        </group>
+      </group>
+      <mesh geometry={geo.pylorus} position={pylorus.pos} quaternion={pylorus.q}>
+        <meshStandardMaterial color="#b2445a" roughness={0.5} transparent opacity={0.7} depthWrite={false} />
+      </mesh>
+      <Tissue geometry={geo.smallIntestine} color={ORGAN_COLOR.smallIntestine} stage="smallIntestine" active={stage === 'smallIntestine'} />
+      <Tissue geometry={geo.largeIntestine} color={ORGAN_COLOR.largeIntestine} stage="largeIntestine" active={stage === 'largeIntestine'} />
 
       <Swarm sim={sim} />
       <Labels active={stage} />
@@ -112,17 +166,35 @@ function Body({ sim }: { sim: Simulation }) {
   )
 }
 
-function Organ({ stage, active, geometry }: { stage: StageId; active: boolean; geometry: BufferGeometry }) {
+/** Wet-looking tissue: a clear-coated, translucent physical material. */
+function Tissue({
+  geometry,
+  color,
+  opacity,
+  stage,
+  active = false,
+}: {
+  geometry: BufferGeometry
+  color: string
+  opacity?: number
+  stage?: StageId
+  active?: boolean
+}) {
+  const base = opacity ?? (active ? 0.62 : 0.34)
   return (
-    <mesh geometry={geometry} renderOrder={1}>
-      <meshStandardMaterial
-        color={ORGAN_COLOR[stage]}
-        emissive={ORGAN_COLOR[stage]}
-        emissiveIntensity={active ? 0.35 : 0}
+    <mesh geometry={geometry} renderOrder={stage ? 2 : 1}>
+      <meshPhysicalMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={active ? 0.32 : 0.04}
+        roughness={0.38}
+        clearcoat={0.7}
+        clearcoatRoughness={0.25}
+        envMapIntensity={0.7}
         transparent
-        opacity={active ? 0.55 : 0.28}
-        roughness={0.55}
+        opacity={base}
         depthWrite={false}
+        side={DoubleSide}
       />
     </mesh>
   )
@@ -175,16 +247,16 @@ function Swarm({ sim }: { sim: Simulation }) {
               meshes.current[kind] = m ?? undefined
             }}
             args={[geo.particles[kind], undefined, byKind[kind].length]}
-            renderOrder={5}
+            renderOrder={10}
             frustumCulled={false}
           >
             <meshStandardMaterial
               color={NUTRIENT_COLOR[kind]}
               emissive={NUTRIENT_COLOR[kind]}
-              emissiveIntensity={0.35}
-              roughness={0.4}
+              emissiveIntensity={0.45}
+              roughness={0.35}
               transparent={kind === 'water'}
-              opacity={kind === 'water' ? 0.7 : 1}
+              opacity={kind === 'water' ? 0.75 : 1}
             />
           </instancedMesh>
         ),
@@ -199,19 +271,32 @@ function Labels({ active }: { active: StageId }) {
   const { t } = useTranslation()
   const width = useThree((s) => s.size.width)
   const compact = width < 340
+  const roomy = width >= 460
+  const pill = 'block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] leading-tight shadow-sm'
   return (
     <>
-      {LABEL_STAGES.filter((s) => !compact || s === active).map((s) => (
+      {/* Labels stay mounted and are hidden with CSS: mounting/unmounting drei <Html> while the
+          canvas renders makes React warn about unmounting a root mid-render. */}
+      {LABEL_STAGES.map((s) => (
         <Html key={s} position={STAGE_LABEL_ANCHOR[s]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
           <span
-            className={`block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] leading-tight shadow-sm transition-colors ${
-              s === active ? 'bg-ink text-white font-semibold' : 'bg-panel/85 text-ink-2'
-            }`}
+            hidden={compact && s !== active}
+            className={`${pill} ${s === active ? 'bg-ink font-semibold text-white' : 'bg-panel/85 text-ink-2'}`}
           >
-            {t(`stages.${s}.name`)}
+            {t(`stages.${s}.name`).replace(/\s*\(.*\)/, '')}
           </span>
         </Html>
       ))}
+      <Html position={[-0.7, 1.3, 0.1]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
+        <span hidden={!roomy} className={`${pill} bg-panel/70 text-ink-2`}>
+          {t('anatomy.liver')}
+        </span>
+      </Html>
+      <Html position={[0.36, 0.3, -0.1]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
+        <span hidden={!roomy} className={`${pill} bg-panel/70 text-ink-2`}>
+          {t('anatomy.pancreas')}
+        </span>
+      </Html>
     </>
   )
 }

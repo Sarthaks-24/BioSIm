@@ -1,7 +1,9 @@
 import { parseFood, type Food } from '../src/schema.ts'
 
 /** Reference test meals used in clinical studies — not shipped as app content. */
-const src = [{ label: 'test fixture', citation: 'Synthetic reference meal for calibration', fields: ['nutrients', 'glycemicIndex'] as const }]
+const src = [
+  { label: 'test fixture', citation: 'Synthetic reference meal for calibration', fields: ['nutrients', 'glycemicIndex'] as const },
+]
 
 function food(partial: Omit<Food, 'schemaVersion' | 'sources' | 'name' | 'emoji' | 'serving' | 'category'> & { grams: number }): Food {
   const { grams, ...rest } = partial

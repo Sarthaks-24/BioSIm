@@ -3,7 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { Vector3, type Curve } from 'three'
 import { activeStage, type NutrientKind, type Simulation, type StageId } from '@biosim/engine'
 import { useSim } from '../state/sim.ts'
-import { ESOPHAGUS, LARGE_INTESTINE, SMALL_INTESTINE, STAGE_LABEL_ANCHOR, STOMACH, particlePosition, stomachRadius } from '../anatomy/anatomy.ts'
+import {
+  ESOPHAGUS,
+  LARGE_INTESTINE,
+  PHARYNX,
+  SMALL_INTESTINE,
+  STAGE_LABEL_ANCHOR,
+  STOMACH,
+  particlePosition,
+  stomachRadius,
+} from '../anatomy/anatomy.ts'
 import { INK, NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
 
 /**
@@ -11,11 +20,40 @@ import { INK, NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
  * the 3D view, drawn front-on with Canvas 2D.
  */
 
+/** Same silhouette as the 3D body (see three/geometry.ts buildBody). */
 const TORSO: [number, number][] = [
-  [0.0, -1.75], [0.55, -1.7], [0.85, -1.45], [0.92, -1.1], [0.86, -0.6], [0.78, -0.1], [0.82, 0.4],
-  [0.95, 1.0], [1.02, 1.6], [1.05, 1.95], [0.9, 2.12], [0.5, 2.2], [0.2, 2.26], [0.16, 2.36], [0.15, 2.52],
+  [0.0, -1.78],
+  [0.5, -1.74],
+  [0.82, -1.55],
+  [0.93, -1.2],
+  [0.9, -0.75],
+  [0.8, -0.25],
+  [0.79, 0.25],
+  [0.88, 0.85],
+  [0.98, 1.45],
+  [1.03, 1.8],
+  [0.98, 1.97],
+  [0.8, 2.08],
+  [0.52, 2.17],
+  [0.28, 2.23],
+  [0.19, 2.3],
+  [0.17, 2.46],
 ]
-const VIEW = { minX: -1.25, maxX: 1.25, minY: -1.9, maxY: 3.2 }
+/** Liver outline: tall right lobe (viewer's left) tapering to a thin left lobe over the stomach. */
+const LIVER_OUTLINE: [number, number][] = [
+  [-0.8, 1.05],
+  [-0.62, 1.24],
+  [-0.3, 1.28],
+  [0.05, 1.2],
+  [0.38, 1.1],
+  [0.58, 1.02],
+  [0.4, 0.96],
+  [0.1, 0.92],
+  [-0.2, 0.78],
+  [-0.5, 0.56],
+  [-0.72, 0.6],
+]
+const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.25 }
 
 export default function FlatBody({ sim, label }: { sim: Simulation; label: string }) {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -64,8 +102,20 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
   ctx.closePath()
   ctx.stroke()
   ctx.beginPath()
-  ctx.ellipse(X(0), Y(2.8), 0.31 * scale, 0.36 * scale, 0, 0, Math.PI * 2)
+  ctx.ellipse(X(0), Y(2.84), 0.31 * scale, 0.39 * scale, 0, 0, Math.PI * 2)
   ctx.stroke()
+  for (const sgn of [-1, 1]) {
+    ctx.beginPath()
+    ctx.roundRect(X(sgn * 1.17) - 0.17 * scale, Y(1.95), 0.34 * scale, 1.9 * scale, 0.17 * scale)
+    ctx.stroke()
+  }
+
+  // Liver and pancreas for context (not on the food's path).
+  ctx.beginPath()
+  LIVER_OUTLINE.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
+  ctx.closePath()
+  ctx.fillStyle = 'rgba(123,45,42,0.28)'
+  ctx.fill()
 
   const stage = activeStage(sim, time)
   const p = new Vector3()
@@ -84,9 +134,10 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
     ctx.stroke()
     ctx.globalAlpha = 1
   }
+  strokeCurve(PHARYNX, 0.09, 'esophagus', 12)
   strokeCurve(ESOPHAGUS, 0.08, 'esophagus')
   strokeCurve(LARGE_INTESTINE, 0.16, 'largeIntestine')
-  strokeCurve(SMALL_INTESTINE, 0.09, 'smallIntestine', 400)
+  strokeCurve(SMALL_INTESTINE, 0.08, 'smallIntestine', 900)
 
   // Stomach: filled outline built from the radius function.
   const left: [number, number][] = []

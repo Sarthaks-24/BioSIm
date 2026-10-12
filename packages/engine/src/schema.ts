@@ -17,17 +17,7 @@ export type LocalizedText = z.infer<typeof LocalizedText>
 export const FoodPhase = z.enum(['liquid', 'solid'])
 export type FoodPhase = z.infer<typeof FoodPhase>
 
-export const FoodCategory = z.enum([
-  'drink',
-  'fruit',
-  'grain',
-  'legume',
-  'dairy',
-  'vegetable',
-  'egg',
-  'fast-food',
-  'meat',
-])
+export const FoodCategory = z.enum(['drink', 'fruit', 'grain', 'legume', 'dairy', 'vegetable', 'egg', 'fast-food', 'meat'])
 export type FoodCategory = z.infer<typeof FoodCategory>
 
 const grams = z.number().min(0).max(2000)
