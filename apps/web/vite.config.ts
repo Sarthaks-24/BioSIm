@@ -40,6 +40,8 @@ export default defineConfig({
     proxy: { '/api': 'http://localhost:8787' },
   },
   build: {
+    // For scripts/check-budget.mjs (route sizes). Under dist/.vite/, which the service worker does not precache.
+    manifest: true,
     rollupOptions: {
       output: {
         // One cacheable 3D chunk (~320 KB gzipped). It only loads on the simulator page; the

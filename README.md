@@ -47,7 +47,8 @@ To send reports to the local API instead, put `VITE_API_URL=/api` in `apps/web/.
 
 ```bash
 npm run check      # validate foods, typecheck, unit tests, production build
-npm run e2e -w @lifepeek/web   # browser smoke tests (needs: npx playwright install chromium)
+npm run e2e -w @lifepeek/web   # browser smoke + release-gate tests (needs: npx playwright install chromium)
+npm run budget -w @lifepeek/web  # download-size budgets of the last build
 ```
 
 ## What's where
