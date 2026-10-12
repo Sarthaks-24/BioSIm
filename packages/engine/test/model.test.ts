@@ -239,7 +239,7 @@ describe('one consistent story', () => {
 
   pinned(
     'event.stomachHalfEmpty',
-    'half-empty is measured by food energy: a drink added to a meal never makes the meal look faster',
+    'half-empty is measured by food energy: water added to a meal never makes the meal look faster; a sugary drink only a little',
     () => {
       const alone = run('fatty-meal').events.stomachHalfEmptyMin!
       const withWater = run('fatty-meal', 'water-test').events.stomachHalfEmptyMin!

@@ -16,7 +16,7 @@ Old share links still open. The app tells the viewer the numbers may differ from
 |---|---|
 | Stage | One of mouth, oesophagus (code: `esophagus`), stomach, small intestine, large intestine (code: `largeIntestine`; "colon" in params) |
 | Leftovers | Fibre — the part the body can't digest. Small unabsorbed amounts of sugar, protein or fat are fermented by gut bacteria and don't count |
-| t½, t90 | Time until 50 % / 90 % of the meal has left the stomach, measured by **food energy** (by weight only for water), so a drink added to a meal can't make the meal look faster |
+| t½, t90 | Time until 50 % / 90 % of the meal has left the stomach, measured by **food energy** (by weight only for water), so water added to a meal can't make the meal look faster (a drink with calories can make it look a little faster, because its energy leaves first) |
 | GI | Glycemic index: blood-sugar area after 50 g of a food's carbohydrate, as a % of 50 g glucose |
 | Fibre / fiber | Same thing. The UI uses UK spelling; the code uses US spelling |
 

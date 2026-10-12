@@ -557,8 +557,9 @@ export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
     sourceIds: ['ziessman2009', 'brener1983', 'hunt1975', 'abell2008'],
     i18nKey: k('event.stomachHalfEmpty'),
     shipsIn: 'v2.0',
-    // By energy on purpose: adding a drink never makes a meal look faster. So on a grams strip the
-    // half-way point in grams can come before this marker (the drink's grams leave first).
+    // By energy on purpose: adding water to a meal never makes it look faster (a drink with
+    // calories can, a little: its energy leaves first). So on a grams strip the half-way point in
+    // grams can come before this marker (the drink's grams leave first).
     definition: "First minute when half of the meal's food energy (for energy-free drinks: half its weight) has left the stomach.",
     retired: ['events.stomachHalfEmpty', 'events.half'],
   },
