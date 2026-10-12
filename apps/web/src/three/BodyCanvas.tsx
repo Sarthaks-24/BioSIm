@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls } from '@react-three/drei'
-import { useEffect, useMemo, useRef } from 'react'
+import { OrbitControls } from '@react-three/drei'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BackSide,
@@ -36,34 +36,65 @@ interface Props {
  * so a paused simulation costs nothing on a school laptop's battery.
  */
 export default function BodyCanvas({ sim, label, onContextLost }: Props) {
+  const minute = useSim((s) => Math.round(s.time))
+  const stage = activeStage(sim, minute)
+  const [width, setWidth] = useState(0)
+  const specs = useLabels(stage, width)
+  const refs = useRef<Record<string, HTMLSpanElement | null>>({})
+  const wrapper = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = wrapper.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <Canvas
-      frameloop="demand"
-      dpr={[1, 1.75]}
-      camera={{ position: [0, 0.7, 8.9], fov: 32 }}
-      gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
-      aria-label={label}
-      role="img"
-      onCreated={({ gl }) => {
-        gl.domElement.addEventListener('webglcontextlost', (e) => {
-          e.preventDefault()
-          onContextLost?.()
-        })
-      }}
-    >
-      <Lighting />
-      <Body sim={sim} />
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        minDistance={3.5}
-        maxDistance={11}
-        target={[0, 0.7, 0]}
-        minPolarAngle={Math.PI * 0.2}
-        maxPolarAngle={Math.PI * 0.8}
-      />
-      <Invalidator sim={sim} />
-    </Canvas>
+    <div className="relative h-full w-full" ref={wrapper}>
+      <Canvas
+        frameloop="demand"
+        dpr={[1, 1.75]}
+        camera={{ position: [0, 0.7, 8.9], fov: 32 }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
+        aria-label={label}
+        role="img"
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault()
+            onContextLost?.()
+          })
+        }}
+      >
+        <Lighting />
+        <Body sim={sim} stage={stage} />
+        <OrbitControls
+          makeDefault
+          enablePan={false}
+          minDistance={3.5}
+          maxDistance={11}
+          target={[0, 0.7, 0]}
+          minPolarAngle={Math.PI * 0.2}
+          maxPolarAngle={Math.PI * 0.8}
+        />
+        <LabelProjector specs={specs} refs={refs} />
+        <Invalidator sim={sim} />
+      </Canvas>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        {specs.map((spec) => (
+          <span
+            key={spec.key}
+            ref={(el) => {
+              refs.current[spec.key] = el
+            }}
+            style={{ visibility: 'hidden' }}
+            className={`absolute top-0 left-0 rounded-full px-2 py-0.5 text-xs leading-tight whitespace-nowrap shadow-sm ${LABEL_TONE[spec.tone]}`}
+          >
+            {spec.text}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -128,10 +159,9 @@ const skinMaterial = () =>
 /** Centre the stomach scales around, so it swells and shrinks in place. */
 const STOMACH_PIVOT = STOMACH.getPointAt(0.45)
 
-function Body({ sim }: { sim: Simulation }) {
+function Body({ sim, stage }: { sim: Simulation; stage: StageId }) {
   const geo = sharedGeometry()
   const minute = useSim((s) => Math.round(s.time))
-  const stage = activeStage(sim, minute)
   const skin = useMemo(skinMaterial, [])
   const pylorus = useMemo(() => {
     const { pos, tan } = pylorusTransform()
@@ -182,7 +212,6 @@ function Body({ sim }: { sim: Simulation }) {
       />
 
       <Swarm sim={sim} />
-      <Labels active={stage} />
     </group>
   )
 }
@@ -302,38 +331,60 @@ function Swarm({ sim }: { sim: Simulation }) {
   )
 }
 
-const LABEL_STAGES: StageId[] = ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine']
+interface LabelSpec {
+  key: string
+  anchor: Vector3
+  text: string
+  /** 'active' = dark pill, 'stage' = light pill, 'context' = faint (organs not on the food's path). */
+  tone: 'active' | 'stage' | 'context'
+  hidden: boolean
+}
 
-function Labels({ active }: { active: StageId }) {
+const LABEL_STAGES: StageId[] = ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine']
+const LIVER_LABEL = new Vector3(-0.7, 1.3, 0.1)
+const PANCREAS_LABEL = new Vector3(0.36, 0.3, -0.1)
+
+function useLabels(stage: StageId, width: number): LabelSpec[] {
   const { t } = useTranslation()
-  const width = useThree((s) => s.size.width)
   const compact = width < 340
   const roomy = width >= 460
-  const pill = 'block whitespace-nowrap rounded-full px-2 py-0.5 text-xs leading-tight shadow-sm'
-  return (
-    <>
-      {/* Labels stay mounted and are hidden with CSS: mounting/unmounting drei <Html> while the
-          canvas renders makes React warn about unmounting a root mid-render. */}
-      {LABEL_STAGES.map((s) => (
-        <Html key={s} position={STAGE_LABEL_ANCHOR[s]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-          <span
-            hidden={compact && s !== active}
-            className={`${pill} ${s === active ? 'bg-ink font-semibold text-white' : 'bg-panel/85 text-ink-2'}`}
-          >
-            {t(`stages.${s}.short`)}
-          </span>
-        </Html>
-      ))}
-      <Html position={[-0.7, 1.3, 0.1]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-        <span hidden={!roomy} className={`${pill} bg-panel/70 text-ink-2`}>
-          {t('anatomy.liver')}
-        </span>
-      </Html>
-      <Html position={[0.36, 0.3, -0.1]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-        <span hidden={!roomy} className={`${pill} bg-panel/70 text-ink-2`}>
-          {t('anatomy.pancreas')}
-        </span>
-      </Html>
-    </>
-  )
+  return [
+    ...LABEL_STAGES.map((s) => ({
+      key: s,
+      anchor: STAGE_LABEL_ANCHOR[s],
+      text: t(`stages.${s}.short`),
+      tone: (s === stage ? 'active' : 'stage') as LabelSpec['tone'],
+      hidden: compact && s !== stage,
+    })),
+    { key: 'liver', anchor: LIVER_LABEL, text: t('anatomy.liver'), tone: 'context' as const, hidden: !roomy },
+    { key: 'pancreas', anchor: PANCREAS_LABEL, text: t('anatomy.pancreas'), tone: 'context' as const, hidden: !roomy },
+  ]
+}
+
+/**
+ * Organ labels are plain DOM on top of the canvas (crisp, translatable, no WebGL text); this
+ * component only moves each one to where its 3D anchor is on screen.
+ */
+function LabelProjector({ specs, refs }: { specs: LabelSpec[]; refs: React.RefObject<Record<string, HTMLSpanElement | null>> }) {
+  const camera = useThree((s) => s.camera)
+  const size = useThree((s) => s.size)
+  const p = useMemo(() => new Vector3(), [])
+  useFrame(() => {
+    for (const spec of specs) {
+      const el = refs.current?.[spec.key]
+      if (!el) continue
+      p.copy(spec.anchor).project(camera)
+      const x = ((p.x + 1) / 2) * size.width
+      const y = ((1 - p.y) / 2) * size.height
+      el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
+      el.style.visibility = p.z > 1 || spec.hidden ? 'hidden' : 'visible'
+    }
+  })
+  return null
+}
+
+const LABEL_TONE: Record<LabelSpec['tone'], string> = {
+  active: 'bg-ink font-semibold text-white',
+  stage: 'bg-panel/85 text-ink-2',
+  context: 'bg-panel/70 text-ink-2',
 }

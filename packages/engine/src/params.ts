@@ -108,10 +108,12 @@ export const PARAMS = {
     /**
      * Insulin action builds up while glucose is raised and then pulls it back down, so blood
      * glucose peaks and returns even while the gut is still absorbing. Structure follows the
-     * Bergman minimal model (Bergman et al. 1979); constants are calibrated, not measured.
+     * Bergman minimal model (Bergman et al. 1979); constants are calibrated, not measured. A long
+     * time constant makes insulin action keep building while glucose is high, so even a slow,
+     * steady meal brings glucose back towards normal instead of leaving a plateau.
      */
-    insulinTauMin: 25,
-    insulinGain: 0.00015,
+    insulinTauMin: 300,
+    insulinGain: 0.0001,
     /** Calibrated so 50 g glucose in water peaks ~+50 mg/dL at ~30–60 min (see golden tests). */
     gainMgDlPerG: 8,
     /**
@@ -127,7 +129,7 @@ export const PARAMS = {
      * twice. This factor undoes it, calibrated so simulated white bread (GI 75) gives 75 % of the
      * 2-hour glucose area of 50 g glucose — the definition of GI (Brouns et al. 2005).
      */
-    solidGlycemicCorrection: 2.25,
+    solidGlycemicCorrection: 2.12,
     /** Between-person spread shown as a band (glycemic responses vary ~20–40 % between people). */
     bandLow: 0.65,
     bandHigh: 1.45,

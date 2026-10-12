@@ -133,11 +133,13 @@ export default function Simulator() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-6 rounded-xl border border-rule bg-panel p-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_0.9fr]">
+          <div className="mt-6 grid gap-6 rounded-xl border border-rule bg-panel p-4 md:grid-cols-2 xl:grid-cols-3">
             <StomachChart sims={sims} />
             <GlucoseChart sims={sims} />
-            <div className="space-y-6 md:col-span-2 xl:col-span-1">
+            <div className="md:col-span-2 xl:col-span-1">
               <WhereChart sims={sims} />
+            </div>
+            <div className="md:col-span-2 xl:col-span-3">
               <KeyMoments sims={sims} />
             </div>
           </div>

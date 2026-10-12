@@ -153,7 +153,8 @@
     "print": "Print",
     "meal": "Meal",
     "per": "Total",
-    "chemistry": "Chemistry"
+    "chemistry": "Chemistry",
+    "fewSeconds": "a few seconds"
   },
   "feedback": {
     "title": "Report a mistake",

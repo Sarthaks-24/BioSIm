@@ -116,6 +116,12 @@ describe('blood glucose', () => {
     expect(fatty.timeMin).toBeGreaterThan(light.timeMin)
   })
 
+  it('blood sugar comes back down: no long plateau after a starchy meal', () => {
+    expect(rise(run('bread-50'), 240)).toBeLessThan(8)
+    expect(rise(run('standard-meal'), 240)).toBeLessThan(8)
+    expect(rise(run('glucose-50'), 180)).toBeLessThan(3)
+  })
+
   it('water does not change glucose and has no nutrients to absorb', () => {
     const sim = run('water-test')
     expect(sim.events.glucosePeak).toBeNull()
