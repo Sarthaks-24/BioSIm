@@ -88,6 +88,38 @@ A food's GI already includes how slowly that food leaves the stomach. One correc
 
 The display is a **band**, from 0.65× to 1.45× the typical curve, because glycemic responses vary a lot between people.
 
+**Back to before-meal level.** The marker is the first minute after the peak when the typical curve is within **5 mg/dL** of fasting (`PARAMS.glucose.backToBaseMgDl`). The 5 mg/dL is a display choice, not physiology. For context, blood sugar after a meal is usually back to its before-meal level within 2–3 h (American Diabetes Association 2001). The model gets there in about 2 h for a sugary drink, but takes about 4 h for white bread and longer for big fatty meals (see Known limits); a test marks this as a known limit.
+
+## Signals
+
+Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
+
+"Status" is what the screen says: *simulated* = "Calculated from studies", *assumption* = "Best guess".
+
+| ID | Unit | Status | Built from | Checked by golden tests against |
+|---|---|---|---|---|
+| `gut.stomach.contentG` | g | simulated | liquid + solid grams in the stomach (food as eaten) | OpenStax |
+| `gut.stomach.liquidG` | g | simulated | drinks still in the stomach | Ziessman 2009, Brener 1983 |
+| `gut.stomach.solidG` | g | simulated | solid food still in the stomach | Abell 2008, Siegel 1988, Hunt 1975 |
+| `gut.small.contentG` | g | simulated | tracked nutrients in the small intestine | OpenStax (mass balance) |
+| `gut.colon.contentG` | g | simulated | tracked nutrients in the large intestine | OpenStax, Nandhra 2023 |
+| `gut.absorbed.carbsG`, `.proteinG`, `.fatG`, `.waterG` | g | simulated | running totals absorbed | OpenStax |
+| `gut.absorbed.fibreG` | g | simulated | always 0 (fibre is not absorbed) | OpenStax |
+| `gut.leftBodyG` | g | simulated | running total that has left the body | OpenStax |
+| `blood.glucose` | mg/dL | simulated (band: assumption) | typical curve; band 0.65×–1.45× | Freckmann 2007, Bergman 1979, Brouns 2005, Atkinson 2008, Moghaddam 2006 |
+| `energy.inRate`, `energy.inTotal` | kcal/h, kcal | simulated | *not built yet (v2.0 work package 6)* | — |
+| `energy.usedRate`, `energy.usedTotal` | kcal/h, kcal | assumption | *not built yet (v2.0 work package 6)* | — |
+
+| Event | Meaning | Checked against |
+|---|---|---|
+| `event.stomachHalfEmpty` | half the meal's food energy has left the stomach (by weight for water) | Ziessman 2009, Hunt 1975 |
+| `event.glucosePeak` | typical blood glucose is highest (none if the rise is under 1 mg/dL) | Freckmann 2007 |
+| `event.glucoseBackToBase` | first minute after the peak within 5 mg/dL of fasting | ADA 2001 (context) |
+| `event.mostlyAbsorbed` | 90 % of the carbohydrate, protein and fat that will be absorbed is in the body | OpenStax |
+| `event.firstLeftovers` | leftovers (fibre) start leaving the body, with a between-person range | OpenStax, Nandhra 2023 |
+
+"% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
+
 ## Known limits
 
 - It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
@@ -113,6 +145,7 @@ The display is a **band**, from 0.65× to 1.45× the typical curve, because glyc
 11. Siegel JA, et al. Biphasic nature of gastric emptying. *Gut* 1988;29:85–89.
 12. Wang YT, et al. Regional gastrointestinal transit and pH in 215 healthy volunteers. *Aliment Pharmacol Ther* 2015;42:761–772.
 13. Ziessman HA, et al. Liquid gastric emptying. *J Nucl Med* 2009;50:726–731.
+14. American Diabetes Association. Postprandial blood glucose. *Diabetes Care* 2001;24:775–778.
 
 The food data comes from:
 

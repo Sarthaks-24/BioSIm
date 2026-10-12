@@ -16,6 +16,11 @@ export interface SimEvents {
   /** Leftovers start leaving the body. Depends mostly on the person. Null if there is almost nothing left over. */
   firstExit: Range | null
   glucosePeak: { timeMin: number; riseMgDl: Range } | null
+  /**
+   * First minute after the peak when typical glucose is within PARAMS.glucose.backToBaseMgDl of
+   * fasting (a display threshold). Null if there is no peak, or it does not happen within the run.
+   */
+  glucoseBackToBaseMin: number | null
   /** The meal has almost no energy, so there is nothing to absorb (e.g. water). */
   noNutrients: boolean
 }
@@ -63,6 +68,16 @@ export function computeEvents(meal: Meal, s: EventInput): SimEvents {
   for (let i = 1; i < s.n; i++) if (s.glucoseTypical[i]! > s.glucoseTypical[peakIdx]!) peakIdx = i
   const g = PARAMS.glucose
   const peakRise = s.glucoseTypical[peakIdx]! - g.fastingMgDl
+  const hasPeak = peakRise >= 1
+  let backToBaseIdx: number | null = null
+  if (hasPeak) {
+    for (let i = peakIdx + 1; i < s.n; i++) {
+      if (s.glucoseTypical[i]! <= g.fastingMgDl + g.backToBaseMgDl) {
+        backToBaseIdx = i
+        break
+      }
+    }
+  }
 
   return {
     eatingEndMin: meal.eatingMin,
@@ -78,10 +93,10 @@ export function computeEvents(meal: Meal, s: EventInput): SimEvents {
             typical: firstIn + co.typicalMin,
             high: firstIn + siLater + co.highMin,
           },
-    glucosePeak:
-      peakRise >= 1
-        ? { timeMin: peakIdx * s.step, riseMgDl: { low: peakRise * g.bandLow, typical: peakRise, high: peakRise * g.bandHigh } }
-        : null,
+    glucosePeak: hasPeak
+      ? { timeMin: peakIdx * s.step, riseMgDl: { low: peakRise * g.bandLow, typical: peakRise, high: peakRise * g.bandHigh } }
+      : null,
+    glucoseBackToBaseMin: backToBaseIdx === null ? null : backToBaseIdx * s.step,
     noNutrients: meal.total.energyKcal < 1,
   }
 }
