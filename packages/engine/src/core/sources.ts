@@ -105,25 +105,39 @@ export const SOURCES = {
   },
 
   // ── New in v2.0 (WP-06 energy, WP-04 back-to-base) ──
+  /** Checked 2026-10-12 (WP-06): §5.2, Table 5.2, men 18–30 y: 15.057·kg + 692.2 kcal/d. */
   faowhounu2004: {
     kind: 'report',
     check: 'checked',
-    usedFor: 'Schofield BMR equations (Table 4.2)',
+    usedFor: 'Schofield BMR equations (§5.2, Table 5.2)',
+    url: 'https://www.fao.org/4/y5686e/y5686e07.htm',
     citation:
       'FAO/WHO/UNU. Human energy requirements. Report of a Joint FAO/WHO/UNU Expert Consultation. FAO Food and Nutrition Technical Report Series 1. Rome, 2004.',
   },
+  /**
+   * Checked 2026-10-12 (WP-06) against ICMR-NIN's own brief note (nin.res.in/rdabook/brief_note.pdf):
+   * Table 1b men 65.0 kg, sedentary 2110 kcal/d; sedentary PAL 1.40; adult BMR from the FAO/WHO/UNU
+   * equations lowered by 5 % (2010) + 5 % (2020). The 19–39 y age range was seen only in secondary
+   * reports of the 2020 book.
+   */
   'icmr-nin2020': {
     kind: 'guideline',
     check: 'checked',
     usedFor: 'reference adult 65 kg, −10 % BMR for Indian adults, PAL 1.40, 2110 kcal/d',
+    url: 'https://www.nin.res.in/rdabook/brief_note.pdf',
     citation:
       'ICMR-National Institute of Nutrition. Nutrient Requirements for Indians: Recommended Dietary Allowances and Estimated Average Requirements. Hyderabad, 2020.',
   },
-  /** Must be read (FNP 77 §3, the Atwater general factors) before release, or the citation moved to OpenStax. */
+  /**
+   * Checked 2026-10-12 (WP-06): §3.5.1 "The Atwater general factor system" gives 4.0 kcal/g protein,
+   * 9.0 fat, 4.0 carbohydrate, "corrected for losses in digestion, absorption and urinary excretion
+   * of urea"; Atwater's carbohydrate is by difference, so includes fibre.
+   */
   fao2003: {
     kind: 'report',
-    check: 'toVerify',
-    usedFor: 'Atwater general factors 4/4/9 kcal/g',
+    check: 'checked',
+    usedFor: 'Atwater general factors 4/4/9 kcal/g (§3.5.1)',
+    url: 'https://www.fao.org/4/y5022e/y5022e04.htm',
     citation: 'FAO. Food energy – methods of analysis and conversion factors. FAO Food and Nutrition Paper 77. Rome, 2003.',
   },
   ada2001: {
@@ -206,6 +220,11 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'colon.highMin': { sources: ['nandhra2023'], basis: 'measured' },
   // "Almost nothing left over" below 1 g of fibre: decides whether the leftovers marker is shown.
   residueThresholdG: { sources: [], basis: 'display' },
+
+  // FNP 77 §3.5.1: the general factors 4.0 / 9.0 / 4.0 kcal/g (protein, fat, carbohydrate).
+  'energy.atwaterKcalPerG.carbs': { sources: ['fao2003'], basis: 'measured' },
+  'energy.atwaterKcalPerG.protein': { sources: ['fao2003'], basis: 'measured' },
+  'energy.atwaterKcalPerG.fat': { sources: ['fao2003'], basis: 'measured' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

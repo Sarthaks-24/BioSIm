@@ -19,7 +19,7 @@ import {
   type EventId,
 } from './catalog.ts'
 import type { OrganismId } from './organism.ts'
-import { SOURCES, isRegisteredSource } from './sources.ts'
+import { isRegisteredSource, sourceById } from './sources.ts'
 
 /** One `golden(…)`, `golden.fails(…)` or `pinned(…)` call found in a test file. */
 export interface GoldenCall {
@@ -81,7 +81,7 @@ export function goldenCoverage(calls: readonly GoldenCall[], organism: OrganismI
   const assumption = provided.filter((id) => SIGNALS[id].status === 'assumption')
 
   const cited = [...provided.flatMap((id) => SIGNALS[id].sourceIds), ...EVENT_IDS.flatMap((id) => EVENTS[id].sourceIds)]
-  const toVerifySources = cited.filter((s) => isRegisteredSource(s) && SOURCES[s].check === 'toVerify')
+  const toVerifySources = cited.filter((s) => sourceById(s)?.check === 'toVerify')
 
   return {
     missingSourced: [...simulated, ...EVENT_IDS].filter((id) => !sourced.has(id)),

@@ -1,12 +1,11 @@
 /**
  * Builds the signal table from today's engine arrays (A1 + M4, v2.0 signals only). This is the
  * mapping in plans/v2 04-CATALOG-DRAFT §5: one line per catalog ID. No new physiology here, only
- * copies and sums, so MODEL_VERSION does not change.
- *
- * Not built yet: energy.inRate, energy.inTotal, energy.usedRate, energy.usedTotal. They need the
- * stated person (core/profile.ts), which WP-06 adds together with their golden tests.
+ * copies and sums, so MODEL_VERSION does not change. The energy series are computed by
+ * energy/energyBalance.ts (they need the stated person, core/profile.ts) and copied in here.
  */
 import type { Simulation } from '../simulate.ts'
+import type { EnergySeries } from '../energy/energyBalance.ts'
 import { EVENTS, SIGNALS, type ActiveSignalId, type EventId } from './catalog.ts'
 import type { SourceId } from './sources.ts'
 import type { EventPoint, Series } from './signal.ts'
@@ -30,8 +29,8 @@ function series<Id extends ActiveSignalId>(
   }
 }
 
-/** One Series per v2.0 signal the engine produces today (energy.* arrive in WP-06). */
-export function buildSignalTable(sim: SimArrays): Map<ActiveSignalId, Series> {
+/** One Series per v2.0 signal: every active human signal. */
+export function buildSignalTable(sim: SimArrays, energy: EnergySeries): Map<ActiveSignalId, Series> {
   const n = sim.length
   const content = new Float64Array(n)
   for (let i = 0; i < n; i++) content[i] = sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!
@@ -53,6 +52,11 @@ export function buildSignalTable(sim: SimArrays): Map<ActiveSignalId, Series> {
     series(sim, 'gut.leftBodyG', sim.excretedG),
     // Absolute mg/dL; the rise above fasting is the helper riseAboveFasting (core/derive.ts).
     series(sim, 'blood.glucose', sim.glucose.typical, { low: sim.glucose.low, high: sim.glucose.high }),
+    // In = Atwater kcal of the absorbed grams; used = the run's profile at rest (same for every meal).
+    series(sim, 'energy.inRate', energy.inRate),
+    series(sim, 'energy.inTotal', energy.inTotal),
+    series(sim, 'energy.usedRate', energy.usedRate),
+    series(sim, 'energy.usedTotal', energy.usedTotal),
   ]
   return new Map(list.map((s) => [s.meta.id as ActiveSignalId, s]))
 }

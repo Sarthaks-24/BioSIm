@@ -90,6 +90,40 @@ The display is a **band**, from 0.65× to 1.45× the typical curve, because glyc
 
 **Back to before-meal level.** The marker is the first minute after the peak when the typical curve is within **5 mg/dL** of fasting (`PARAMS.glucose.backToBaseMgDl`). The 5 mg/dL is a display choice, not physiology. For context, blood sugar after a meal is usually back to its before-meal level within 2–3 h (American Diabetes Association 2001). The model gets there in about 2 h for a sugary drink, but takes about 4 h for white bread and longer for big fatty meals (see Known limits); a test marks this as a known limit.
 
+## Energy in vs used
+
+Two lines on one kcal/h axis: the food energy from this meal **coming in**, and the energy the body **uses at rest**. It is a comparison, not a score: nothing is "good" or "bad", and there is no 0–100 bar.
+
+**The person.** Energy use depends on who is eating, so every run states its person (`core/profile.ts`). The default, and the only one in v2.0, is `adult-ref`, tagged "Adult model": the ICMR-NIN 2020 reference Indian adult man, 19–39 years, 65 kg, at rest. Digestion and blood sugar do not depend on the person; their data come from studies of adults.
+
+**Energy coming in** (`energy.inRate`, `energy.inTotal`): status *simulated* ("Calculated from studies").
+
+    energy in (kcal) = 4 × carbohydrate + 4 × protein + 9 × fat   (grams absorbed so far)
+
+The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 2003, §3.5.1; `PARAMS.energy.atwaterKcalPerG`). They are applied to the grams the absorption model has taken into the body, so the line rises as the meal is absorbed. The rate is the change per minute, × 60 (kcal/h).
+
+**Energy used at rest** (`energy.usedRate`, `energy.usedTotal`): status *assumption* ("Best guess").
+
+    resting use (kcal/day) = (15.057 × 65 + 692.2) × 0.9 = 1503.8 kcal/day ≈ 62.7 kcal/h
+
+- 15.057 × weight + 692.2 is the Schofield equation for men aged 18–30 years (FAO/WHO/UNU 2004, §5.2, Table 5.2): 1671 kcal/day at 65 kg.
+- × 0.9: ICMR-NIN 2020 lowers the FAO/WHO/UNU basal rate by 10 % for Indian adults, because the equations overestimate Indian basal rates by 10–12 %.
+- The line is the same at every minute and for every meal.
+
+**Golden tests** (`test/energy.test.ts`):
+
+- Schofield at 65 kg = 1671 kcal/day (±1); with ICMR's −10 %, 1504 kcal/day (±1).
+- × the sedentary physical activity level of 1.40 gives 2105 kcal/day, within 0.5 % of ICMR-NIN 2020's 2110 kcal/day for the sedentary 65 kg man.
+- Energy in equals the Atwater sum of the absorbed grams at every minute (±0.01 kcal), and the hourly rate adds up to the total.
+- After 48 h, 85–100 % of each food's Atwater energy has come in (most carbohydrate, protein and fat is absorbed: OpenStax §23.7). The model gives 93–95 %.
+- Energy used is identical for every meal.
+
+**Limits.**
+
+- Energy coming in uses the standard factors, so the total can differ a little from the food label. Fibre's small energy (gut bacteria ferment part of it) is left out.
+- The Atwater factors already allow for the part of each nutrient the body does not absorb (FAO 2003). Applying them to absorbed grams counts that loss twice, so energy in reads a few per cent low.
+- Energy used is a formula for one resting adult, not a measurement. It leaves out digesting the meal and any movement, and it does not change with the meal.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -107,8 +141,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `gut.absorbed.fibreG` | g | simulated | always 0 (fibre is not absorbed) | OpenStax |
 | `gut.leftBodyG` | g | simulated | running total that has left the body | OpenStax |
 | `blood.glucose` | mg/dL | simulated (band: assumption) | typical curve; band 0.65×–1.45× | Freckmann 2007, Bergman 1979, Brouns 2005, Atkinson 2008, Moghaddam 2006 |
-| `energy.inRate`, `energy.inTotal` | kcal/h, kcal | simulated | *not built yet (v2.0 work package 6)* | — |
-| `energy.usedRate`, `energy.usedTotal` | kcal/h, kcal | assumption | *not built yet (v2.0 work package 6)* | — |
+| `energy.inRate`, `energy.inTotal` | kcal/h, kcal | simulated | 4·carbs + 4·protein + 9·fat of the absorbed grams | FAO 2003, OpenStax |
+| `energy.usedRate`, `energy.usedTotal` | kcal/h, kcal | assumption | resting use of the run's person ÷ 24 (adult model: 62.7 kcal/h), same for every meal | FAO/WHO/UNU 2004, ICMR-NIN 2020 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -123,6 +157,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 ## Known limits
 
 - It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
+- Energy used is a resting formula for one reference adult (see Energy in vs used), not a measurement.
 - Milk clots in the stomach and really empties more slowly than the liquid model shows.
 - Fibre isn't modelled on its own. Its effect on blood sugar shows up only through each food's GI.
 - GI values vary between studies and varieties (rice ranges from about 50 to over 90).
@@ -146,6 +181,9 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 12. Wang YT, et al. Regional gastrointestinal transit and pH in 215 healthy volunteers. *Aliment Pharmacol Ther* 2015;42:761–772.
 13. Ziessman HA, et al. Liquid gastric emptying. *J Nucl Med* 2009;50:726–731.
 14. American Diabetes Association. Postprandial blood glucose. *Diabetes Care* 2001;24:775–778.
+15. FAO/WHO/UNU. *Human energy requirements.* Report of a Joint FAO/WHO/UNU Expert Consultation. FAO Food and Nutrition Technical Report Series 1. Rome, 2004.
+16. ICMR-National Institute of Nutrition. *Nutrient Requirements for Indians: Recommended Dietary Allowances and Estimated Average Requirements.* Hyderabad, 2020.
+17. FAO. *Food energy – methods of analysis and conversion factors.* FAO Food and Nutrition Paper 77. Rome, 2003.
 
 The food data comes from:
 
