@@ -112,6 +112,11 @@ export default function Layout() {
               </Link>
             </li>
             <li>
+              <Link to="/stats" className={footerLink}>
+                {t('stats.footer')}
+              </Link>
+            </li>
+            <li>
               {/* A plain file on the server, not an app page: a normal link, not a router link. */}
               <a href="/THIRD_PARTY_NOTICES.txt" className={footerLink}>
                 {t('footer.notices')}

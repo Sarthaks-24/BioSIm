@@ -1,0 +1,27 @@
+name: Stats refresh
+
+# Rebuilds the live site once a week so /stats shows fresh counts: the build reads the public
+# mistake-report issues (apps/web/scripts/fetch-stats.mjs, with STATS_FETCH=1 set on Vercel).
+# Setup: Vercel project → Settings → Git → Deploy Hooks → create one for `main`, then put its URL
+# in this repo's Settings → Secrets and variables → Actions → VERCEL_DEPLOY_HOOK.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger a Vercel rebuild
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "VERCEL_DEPLOY_HOOK is not set; nothing to do."
+            exit 0
+          fi
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK" > /dev/null

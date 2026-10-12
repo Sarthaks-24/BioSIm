@@ -50,3 +50,6 @@ test-results/
 
 # Generated at build time from the installed packages (apps/web/scripts/third-party-notices.mjs)
 apps/web/public/THIRD_PARTY_NOTICES.txt
+
+# Written at build time from public GitHub issues for the /stats page (apps/web/scripts/fetch-stats.mjs)
+apps/web/public/stats.json

@@ -65,12 +65,13 @@ test('Hindi switch translates the interface and is kept in the link', async ({ p
 })
 
 test('footer shows Made by, Privacy and About on every page', async ({ page }) => {
-  for (const path of ['/', '/sim', '/teach', '/science', '/about', '/privacy']) {
+  for (const path of ['/', '/sim', '/teach', '/science', '/about', '/privacy', '/stats']) {
     await page.goto(path)
     const footer = page.getByRole('contentinfo')
     await expect(footer.getByRole('link', { name: 'Made by Sarthak' }), path).toHaveAttribute('href', 'https://github.com/Sarthaks-24')
     await expect(footer.getByRole('link', { name: 'Privacy', exact: true }), path).toHaveAttribute('href', '/privacy')
     await expect(footer.getByRole('link', { name: 'About', exact: true }), path).toHaveAttribute('href', '/about')
+    await expect(footer.getByRole('link', { name: 'Stats', exact: true }), path).toHaveAttribute('href', '/stats')
     await expect(footer.getByRole('link', { name: 'Third-party notices' }), path).toHaveAttribute('href', '/THIRD_PARTY_NOTICES.txt')
   }
 })

@@ -336,7 +336,8 @@
         ],
         "items": [
           "**Analytics are switched off.** We do not use Vercel Analytics, Google Analytics or any other tracker.",
-          "Fonts and pictures are part of the app, so your browser does not contact Google or other services."
+          "Fonts and pictures are part of the app, so your browser does not contact Google or other services.",
+          "The **Stats** page only shows counts of public GitHub issues (mistake reports). We read them from GitHub once a week when the site is built, so on that page your browser does not contact GitHub: it only downloads a small file from this site."
         ]
       },
       {
@@ -366,6 +367,36 @@
         ]
       }
     ]
+  },
+  "stats": {
+    "footer": "Stats",
+    "title": "LifePeek in numbers",
+    "lead": "Only numbers that are already public. They are updated once a week.",
+    "noTracking": "**We don't count visitors.** LifePeek has no server, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose.",
+    "mistakesTitle": "Mistakes reported and fixed",
+    "mistakesLead": "Counted from the public “Report a mistake” issues on GitHub, over the last {{weeks}} weeks. A mistake counts as fixed when its issue is closed as done.",
+    "loading": "Loading the numbers…",
+    "unavailable": "Numbers will appear after the next weekly update.",
+    "failed": "The numbers didn't load. You may be offline.",
+    "retry": "Try again",
+    "reported": "Reported",
+    "fixed": "Fixed",
+    "lastWeeks": "in the last {{weeks}} weeks",
+    "medianDays": "Median days to fix",
+    "medianNote": "half were fixed sooner, half later",
+    "noFixes": "nothing fixed in these weeks",
+    "tableTitle": "Week by week",
+    "weekCol": "Week starting",
+    "thisWeek": "this week",
+    "updated": "Updated {{date}}.",
+    "source": "See the reports on GitHub",
+    "factsTitle": "This version",
+    "modelVersion": "Model version",
+    "foods": "Foods",
+    "languages": "Languages",
+    "languageNames": "English and Hindi",
+    "lastRelease": "Last release",
+    "noRelease": "None yet"
   },
   "status": {
     "simulated": {

@@ -229,6 +229,42 @@ in later work packages). Notes for the reviewer:
 | `units.mgdl` | {{n}} mg/dL | {{n}} mg/dL | draft |
 | `units.kcalPerH` | {{n}} kcal/h | {{n}} किलो कैलोरी/घंटा | draft |
 
+## Stats page (WP-21)
+
+The `/stats` page, its footer link, and one new line on the privacy page (`privacy.sections[2].items[2]`, under "होस्टिंग").
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `stats.footer` | Stats | आँकड़े | draft |
+| `stats.title` | LifePeek in numbers | LifePeek आँकड़ों में | draft |
+| `stats.lead` | Only numbers that are already public. They are updated once a week. | सिर्फ़ वे संख्याएँ जो पहले से सार्वजनिक हैं। इन्हें हफ़्ते में एक बार अपडेट किया जाता है। | draft |
+| `stats.noTracking` | **We don't count visitors.** LifePeek has no server, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose. | **हम आने वालों की गिनती नहीं करते।** LifePeek का कोई सर्वर नहीं है, कोई कुकी नहीं और कोई एनालिटिक्स नहीं, इसलिए हमें नहीं पता कि कितने सिमुलेशन चलाए जाते हैं। ऐसा जान-बूझकर है। | draft |
+| `stats.mistakesTitle` | Mistakes reported and fixed | बताई गई और ठीक की गई गलतियाँ | draft |
+| `stats.mistakesLead` | Counted from the public “Report a mistake” issues on GitHub, over the last {{weeks}} weeks. A mistake counts as fixed when its issue is closed as done. | GitHub पर सार्वजनिक “गलती बताएँ” issue से गिनी गईं, पिछले {{weeks}} हफ़्तों में। कोई गलती तब ठीक मानी जाती है जब उसका issue काम पूरा होने पर बंद किया जाता है। | draft |
+| `stats.loading` | Loading the numbers… | संख्याएँ लोड हो रही हैं… | draft |
+| `stats.unavailable` | Numbers will appear after the next weekly update. | अगले साप्ताहिक अपडेट के बाद संख्याएँ दिखेंगी। | draft |
+| `stats.failed` | The numbers didn't load. You may be offline. | संख्याएँ लोड नहीं हुईं। हो सकता है आप ऑफ़लाइन हों। | draft |
+| `stats.retry` | Try again | फिर से कोशिश करें | draft |
+| `stats.reported` | Reported | बताई गईं | draft |
+| `stats.fixed` | Fixed | ठीक की गईं | draft |
+| `stats.lastWeeks` | in the last {{weeks}} weeks | पिछले {{weeks}} हफ़्तों में | draft |
+| `stats.medianDays` | Median days to fix | ठीक करने में लगे दिन (माध्यिका) | draft |
+| `stats.medianNote` | half were fixed sooner, half later | आधी इससे जल्दी ठीक हुईं, आधी बाद में | draft |
+| `stats.noFixes` | nothing fixed in these weeks | इन हफ़्तों में कुछ ठीक नहीं हुआ | draft |
+| `stats.tableTitle` | Week by week | हफ़्ते-दर-हफ़्ते | draft |
+| `stats.weekCol` | Week starting | हफ़्ते की शुरुआत | draft |
+| `stats.thisWeek` | this week | यह हफ़्ता | draft |
+| `stats.updated` | Updated {{date}}. | {{date}} को अपडेट किया गया। | draft |
+| `stats.source` | See the reports on GitHub | GitHub पर रिपोर्टें देखें | draft |
+| `stats.factsTitle` | This version | यह संस्करण | draft |
+| `stats.modelVersion` | Model version | मॉडल संस्करण | draft |
+| `stats.foods` | Foods | खाद्य पदार्थ | draft |
+| `stats.languages` | Languages | भाषाएँ | draft |
+| `stats.languageNames` | English and Hindi | अंग्रेज़ी और हिन्दी | draft |
+| `stats.lastRelease` | Last release | पिछली रिलीज़ | draft |
+| `stats.noRelease` | None yet | अभी कोई नहीं | draft |
+| `privacy.sections[2].items[2]` | The **Stats** page only shows counts of public GitHub issues (mistake reports). We read them from GitHub once a week when the site is built, so on that page your browser does not contact GitHub: it only downloads a small file from this site. | **आँकड़े** पेज सिर्फ़ GitHub के सार्वजनिक issue (गलती की रिपोर्टें) की गिनती दिखाता है। हम इन्हें हफ़्ते में एक बार, साइट बनते समय GitHub से पढ़ते हैं, इसलिए उस पेज पर आपका ब्राउज़र GitHub से संपर्क नहीं करता: वह सिर्फ़ इसी साइट से एक छोटी फ़ाइल डाउनलोड करता है। | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___

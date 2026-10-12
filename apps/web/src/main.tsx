@@ -12,6 +12,7 @@ const Teach = lazy(() => import('./pages/Teach.tsx'))
 const Science = lazy(() => import('./pages/Science.tsx'))
 const About = lazy(() => import('./pages/About.tsx'))
 const Privacy = lazy(() => import('./pages/Privacy.tsx'))
+const Stats = lazy(() => import('./pages/Stats.tsx'))
 
 const page = (el: React.ReactNode) => <Suspense fallback={<p className="p-10 text-center text-ink-2">…</p>}>{el}</Suspense>
 
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: '/science', element: page(<Science />) },
       { path: '/about', element: page(<About />) },
       { path: '/privacy', element: page(<Privacy />) },
+      { path: '/stats', element: page(<Stats />) },
       { path: '*', element: <NotFound /> },
     ],
   },

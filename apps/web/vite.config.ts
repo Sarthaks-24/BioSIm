@@ -29,10 +29,20 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+        // stats.json changes every week without a new app version, so it is not precached: the
+        // network first, and offline the last copy that was fetched (the /stats page).
+        globIgnores: ['**/node_modules/**/*', 'stats.json'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/stats.json',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'stats', networkTimeoutSeconds: 5, expiration: { maxEntries: 1 } },
+          },
+        ],
         // The 3D chunk is large; still cache it so the app works offline in class.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // Plain files that must reach the server, not the app shell.
-        navigateFallbackDenylist: [/^\/api\//, /^\/THIRD_PARTY_NOTICES\.txt$/, /^\/robots\.txt$/, /^\/sitemap\.xml$/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/THIRD_PARTY_NOTICES\.txt$/, /^\/robots\.txt$/, /^\/sitemap\.xml$/, /^\/stats\.json$/],
       },
     }),
   ],
