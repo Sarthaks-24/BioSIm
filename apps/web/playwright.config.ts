@@ -16,7 +16,7 @@ const desktop = { width: 1440, height: 900 }
 const projects: PlaywrightTestConfig['projects'] = [
   {
     name: 'desktop',
-    testMatch: ['smoke.spec.ts', 'gate.spec.ts', 'hindi.spec.ts', 'a11y.spec.ts', 'offline.spec.ts', 'stage.spec.ts'],
+    testMatch: ['smoke.spec.ts', 'gate.spec.ts', 'hindi.spec.ts', 'a11y.spec.ts', 'offline.spec.ts', 'stage.spec.ts', 'stats.spec.ts'],
     use: { viewport: desktop, launchOptions: webgl },
   },
   {
