@@ -133,6 +133,13 @@ export const PARAMS = {
     /** Between-person spread shown as a band (glycemic responses vary ~20–40 % between people). */
     bandLow: 0.65,
     bandHigh: 1.45,
+    /**
+     * "Back to before-meal level" = typical glucose within this many mg/dL of fasting
+     * (event.glucoseBackToBase). A DISPLAY threshold, not physiology: it only decides where the
+     * marker is drawn and changes no curve. Context only: after a meal, glucose is back to
+     * preprandial levels in about 2–3 h (American Diabetes Association 2001).
+     */
+    backToBaseMgDl: 5,
   },
 
   /** Simulated window: 48 h at 1-minute resolution. Share links clamp `t` to this. */

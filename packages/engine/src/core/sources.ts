@@ -153,8 +153,8 @@ export type ParamBasis = 'measured' | 'calibrated' | 'assumption' | 'display'
 
 /**
  * A2: which parameter (dotted path into PARAMS) rests on which source, and how. The numbers stay in
- * params.ts. WP-04 fills in the rest (absorption fractions and times, transit) and adds
- * 'glucose.backToBaseMgDl' with its new parameter.
+ * params.ts. Every number in PARAMS has a line here (test/contract.test.ts checks it).
+ * An 'assumption' may still list a source when the source gives the context but not the number.
  */
 export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly RegisteredSourceId[]; basis: ParamBasis }>>> = {
   'stomach.waterHalfTimeMin': { sources: ['ziessman2009'], basis: 'measured' },
@@ -168,4 +168,46 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'glucose.solidGlycemicCorrection': { sources: ['brouns2005'], basis: 'calibrated' },
   'glucose.bandLow': { sources: [], basis: 'assumption' },
   'glucose.bandHigh': { sources: [], basis: 'assumption' },
+  'glucose.clearanceTauMin': { sources: ['bergman1979'], basis: 'calibrated' },
+  'glucose.bluntingK': { sources: ['moghaddam2006'], basis: 'calibrated' },
+  'glucose.bluntingFloor': { sources: [], basis: 'assumption' },
+  // Where the "back to before-meal level" marker is drawn. ADA 2001 (2–3 h) is context only.
+  'glucose.backToBaseMgDl': { sources: ['ada2001'], basis: 'display' },
+
+  'eating.solidGramsPerMin': { sources: [], basis: 'assumption' },
+  'eating.minSolidMin': { sources: [], basis: 'assumption' },
+  'eating.maxMin': { sources: [], basis: 'assumption' },
+  'eating.liquidMin': { sources: [], basis: 'assumption' },
+  'esophagus.transitMin': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  // Emptying data come from meals up to about this size; above it the model is not meant to be used.
+  maxMealKcal: { sources: ['hunt1975'], basis: 'assumption' },
+
+  // OpenStax §23.7: fat ~95 % absorbed in the small intestine; indigestible fibre is not absorbed.
+  'absorbedInSmallIntestine.fat': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  'absorbedInSmallIntestine.fiber': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  // OpenStax §23.7 gives carbs "all", protein 95–98 %, water ~90 %: the model's 0.95 / 0.9 / 0.8 are rounder choices.
+  'absorbedInSmallIntestine.carbs': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
+  'absorbedInSmallIntestine.protein': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
+  'absorbedInSmallIntestine.water': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
+  // Carbs: calibrated together with the glucose curve. The others are modelling assumptions.
+  'absorptionTauMin.carbs': { sources: ['freckmann2007'], basis: 'calibrated' },
+  'absorptionTauMin.protein': { sources: [], basis: 'assumption' },
+  'absorptionTauMin.fat': { sources: [], basis: 'assumption' },
+  'absorptionTauMin.water': { sources: [], basis: 'assumption' },
+  'absorptionTauMin.fiber': { sources: [], basis: 'assumption' },
+  colonWaterAbsorbed: { sources: [], basis: 'assumption' },
+  colonWaterTauMin: { sources: [], basis: 'assumption' },
+
+  'smallIntestine.typicalMin': { sources: ['openstax-ap2e-23', 'nandhra2023'], basis: 'measured' },
+  'smallIntestine.lowMin': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  'smallIntestine.highMin': { sources: ['nandhra2023'], basis: 'measured' },
+  'colon.typicalMin': { sources: ['openstax-ap2e-23', 'nandhra2023'], basis: 'measured' },
+  'colon.lowMin': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  'colon.highMin': { sources: ['nandhra2023'], basis: 'measured' },
+  // "Almost nothing left over" below 1 g of fibre: decides whether the leftovers marker is shown.
+  residueThresholdG: { sources: [], basis: 'display' },
+
+  // The run window and resolution (48 h, 1 min): presentation choices.
+  horizonMin: { sources: [], basis: 'display' },
+  stepMin: { sources: [], basis: 'display' },
 }

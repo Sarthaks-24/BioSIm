@@ -7,13 +7,18 @@ import { runSegment } from './transit.ts'
 import { bluntingFactor, glucoseCurve, type GlucoseCurve } from './glucose.ts'
 import { computeEvents, type SimEvents } from './events.ts'
 import { makeParticles, type Particle } from './particles.ts'
+import type { SignalTable } from './core/signal.ts'
+import { buildMoments, buildSignalTable } from './core/table.ts'
 
 /**
  * Runs the whole model for one meal, minute by minute for 48 h:
  *   stomach (stomach.ts) → small intestine → large intestine (transit.ts) → blood glucose (glucose.ts)
  * then derives key moments (events.ts) and the particles for the picture (particles.ts).
+ *
+ * New code reads `signals` (catalog ID → Series) and `moments` (event ID → EventPoint), built by
+ * core/table.ts. The raw arrays and `events` below stay for v1 and are removed in bundle B.
  */
-export interface Simulation {
+export interface Simulation extends SignalTable {
   modelVersion: number
   meal: Meal
   curves: Record<FoodPhase, EmptyingCurve>
@@ -21,18 +26,36 @@ export interface Simulation {
   stomachArrivalMin: number
   stepMin: number
   length: number
-  /** Grams of food (whole servings) in the stomach, per minute. */
+  /**
+   * Grams of food (whole servings) in the stomach, per minute.
+   * @deprecated Use signals 'gut.stomach.liquidG' / 'gut.stomach.solidG'.
+   */
   stomachLiquidG: Float64Array
+  /** @deprecated Use signals.get('gut.stomach.solidG'). */
   stomachSolidG: Float64Array
-  /** Grams of tracked nutrients (carbs, protein, fat, fibre, water) in each intestine, per minute. */
+  /**
+   * Grams of tracked nutrients (carbs, protein, fat, fibre, water) in each intestine, per minute.
+   * @deprecated Use signals 'gut.small.contentG'.
+   */
   smallIntestineG: Float64Array
+  /** @deprecated Use signals.get('gut.colon.contentG'). */
   colonG: Float64Array
-  /** Cumulative grams absorbed into the body, per nutrient. */
+  /**
+   * Cumulative grams absorbed into the body, per nutrient.
+   * @deprecated Use signals 'gut.absorbed.*G'.
+   */
   absorbedG: Record<NutrientKind, Float64Array>
-  /** Cumulative grams that have left the body. */
+  /**
+   * Cumulative grams that have left the body.
+   * @deprecated Use signals.get('gut.leftBodyG').
+   */
   excretedG: Float64Array
-  /** Plasma glucose (mg/dL) — typical and the low/high edges of the between-person band. */
+  /**
+   * Plasma glucose (mg/dL) — typical and the low/high edges of the between-person band.
+   * @deprecated Use signals.get('blood.glucose').
+   */
   glucose: GlucoseCurve
+  /** @deprecated Use moments (event IDs). eatingEndMin and noNutrients become run metadata. */
   events: SimEvents
   particles: Particle[]
 }
@@ -128,7 +151,7 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
   })
   const particles = makeParticles(meal, curves, arrival, opts.particles ?? 48)
 
-  return {
+  const run = {
     modelVersion: MODEL_VERSION,
     meal,
     curves,
@@ -145,6 +168,13 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
     events,
     particles,
   }
+  return {
+    ...run,
+    signals: buildSignalTable(run),
+    moments: buildMoments(run),
+    rhythms: new Map(),
+    horizonMin: PARAMS.horizonMin,
+  }
 }
 
 /** Index into the per-minute arrays for a time in minutes (clamped). */
@@ -152,7 +182,10 @@ export function indexAt(sim: Simulation, tMin: number): number {
   return Math.min(sim.length - 1, Math.max(0, Math.round(tMin / sim.stepMin)))
 }
 
-/** Share (0–1) of the meal still in the stomach at minute index i (by food energy; by weight for water). Every chart and the verdict use this. */
+/**
+ * Share (0–1) of the meal still in the stomach at minute index i (by food energy; by weight for water). Every chart and the verdict use this.
+ * @deprecated New code uses `shareOfMealInStomach` (core/derive.ts), which takes minutes.
+ */
 export function stomachFraction(sim: Simulation, i: number): number {
   return stomachShare(sim.meal, sim.stomachLiquidG[i]!, sim.stomachSolidG[i]!)
 }
@@ -167,7 +200,10 @@ export interface MealLocation {
   total: number
 }
 
-/** Where every gram of tracked nutrients is at minute index i. Sums to the meal's total. */
+/**
+ * Where every gram of tracked nutrients is at minute index i. Sums to the meal's total.
+ * @deprecated New code uses `mealLocationAt` (core/derive.ts), which takes minutes.
+ */
 export function mealLocation(sim: Simulation, i: number): MealLocation {
   const tracked = (p: Meal['total']) => p.carbsG + p.proteinG + p.fatG + p.fiberG + p.waterG
   const m = sim.meal

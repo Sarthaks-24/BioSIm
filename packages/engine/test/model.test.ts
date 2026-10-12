@@ -9,14 +9,21 @@ import {
   stageWindow,
   stomachFraction,
   STAGES,
+  findFirst,
   type Simulation,
 } from '../src/index.ts'
 import { lookup } from './fixtures.ts'
+import { golden, pinned } from './golden.ts'
 
 /**
  * Golden tests: each checks the model against a PUBLISHED figure (source in the test name).
  * If you change PARAMS and one fails, either the change is wrong or the reference needs a new
  * citation. See docs/MODEL.md.
+ *
+ * Each test names the catalog IDs it checks (test/golden.ts): `golden` = checked against the
+ * sources listed, `pinned` = a behaviour pin with no source, `golden.fails` = a known limit.
+ * test/contract.test.ts reads these calls and fails if an active ID has no sourced test.
+ * Stage and particle tests stay plain `it`: they check the picture, not a signal.
  */
 
 const run = (...ids: string[]) =>
@@ -31,13 +38,18 @@ const leftPct = (sim: Simulation, minutesAfterEating: number) =>
 const rise = (sim: Simulation, t: number) => sim.glucose.typical[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl
 
 describe('gastric emptying', () => {
-  it('water half-empties in ~10–22 min (Ziessman et al. 2009)', () => {
-    const t50 = run('water-test').events.stomachHalfEmptyMin!
-    expect(t50).toBeGreaterThanOrEqual(10)
-    expect(t50).toBeLessThanOrEqual(22)
-  })
+  golden(
+    ['gut.stomach.liquidG', 'event.stomachHalfEmpty'],
+    ['ziessman2009'],
+    'water half-empties in ~10–22 min (Ziessman et al. 2009)',
+    () => {
+      const t50 = run('water-test').events.stomachHalfEmptyMin!
+      expect(t50).toBeGreaterThanOrEqual(10)
+      expect(t50).toBeLessThanOrEqual(22)
+    },
+  )
 
-  it('consensus solid test meal stays inside scintigraphy norms (Abell et al. 2008)', () => {
+  golden('gut.stomach.solidG', ['abell2008'], 'consensus solid test meal stays inside scintigraphy norms (Abell et al. 2008)', () => {
     const sim = run('standard-meal')
     expect(leftPct(sim, 60)).toBeGreaterThanOrEqual(37)
     expect(leftPct(sim, 60)).toBeLessThanOrEqual(90)
@@ -46,30 +58,35 @@ describe('gastric emptying', () => {
     expect(leftPct(sim, 240)).toBeLessThanOrEqual(10)
   })
 
-  it('solids have a lag phase: almost nothing leaves in the first 10 min (Siegel et al. 1988)', () => {
-    expect(leftPct(run('standard-meal'), 10)).toBeGreaterThan(95)
-  })
+  golden(
+    'gut.stomach.solidG',
+    ['siegel1988'],
+    'solids have a lag phase: almost nothing leaves in the first 10 min (Siegel et al. 1988)',
+    () => {
+      expect(leftPct(run('standard-meal'), 10)).toBeGreaterThan(95)
+    },
+  )
 
-  it('a glucose drink empties at ~2.13 kcal/min (Brener et al. 1983)', () => {
+  golden('gut.stomach.liquidG', ['brener1983'], 'a glucose drink empties at ~2.13 kcal/min (Brener et al. 1983)', () => {
     const t90 = run('glucose-50').events.stomach90EmptyMin!
     const expected = (0.9 * 200) / PARAMS.stomach.energyKcalPerMin
     expect(Math.abs(t90 - expected)).toBeLessThan(15)
   })
 
-  it('a high-fat meal is still being emptied after 6 h (OpenStax A&P 2e §23.4)', () => {
+  golden('gut.stomach.contentG', ['openstax-ap2e-23'], 'a high-fat meal is still being emptied after 6 h (OpenStax A&P 2e §23.4)', () => {
     expect(run('fatty-meal').events.stomach90EmptyMin!).toBeGreaterThanOrEqual(6 * 60)
   })
 
-  it('emptying order: water < sugary drink < light meal < heavy fatty meal', () => {
+  golden('event.stomachHalfEmpty', ['hunt1975'], 'emptying order: water < sugary drink < light meal < heavy fatty meal', () => {
     const order = ['water-test', 'glucose-50', 'standard-meal', 'fatty-meal'].map((id) => run(id).events.stomachHalfEmptyMin!)
     for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThan(order[i - 1]!)
   })
 
-  it('a caloric drink slows the solid part of a meal eaten with it', () => {
+  golden('gut.stomach.solidG', ['hunt1975'], 'a caloric drink slows the solid part of a meal eaten with it', () => {
     expect(run('fatty-meal', 'glucose-50').curves.solid.linearMin).toBeGreaterThan(run('fatty-meal').curves.solid.linearMin)
   })
 
-  it('meals over the cap are flagged; a meal at the cap still empties within 16 h', () => {
+  pinned('gut.stomach.contentG', 'meals over the cap are flagged; a meal at the cap still empties within 16 h', () => {
     const big = simulate(buildMeal([{ foodId: 'fatty-meal', servings: 2.25 }], lookup))
     expect(big.meal.overCap).toBe(true)
     const atCap = simulate(buildMeal([{ foodId: 'fatty-meal', servings: 2 }], lookup))
@@ -79,57 +96,91 @@ describe('gastric emptying', () => {
 })
 
 describe('blood glucose', () => {
-  it('50 g glucose drink: peak +30–60 mg/dL at 30–60 min, near baseline by 2 h (standard OGTT shape)', () => {
-    const sim = run('glucose-50')
-    const peak = sim.events.glucosePeak!
-    expect(peak.timeMin).toBeGreaterThanOrEqual(30)
-    expect(peak.timeMin).toBeLessThanOrEqual(60)
-    expect(peak.riseMgDl.typical).toBeGreaterThanOrEqual(30)
-    expect(peak.riseMgDl.typical).toBeLessThanOrEqual(60)
-    expect(rise(sim, 120)).toBeLessThan(20)
-    expect(Math.abs(rise(sim, 240))).toBeLessThan(5)
-  })
+  golden(
+    ['blood.glucose', 'event.glucosePeak'],
+    ['freckmann2007', 'bergman1979'],
+    '50 g glucose drink: peak +30–60 mg/dL at 30–60 min, near baseline by 2 h (standard OGTT shape)',
+    () => {
+      const sim = run('glucose-50')
+      const peak = sim.events.glucosePeak!
+      expect(peak.timeMin).toBeGreaterThanOrEqual(30)
+      expect(peak.timeMin).toBeLessThanOrEqual(60)
+      expect(peak.riseMgDl.typical).toBeGreaterThanOrEqual(30)
+      expect(peak.riseMgDl.typical).toBeLessThanOrEqual(60)
+      expect(rise(sim, 120)).toBeLessThan(20)
+      expect(Math.abs(rise(sim, 240))).toBeLessThan(5)
+    },
+  )
 
-  it('reproduces the GI definition: white bread (GI 75) gives ~75 % of the glucose 2-h area (Brouns et al. 2005)', () => {
-    const iauc = (sim: Simulation) => {
-      let a = 0
-      for (let t = 0; t <= 120; t++) a += Math.max(0, rise(sim, t))
-      return a
-    }
-    const ratio = iauc(run('bread-50')) / iauc(run('glucose-50'))
-    expect(ratio).toBeGreaterThan(0.7)
-    expect(ratio).toBeLessThan(0.8)
-  })
+  golden(
+    'blood.glucose',
+    ['brouns2005', 'atkinson2008'],
+    'reproduces the GI definition: white bread (GI 75) gives ~75 % of the glucose 2-h area (Brouns et al. 2005)',
+    () => {
+      const iauc = (sim: Simulation) => {
+        let a = 0
+        for (let t = 0; t <= 120; t++) a += Math.max(0, rise(sim, t))
+        return a
+      }
+      const ratio = iauc(run('bread-50')) / iauc(run('glucose-50'))
+      expect(ratio).toBeGreaterThan(0.7)
+      expect(ratio).toBeLessThan(0.8)
+    },
+  )
 
-  it('a starchy solid meal peaks later than the drink but within ~75 min (meal tests peak ~46–50 min, Freckmann et al. 2007)', () => {
-    const drink = run('glucose-50').events.glucosePeak!
-    const bread = run('bread-50').events.glucosePeak!
-    expect(bread.timeMin).toBeGreaterThan(drink.timeMin)
-    expect(bread.timeMin).toBeLessThanOrEqual(75)
-    expect(bread.riseMgDl.typical).toBeLessThan(drink.riseMgDl.typical)
-  })
+  golden(
+    'event.glucosePeak',
+    ['freckmann2007'],
+    'a starchy solid meal peaks later than the drink but within ~75 min (meal tests peak ~46–50 min, Freckmann et al. 2007)',
+    () => {
+      const drink = run('glucose-50').events.glucosePeak!
+      const bread = run('bread-50').events.glucosePeak!
+      expect(bread.timeMin).toBeGreaterThan(drink.timeMin)
+      expect(bread.timeMin).toBeLessThanOrEqual(75)
+      expect(bread.riseMgDl.typical).toBeLessThan(drink.riseMgDl.typical)
+    },
+  )
 
-  it('fat and protein flatten and delay the curve (Moghaddam et al. 2006)', () => {
+  golden('blood.glucose', ['moghaddam2006'], 'fat and protein flatten and delay the curve (Moghaddam et al. 2006)', () => {
     const light = run('standard-meal').events.glucosePeak!
     const fatty = run('fatty-meal').events.glucosePeak!
     expect(fatty.riseMgDl.typical).toBeLessThan(light.riseMgDl.typical)
     expect(fatty.timeMin).toBeGreaterThan(light.timeMin)
   })
 
-  it('blood sugar comes back down: no long plateau after a starchy meal', () => {
-    expect(rise(run('bread-50'), 240)).toBeLessThan(8)
-    expect(rise(run('standard-meal'), 240)).toBeLessThan(8)
-    expect(rise(run('glucose-50'), 180)).toBeLessThan(3)
-  })
+  golden(
+    ['blood.glucose', 'event.glucoseBackToBase'],
+    ['ada2001'],
+    'blood sugar comes back down: no long plateau after a starchy meal',
+    () => {
+      expect(rise(run('bread-50'), 240)).toBeLessThan(8)
+      expect(rise(run('standard-meal'), 240)).toBeLessThan(8)
+      expect(rise(run('glucose-50'), 180)).toBeLessThan(3)
+      // ADA 2001: back to preprandial within 2–3 h. The marker uses the 5 mg/dL display threshold.
+      const drink = run('glucose-50').events
+      expect(drink.glucoseBackToBaseMin!).toBeGreaterThan(drink.glucosePeak!.timeMin)
+      expect(drink.glucoseBackToBaseMin!).toBeLessThanOrEqual(180)
+    },
+  )
 
-  it('water does not change glucose and has no nutrients to absorb', () => {
+  golden.fails(
+    'event.glucoseBackToBase',
+    ['ada2001'],
+    'a starchy meal is back within 5 mg/dL of fasting by 3 h (ADA 2001: 2–3 h)',
+    'limits.glucoseTail: the model keeps glucose slightly raised while starch still leaves the stomach (white bread: ~4 h)',
+    () => {
+      expect(run('bread-50').events.glucoseBackToBaseMin!).toBeLessThanOrEqual(180)
+    },
+  )
+
+  pinned(['blood.glucose', 'gut.absorbed.carbsG'], 'water does not change glucose and has no nutrients to absorb', () => {
     const sim = run('water-test')
     expect(sim.events.glucosePeak).toBeNull()
     expect(sim.events.noNutrients).toBe(true)
     expect(sim.events.absorptionMostlyDoneMin).toBeNull()
   })
 
-  it('the band always brackets the typical curve', () => {
+  pinned('blood.glucose', 'the band always brackets the typical curve', () => {
     const sim = run('glucose-50')
     for (let i = 0; i < sim.length; i += 37) {
       expect(sim.glucose.low[i]!).toBeLessThanOrEqual(sim.glucose.typical[i]! + 1e-9)
@@ -139,51 +190,122 @@ describe('blood glucose', () => {
 })
 
 describe('one consistent story', () => {
-  it('sugar from a drink is mostly absorbed by the time blood glucose is back down', () => {
-    const sim = run('glucose-50')
-    expect(sim.events.absorptionMostlyDoneMin!).toBeLessThanOrEqual(150)
-    const atPeak = sim.absorbedG.carbs[indexAt(sim, sim.events.glucosePeak!.timeMin)]!
-    expect(atPeak / sim.meal.total.carbsG).toBeGreaterThan(0.2)
-  })
+  pinned(
+    ['gut.absorbed.carbsG', 'event.mostlyAbsorbed'],
+    'sugar from a drink is mostly absorbed by the time blood glucose is back down',
+    () => {
+      const sim = run('glucose-50')
+      expect(sim.events.absorptionMostlyDoneMin!).toBeLessThanOrEqual(150)
+      const atPeak = sim.absorbedG.carbs[indexAt(sim, sim.events.glucosePeak!.timeMin)]!
+      expect(atPeak / sim.meal.total.carbsG).toBeGreaterThan(0.2)
+    },
+  )
 
-  it('mass balance: stomach + intestines + absorbed + left the body = eaten, at every time', () => {
-    const sim = run('fatty-meal', 'glucose-50')
-    for (let t = 30; t <= PARAMS.horizonMin; t += 97) {
-      const loc = mealLocation(sim, indexAt(sim, t))
-      const sum = loc.stomach + loc.smallIntestine + loc.largeIntestine + loc.absorbed + loc.leftBody
-      expect(sum).toBeCloseTo(loc.total, 0)
-    }
-  })
+  golden(
+    [
+      'gut.small.contentG',
+      'gut.colon.contentG',
+      'gut.absorbed.carbsG',
+      'gut.absorbed.proteinG',
+      'gut.absorbed.fatG',
+      'gut.absorbed.waterG',
+      'gut.absorbed.fibreG',
+      'gut.leftBodyG',
+    ],
+    ['openstax-ap2e-23'],
+    'mass balance: stomach + intestines + absorbed + left the body = eaten, at every time',
+    () => {
+      const sim = run('fatty-meal', 'glucose-50')
+      for (let t = 30; t <= PARAMS.horizonMin; t += 97) {
+        const loc = mealLocation(sim, indexAt(sim, t))
+        const sum = loc.stomach + loc.smallIntestine + loc.largeIntestine + loc.absorbed + loc.leftBody
+        expect(sum).toBeCloseTo(loc.total, 0)
+      }
+    },
+  )
 
-  it('fibre is never absorbed and ends up leaving the body; most carbs are absorbed', () => {
-    const sim = run('fatty-meal')
-    const end = sim.length - 1
-    expect(sim.absorbedG.fiber[end]).toBe(0)
-    expect(sim.absorbedG.carbs[end]! / sim.meal.total.carbsG).toBeGreaterThan(0.9)
-    expect(sim.excretedG[end]!).toBeGreaterThan(sim.meal.total.fiberG * 0.9)
-  })
+  golden(
+    ['gut.absorbed.fibreG', 'gut.absorbed.carbsG', 'gut.leftBodyG'],
+    ['openstax-ap2e-23'],
+    'fibre is never absorbed and ends up leaving the body; most carbs are absorbed',
+    () => {
+      const sim = run('fatty-meal')
+      const end = sim.length - 1
+      expect(sim.absorbedG.fiber[end]).toBe(0)
+      expect(sim.absorbedG.carbs[end]! / sim.meal.total.carbsG).toBeGreaterThan(0.9)
+      expect(sim.excretedG[end]!).toBeGreaterThan(sim.meal.total.fiberG * 0.9)
+    },
+  )
 
-  it('half-empty is measured by food energy: a drink added to a meal never makes the meal look faster', () => {
-    const alone = run('fatty-meal').events.stomachHalfEmptyMin!
-    const withWater = run('fatty-meal', 'water-test').events.stomachHalfEmptyMin!
-    const withDrink = run('fatty-meal', 'glucose-50').events.stomachHalfEmptyMin!
-    expect(withWater).toBeGreaterThanOrEqual(alone)
-    expect(withDrink).toBeGreaterThan(alone * 0.8)
-  })
+  pinned(
+    'event.stomachHalfEmpty',
+    'half-empty is measured by food energy: a drink added to a meal never makes the meal look faster',
+    () => {
+      const alone = run('fatty-meal').events.stomachHalfEmptyMin!
+      const withWater = run('fatty-meal', 'water-test').events.stomachHalfEmptyMin!
+      const withDrink = run('fatty-meal', 'glucose-50').events.stomachHalfEmptyMin!
+      expect(withWater).toBeGreaterThanOrEqual(alone)
+      expect(withDrink).toBeGreaterThan(alone * 0.8)
+    },
+  )
 
-  it('only fibre counts as leftovers: sugar drinks leave nothing, however many', () => {
+  pinned('event.firstLeftovers', 'only fibre counts as leftovers: sugar drinks leave nothing, however many', () => {
     const drinks = simulate(buildMeal([{ foodId: 'glucose-50', servings: 3 }], lookup))
     expect(drinks.events.firstExit).toBeNull()
     expect(drinks.events.halfLeftoversInColon).toBeNull()
   })
 
-  it('leftover timings depend on the meal; drinks with no leftovers have no exit time', () => {
+  pinned('event.firstLeftovers', 'leftover timings depend on the meal; drinks with no leftovers have no exit time', () => {
     expect(run('glucose-50').events.firstExit).toBeNull()
     expect(run('water-test').events.halfLeftoversInColon).toBeNull()
     const light = run('standard-meal').events.halfLeftoversInColon!.typical
     const fatty = run('fatty-meal').events.halfLeftoversInColon!.typical
     expect(fatty).toBeGreaterThan(light)
   })
+
+  golden(
+    'gut.colon.contentG',
+    ['openstax-ap2e-23', 'nandhra2023'],
+    'the first of the meal reaches the colon 3–5.7 h after it reaches the stomach (small-bowel transit: OpenStax 3–5 h; Nandhra et al. 2023 3.3–5.7 h)',
+    () => {
+      for (const id of ['glucose-50', 'standard-meal', 'fatty-meal']) {
+        const sim = run(id)
+        const colon = sim.signals.get('gut.colon.contentG')!
+        const first = findFirst(colon, (g) => g > 0.1)! - sim.stomachArrivalMin
+        expect(first, id).toBeGreaterThanOrEqual(3 * 60)
+        expect(first, id).toBeLessThanOrEqual(5.7 * 60)
+      }
+    },
+  )
+
+  golden(
+    'event.mostlyAbsorbed',
+    ['openstax-ap2e-23'],
+    'a meal is mostly absorbed before its last chyme has left the small intestine (OpenStax: almost all food is absorbed there; all chyme leaves it in 3–5 h)',
+    () => {
+      for (const id of ['glucose-50', 'bread-50', 'standard-meal', 'fatty-meal']) {
+        const sim = run(id)
+        const mostly = sim.moments.get('event.mostlyAbsorbed')!.atMin!
+        expect(mostly, id).toBeGreaterThan(sim.events.stomachHalfEmptyMin!)
+        expect(mostly, id).toBeLessThanOrEqual(sim.events.stomach90EmptyMin! + 5 * 60)
+      }
+    },
+  )
+
+  golden(
+    'event.firstLeftovers',
+    ['openstax-ap2e-23', 'nandhra2023'],
+    'leftovers start leaving within the published transit times: no sooner than 15 h (3 h small bowel + 12 h colon, OpenStax), no later than ~36 h (5.7 h + 29 h, Nandhra et al. 2023)',
+    () => {
+      for (const id of ['bread-50', 'standard-meal', 'fatty-meal']) {
+        const p = run(id).moments.get('event.firstLeftovers')!
+        expect(p.low!, id).toBeGreaterThanOrEqual(15 * 60)
+        expect(p.low!, id).toBeLessThanOrEqual(p.atMin!)
+        expect(p.atMin!, id).toBeLessThanOrEqual(p.high!)
+        expect(p.high!, id).toBeLessThanOrEqual(36 * 60)
+      }
+    },
+  )
 })
 
 describe('stages and particles', () => {
