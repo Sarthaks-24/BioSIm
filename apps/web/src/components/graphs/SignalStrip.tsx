@@ -8,6 +8,7 @@ import { formatNumber, formatSignal } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import { LineSwatch } from '../stage/KeptTag.tsx'
 import Playhead from './Playhead.tsx'
+import { lineEndSpots, placeLabel, polyline, ringSpots, type Box } from './labels.ts'
 import { STRIP_ROWS } from './layout.ts'
 
 interface Props {
@@ -16,8 +17,8 @@ interface Props {
   kept: Series | null
   /** The kept meal's name, for the ghost's end label ("Kept: Cola"). */
   keptName: string
-  /** One moment ringed on the live line, with a short label ("Highest: 121"). */
-  marker: { atMin: number; label: string } | null
+  /** One moment ringed on the live line at `value`, with a short label ("Highest: 121"). */
+  marker: { atMin: number; value: number; label: string } | null
   /** The ⓘ "How we know" button (HowWeKnow). */
   info: ReactNode
   /** A line under the graph (the blood-sugar "not medical advice" note). */
@@ -64,6 +65,11 @@ function useSize<T extends HTMLElement>() {
   }, [])
   return [ref, size] as const
 }
+
+const sameBox = (a: Box | null, b: Box | null) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h)
+
+/** Where a measured plot label goes; until it is placed (or if no spot was found) it is not seen. */
+const labelStyle = (b: Box | null): React.CSSProperties => (b ? { left: b.x, top: b.y } : { left: 0, top: 0, visibility: 'hidden' })
 
 /**
  * One live graph (G1): a catalog signal over the 48 h meal clock, beside the body.
@@ -112,19 +118,53 @@ export default function SignalStrip({
     const y = (v: number) => yAt(v, domain, height)
     const line = (values: Float32Array) => {
       const s = samplesOf(values)
-      return linePath(s.t, s.v, x, y)
+      return { d: linePath(s.t, s.v, x, y), points: polyline(s.t, s.v, x, y) }
     }
-    const end = (values: Float32Array) => ({ x: width, y: y(values[values.length - 1]!) })
+    const run = line(series.values)
+    const keptLine = kept ? line(kept.values) : null
+    const secondLine = second ? line(second.series.values) : null
     return {
-      run: line(series.values),
+      run: run.d,
       band: series.low && series.high ? bandPath(samplesOf(series.high), samplesOf(series.low), x, y) : null,
-      kept: kept ? line(kept.values) : null,
-      keptEnd: kept ? end(kept.values) : null,
-      second: second ? line(second.series.values) : null,
-      secondEnd: second ? end(second.series.values) : null,
-      marker: marker ? { x: x(marker.atMin), y: y(valueAt(series, marker.atMin)) } : null,
+      kept: keptLine?.d ?? null,
+      keptEnd: kept ? { x: width, y: y(kept.values[kept.values.length - 1]!) } : null,
+      second: secondLine?.d ?? null,
+      secondEndY: second ? y(second.series.values[second.series.values.length - 1]!) : null,
+      marker: marker ? { x: x(marker.atMin), y: y(marker.value) } : null,
+      // Every drawn line, for keeping the labels off them.
+      points: [run.points, keptLine?.points, secondLine?.points].filter((p) => !!p),
     }
   }, [series, kept, second, marker, width, height, domain])
+
+  // The words on the plot (the ring's label, the second line's name) go where they cross no line.
+  // Measured after layout and placed before paint; hidden until placed, and when nothing fits.
+  const markerLabel = useRef<HTMLSpanElement>(null)
+  const secondLabel = useRef<HTMLSpanElement>(null)
+  const [placed, setPlaced] = useState<{ marker: Box | null; second: Box | null }>({ marker: null, second: null })
+  const markerWords = marker?.label
+  const secondWords = second?.label
+  // A web font arriving late (Devanagari) changes the labels' size: place them again.
+  const [fonts, setFonts] = useState(0)
+  useLayoutEffect(() => {
+    const done = () => setFonts((n) => n + 1)
+    document.fonts?.addEventListener('loadingdone', done)
+    return () => document.fonts?.removeEventListener('loadingdone', done)
+  }, [])
+  useLayoutEffect(() => {
+    const plotSize = { width, height }
+    const sizeOf = (el: HTMLElement | null) => (el && el.offsetWidth > 0 ? { w: el.offsetWidth, h: el.offsetHeight } : null)
+    let secondBox: Box | null = null
+    const s = sizeOf(secondLabel.current)
+    if (paths && s && paths.secondEndY != null) {
+      secondBox = placeLabel(s, lineEndSpots(paths.secondEndY, width, s.w, s.h), plotSize, paths.points)
+    }
+    let markerBox: Box | null = null
+    const m = sizeOf(markerLabel.current)
+    if (paths?.marker && m) {
+      markerBox = placeLabel(m, ringSpots(paths.marker.x, paths.marker.y, m.w, m.h), plotSize, paths.points, secondBox ? [secondBox] : [])
+    }
+    setPlaced((p) => (sameBox(p.marker, markerBox) && sameBox(p.second, secondBox) ? p : { marker: markerBox, second: secondBox }))
+  }, [paths, width, height, rem, markerWords, secondWords, fonts])
 
   // Readout text: the value of this run, the kept run and the second line, and running totals if any.
   const runText = useRef<HTMLSpanElement>(null)
@@ -170,14 +210,16 @@ export default function SignalStrip({
   const named = !!second
   // Phones show name and value only (plan-graphs §3.5): the totals, like the second line's label,
   // need the room of a desktop column; on a phone "How we know" gives them in its summary.
-  const totalSpan = (ref: RefObject<HTMLSpanElement | null>) => totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
+  const totalSpan = (ref: RefObject<HTMLSpanElement | null>) =>
+    totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
   return (
     <figure
       aria-labelledby={titleId}
       aria-describedby={summary ? summaryId : undefined}
-      className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}>
+      className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}
+    >
       {/*
        * Phones: the tab above already names the graph, so the header is one row: values, status, ⓘ
        * (a two-line graph: status and ⓘ, then its longer values under them).
@@ -307,20 +349,24 @@ export default function SignalStrip({
           )}
           {paths?.marker && marker && (
             <span
+              ref={markerLabel}
               aria-hidden="true"
-              className="pointer-events-none absolute text-caption leading-none font-semibold whitespace-nowrap text-ink [text-shadow:var(--strip-halo)]"
-              style={{ left: paths.marker.x + 9, top: paths.marker.y - 9, transform: 'translateY(-100%)' }}
+              data-plot-label="marker"
+              className="pointer-events-none absolute w-max max-w-[max(9rem,45%)] text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
+              style={labelStyle(placed.marker)}
             >
               {marker.label}
             </span>
           )}
-          {paths?.secondEnd && second && (
-            // Over the right end of its line, right of the 6 h knee, where the food energy has
-            // mostly come in already, so the label sits on empty graph paper.
+          {paths?.secondEndY != null && second && (
+            // Near the right end of its line, right of the 6 h knee, where the food energy has
+            // mostly come in already, so the label usually sits on empty graph paper.
             <span
+              ref={secondLabel}
               aria-hidden="true"
-              className="pointer-events-none absolute right-1 max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
-              style={{ bottom: height - paths.secondEnd.y + 5 }}
+              data-plot-label="second"
+              className="pointer-events-none absolute w-max max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
+              style={labelStyle(placed.second)}
             >
               {second.label}
             </span>

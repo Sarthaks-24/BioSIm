@@ -8,7 +8,7 @@ import { StatusTag } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
 import HowWeKnow, { Section } from './HowWeKnow.tsx'
 import SignalStrip from './SignalStrip.tsx'
-import { markedMoment } from './marks.ts'
+import { stripMarker } from './marks.ts'
 
 /**
  * The stack of graphs (G1, G2): one column, one time axis; all of them read the same meal clock,
@@ -60,7 +60,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
   const lang = i18n.language
   // The run's table holds only active signals.
   const id = series.meta.id as ActiveSignalId
-  const moment = markedMoment(id, run)
+  const ring = stripMarker(id, run)
   const glucose = id === 'blood.glucose'
   const totalOf = (of: ActiveSignalId) => {
     const total = TOTAL_OF[of]
@@ -70,12 +70,10 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
   const totals = runTotal && { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null }
   const title = second ? t('stage.strips.energy') : undefined
 
-  const marker = moment && {
-    atMin: moment.atMin,
-    label:
-      moment.id === 'event.glucosePeak'
-        ? t('graph.highest', { value: formatNumber(series.values[moment.atMin] ?? 0, series.meta, lang) })
-        : t('graph.halfLeft'),
+  const marker = ring && {
+    atMin: ring.atMin,
+    value: ring.value,
+    label: t(ring.labelKey, { value: formatNumber(ring.value, series.meta, lang) }),
   }
 
   // Energy: what came in and what the resting body used in the first 6 h (the same window for
@@ -95,7 +93,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
       <Section title={t('signals.event.glucoseBackToBase.name')}>{t('limits.backToBase')}</Section>
     </>
   ) : id === 'gut.stomach.contentG' ? (
-    <Section title={t('signals.event.stomachHalfEmpty.name')}>{t('graph.halfNote')}</Section>
+    <Section title={t('graph.halfTitle')}>{t('graph.halfNote')}</Section>
   ) : second ? (
     <>
       <p className="text-ink">{summary}</p>

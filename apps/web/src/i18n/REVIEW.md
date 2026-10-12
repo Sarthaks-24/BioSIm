@@ -315,7 +315,8 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |
 | `graph.highestTitle` | The ring: highest point | गोला: सबसे ऊँचा बिंदु | draft |
 | `graph.highestNote` | The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level. | गोला दिखाता है कि इस भोजन के बाद रक्त शर्करा कब सबसे अधिक होती है। 5 mg/dL या उससे कम बढ़ने पर गोला नहीं बनता: रक्त शर्करा खाने से पहले के स्तर के पास ही रहती है। | draft |
-| `graph.halfLeft` | Half has left | आधा निकल गया | draft |
+| `graph.halfEnergyLeft` | Half the energy has left the stomach | आधी ऊर्जा आमाशय से निकल गई | draft |
+| `graph.halfTitle` | The ring: half has left the stomach | गोला: आधा भोजन आमाशय से निकल गया | draft |
 | `graph.halfNote` | The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring. | गोला दिखाता है कि भोजन की आधी ऊर्जा कब आमाशय से निकल गई (पानी के लिए: उसका आधा वज़न)। पेय पहले निकलते हैं, इसलिए इस ग्राफ़ पर ग्राम गोले से पहले ही आधे रह सकते हैं। | draft |
 
 ## Energy graph (WP-13)

@@ -23,7 +23,7 @@ export const glucoseLeftBase = (run: Simulation) => glucoseRise(run) > PARAMS.gl
 /** The moment drawn as a ring on each graph's own line, if the graph has one. */
 const MARKED: Partial<Record<ActiveSignalId, EventId>> = {
   'blood.glucose': 'event.glucosePeak',
-  // By food energy, not grams (decision 3): "How we know" says why the grams can halve sooner.
+  // By food energy, not grams (decision 3), so its label says "energy" (StripMarker).
   'gut.stomach.contentG': 'event.stomachHalfEmpty',
 }
 
@@ -33,4 +33,39 @@ export function markedMoment(signal: ActiveSignalId, run: Simulation): { id: Eve
   if (id === 'event.glucosePeak' && !glucoseLeftBase(run)) return null
   const atMin = run.moments.get(id)?.atMin
   return atMin == null ? null : { id, atMin }
+}
+
+/**
+ * A graph's ring and what its label says. The ring always sits ON the drawn line (`value`, in the
+ * graph's unit); the label names the quantity the moment is about, which is not always the one
+ * drawn:
+ * - blood sugar: "Highest: 121" is the drawn value itself;
+ * - stomach: the line is grams, but "half has left" is by food energy (event.stomachHalfEmpty),
+ *   and with a drink the grams halve sooner (the drink leaves first). So the label says "Half the
+ *   energy has left the stomach". Only a meal with no energy (water) is halved by weight, and
+ *   then the grams on the line are half too: "Half has left the stomach".
+ * The kept run gets no ring on a graph (its moments are hollow markers on the timeline), so a
+ * graph shows at most one label, even where the two runs' moments coincide.
+ */
+export interface StripMarker {
+  id: EventId
+  atMin: number
+  /** The drawn line's value at `atMin`: where the ring sits. */
+  value: number
+  /** i18n key of the label; `graph.highest` takes `value`. */
+  labelKey: 'graph.highest' | 'graph.halfEnergyLeft' | 'signals.event.stomachHalfEmpty.name'
+}
+
+export function stripMarker(signal: ActiveSignalId, run: Simulation): StripMarker | null {
+  const moment = markedMoment(signal, run)
+  const series = run.signals.get(signal)
+  if (!moment || !series) return null
+  const value = valueAt(series, moment.atMin)
+  const labelKey =
+    moment.id === 'event.glucosePeak'
+      ? 'graph.highest'
+      : run.events.noNutrients
+        ? 'signals.event.stomachHalfEmpty.name'
+        : 'graph.halfEnergyLeft'
+  return { ...moment, value, labelKey }
 }
