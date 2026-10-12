@@ -42,7 +42,7 @@ for (const lang of ['en', 'hi'] as const) {
 
     // G9: y ticks and every other caption ≥ 18 px, readouts ≥ 24 px, organ labels ≥ 18 px.
     for (const size of await styles(page, '[data-axis="y"] span', 'font-size')) expect(px(size), 'y tick').toBeGreaterThanOrEqual(18)
-    const readout = page.locator('figure figcaption .font-semibold.whitespace-nowrap').filter({ visible: true }).first()
+    const readout = page.locator('figure [data-readout]').filter({ visible: true }).first()
     await expect(readout).toHaveText(/\d/)
     expect(px(await readout.evaluate((el) => getComputedStyle(el).fontSize)), 'readout').toBeGreaterThanOrEqual(24)
     for (const size of await styles(page, '[data-callout]', 'font-size')) expect(px(size), 'organ label').toBeGreaterThanOrEqual(18)
@@ -59,6 +59,36 @@ for (const lang of ['en', 'hi'] as const) {
     await expect(band).toHaveCount(1)
     expect(px(await band.evaluate((el) => getComputedStyle(el).fillOpacity)), 'band').toBeCloseTo(0.28, 2)
     expect(px(await band.evaluate((el) => getComputedStyle(el).strokeWidth)), 'band edge').toBe(1.5)
+  })
+}
+
+// The whole lesson on one projector screen (after WP-14): a meal compared with a kept one, mid-way.
+// The summary sentence and the Now line are in the window, nothing scrolls, and every graph's
+// plot is still at least 250 px tall. If they ever compete, the summary wins, then the Now line.
+for (const lang of ['en', 'hi'] as const) {
+  test(`projector lesson view (${lang}): summary, Now line and a ≥ 250 px plot on every tab, no scroll`, async ({ page }) => {
+    onlyIn('projector')
+    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
+    const group = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
+    await expect(group).toBeVisible()
+    const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
+    if (await ok.isVisible()) await ok.click()
+    const inWindow = async (selector: string) => {
+      const el = page.locator(selector).filter({ visible: true }).first()
+      await expect(el, selector).toBeVisible()
+      const box = (await el.boundingBox())!
+      expect(box.y + box.height, `${selector} bottom`).toBeLessThanOrEqual(800)
+    }
+    await inWindow('[data-summary="compare"]')
+    await inWindow('[data-now]')
+    for (const tab of await group.getByRole('button').allTextContents()) {
+      await group.getByRole('button', { name: tab, exact: true }).click()
+      const plot = page.locator('figure svg[role="img"]').filter({ visible: true })
+      await expect(plot).toHaveCount(1)
+      await expect.poll(async () => (await plot.boundingBox())!.height, { message: `${tab}: plot height` }).toBeGreaterThanOrEqual(250)
+      const m = await page.evaluate(() => [document.documentElement.scrollHeight, innerHeight])
+      expect(m[0], `${tab}: page height`).toBeLessThanOrEqual(m[1]!)
+    }
   })
 }
 
