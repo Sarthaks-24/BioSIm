@@ -244,7 +244,10 @@
     "minutes": "{{n}} min",
     "seconds": "{{n}} s",
     "hShort": "{{n}}h",
-    "kcal": "{{n}} kcal"
+    "kcal": "{{n}} kcal",
+    "g": "{{n}} g",
+    "mgdl": "{{n}} mg/dL",
+    "kcalPerH": "{{n}} kcal/h"
   },
   "anatomy": {
     "liver": "Liver",
@@ -362,5 +365,169 @@
         ]
       }
     ]
+  },
+  "status": {
+    "simulated": {
+      "label": "Calculated from studies",
+      "help": "Worked out by the model from published measurements."
+    },
+    "assumption": {
+      "label": "Best guess",
+      "help": "A formula or a reasonable estimate, not measured for this meal."
+    },
+    "illustration": {
+      "label": "Drawing only",
+      "help": "A picture to show the idea. The speed is not calculated."
+    },
+    "howWeKnow": "How we know",
+    "sameEveryMeal": "The same for every meal (resting body)"
+  },
+  "signals": {
+    "gut": {
+      "stomach": {
+        "contentG": {
+          "name": "Food in the stomach",
+          "short": "In stomach",
+          "desc": "Grams of the meal still in the stomach, as eaten (food and drink).",
+          "summary": "The stomach holds {{start}} g at the start. Half of the meal has left by {{half}}, and it is almost empty by {{empty}}."
+        },
+        "liquidG": {
+          "name": "Drink in the stomach",
+          "short": "Drink",
+          "desc": "Grams of the meal's drinks still in the stomach."
+        },
+        "solidG": {
+          "name": "Solid food in the stomach",
+          "short": "Solid food",
+          "desc": "Grams of the meal's solid food still in the stomach."
+        }
+      },
+      "small": {
+        "contentG": {
+          "name": "In the small intestine",
+          "short": "Small intestine",
+          "desc": "Grams from the meal now in the small intestine (carbohydrate, protein, fat, fibre and water)."
+        }
+      },
+      "colon": {
+        "contentG": {
+          "name": "In the large intestine",
+          "short": "Large intestine",
+          "desc": "Grams from the meal now in the large intestine, mostly fibre and water."
+        }
+      },
+      "absorbed": {
+        "carbsG": {
+          "name": "Carbohydrate absorbed",
+          "short": "Carbohydrate",
+          "desc": "Grams of the meal's carbohydrate taken into the body so far (fibre not included)."
+        },
+        "proteinG": {
+          "name": "Protein absorbed",
+          "short": "Protein",
+          "desc": "Grams of the meal's protein taken into the body so far."
+        },
+        "fatG": {
+          "name": "Fat absorbed",
+          "short": "Fat",
+          "desc": "Grams of the meal's fat taken into the body so far."
+        },
+        "waterG": {
+          "name": "Water absorbed",
+          "short": "Water",
+          "desc": "Grams of the meal's water taken into the body so far, in the small and large intestine."
+        },
+        "fibreG": {
+          "name": "Fibre absorbed (always 0)",
+          "short": "Fibre",
+          "desc": "The body cannot digest fibre, so none of it is absorbed."
+        }
+      },
+      "leftBodyG": {
+        "name": "Left the body",
+        "short": "Left",
+        "desc": "Grams from the meal that have left the body so far, mostly fibre and water."
+      }
+    },
+    "blood": {
+      "glucose": {
+        "name": "Blood sugar",
+        "short": "Blood sugar",
+        "desc": "Sugar (glucose) in the blood of a typical healthy adult, in mg/dL. Before eating it is about 90.",
+        "band": {
+          "name": "How much people differ"
+        },
+        "summary": "Blood sugar starts at about {{start}} mg/dL, is highest at about {{peak}} mg/dL after {{peakTime}}, and is back near the before-meal level by {{backTime}}.",
+        "summaryNone": "Blood sugar stays near {{start}} mg/dL: this meal has almost no sugar or starch."
+      }
+    },
+    "energy": {
+      "inRate": {
+        "name": "Energy coming in",
+        "short": "Coming in",
+        "desc": "Food energy entering the blood each hour, from absorbed carbohydrate, protein and fat.",
+        "summary": "In the first {{time}}, about {{in}} kcal from this meal entered the blood, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later."
+      },
+      "inTotal": {
+        "name": "Energy taken in so far",
+        "short": "Taken in",
+        "desc": "Food energy from this meal that has entered the blood so far."
+      },
+      "usedRate": {
+        "name": "Energy used at rest",
+        "short": "Used",
+        "desc": "Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the adult model."
+      },
+      "usedTotal": {
+        "name": "Energy used so far",
+        "short": "Used so far",
+        "desc": "Energy the resting body has used since the meal started. It is the same for every meal."
+      }
+    },
+    "event": {
+      "stomachHalfEmpty": {
+        "name": "Half has left the stomach"
+      },
+      "glucosePeak": {
+        "name": "Blood sugar highest"
+      },
+      "glucoseBackToBase": {
+        "name": "Blood sugar back near the before-meal level"
+      },
+      "mostlyAbsorbed": {
+        "name": "Nutrients mostly absorbed"
+      },
+      "firstLeftovers": {
+        "name": "Leftovers start leaving the body",
+        "desc": "Depends mostly on the person, not the meal"
+      },
+      "never": "Not within 48 h"
+    }
+  },
+  "limits": {
+    "glucoseTail": "After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner.",
+    "glucoseBand": "The shaded band is a best guess of how much healthy people differ.",
+    "energyInAtwater": "Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out.",
+    "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
+    "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it."
+  },
+  "profiles": {
+    "adult-ref": {
+      "tag": "Adult model",
+      "desc": "Based on the ICMR-NIN 2020 reference adult man (65 kg), at rest. Digestion times come from studies of adults."
+    }
+  },
+  "organisms": {
+    "human": {
+      "name": "Human"
+    }
+  },
+  "systems": {
+    "digestion": {
+      "name": "Digestion"
+    }
+  },
+  "lifeProcess": {
+    "nutrition": "Nutrition"
   }
 }

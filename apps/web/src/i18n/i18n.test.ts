@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import en from './en.json'
 import hi from './hi.json'
+import { catalogKeys, registryKeys } from '../registry/i18nKeys.ts'
 
 /** Flatten to "a.b.c" → value, with arrays as a single entry holding their length. */
 function flatten(obj: unknown, prefix = ''): Map<string, unknown> {
@@ -55,11 +56,21 @@ describe('translations', () => {
     }
   })
 
+  // Keys built at run time from the catalog and the registry (`${i18nKey}.name` …).
+  const catalog = catalogKeys()
+  const registry = registryKeys()
+  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional])
+
+  it('every catalog and registry key exists as text', () => {
+    const missing = [...catalog.required, ...registry.required].filter((k) => typeof fe.get(k) !== 'string')
+    expect(missing).toEqual([])
+  })
+
   it('every key used in code exists, and every key in en.json is used', () => {
     const { called, literal, prefixes } = keysInSource()
     for (const k of called) expect(fe.has(k) || [...fe.keys()].some((f) => f.startsWith(`${k}.`)), `missing key ${k}`).toBe(true)
     const used = (k: string) =>
-      literal.has(k) || [...literal].some((l) => k.startsWith(`${l}.`)) || [...prefixes].some((p) => p && k.startsWith(p))
+      built.has(k) || literal.has(k) || [...literal].some((l) => k.startsWith(`${l}.`)) || [...prefixes].some((p) => p && k.startsWith(p))
     const unused = [...fe.keys()].filter((k) => !used(k))
     expect(unused).toEqual([])
   })

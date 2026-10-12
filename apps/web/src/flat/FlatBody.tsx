@@ -13,7 +13,7 @@ import {
   TORSO_PROFILE,
   particlePosition,
   stomachRadius,
-} from '../anatomy/anatomy.ts'
+} from '../anatomy/human.ts'
 import { INK, NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
 
 /**
