@@ -15,6 +15,7 @@ import LessonView from '../components/LessonView.tsx'
 import Legend from '../components/Legend.tsx'
 import ShareButton from '../components/ShareButton.tsx'
 import FeedbackDialog from '../components/FeedbackDialog.tsx'
+import { FirstRunNote } from '../components/MedicalNote.tsx'
 import Verdict from '../components/Verdict.tsx'
 import { GlucoseChart, StomachChart, WhereChart } from '../components/charts/SimCharts.tsx'
 import { MEAL_COLOR } from '../lib/colors.ts'
@@ -64,6 +65,8 @@ export default function Simulator() {
           {n}
         </p>
       ))}
+
+      <FirstRunNote />
 
       <div className="no-print mb-4 grid gap-4 md:grid-cols-2">
         {MEAL_KEYS.map((k) => (

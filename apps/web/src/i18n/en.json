@@ -167,12 +167,21 @@
     "sent": "Thanks — report sent.",
     "failed": "Couldn’t reach the LifePeek server.",
     "close": "Close",
-    "privacy": "Please don’t include names, emails or health information.",
-    "openIssue": "Send it as a GitHub issue instead"
+    "privacy": "Reports are public. Please don’t include names, school, emails or health information.",
+    "openIssue": "Send it as a GitHub issue instead",
+    "publicWarning": "This opens a public page on GitHub. Don't type your name, school or phone number.",
+    "openIssueDirect": "Open the report on GitHub"
   },
   "disclaimer": {
     "short": "Educational model of a typical healthy adult. Not medical advice.",
-    "long": "LifePeek is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions."
+    "long": "LifePeek is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions.",
+    "firstRun": {
+      "title": "For learning, not for diet decisions",
+      "body": "LifePeek shows what typically happens in a healthy adult. Real bodies differ. It is not medical advice. If you have diabetes or any health worry, talk to a doctor.",
+      "ok": "Got it"
+    },
+    "graph": "A typical range for a healthy adult, not a prediction for you. Not medical advice.",
+    "more": "More about this"
   },
   "teach": {
     "title": "Using LifePeek in class",
@@ -254,5 +263,104 @@
     "title": "Something didn’t load",
     "body": "This often happens right after LifePeek is updated. Reloading fixes it.",
     "reload": "Reload"
+  },
+  "footer": {
+    "madeBy": "Made by {{name}}",
+    "about": "About",
+    "privacy": "Privacy",
+    "licences": "Code Apache-2.0 · Content CC BY 4.0",
+    "notices": "Third-party notices",
+    "model": "Model version {{version}}"
+  },
+  "about": {
+    "title": "About LifePeek",
+    "tagline": "LifePeek: peek inside living things",
+    "lead": "Compare what happens to two meals inside your body. Free, no login, works offline once loaded.",
+    "makerTitle": "Who made it",
+    "maker": "LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources.",
+    "medicalTitle": "Not medical advice",
+    "medical": "LifePeek is an educational model of a typical healthy adult. It does not model children, pregnancy, diabetes or digestive illness. Its numbers are typical ranges, not measurements of any person, and must not be used to choose a diet, treat an illness or change medicine. If you have diabetes or any health concern, talk to a doctor or a qualified dietitian.",
+    "sourcesTitle": "Where the numbers come from",
+    "sources": "Each food is described only by cited values: its nutrients from USDA FoodData Central or the Indian Nutrient Databank, and, where it applies, its glycemic index from the International GI tables (Atkinson et al. 2008). The model computes everything else.",
+    "sourcesLink": "Every food and its sources",
+    "licencesTitle": "Licences",
+    "licenceCode": "Code: Apache License 2.0. Keep the NOTICE file in copies.",
+    "licenceContent": "Lesson text, translations, illustrations, docs, and our own food-file structure and labels: CC BY 4.0. Credit: “LifePeek by {{name}}, https://lifepeek.vercel.app, CC BY 4.0”.",
+    "licenceData": "Nutrient and GI values from USDA, the Indian Nutrient Databank, Atkinson et al. and others: not relicensed by us.",
+    "licenceName": "The LifePeek name and logo: not licensed. Forks must use a different name.",
+    "licenceLibraries": "Bundled libraries and fonts: their own licences.",
+    "reportTitle": "Found a mistake?",
+    "report": "Spotted a wrong number or explanation? Use “Report a mistake” in the simulator.",
+    "openIssue": "Open an issue on GitHub",
+    "privacyTitle": "Privacy",
+    "privacy": "LifePeek has no accounts, no ads, no cookies and no analytics, and collects no personal data.",
+    "privacyLink": "Read the privacy page"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "updated": "Last updated: <date of launch>",
+    "summary": "**Short version: LifePeek does not ask for, collect or store anything about you.** There are no accounts, no logins, no ads, no cookies and no tracking.",
+    "sections": [
+      {
+        "title": "What stays on your device",
+        "intro": ["LifePeek saves a few things **in your own browser only**. They are never sent to us:"],
+        "items": [
+          "your language (English or Hindi), whether Projector mode is on, and whether you have closed the \"not medical advice\" note;",
+          "a one-time note that the page has just reloaded after an update error (deleted when you close the tab);",
+          "a copy of the app, so it works offline in class;",
+          "the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you."
+        ],
+        "outro": ["You can delete all of this by clearing the site data for lifepeek.vercel.app in your browser settings."]
+      },
+      {
+        "title": "Reporting a mistake",
+        "intro": [
+          "When you press **Report a mistake**, LifePeek opens a **GitHub issue** in a new tab with your report already filled in. **Nothing is sent to us. Your report text reaches GitHub only inside the link that opens the form, and nothing is published until you press Submit there.** You choose whether to send it."
+        ],
+        "items": [
+          "GitHub issues are **public**. Anyone can read them.",
+          "You need a GitHub account, and GitHub only allows accounts for people aged 13 and over. If you are younger, ask your teacher to send the report.",
+          "GitHub's own privacy statement applies to your account and the issue: https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement",
+          "**Don't type your name, school, phone number, email or any health information** in the report. Just say what is wrong and, if you can, where the right number comes from.",
+          "If you posted something by mistake, ask us (see \"Contact\" below) and we will delete the issue."
+        ]
+      },
+      {
+        "title": "Hosting",
+        "intro": [
+          "The app is served by Vercel, a web hosting company. Like every website, Vercel's servers see your IP address and browser type when your device downloads the app, and may keep this in logs for a limited time, for security and to keep the site running, under Vercel's privacy policy: https://vercel.com/legal/privacy-policy. We do not use these logs to find out who you are, and we do not combine them with anything else."
+        ],
+        "items": [
+          "**Analytics are switched off.** We do not use Vercel Analytics, Google Analytics or any other tracker.",
+          "Fonts and pictures are part of the app, so your browser does not contact Google or other services."
+        ]
+      },
+      {
+        "title": "How long we keep things",
+        "items": [
+          "**On our side: nothing**, because we don't receive anything about you.",
+          "Reports on GitHub stay public until they are deleted. We delete any report that contains personal details as soon as we see it.",
+          "If we later add our own report form, we will update this page **before** it goes live. The plan is: no name or email fields, IP addresses used only for a moment to stop spam (never saved), server logs deleted within 14 days, and reports deleted within 90 days after they are handled."
+        ]
+      },
+      {
+        "title": "Children and India's data protection law",
+        "intro": [
+          "LifePeek is made for school students. India's **Digital Personal Data Protection Act, 2023 (DPDP Act)** protects personal data, with extra care for children. We follow it by not collecting personal data at all, so there is nothing to ask parents' consent for. If this ever changes, we will update this page first."
+        ]
+      },
+      {
+        "title": "Contact (grievances)",
+        "intro": ["If you have a question or a complaint about privacy, or want something deleted:"],
+        "items": ["open an issue: https://github.com/Sarthaks-24/lifepeek/issues, or", "email: **<project email>**"],
+        "outro": ["Maintainer: {{name}} (GitHub: @Sarthaks-24). We aim to reply within 7 days."]
+      },
+      {
+        "title": "Not medical advice",
+        "intro": [
+          "LifePeek is an **educational model of a typical healthy adult**. Times and blood-sugar values are typical ranges and vary a lot between people. **It is not medical advice.** Do not use it to make health, diet or medical decisions. If you have diabetes or any health concern, talk to a doctor."
+        ]
+      }
+    ]
   }
 }

@@ -42,7 +42,8 @@ npm run dev        # web app → http://localhost:5173
 npm run dev:api    # optional API for "report a mistake" → http://localhost:8787
 ```
 
-The web app works without the API: links carry the whole comparison, and error reports fall back to a GitHub issue.
+The web app works without the API: links carry the whole comparison, and error reports open as a GitHub issue.
+To send reports to the local API instead, put `VITE_API_URL=/api` in `apps/web/.env.development.local`.
 
 ```bash
 npm run check      # validate foods, typecheck, unit tests, production build
@@ -71,7 +72,7 @@ The validator rejects numbers that don't add up.
 
 ## Deploy
 
-- **Web:** any static host. `npm run build -w @lifepeek/web` writes `apps/web/dist`. Rewrite all paths to `index.html` (`vercel.json` is included). Set `VITE_API_URL` if the API is on another origin.
+- **Web:** any static host. `npm run build -w @lifepeek/web` writes `apps/web/dist`. Rewrite all paths to `index.html` (`vercel.json` is included). Leave `VITE_API_URL` empty: reports then open as a GitHub issue and the app sends nothing. Set it only if you run the API.
 - **API:** any Node 20+ host. Run `npm start -w @lifepeek/api` with these settings (see `apps/api/.env.example`):
   - `DATABASE_URL`: a Turso/libSQL URL, or `file:lifepeek.db`
   - `DATABASE_AUTH_TOKEN`: the database token

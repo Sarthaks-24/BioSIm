@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { readPref, writePref } from '../lib/prefs.ts'
 import { INK, ORGAN_COLOR } from '../lib/colors.ts'
+import { MAKER } from '../lib/credits.ts'
+import { useCanonical } from '../hooks/useCanonical.ts'
+import MedicalNote from './MedicalNote.tsx'
 
 function Logo() {
   // A stylized stomach-and-gut mark: the loop the app is about.
@@ -30,6 +33,9 @@ export default function Layout() {
     writePref('projector', projector ? '1' : '0')
   }, [projector])
 
+  useCanonical()
+
+  const footerLink = 'inline-block py-1 underline-offset-2 hover:text-ink hover:underline'
   const nav = ({ isActive }: { isActive: boolean }) =>
     `rounded-full px-3 py-1.5 text-sm font-semibold ${isActive ? 'bg-ink text-white' : 'hover:bg-sunk'}`
 
@@ -82,9 +88,37 @@ export default function Layout() {
       </main>
 
       <footer className="no-print border-t border-rule">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-sm text-ink-2">
-          <p>{t('disclaimer.short')}</p>
-          <p className="tabular">{t('science.version', { version: MODEL_VERSION })}</p>
+        <div className="mx-auto max-w-7xl space-y-3 px-4 py-5 text-sm text-ink-2">
+          <MedicalNote text="short" />
+          <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <li>
+              <a href={MAKER.github} target="_blank" rel="noreferrer" className={footerLink}>
+                {t('footer.madeBy', { name: MAKER.name })}
+              </a>
+            </li>
+            <li>
+              <Link to="/about" className={footerLink}>
+                {t('footer.about')}
+              </Link>
+            </li>
+            <li>
+              <Link to="/privacy" className={footerLink}>
+                {t('footer.privacy')}
+              </Link>
+            </li>
+            <li>
+              <Link to="/about#licences" className={footerLink}>
+                {t('footer.licences')}
+              </Link>
+            </li>
+            <li>
+              {/* A plain file on the server, not an app page: a normal link, not a router link. */}
+              <a href="/THIRD_PARTY_NOTICES.txt" className={footerLink}>
+                {t('footer.notices')}
+              </a>
+            </li>
+            <li className="tabular">{t('footer.model', { version: MODEL_VERSION })}</li>
+          </ul>
         </div>
       </footer>
       <ScrollRestoration />
