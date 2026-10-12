@@ -53,6 +53,7 @@
     "reportError": "Report a mistake",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
     "oldLink": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
+    "newerLink": "This link was made with a newer version of LifePeek, so this version may show it differently.",
     "keyboardHint": "Keys: Space play/pause, ← → move 10 minutes, Shift + ← → move 1 hour",
     "afterEating": "after eating",
     "paceValue": "Play 2 days in {{duration}}",
@@ -530,5 +531,35 @@
   },
   "lifeProcess": {
     "nutrition": "Nutrition"
+  },
+  "stage": {
+    "meal": "Meal",
+    "body": "The body",
+    "bodyLabel": "The body, digesting {{meal}}",
+    "empty": "Pick a food to start the clock.",
+    "examples": "Foods to start with",
+    "layer": "Body system",
+    "graphs": "Graphs",
+    "strips": {
+      "gut": "Stomach",
+      "blood": "Blood sugar",
+      "energy": "Energy"
+    },
+    "clock": "Meal clock",
+    "keysHint": "Keys: ← → move 10 minutes, Shift + ← → move 1 hour, Page Down and Page Up go to the next or previous key moment, Home and End go to the start or the end.",
+    "search": "Search foods",
+    "noMatch": "No food matches “{{query}}”.",
+    "inMeal": "In the meal",
+    "mealFull": "The meal already has {{n}} foods, the most it can hold.",
+    "close": "Close",
+    "thisMeal": "This meal",
+    "keptMeal": "The kept meal"
+  },
+  "keep": {
+    "button": "Keep to compare",
+    "help": "Keeps this meal as a dashed line on the graphs. Then change the meal and compare.",
+    "already": "This meal is the one kept",
+    "tag": "Kept: {{meal}}",
+    "remove": "Stop comparing with {{meal}}"
   }
 }

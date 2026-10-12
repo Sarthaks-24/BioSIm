@@ -2,12 +2,14 @@ import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import './styles.css'
-import './i18n/index.ts'
-import Layout from './components/Layout.tsx'
+import { i18nReady } from './i18n/index.ts'
+import Layout, { type RouteHandle } from './components/Layout.tsx'
 import Home from './pages/Home.tsx'
 import { ErrorPage, NotFound } from './pages/Misc.tsx'
 
 const Simulator = lazy(() => import('./pages/Simulator.tsx'))
+// The v2 screen, built next to v1 until WP-19 swaps it in (unlisted: no nav link).
+const Stage = lazy(() => import('./pages/Stage.tsx'))
 const Teach = lazy(() => import('./pages/Teach.tsx'))
 const Science = lazy(() => import('./pages/Science.tsx'))
 const About = lazy(() => import('./pages/About.tsx'))
@@ -22,6 +24,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/sim', element: page(<Simulator />) },
+      { path: '/next', element: page(<Stage />), handle: { fit: true } satisfies RouteHandle },
       { path: '/teach', element: page(<Teach />) },
       { path: '/science', element: page(<Science />) },
       { path: '/about', element: page(<About />) },
@@ -53,8 +56,12 @@ setTimeout(() => {
   }
 }, 10_000)
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
-)
+// Draw once the first language is ready (Hindi is fetched on demand). If it fails to load, draw
+// anyway: every key falls back to English.
+const draw = () =>
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  )
+void i18nReady.then(draw, draw)

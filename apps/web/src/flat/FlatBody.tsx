@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Vector3, type Curve } from 'three'
 import { activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
-import { useSim } from '../state/sim.ts'
+import { useBodyClock } from '../hooks/useBodyClock.ts'
 import {
   ESOPHAGUS,
   LARGE_INTESTINE,
@@ -40,20 +40,21 @@ const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.25 }
 export default function FlatBody({ sim, label }: { sim: Simulation; label: string }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const { t } = useTranslation()
+  const clock = useBodyClock()
 
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
-    const draw = () => paint(canvas, sim, useSim.getState().time, (s) => t(`stages.${s}.short`))
+    const draw = () => paint(canvas, sim, clock.now(), (s) => t(`stages.${s}.short`))
     draw()
-    const unsub = useSim.subscribe((s, prev) => s.time !== prev.time && draw())
+    const unsub = clock.subscribe(draw)
     const ro = new ResizeObserver(draw)
     ro.observe(canvas)
     return () => {
       unsub()
       ro.disconnect()
     }
-  }, [sim, t])
+  }, [sim, t, clock])
 
   return <canvas ref={ref} role="img" aria-label={label} className="block h-full w-full" />
 }

@@ -52,16 +52,17 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 |---|---|
 | `pages/` | One page per route: home, simulator, teach, science, error and 404 |
 | `components/` | UI pieces: meal picker, verdict line, timeline, stage panel, charts, lesson view, share, feedback |
+| `components/kit/`, `components/stage/` | v2: the flat component kit, and the zones of the one-screen stage at `/next` (`pages/Stage.tsx`): meal bar, food sheet, keep button and kept tag, body pane, layer bar, graph column, notes, dock slider |
 | `anatomy/` | One file per organism (`human.ts`): the gut curves, torso outline and particle positions shared by 3D and flat views |
 | `registry/` | Organisms, systems and organs as data (`human/`), checked by `registry.test.ts`. A new system is one entry plus a flat and a 3D layer |
 | `three/` | WebGL scene and organ models (lazy-loaded) |
 | `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
 | `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
 | `state/clock.ts`, `state/motion.ts` | v2 (`/next`): the meal clock (`useClock`, read per frame without re-rendering; `useMealClock` runs playback) and the one reduced-motion flag (`useMotion`) |
-| `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync` |
+| `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync`; v2: `useRun`, `useLinkSync`, `useBodyClock` (which clock the shared bodies follow) |
 | `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
-| `data/` | Loads the food files at build time |
-| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry) |
+| `data/` | Loads the food files at build time (a quick field check in the browser; the full schema runs in CI and `foods.test.ts`) |
+| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry). English is bundled; Hindi is fetched when first needed |
 
 ## Performance
 
@@ -69,3 +70,6 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 - Both bodies share one set of geometry, and particles are instanced: one draw call per
   nutrient.
 - The 3D chunk loads only on the simulator page. The PWA precaches everything for offline use.
+- three.js is bundled from its source modules (`vite.config.ts`), so the flat body's few maths
+  classes ride with the page and the rest stays in the lazy 3D chunk, which only a device with
+  WebGL downloads. `npm run budget -w @lifepeek/web` checks the route sizes after a build.

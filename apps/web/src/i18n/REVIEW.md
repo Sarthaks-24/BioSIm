@@ -229,6 +229,38 @@ in later work packages). Notes for the reviewer:
 | `units.mgdl` | {{n}} mg/dL | {{n}} mg/dL | draft |
 | `units.kcalPerH` | {{n}} kcal/h | {{n}} किलो कैलोरी/घंटा | draft |
 
+## Stage at /next (WP-11)
+
+The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin to compare"; the kept run is drawn as a dashed line (टूटी रेखा) on the graphs.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `sim.newerLink` | This link was made with a newer version of LifePeek, so this version may show it differently. | यह लिंक LifePeek के नए संस्करण से बना था, इसलिए यह संस्करण इसे कुछ अलग दिखा सकता है। | draft |
+| `stage.meal` | Meal | भोजन | draft |
+| `stage.body` | The body | शरीर | draft |
+| `stage.bodyLabel` | The body, digesting {{meal}} | शरीर, {{meal}} को पचाते हुए | draft |
+| `stage.empty` | Pick a food to start the clock. | घड़ी शुरू करने के लिए कोई खाद्य पदार्थ चुनें। | draft |
+| `stage.examples` | Foods to start with | शुरू करने के लिए खाद्य पदार्थ | draft |
+| `stage.layer` | Body system | शरीर का तंत्र | draft |
+| `stage.graphs` | Graphs | ग्राफ़ | draft |
+| `stage.strips.gut` | Stomach | आमाशय | draft |
+| `stage.strips.blood` | Blood sugar | रक्त शर्करा | draft |
+| `stage.strips.energy` | Energy | ऊर्जा | draft |
+| `stage.clock` | Meal clock | भोजन की घड़ी | draft |
+| `stage.keysHint` | Keys: ← → move 10 minutes, Shift + ← → move 1 hour, Page Down and Page Up go to the next or previous key moment, Home and End go to the start or the end. | कुंजियाँ: ← → 10 मिनट आगे-पीछे, Shift + ← → 1 घंटा आगे-पीछे, Page Down और Page Up अगले या पिछले मुख्य पल पर, Home और End शुरुआत या अंत पर। | draft |
+| `stage.search` | Search foods | खाद्य पदार्थ खोजें | draft |
+| `stage.noMatch` | No food matches “{{query}}”. | “{{query}}” से मेल खाता कोई खाद्य पदार्थ नहीं मिला। | draft |
+| `stage.inMeal` | In the meal | भोजन में है | draft |
+| `stage.mealFull` | The meal already has {{n}} foods, the most it can hold. | भोजन में पहले से {{n}} खाद्य पदार्थ हैं, इससे ज़्यादा नहीं जोड़े जा सकते। | draft |
+| `stage.close` | Close | बंद करें | draft |
+| `stage.thisMeal` | This meal | यह भोजन | draft |
+| `stage.keptMeal` | The kept meal | रखा गया भोजन | draft |
+| `keep.button` | Keep to compare | तुलना के लिए रखें | draft |
+| `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | इस भोजन को ग्राफ़ पर टूटी रेखा के रूप में रखता है। फिर भोजन बदलें और तुलना करें। | draft |
+| `keep.already` | This meal is the one kept | यही भोजन रखा गया है | draft |
+| `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
+| `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___

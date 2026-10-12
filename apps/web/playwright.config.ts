@@ -21,7 +21,7 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'projector',
-    testMatch: ['gate.spec.ts'],
+    testMatch: ['gate.spec.ts', 'stage.spec.ts'],
     use: {
       viewport: { width: 1280, height: 800 },
       launchOptions: webgl,
@@ -31,12 +31,12 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'phone',
-    testMatch: ['gate.spec.ts', 'hindi.spec.ts'],
+    testMatch: ['gate.spec.ts', 'hindi.spec.ts', 'stage.spec.ts'],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },
   {
     name: 'reduced',
-    testMatch: ['motion.spec.ts'],
+    testMatch: ['motion.spec.ts', 'stage.spec.ts'],
     use: { viewport: desktop, reducedMotion: 'reduce', launchOptions: webgl },
   },
   {

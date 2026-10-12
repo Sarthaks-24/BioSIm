@@ -64,3 +64,32 @@ export const InfoIcon = () => (
     <circle cx="10" cy="6.25" r="0.4" fill="currentColor" />
   </Icon>
 )
+
+/** Keep to compare: a solid line over a dashed one (this meal, and the kept run it will draw). */
+export const KeepIcon = () => (
+  <Icon>
+    <path d="M3 7.5h14" />
+    <path d="M3 13.5h3m3.5 0h3m3.5 0h1" />
+  </Icon>
+)
+
+/** Copy link: two chain links. */
+export const LinkIcon = () => (
+  <Icon width="18" height="18">
+    <path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5l-1 1" />
+    <path d="M11.5 8.5a3.5 3.5 0 0 0-5 0L4 11a3.5 3.5 0 0 0 5 5l1-1" />
+  </Icon>
+)
+
+export const SearchIcon = () => (
+  <Icon width="18" height="18">
+    <circle cx="8.75" cy="8.75" r="5.25" />
+    <path d="m12.75 12.75 4 4" />
+  </Icon>
+)
+
+export const CheckIcon = () => (
+  <Icon width="16" height="16">
+    <path d="m4.5 10.5 3.5 3.5 7.5-8" />
+  </Icon>
+)

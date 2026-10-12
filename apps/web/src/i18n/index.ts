@@ -1,7 +1,6 @@
-import i18n from 'i18next'
+import i18n, { type BackendModule } from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from './en.json'
-import hi from './hi.json'
 import { readPref, writePref } from '../lib/prefs.ts'
 
 export const LANGUAGES = ['en', 'hi'] as const
@@ -13,15 +12,41 @@ function initialLanguage(): Language {
   return navigator.language?.toLowerCase().startsWith('hi') ? 'hi' : 'en'
 }
 
-void i18n.use(initReactI18next).init({
-  resources: { en: { translation: en }, hi: { translation: hi } },
-  lng: initialLanguage(),
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false },
-  returnObjects: true,
-})
+/**
+ * English is bundled with the app: it is the fallback for every key. Hindi is its own file,
+ * fetched when it is first needed (at start for a Hindi reader, or on switching), so English
+ * readers don't download it: about 13 KB gzipped off every page (roadmap A8 budgets). The service
+ * worker caches it with the rest of the app, so switching works offline too.
+ */
+const locales: BackendModule = {
+  type: 'backend',
+  init: () => undefined,
+  read: (lng, _ns, done) => {
+    if (lng === 'hi')
+      import('./hi.json').then(
+        (m) => done(null, m.default),
+        (e: Error) => done(e, false),
+      )
+    else done(null, lng === 'en' ? en : {})
+  },
+}
 
-document.documentElement.lang = i18n.language
+const first = initialLanguage()
+
+/** Resolves once the first language is ready; main.tsx draws the app after it (never in a half-loaded language). */
+export const i18nReady = i18n
+  .use(locales)
+  .use(initReactI18next)
+  .init({
+    resources: { en: { translation: en } },
+    partialBundledLanguages: true,
+    lng: first,
+    fallbackLng: 'en',
+    interpolation: { escapeValue: false },
+    returnObjects: true,
+  })
+
+document.documentElement.lang = first
 i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
   writePref('lang', lng)
