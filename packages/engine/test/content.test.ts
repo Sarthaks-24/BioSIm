@@ -24,13 +24,12 @@ describe('real foods', () => {
     }
   })
 
-  it('home page claim: cola is half out of the stomach in about half an hour; burger + fries takes hours', () => {
+  it('home page claim: half a can of cola leaves the stomach in about half an hour; half a burger + fries takes over four hours', () => {
     const cola = run('cola:1').events.stomachHalfEmptyMin!
-    const burger = run('cheeseburger:1,fries:1')
+    const burger = run('cheeseburger:1,fries:1').events.stomachHalfEmptyMin!
     expect(cola).toBeGreaterThanOrEqual(20)
     expect(cola).toBeLessThanOrEqual(45)
-    expect(burger.events.stomachHalfEmptyMin!).toBeGreaterThan(150)
-    expect(burger.events.stomach90EmptyMin!).toBeGreaterThan(4 * 60)
+    expect(burger).toBeGreaterThan(4 * 60)
   })
 
   it('lesson claim: roti + dal gives a gentler blood sugar curve than white rice', () => {

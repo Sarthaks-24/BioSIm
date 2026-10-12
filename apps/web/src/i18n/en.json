@@ -6,10 +6,11 @@
     "language": "भाषा: हिन्दी",
     "languageLabel": "Switch to Hindi",
     "projector": "Projector mode",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "main": "Main"
   },
   "home": {
-    "headline": "A can of cola leaves your stomach in about half an hour. A burger with fries can take four.",
+    "headline": "Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours.",
     "lead": "LifePeek shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds.",
     "cta": "Compare two meals",
     "previewCaption": "Food still in the stomach after eating — computed by the LifePeek model",
@@ -94,7 +95,7 @@
     },
     "smallIntestine": {
       "name": "Small intestine",
-      "what": "Chyme moves through about 6 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption.",
+      "what": "Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption.",
       "chemistry": "Bile from the liver breaks fat into tiny droplets. Pancreatic enzymes — amylase, lipase, trypsin — and enzymes on the villi finish breaking food into sugars, amino acids, fatty acids and glycerol.",
       "absorbed": "Most nutrients and most of the water are absorbed here into the blood and lymph.",
       "fact": "The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court.",
@@ -253,7 +254,7 @@
       "mgdl": "milligrams of sugar in each decilitre (a tenth of a litre) of blood",
       "g": "grams (1000 g = 1 kg)",
       "kcal": "kilocalories of food energy",
-      "kcalPerH": "kilocalories of food energy per hour"
+      "kcalPerH": "kilocalories of energy per hour"
     }
   },
   "anatomy": {
@@ -379,7 +380,7 @@
     "footer": "Stats",
     "title": "LifePeek in numbers",
     "lead": "Only numbers that are already public. They are updated once a week.",
-    "noTracking": "**We don't count visitors.** LifePeek has no server, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose.",
+    "noTracking": "**We don't count visitors.** LifePeek has no server of its own, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose.",
     "mistakesTitle": "Mistakes reported and fixed",
     "mistakesLead": "Counted from the public “Report a mistake” issues on GitHub, over the last {{weeks}} weeks. A mistake counts as fixed when its issue is closed as done.",
     "loading": "Loading the numbers…",
@@ -504,13 +505,13 @@
       "inRate": {
         "name": "Energy coming in",
         "short": "Coming in",
-        "desc": "Food energy entering the blood each hour, from absorbed carbohydrate, protein and fat.",
-        "summary": "In the first {{time}}, about {{in}} kcal from this meal entered the blood, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later."
+        "desc": "Food energy entering the body each hour, from absorbed carbohydrate, protein and fat.",
+        "summary": "In the first {{time}}, about {{in}} kcal from this meal entered the body, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later."
       },
       "inTotal": {
         "name": "Energy taken in so far",
         "short": "Taken in",
-        "desc": "Food energy from this meal that has entered the blood so far."
+        "desc": "Food energy from this meal that has entered the body so far."
       },
       "usedRate": {
         "name": "Energy used at rest",
@@ -546,10 +547,10 @@
   "limits": {
     "glucoseTail": "After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner.",
     "glucoseBand": "The shaded band is a best guess of how much healthy people differ.",
-    "energyInAtwater": "Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out.",
+    "energyInAtwater": "Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted.",
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
-    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too."
+    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people."
   },
   "profiles": {
     "adult-ref": {
