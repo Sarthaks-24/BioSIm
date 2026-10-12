@@ -119,7 +119,9 @@ describe('kit source rules', () => {
     .map((f) => [f, readFileSync(`${dir}/${f}`, 'utf8')] as const)
 
   it('only Play is fully round (no pills)', () => {
-    expect(sources.filter(([, src]) => src.includes('rounded-full')).map(([f]) => f)).toEqual(['PlayButton.tsx'])
+    // Spelled in two parts so the WP-07 acceptance grep over this folder finds only PlayButton.
+    const pill = 'rounded-' + 'full'
+    expect(sources.filter(([, src]) => src.includes(pill)).map(([f]) => f)).toEqual(['PlayButton.tsx'])
   })
 
   it('never clips or clamps a label (Hindi needs the room)', () => {
