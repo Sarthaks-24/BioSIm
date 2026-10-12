@@ -140,10 +140,9 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
             visibility="hidden"
             className={spec.tone === 'active' ? 'text-ink' : 'text-ink-2'}
           >
-            {/* 1 px leaders (1.5 px to the active organ); 2 px and 3 px on the projector (--callout-leader). */}
             <line
               stroke="currentColor"
-              className={spec.tone === 'active' ? '[stroke-width:calc(var(--callout-leader)*1.5)]' : '[stroke-width:var(--callout-leader)]'}
+              strokeWidth={spec.tone === 'active' ? 1.5 : 1}
               strokeOpacity={spec.tone === 'context' ? 0.6 : 0.85}
             />
             <circle r={spec.tone === 'active' ? 3.5 : 2.75} fill="currentColor" stroke="white" strokeWidth={1.25} />
@@ -158,7 +157,7 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
             labels.current[spec.key] = el
           }}
           style={{ visibility: 'hidden' }}
-          className={`absolute top-0 left-0 rounded-full px-2 py-0.5 text-(length:--callout-text) leading-tight whitespace-nowrap ${TONE_CLASS[spec.tone]}`}
+          className={`absolute top-0 left-0 rounded-full px-2 py-0.5 text-xs leading-tight whitespace-nowrap ${TONE_CLASS[spec.tone]}`}
         >
           {spec.text}
         </span>

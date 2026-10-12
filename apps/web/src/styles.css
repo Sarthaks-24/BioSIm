@@ -87,23 +87,14 @@
   color-scheme: light;
   /*
    * Graph marks (components/graphs). Lines 2 px (2.5 px on phones, where they are drawn smaller),
-   * the kept run dashed 6 4 (KEPT_DASH in colors.ts), the "how people differ" band a light wash
-   * with no edge, a 1 px grid, a 5 px ring on the marked moment, a 2 px playhead. Readouts are
-   * caption size. The projector block below makes all of these heavier (G9).
+   * the kept run dashed 6 4 (KEPT_DASH in colors.ts), the "how people differ" band a light wash.
+   * WP-17 makes them heavier for the projector.
    */
   --strip-line: 2.5px;
   --strip-kept-dash: 6 4;
   --strip-band-opacity: 0.14;
-  --strip-band-edge: 0px;
-  --strip-grid: 1px;
-  --strip-ring: 5px;
-  --strip-playhead: 2px;
-  --strip-readout: 1em;
   /* A Shelf-coloured halo round labels drawn over the lines, so they stay readable where they cross. */
   --strip-halo: 0 0 2px var(--color-shelf), 0 0 2px var(--color-shelf), 0 0 4px var(--color-shelf), 0 0 4px var(--color-shelf);
-  /* Organ labels on the body: caption-sized words on 1 px leaders. */
-  --callout-text: 0.75rem;
-  --callout-leader: 1px;
 }
 @media (width >= 64rem) {
   :root {
@@ -146,18 +137,10 @@ html[data-contrast='high'] {
   font-size: 112.5%;
   --text-caption: 1rem;
   --text-micro: 0.875rem;
-  /* Graph marks: thick lines and a solid grid survive a washed-out projector; the band gets twice
-     the wash and an edge line, because a faint fill vanishes. Dashes grow with the line. */
+  /* Graph lines 4 px, their dashes longer, the band twice the wash (rules below add the rest). */
   --strip-line: 4px;
   --strip-kept-dash: 10 7;
   --strip-band-opacity: 0.28;
-  --strip-band-edge: 1.5px;
-  --strip-grid: 1.5px;
-  --strip-ring: 7px;
-  --strip-playhead: 3px;
-  --strip-readout: 1.3334rem;
-  --callout-text: 1rem;
-  --callout-leader: 2px;
 }
 html[data-contrast='high']:lang(hi) {
   font-size: 119.5%;
@@ -171,6 +154,48 @@ html[data-contrast='high'] {
   --color-sunk2: #e6e6e6;
   --color-rule2: #4f5d6b;
   --color-grid: #b8c2cc;
+}
+
+/*
+ * Projector marks (G9), in CSS so the graphs and the body need no extra script: a solid 1.5 px
+ * grid; the band's edge drawn, because a faint fill vanishes; a bigger ring on the marked moment;
+ * a 3 px playhead with bigger dots; readouts 24 px; organ labels 18 px on 2 px leaders.
+ */
+html[data-contrast='high'] {
+  & figure svg .stroke-grid {
+    stroke-width: 1.5px;
+  }
+  & [data-line='band'] {
+    stroke: var(--color-run);
+    stroke-opacity: 0.55;
+    stroke-width: 1.5px;
+  }
+  & [data-line] ~ circle {
+    r: 7px;
+    stroke-width: 3px;
+  }
+  & [data-playhead] {
+    width: 3px;
+    margin-left: -0.5px;
+    & > span {
+      width: 1rem;
+      height: 1rem;
+    }
+    & > .border-kept {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
+  & [data-readout] {
+    font-size: 1.3334rem;
+    line-height: 1.25;
+  }
+  & [data-callout] {
+    font-size: 1rem;
+  }
+  & svg:has(~ [data-callout]) line {
+    stroke-width: 2px;
+  }
 }
 
 /* v2 type in Hindi: Devanagari matras need taller lines, and captions never drop below 14 px. */

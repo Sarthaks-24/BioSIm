@@ -42,7 +42,7 @@ for (const lang of ['en', 'hi'] as const) {
 
     // G9: y ticks and every other caption ≥ 18 px, readouts ≥ 24 px, organ labels ≥ 18 px.
     for (const size of await styles(page, '[data-axis="y"] span', 'font-size')) expect(px(size), 'y tick').toBeGreaterThanOrEqual(18)
-    const readout = page.locator('figure figcaption .font-semibold.whitespace-nowrap').filter({ visible: true }).first()
+    const readout = page.locator('figure [data-readout]').filter({ visible: true }).first()
     await expect(readout).toHaveText(/\d/)
     expect(px(await readout.evaluate((el) => getComputedStyle(el).fontSize)), 'readout').toBeGreaterThanOrEqual(24)
     for (const size of await styles(page, '[data-callout]', 'font-size')) expect(px(size), 'organ label').toBeGreaterThanOrEqual(18)
