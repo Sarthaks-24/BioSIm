@@ -16,5 +16,24 @@ export function mealNames(items: readonly MealItem[], lang: string): string {
     .join(' + ')
 }
 
+/** A food's name without its details: "Roti / chapati (whole wheat)" → "Roti", "Dal (masoor)" → "Dal". */
+export const shortFoodName = (name: string) =>
+  name
+    .replace(/\s*\([^)]*\)/g, '')
+    .split(' / ')[0]!
+    .trim()
+
+/**
+ * A meal in few words, for the graphs' legend: short food names, the first two foods and "…" for
+ * the rest ("Roti ×2 + Dal", "Cheeseburger + French fries + …"). The meal bar has the full names.
+ */
+export function shortMealNames(items: readonly MealItem[], lang: string): string {
+  const names = items.slice(0, 2).map((i) => {
+    const name = shortFoodName(localized(lookupFood(i.foodId)?.name, lang))
+    return i.servings === 1 ? name : `${name} ×${i.servings}`
+  })
+  return items.length > 2 ? `${names.join(' + ')} + …` : names.join(' + ')
+}
+
 /** Total food energy, rounded to a whole kcal (what the meal bar shows). */
 export const mealKcalRounded = (items: readonly MealItem[]) => Math.round(mealKcal([...items], lookupFood))

@@ -34,6 +34,8 @@ interface RunStripProps {
   series: ChartableSeries
   run: Simulation
   kept: Simulation | null
+  /** The meals' short names, for the legend. */
+  runName: string
   keptName: string
   profile: ProfileId
   /** The y range, if the organism's registry overrides the catalog's. */
@@ -55,7 +57,7 @@ const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
  * Energy is two lines on one kcal/h axis: coming in (this meal) and used at rest (the same for
  * every meal), each with its running total; it is described, never scored (plan-graphs §3.8).
  */
-export function RunStrip({ series, run, kept, keptName, profile, range, second, className }: RunStripProps) {
+export function RunStrip({ series, run, kept, runName, keptName, profile, range, second, className }: RunStripProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   // The run's table holds only active signals.
@@ -110,6 +112,7 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
     <SignalStrip
       series={series}
       kept={kept?.signals.get(id) ?? null}
+      runName={runName}
       keptName={keptName}
       marker={marker}
       className={className}

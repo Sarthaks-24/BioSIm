@@ -309,7 +309,6 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `graph.limits` | Known limits | ज्ञात सीमाएँ | draft |
 | `graph.sources` | Sources | स्रोत | draft |
 | `graph.foodData` | Food data: | भोजन के आँकड़े: | draft |
-| `graph.kept` | Kept | रखा गया | draft |
 | `graph.stretched` | Scale stretched to fit this meal | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
 | `graph.range` | {{low}}–{{high}} | {{low}}–{{high}} | draft |
 | `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |

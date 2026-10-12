@@ -15,7 +15,8 @@ interface Props {
   series: ChartableSeries
   /** The kept run's series for the same signal: a dashed grey ghost under the live line (G7). */
   kept: Series | null
-  /** The kept meal's name, for the ghost's end label ("Kept: Cola"). */
+  /** The meals' short names: the legend says which line is which ("Cola", "Kept: Cheeseburger + French fries"). */
+  runName: string
   keptName: string
   /** One moment ringed on the live line at `value`, with a short label ("Highest: 121"). */
   marker: { atMin: number; value: number; label: string } | null
@@ -79,7 +80,9 @@ const labelStyle = (b: Box | null): React.CSSProperties => (b ? { left: b.x, top
  * - x is the timeline's squeezed scale, so it lines up with the dock below; y is the signal's
  *   fixed range (`displayRange`), the same for every meal, stretched once only if a value would
  *   not fit. Labels are HTML (they wrap, scale and get Devanagari line height); the SVG holds lines.
- * - The kept run is a dashed grey line with an end label, never told apart by hue alone.
+ * - The kept run is a dashed grey line, never told apart by hue alone: the legend above the plot
+ *   names both meals ("— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g"). No words sit at
+ *   the lines' ends (they landed on the lines, council 2026-10-13).
  * - A second line (energy used at rest, WP-13) shares the axis: orange, named and rated in the
  *   readouts with its own status, labelled on the line itself, never given a kept ghost.
  * - The playhead and the readouts follow the meal clock outside React (Playhead). Dragging on the
@@ -88,6 +91,7 @@ const labelStyle = (b: Box | null): React.CSSProperties => (b ? { left: b.x, top
 export default function SignalStrip({
   series,
   kept,
+  runName,
   keptName,
   marker,
   info,
@@ -127,7 +131,6 @@ export default function SignalStrip({
       run: run.d,
       band: series.low && series.high ? bandPath(samplesOf(series.high), samplesOf(series.low), x, y) : null,
       kept: keptLine?.d ?? null,
-      keptEnd: kept ? { x: width, y: y(kept.values[kept.values.length - 1]!) } : null,
       second: secondLine?.d ?? null,
       secondEndY: second ? y(second.series.values[second.series.values.length - 1]!) : null,
       marker: marker ? { x: x(marker.atMin), y: y(marker.value) } : null,
@@ -221,12 +224,20 @@ export default function SignalStrip({
       className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}
     >
       {/*
-       * Phones: the tab above already names the graph, so the header is one row: values, status, ⓘ
-       * (a two-line graph: status and ⓘ, then its longer values under them).
-       * From 1024 px up: name, status and ⓘ, then the values under them.
+       * From 1024 px up: name, status and ⓘ, then the legend under them, naming both meals.
+       * Phones: the tab above names the graph and the meal bar right above names this meal (same
+       * line sample), so the header is: value, status, ⓘ; with a kept meal, the kept line's legend
+       * entry ("- - Kept: Cheeseburger + French fries 98 mg/dL") gets the next row to itself; a
+       * two-line graph: status and ⓘ, then its longer legend under them.
        */}
       <figcaption
-        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read'] ${named ? "gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']" : "[grid-template-areas:'read_status_info']"}`}
+        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read'] ${
+          named
+            ? "gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
+            : kept
+              ? "gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note']"
+              : "[grid-template-areas:'read_status_info']"
+        }`}
       >
         <span id={titleId} className="text-control font-semibold text-ink [grid-area:title] max-lg:sr-only">
           {name}
@@ -235,10 +246,19 @@ export default function SignalStrip({
           <StatusTag status={meta.status} />
         </span>
         <span className="[grid-area:info]">{info}</span>
-        <span className="tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read]">
-          <span className={group}>
+        {/* On a phone with a kept meal, the legend's entries are rows of the header grid (`contents`). */}
+        <span
+          className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${!named && kept ? 'max-lg:contents' : ''}`}
+        >
+          <span className={`${group} max-lg:[grid-area:read]`}>
             <LineSwatch />
-            <span className={named ? 'text-ink-2' : 'sr-only'}>{named ? t(`${meta.i18nKey}.short`) : `${t('stage.thisMeal')}: `}</span>
+            {/*
+             * A two-line graph names the line ("Coming in"); beside a kept meal, the meal names it
+             * (on a phone the meal bar above does). Alone, the graph's name says what the line is.
+             */}
+            <span className={named ? 'text-ink-2' : kept ? 'text-ink-2 max-lg:sr-only' : 'sr-only'}>
+              {named ? t(`${meta.i18nKey}.short`) : kept ? runName : `${t('stage.thisMeal')}: `}
+            </span>
             <span ref={runText} className="font-semibold whitespace-nowrap text-ink" />
             {totalSpan(runTotal)}
           </span>
@@ -252,13 +272,13 @@ export default function SignalStrip({
             </span>
           )}
           {kept && (
-            <span className={`${group} text-ink-2`}>
+            <span className={`${group} text-ink-2 max-lg:[grid-area:kept]`}>
               <LineSwatch kept />
-              {t('graph.kept')}
+              <span>{t('keep.tag', { meal: keptName })}</span>
               <span ref={keptText} className="font-semibold whitespace-nowrap" />
             </span>
           )}
-          {stretched && <span className="text-ink-2">{t('graph.stretched')}</span>}
+          {stretched && <span className="text-ink-2 max-lg:[grid-area:note]">{t('graph.stretched')}</span>}
         </span>
       </figcaption>
 
@@ -369,16 +389,6 @@ export default function SignalStrip({
               style={labelStyle(placed.second)}
             >
               {second.label}
-            </span>
-          )}
-          {/* A second line's label takes the right end; the kept line is then named in the readouts. */}
-          {paths?.keptEnd && !second && (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute right-1 max-w-[80%] text-right text-caption leading-tight text-ink-2 [text-shadow:var(--strip-halo)]"
-              style={{ bottom: height - paths.keptEnd.y + 5 }}
-            >
-              {t('keep.tag', { meal: keptName })}
             </span>
           )}
           <Playhead
