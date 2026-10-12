@@ -70,3 +70,15 @@ describe('real foods', () => {
     expect(salad?.riseMgDl.typical ?? 0).toBeLessThan(6)
   })
 })
+
+describe('food schema', () => {
+  const raw = JSON.parse(readFileSync(join(dir, 'cola.json'), 'utf8'))
+  const withUrl = (url: string) => ({ ...raw, sources: raw.sources.map((s: object, i: number) => (i === 0 ? { ...s, url } : s)) })
+
+  it('a source link must be http or https (the app renders it as a link)', () => {
+    expect(() => parseFood(withUrl('https://fdc.nal.usda.gov/food-details/1/nutrients'))).not.toThrow()
+    expect(() => parseFood(withUrl('http://example.org/table'))).not.toThrow()
+    for (const bad of ['javascript:alert(1)', 'data:text/html,<b>x</b>', 'ftp://example.org/x', 'mailto:a@example.org'])
+      expect(() => parseFood(withUrl(bad)), bad).toThrow()
+  })
+})
