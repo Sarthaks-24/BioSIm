@@ -78,7 +78,9 @@ export default function LineChart({ title, description, series, xMaxMin, yMax, y
     for (let i = Math.min(xMaxMin, low.length - 1); i >= 0; i -= step) bottom += `L${x(i).toFixed(1)},${y(low[i]!).toFixed(1)}`
     return `${top}${bottom}Z`
   }
-  const hours = Array.from({ length: Math.floor(xMaxMin / 60) + 1 }, (_, i) => i)
+  // Label every hour, or every other hour on long charts so the numbers don't collide.
+  const everyH = xMaxMin > 8 * 60 ? 2 : 1
+  const hours = Array.from({ length: Math.floor(xMaxMin / 60 / everyH) + 1 }, (_, i) => i * everyH)
 
   return (
     <figure className="min-w-0">
@@ -87,6 +89,7 @@ export default function LineChart({ title, description, series, xMaxMin, yMax, y
         <span id={`${id}-desc`} className="block text-sm text-ink-2">
           {description}
         </span>
+        <span className="mt-1 block text-xs font-semibold text-ink-2">{yUnit}</span>
       </figcaption>
       <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-labelledby={`${id}-desc`} style={{ fontSize: fs }}>
         {yTicks.map((v) => (
@@ -97,9 +100,6 @@ export default function LineChart({ title, description, series, xMaxMin, yMax, y
             </text>
           </g>
         ))}
-        <text x={M.left} y={M.top - 2} className="fill-ink-2" style={{ fontSize: fs * 0.85 }}>
-          {yUnit}
-        </text>
         {hours.map((h) => (
           <text key={h} x={x(h * 60)} y={H - M.bottom + fs * 1.2} textAnchor="middle" className="tabular fill-ink">
             {h}

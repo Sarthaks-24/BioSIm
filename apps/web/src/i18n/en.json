@@ -117,7 +117,7 @@
   },
   "charts": {
     "stomach": "Food left in the stomach",
-    "stomachDesc": "Percentage of what was eaten that is still in the stomach",
+    "stomachDesc": "Share of the meal still in the stomach (by its food energy; for water, by weight)",
     "glucose": "Blood sugar",
     "glucoseDesc": "Typical rise above the normal (fasting) level for a healthy adult. The shaded band shows how much people differ.",
     "where": "Where the meal has gone",
@@ -125,13 +125,14 @@
     "absorbed": "Absorbed into the body",
     "hoursAxis": "Hours after eating",
     "mgdlAxis": "mg/dL above normal",
-    "leftBody": "Left the body"
+    "leftBody": "Left the body",
+    "glucoseTail": "After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner."
   },
   "events": {
     "title": "Key moments",
     "half": "Half has left the stomach",
-    "colon": "Half the leftovers reach the large intestine",
-    "absorbed": "Nutrients mostly absorbed",
+    "colon": "Fibre (the leftovers) reaches the large intestine — half of it by",
+    "absorbed": "Nutrients mostly absorbed by",
     "exit": "Leftovers start leaving the body",
     "peak": "Blood sugar rise (above normal)",
     "peakValue": "+{{low}} to +{{high}} mg/dL",
@@ -142,7 +143,7 @@
     "peakAt": "highest after {{time}}",
     "noNutrients": "Nothing to absorb (no calories)",
     "exitHint": "Depends mostly on the person, not the meal",
-    "noLeftovers": "Almost nothing left over"
+    "noLeftovers": "Almost no fibre, so almost nothing left over"
   },
   "lesson": {
     "title": "Step by step",
@@ -197,13 +198,14 @@
       "Open the app once on Wi-Fi; after that it works offline.",
       "Every comparison has its own link — save it in your notes to reopen the exact setup.",
       "Use the Step by step view for students using screen readers or old phones."
-    ]
+    ],
+    "presetsTitle": "Ready-made comparisons"
   },
   "science": {
     "title": "Science and sources",
     "lead": "What the model computes, what it assumes, and where every number comes from.",
     "modelTitle": "What is computed",
-    "modelBody": "Stomach emptying is computed from the meal: liquids empty quickly, solids after a grinding delay, and every meal is slowed by its calories (the stomach delivers about 2–3 kcal per minute). Blood sugar is computed from the carbohydrate leaving the stomach, its glycemic index, and the slowing effect of fat and protein.",
+    "modelBody": "Stomach emptying is computed from the meal. Drinks start leaving straight away — water within minutes, drinks with calories at about 2 kcal per minute. Solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal per minute, so meals with more calories take longer. (In the model a bigger meal empties at the same rate; real stomachs speed up a little for big meals.) Blood sugar is computed from the carbohydrate being absorbed, its glycemic index, and the slowing effect of fat and protein.",
     "fixedTitle": "What is fixed",
     "fixedBody": "Time in the small and large intestine varies far more between people than between meals, so BioSim uses typical published values and shows the range.",
     "limitsTitle": "Limits",
@@ -241,10 +243,12 @@
   },
   "verdict": {
     "single": "Half of {{meal}} has left the stomach after {{time}}.",
-    "kcalOne": "{{meal}} has {{kcal}} kcal. The stomach lets only about 2 kcal through per minute, so more calories take longer.",
     "similar": "Both meals leave the stomach at about the same speed.",
     "faster": "{{fast}} leaves the stomach about {{x}}× faster than {{slow}}.",
-    "detail": "Half gone from the stomach: Meal A after {{a}}, Meal B after {{b}}. Meal A has {{kcalA}} kcal, Meal B has {{kcalB}} kcal — and the stomach lets only about {{rate}} kcal through per minute."
+    "times": "Half of each meal has left the stomach after: Meal A {{a}}, Meal B {{b}}.",
+    "reasonDrink": "{{fast}} is only a drink: drinks start leaving straight away, at about 2 kcal a minute, while solid food is first ground for about 20 minutes and then leaves at about 1.4 kcal a minute.",
+    "reasonCalories": "{{slow}} has more calories ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach only lets food through slowly — about 2 kcal a minute for drinks and 1.4 for solid food.",
+    "rates": "Drinks leave at about 2 kcal a minute; solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal a minute."
   },
   "error": {
     "title": "Something didn’t load",

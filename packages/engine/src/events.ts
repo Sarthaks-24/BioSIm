@@ -1,16 +1,17 @@
 import type { Meal } from './meal.ts'
 import type { NutrientKind, Range } from './nutrients.ts'
 import { PARAMS } from './params.ts'
+import { stomachShare } from './stomach.ts'
 
 export interface SimEvents {
   eatingEndMin: number
-  /** Half of what was eaten/drunk (by mass) has left the stomach. */
+  /** Half of the meal (by food energy; by weight for water) has left the stomach. */
   stomachHalfEmptyMin: number | null
   /** 90 % has left the stomach. */
   stomach90EmptyMin: number | null
   /** 90 % of the eventually-absorbed carbs, protein and fat are in the blood. Null if the meal has none. */
   absorptionMostlyDoneMin: number | null
-  /** Half of the leftovers (fibre and anything not absorbed, excluding water) have reached the large intestine. Null if there are almost none. */
+  /** Half of the leftovers (fibre — what the body cannot digest) have reached the large intestine. Null if there is almost no fibre. */
   halfLeftoversInColon: Range | null
   /** Leftovers start leaving the body. Depends mostly on the person. Null if there is almost nothing left over. */
   firstExit: Range | null
@@ -24,7 +25,7 @@ interface EventInput {
   stomachLiquidG: Float64Array
   stomachSolidG: Float64Array
   absorbedG: Record<NutrientKind, Float64Array>
-  /** Cumulative grams (excluding water) that have entered the large intestine. */
+  /** Cumulative grams of fibre that have entered the large intestine. */
   leftoversInColonCum: Float64Array
   glucoseTypical: Float64Array
   step: number
@@ -37,9 +38,11 @@ export function computeEvents(meal: Meal, s: EventInput): SimEvents {
     return null
   }
 
-  const total = meal.total.massG
+  // Same definition as the charts: share of the meal's food energy (by weight for water).
   const stomachBelow = (frac: number) =>
-    total <= 0 ? null : firstIndex((i) => i * s.step >= s.arrival && s.stomachLiquidG[i]! + s.stomachSolidG[i]! <= total * frac)
+    meal.items.length === 0
+      ? null
+      : firstIndex((i) => i * s.step >= s.arrival && stomachShare(meal, s.stomachLiquidG[i]!, s.stomachSolidG[i]!) <= frac)
 
   const energyKinds: NutrientKind[] = ['carbs', 'protein', 'fat']
   const absorbedEnergyG = (i: number) => energyKinds.reduce((sum, k) => sum + s.absorbedG[k][i]!, 0)

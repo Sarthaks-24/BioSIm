@@ -2,7 +2,7 @@ import type { Meal } from './meal.ts'
 import type { FoodPhase } from './schema.ts'
 import { MODEL_VERSION, PARAMS } from './params.ts'
 import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind, type StageId } from './nutrients.ts'
-import { emptyingCurves, retention, type EmptyingCurve } from './stomach.ts'
+import { emptyingCurves, retention, stomachShare, type EmptyingCurve } from './stomach.ts'
 import { runSegment } from './transit.ts'
 import { bluntingFactor, glucoseCurve, type GlucoseCurve } from './glucose.ts'
 import { computeEvents, type SimEvents } from './events.ts'
@@ -100,7 +100,9 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
       abs[i] = small.absorbedCum[i]! + large.absorbedCum[i]!
       out += large.outflow[i]!
       excretedG[i]! += out
-      if (k !== 'water') {
+      // Leftovers = fibre, the part the body cannot digest. Small unabsorbed amounts of sugar,
+      // protein or fat are fermented by gut bacteria and don't count as "left over".
+      if (k === 'fiber') {
         inColon += small.outflow[i]!
         leftoversInColonCum[i]! += inColon
       }
@@ -150,10 +152,9 @@ export function indexAt(sim: Simulation, tMin: number): number {
   return Math.min(sim.length - 1, Math.max(0, Math.round(tMin / sim.stepMin)))
 }
 
-/** Share (0–1) of the whole meal, by weight, that is in the stomach. The one definition every chart uses. */
+/** Share (0–1) of the meal still in the stomach at minute index i (by food energy; by weight for water). Every chart and the verdict use this. */
 export function stomachFraction(sim: Simulation, i: number): number {
-  const total = sim.meal.total.massG
-  return total > 0 ? (sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!) / total : 0
+  return stomachShare(sim.meal, sim.stomachLiquidG[i]!, sim.stomachSolidG[i]!)
 }
 
 export interface MealLocation {

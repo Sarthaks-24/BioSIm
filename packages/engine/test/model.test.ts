@@ -163,6 +163,20 @@ describe('one consistent story', () => {
     expect(sim.excretedG[end]!).toBeGreaterThan(sim.meal.total.fiberG * 0.9)
   })
 
+  it('half-empty is measured by food energy: a drink added to a meal never makes the meal look faster', () => {
+    const alone = run('fatty-meal').events.stomachHalfEmptyMin!
+    const withWater = run('fatty-meal', 'water-test').events.stomachHalfEmptyMin!
+    const withDrink = run('fatty-meal', 'glucose-50').events.stomachHalfEmptyMin!
+    expect(withWater).toBeGreaterThanOrEqual(alone)
+    expect(withDrink).toBeGreaterThan(alone * 0.8)
+  })
+
+  it('only fibre counts as leftovers: sugar drinks leave nothing, however many', () => {
+    const drinks = simulate(buildMeal([{ foodId: 'glucose-50', servings: 3 }], lookup))
+    expect(drinks.events.firstExit).toBeNull()
+    expect(drinks.events.halfLeftoversInColon).toBeNull()
+  })
+
   it('leftover timings depend on the meal; drinks with no leftovers have no exit time', () => {
     expect(run('glucose-50').events.firstExit).toBeNull()
     expect(run('water-test').events.halfLeftoversInColon).toBeNull()

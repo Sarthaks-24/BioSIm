@@ -15,8 +15,8 @@ Old share links still open. The app tells the viewer the numbers may differ from
 | Term | Meaning |
 |---|---|
 | Stage | One of mouth, oesophagus (code: `esophagus`), stomach, small intestine, large intestine (code: `largeIntestine`; "colon" in params) |
-| Leftovers | What reaches the large intestine apart from water: fibre plus the little that isn't absorbed |
-| t½, t90 | Time until 50 % / 90 % of the meal (by weight) has left the stomach |
+| Leftovers | Fibre — the part the body can't digest. Small unabsorbed amounts of sugar, protein or fat are fermented by gut bacteria and don't count |
+| t½, t90 | Time until 50 % / 90 % of the meal has left the stomach, measured by **food energy** (by weight only for water), so a drink added to a meal can't make the meal look faster |
 | GI | Glycemic index: blood-sugar area after 50 g of a food's carbohydrate, as a % of 50 g glucose |
 | Fibre / fiber | Same thing. The UI uses UK spelling; the code uses US spelling |
 
@@ -49,6 +49,7 @@ Solids must first be ground small, which gives a lag phase. After that they empt
 - **Rate.** 1.4 kcal/min is calibrated so the consensus 255 kcal test meal sits mid-range in the scintigraphy norms (Abell et al. 2008). Those norms are 37–90 % left at 1 h, 30–60 % at 2 h and ≤10 % at 4 h; the model gives 78 %, 45 % and 0 %.
 - **Drinks with the meal.** The kcal of a drink taken with a solid meal use up part of the solids' time budget, so a sugary drink delays the food a little.
 - **Fat, protein and carbohydrate** slow emptying equally per kcal (Hunt & Stubbs 1975). Fatty meals take longer simply because they carry more kcal.
+- **Assumption:** the solid rate is the same for small and big meals. Real stomachs empty a little faster (in kcal/min) after bigger meals, so the model is slow for very large meals. Making the rate depend on meal size is deferred until it can be calibrated without breaking the checks above.
 
 **Meal cap.** The model is meant for meals up to **1500 kcal**. The picker won't build a larger meal. A link with a larger meal opens with a warning. A meal at the cap still empties within ~16 h.
 
@@ -94,6 +95,7 @@ The display is a **band**, from 0.65× to 1.45× the typical curve, because glyc
 - Fibre isn't modelled on its own. Its effect on blood sugar shows up only through each food's GI.
 - GI values vary between studies and varieties (rice ranges from about 50 to over 90).
 - Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.
+- After big, fatty meals the model shows a small, slow tail of raised blood sugar (+5–7 mg/dL) while carbohydrate is still trickling out of the stomach. Real bodies usually settle sooner; the chart says so.
 - The insulin constants, the absorption time constants other than carbohydrate, and the eating pace are calibrated or assumed, not measured. `params.ts` says which.
 
 ## References

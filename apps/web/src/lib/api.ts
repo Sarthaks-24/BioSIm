@@ -3,8 +3,9 @@
  * If the API is down or not deployed, reports go through a pre-filled GitHub issue instead, so
  * nothing the user typed is lost.
  */
-const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
-const ISSUES_URL = (import.meta.env.VITE_ISSUES_URL as string | undefined) ?? 'https://github.com/Sarthaks-24/BioSIm/issues/new'
+// `||` (not `??`) so an empty value in .env falls back to the default too.
+const BASE = ((import.meta.env.VITE_API_URL as string | undefined) || '/api').replace(/\/$/, '')
+const ISSUES_URL = (import.meta.env.VITE_ISSUES_URL as string | undefined) || 'https://github.com/Sarthaks-24/BioSIm/issues/new'
 
 export interface FeedbackInput {
   location: string

@@ -26,7 +26,7 @@ export function useUrlSync() {
 
   const writeUrl = () => {
     const { a, b, time, playing } = useSim.getState()
-    if (a.length === 0 && b.length === 0) return
+    // Both meals emptied still gets written (as just "?v=…"), so a reload doesn't bring them back.
     const query = shareQuery({ a, b, time: playing ? 0 : time }, i18n.language)
     if (`?${query}` === window.location.search) return
     ours.current.add(query)
@@ -50,7 +50,9 @@ export function useUrlSync() {
     if (params.has('a') || params.has('b')) {
       const lang = useSim.getState().loadShareState(search)
       if (lang && lang !== i18n.language) void i18n.changeLanguage(lang)
-    } else {
+    } else if (!params.has('v')) {
+      // A bare /sim (from the menu) keeps open meals, or starts the default lesson. A link with
+      // "v" but no meals is a deliberately empty comparison and stays empty.
       const { a, b } = useSim.getState()
       if (a.length === 0 && b.length === 0) {
         useSim.setState({ a: DEFAULT_PRESET.a, b: DEFAULT_PRESET.b, time: 0, playing: false, linkModelVersion: null })

@@ -15,7 +15,7 @@ export default function LessonView({ sims }: { sims: Sims }) {
 
   const when = (sim: Simulation, stage: StageId): string => {
     const w = stageWindow(sim, stage)
-    if (!w) return t('events.noLeftovers')
+    if (!w) return '—'
     if (w.end - w.start < 1) return t('lesson.fewSeconds')
     return `${formatDuration(w.start, t)} – ${formatDuration(w.end, t)}`
   }

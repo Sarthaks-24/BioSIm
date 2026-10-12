@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createApp, rateLimiter } from '../src/app.ts'
+import { clientKeyFrom, createApp, rateLimiter } from '../src/app.ts'
 import { openDb } from '../src/db.ts'
 
 let app: ReturnType<typeof createApp>
@@ -53,14 +53,28 @@ describe('feedback', () => {
   })
 })
 
+describe('client key (the code the real server uses)', () => {
+  it('ignores X-Forwarded-For unless a trusted proxy is configured', () => {
+    expect(clientKeyFrom('6.6.6.6', '1.2.3.4', false)).toBe('1.2.3.4')
+  })
+  it('behind a trusted proxy, uses the right-most hop — the left ones can be faked by the client', () => {
+    expect(clientKeyFrom('6.6.6.6, 9.9.9.9', '10.0.0.1', true)).toBe('9.9.9.9')
+    expect(clientKeyFrom('9.9.9.9', '10.0.0.1', true)).toBe('9.9.9.9')
+    expect(clientKeyFrom(undefined, '10.0.0.1', true)).toBe('10.0.0.1')
+  })
+})
+
 describe('rate limiter memory', () => {
-  it('refuses new clients once full instead of growing without bound, and resets each minute', () => {
+  it('stops growing once full: new clients share one bucket (still limited), and it resets each minute', () => {
     let now = 0
-    const allow = rateLimiter(100, () => now)
+    const allow = rateLimiter(3, () => now)
     for (let i = 0; i < 5000; i++) expect(allow(`c${i}`)).toBe(true)
-    expect(allow('one-too-many')).toBe(false)
+    // Overflow clients share a bucket of the same limit…
+    expect([allow('x1'), allow('x2'), allow('x3'), allow('x4')]).toEqual([true, true, true, false])
+    // …while clients already tracked keep their own allowance.
+    expect(allow('c1')).toBe(true)
     now = 60_000
-    expect(allow('one-too-many')).toBe(true)
+    expect(allow('x4')).toBe(true)
   })
 })
 

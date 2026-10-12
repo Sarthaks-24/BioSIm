@@ -36,6 +36,8 @@ interface SimState {
   linkModelVersion: number | null
   /** Set when the user tried to add more than the meal cap allows. */
   capBlocked: MealKey | null
+  /** Foods in the opened link that no longer exist. */
+  droppedFoods: number
 
   setTime: (t: number) => void
   togglePlay: () => void
@@ -62,6 +64,7 @@ export const useSim = create<SimState>((set, get) => ({
   pace: DEFAULT_PACE,
   linkModelVersion: null,
   capBlocked: null,
+  droppedFoods: 0,
 
   setTime: (t) => set({ time: clampTime(t) }),
   togglePlay: () => {
@@ -85,8 +88,11 @@ export const useSim = create<SimState>((set, get) => ({
     return true
   },
   setServings: (meal, foodId, servings) => {
-    const next = get()[meal].map((i) => (i.foodId === foodId ? { ...i, servings: clampServings(servings) } : i))
-    if (!fitsCap(next)) {
+    const current = get()[meal]
+    const next = current.map((i) => (i.foodId === foodId ? { ...i, servings: clampServings(servings) } : i))
+    // Making a meal smaller is always allowed, even if it is still over the cap (e.g. from an old link).
+    const shrinking = mealKcal(next, lookupFood) <= mealKcal(current, lookupFood)
+    if (!shrinking && !fitsCap(next)) {
       set({ capBlocked: meal })
       return false
     }
@@ -105,7 +111,20 @@ export const useSim = create<SimState>((set, get) => ({
   loadShareState: (search) => {
     const params = new URLSearchParams(search)
     const s = decodeShareState(params)
-    set({ a: s.a, b: s.b, time: s.t, playing: false, linkModelVersion: params.has('v') ? s.modelVersion : null, capBlocked: null })
+    // Foods that no longer exist are dropped (and counted for a notice), so they can't linger
+    // invisibly in the meal or be written back into the link.
+    const known = (items: MealItem[]) => items.filter((i) => lookupFood(i.foodId))
+    const a = known(s.a)
+    const b = known(s.b)
+    set({
+      a,
+      b,
+      time: s.t,
+      playing: false,
+      linkModelVersion: params.has('v') ? s.modelVersion : null,
+      droppedFoods: s.a.length + s.b.length - a.length - b.length,
+      capBlocked: null,
+    })
     return s.lang
   },
 }))

@@ -45,7 +45,7 @@ export default function Simulator() {
 
   const describe = (k: MealKey) => `${mealLabel(k, t)}: ${sims[k].meal.items.map((i) => localized(i.food.name, i18n.language)).join(', ')}`
 
-  const unknown = MEAL_KEYS.reduce((n, k) => n + sims[k].meal.unknownIds.length, 0)
+  const unknown = useSim((s) => s.droppedFoods)
   const overCap = MEAL_KEYS.filter((k) => sims[k].meal.overCap)
   const notes = [
     linkVersion !== null && linkVersion !== MODEL_VERSION && t('sim.oldLink'),

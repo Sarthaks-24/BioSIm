@@ -83,14 +83,23 @@ export default function Timeline({ sims }: { sims: Sims }) {
         pause()
         setTime(m.time)
       }}
-      className={`absolute z-10 grid size-5 -translate-x-1/2 place-items-center ${m.k === 'a' ? 'top-0' : 'bottom-5'}`}
+      className={`group absolute z-10 grid size-7 -translate-x-1/2 place-items-center rounded-full hover:bg-sunk ${m.k === 'a' ? '-top-1' : 'bottom-4'}`}
       style={{ left: `${timeToPos(m.time) * 100}%` }}
     >
       <span
         aria-hidden="true"
-        className={m.k === 'a' ? 'size-2.5 rotate-45' : 'size-2.5 rounded-full'}
+        className={m.k === 'a' ? 'size-3 rotate-45' : 'size-3 rounded-full'}
         style={{ background: MEAL_COLOR[m.k] }}
       />
+      {/* Visible label on hover and keyboard focus, not just a browser tooltip. */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute left-1/2 hidden -translate-x-1/2 rounded-md bg-ink px-2 py-1 text-xs whitespace-nowrap text-white group-hover:block group-focus-visible:block ${
+          m.k === 'a' ? 'bottom-full mb-1' : 'top-full mt-1'
+        }`}
+      >
+        {m.label}
+      </span>
     </button>
   )
 
@@ -172,7 +181,7 @@ export default function Timeline({ sims }: { sims: Sims }) {
         {TIMELINE_TICKS.map((m) => (
           <span
             key={m}
-            className={`tabular absolute bottom-3 -translate-x-1/2 text-xs font-semibold text-ink-2 first:translate-x-0 last:-translate-x-full ${
+            className={`tabular absolute bottom-3 -translate-x-1/2 text-xs font-semibold whitespace-nowrap text-ink-2 first:translate-x-0 last:-translate-x-full ${
               TIMELINE_TICKS_NARROW.includes(m) ? '' : 'max-sm:hidden'
             }`}
             style={{ left: `${timeToPos(m) * 100}%` }}

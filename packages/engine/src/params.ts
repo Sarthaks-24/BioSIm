@@ -97,8 +97,8 @@ export const PARAMS = {
     highMin: 29 * 60,
   },
 
-  /** Less than this many grams reaching the colon counts as "nothing left over". */
-  residueThresholdG: 3,
+  /** Less than this many grams of fibre reaching the colon counts as "almost nothing left over". */
+  residueThresholdG: 1,
 
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */

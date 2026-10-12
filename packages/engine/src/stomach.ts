@@ -62,6 +62,19 @@ function effectiveMinutes(lag: number, t: number): number {
   return t < 2 * lag ? (t * t) / (4 * lag) : t - lag
 }
 
+/**
+ * Share (0–1) of the meal still in the stomach, given the grams of each phase there now.
+ * Measured by FOOD ENERGY, so a glass of water with a burger doesn't make the burger look like
+ * it left faster. A meal with no energy at all (water) is measured by weight instead.
+ */
+export function stomachShare(meal: Meal, liquidG: number, solidG: number): number {
+  const part = (grams: number, p: Meal['liquid']) => (p.massG > 0 ? grams / p.massG : 0)
+  if (meal.total.energyKcal >= 1) {
+    return (part(liquidG, meal.liquid) * meal.liquid.energyKcal + part(solidG, meal.solid) * meal.solid.energyKcal) / meal.total.energyKcal
+  }
+  return meal.total.massG > 0 ? (liquidG + solidG) / meal.total.massG : 0
+}
+
 /** Fraction (0–1) of a phase still in the stomach `t` minutes after it arrived. */
 export function retention(curve: EmptyingCurve, t: number): number {
   if (t <= 0) return 1

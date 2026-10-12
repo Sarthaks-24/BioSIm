@@ -53,21 +53,38 @@ export function GlucoseChart({ sims }: { sims: Sims }) {
       }),
     [sims, t, fasting],
   )
-  const peak = Math.max(20, ...series.flatMap((s) => Array.from(s.high ?? []).slice(0, 6 * 60)))
+  // Show until both meals are back within +3 mg/dL (at least 5 h, at most 12 h), so nothing is cut off mid-curve.
+  const settled = Math.max(
+    ...series.map((s) => {
+      let last = 0
+      for (let i = 0; i < Math.min(s.values.length, 12 * 60); i++) if (s.values[i]! > 3) last = i
+      return last
+    }),
+  )
+  const xMax = Math.min(12, Math.max(5, Math.ceil((settled + 30) / 60))) * 60
+  const peak = Math.max(20, ...series.flatMap((s) => Array.from(s.high ?? []).slice(0, xMax)))
   const yMax = Math.ceil(peak / 20) * 20
   const ticks = Array.from({ length: yMax / 20 + 1 }, (_, i) => i * 20)
-  return (
+  const chart = (
     <LineChart
       title={t('charts.glucose')}
       description={t('charts.glucoseDesc')}
       series={series}
-      xMaxMin={5 * 60}
+      xMaxMin={xMax}
       yMax={yMax}
       yTicks={ticks}
       yUnit={t('charts.mgdlAxis')}
       cursorMin={time}
       xLabel={t('charts.hoursAxis')}
     />
+  )
+  return xMax > 5 * 60 ? (
+    <div>
+      {chart}
+      <p className="mt-1 text-xs text-ink-2">{t('charts.glucoseTail')}</p>
+    </div>
+  ) : (
+    chart
   )
 }
 
@@ -99,7 +116,7 @@ export function WhereChart({ sims }: { sims: Sims }) {
                 {k.toUpperCase()}
               </span>
               <div
-                className="flex h-8 flex-1 overflow-hidden rounded-md bg-sunk"
+                className="flex h-8 min-w-0 flex-1 overflow-hidden rounded-md bg-sunk"
                 role="img"
                 aria-label={`${mealLabel(k, t)}: ${parts.map((p) => `${p.label} ${Math.round((loc[p.key] / total) * 100)}%`).join(', ')}`}
               >

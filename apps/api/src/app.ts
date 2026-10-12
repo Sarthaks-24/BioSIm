@@ -27,8 +27,9 @@ export interface AppOptions {
   clientKey?: (c: Context) => string
 }
 
-/** At most this many clients are tracked at once; beyond that new clients are refused until the window resets. */
+/** At most this many clients are tracked at once; beyond that new clients share one bucket. */
 const MAX_TRACKED_CLIENTS = 5_000
+const OVERFLOW = '\u0000overflow'
 
 /** Fixed one-minute window per client, with a hard cap on memory. */
 export function rateLimiter(limit: number, now: () => number = Date.now) {
@@ -39,11 +40,26 @@ export function rateLimiter(limit: number, now: () => number = Date.now) {
       hits.clear()
       windowStart = now()
     }
-    const count = hits.get(key)
-    if (count === undefined && hits.size >= MAX_TRACKED_CLIENTS) return false
-    hits.set(key, (count ?? 0) + 1)
-    return (count ?? 0) + 1 <= limit
+    // When the table is full, unknown clients share one overflow bucket instead of being refused
+    // outright — memory stays bounded and a flood can't lock out everyone else completely.
+    const bucket = hits.has(key) || hits.size < MAX_TRACKED_CLIENTS ? key : OVERFLOW
+    const count = (hits.get(bucket) ?? 0) + 1
+    hits.set(bucket, count)
+    return count <= limit
   }
+}
+
+/**
+ * Who is calling, for rate limiting. Without a trusted proxy we use the socket address. Behind
+ * one, X-Forwarded-For is "client, proxy1, …, lastProxy" and only the RIGHT-most entry was
+ * added by infrastructure we trust — anything to its left can be typed by the client.
+ */
+export function clientKeyFrom(forwardedFor: string | undefined, socketAddress: string | undefined, trustProxy: boolean): string {
+  if (trustProxy && forwardedFor) {
+    const last = forwardedFor.split(',').at(-1)?.trim()
+    if (last) return last
+  }
+  return socketAddress ?? 'unknown'
 }
 
 function sameSecret(a: string, b: string): boolean {

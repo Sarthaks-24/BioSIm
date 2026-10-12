@@ -66,7 +66,28 @@ export default function KeyMoments({ sims }: { sims: Sims }) {
       <h2 id="moments-title" className="mb-2 font-semibold">
         {t('events.title')}
       </h2>
-      <table className="tabular w-full text-sm">
+      {/* Phones: one card per moment, label on top, A and B side by side (a table is too narrow, especially in Hindi). */}
+      <ul className="tabular space-y-3 text-sm sm:hidden">
+        {rows.map((r) => (
+          <li key={r.label} className="border-b border-rule/60 pb-3">
+            <p>
+              {r.label}
+              {r.hint && <span className="block text-xs text-ink-2">{r.hint}</span>}
+            </p>
+            <div className="mt-1 grid grid-cols-2 gap-3">
+              {keys.map((k) => (
+                <div key={k} className="min-w-0 font-semibold">
+                  <span className="block text-xs font-extrabold" style={{ color: MEAL_COLOR[k] }}>
+                    {mealLabel(k, t)}
+                  </span>
+                  {r.cell(sims[k])}
+                </div>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <table className="tabular hidden w-full text-sm sm:table">
         <thead>
           <tr className="border-b border-rule text-left">
             <th scope="col" className="py-1.5 pr-2 font-normal">

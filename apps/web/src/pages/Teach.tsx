@@ -16,11 +16,16 @@ export default function Teach() {
           <li key={s}>{s}</li>
         ))}
       </ol>
-      <p className="mt-4">
-        <Link to={presetHref(PRESETS[0]!)} className="font-semibold underline underline-offset-4">
-          {t('home.example.colaBurger')}
-        </Link>
-      </p>
+      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.presetsTitle')}</h2>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {PRESETS.map((p) => (
+          <li key={p.key}>
+            <Link to={presetHref(p)} className="block rounded-lg border border-rule bg-panel px-4 py-3 font-semibold hover:border-ink">
+              {t(`home.example.${p.key}`)}
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.questionsTitle')}</h2>
       <ul className="list-disc space-y-2 pl-6">
