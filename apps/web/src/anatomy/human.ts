@@ -1,5 +1,5 @@
 import { CatmullRomCurve3, Vector3 } from 'three'
-import type { Particle, StageId } from '@lifepeek/engine'
+import type { Particle } from '@lifepeek/engine'
 
 /**
  * Stylized but anatomically arranged digestive tract, in scene units (≈ 1 unit = 20 cm).
@@ -25,14 +25,43 @@ export const TORSO_PROFILE: [number, number][] = [
   [0.79, 0.25],
   [0.88, 0.85],
   [0.98, 1.45],
-  [1.03, 1.8],
-  [0.98, 1.97],
-  [0.8, 2.08],
-  [0.52, 2.17],
-  [0.28, 2.23],
-  [0.19, 2.3],
-  [0.17, 2.46],
+  [1.02, 1.78],
+  [0.97, 1.95],
+  [0.82, 2.05],
+  [0.6, 2.13],
+  [0.38, 2.19],
+  [0.24, 2.25],
+  [0.19, 2.33],
+  [0.18, 2.46],
 ]
+
+/**
+ * Arms hang from the shoulders, tapering from the upper arm to the wrist, with a flatter hand
+ * (the viewer's right arm; the left is its mirror). Shared by the 3D shell and the flat outline.
+ */
+export const ARM = curve([
+  v(0.86, 1.9, -0.04),
+  v(1.08, 1.74, -0.04),
+  v(1.17, 1.3, -0.03),
+  v(1.21, 0.86, -0.01),
+  v(1.24, 0.36, 0.02),
+  v(1.25, 0.0, 0.03),
+])
+
+/** Arm radius along ARM (u = 0 at the shoulder joint, 1 at the fingertips). */
+export function armRadius(u: number): number {
+  const shoulder = 0.2 - 0.07 * smooth(0, 0.3, u) // deltoid into the upper arm
+  const elbow = -0.025 * Math.exp(-(((u - 0.5) / 0.06) ** 2))
+  const forearm = -0.035 * smooth(0.55, 0.82, u) // forearm narrows to the wrist
+  const hand = 0.012 * Math.exp(-(((u - 0.9) / 0.05) ** 2))
+  const tip = u > 0.94 ? Math.sqrt(Math.max(0, 1 - ((u - 0.94) / 0.06) ** 2)) : 1
+  return (shoulder + elbow + forearm + hand) * tip
+}
+
+function smooth(a: number, b: number, x: number): number {
+  const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return k * k * (3 - 2 * k)
+}
 
 export const MOUTH = v(0, 2.64, 0.22)
 
@@ -90,6 +119,29 @@ export function stomachRadius(u: number): number {
 }
 
 /**
+ * The stomach stretches as food fills it (plan-systems-3d §3.1): the wall moves out along the
+ * middle of the stomach, weighted by sin(πu), so the cardia and the pylorus never move and the
+ * stomach stays joined to the food pipe and the small intestine. `fill` is 0 (empty) … 1 (a big
+ * meal, see stomachFill); an empty stomach is STOMACH_EMPTY of the drawn radius.
+ */
+export const STOMACH_EMPTY = 0.78
+/** How much wider a full stomach is, as a share of its radius, at the widest point. */
+export const STOMACH_STRETCH = 0.42
+
+/** Weight of the stretch along the stomach: 0 at both ends, 1 in the middle. */
+export const stomachStretchWeight = (u: number) => Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, u))), 0.6)
+
+/** Radius at u for a stomach that is `fill` full. Both the 3D shader and the flat outline follow it. */
+export const stomachFillRadius = (u: number, fill: number) =>
+  stomachRadius(u) * (STOMACH_EMPTY + STOMACH_STRETCH * fill * stomachStretchWeight(u))
+
+/** Grams in the stomach that count as "full" for the picture (about a big thali). */
+export const STOMACH_FULL_G = 700
+
+/** 0…1 from grams in the stomach. Square root, so a small drink still visibly stretches it. */
+export const stomachFill = (grams: number) => Math.sqrt(Math.min(1, Math.max(0, grams) / STOMACH_FULL_G))
+
+/**
  * Duodenum curls in a C around the head of the pancreas, then the jejunum and ileum fold back
  * and forth in tight loops that fill the space framed by the large intestine.
  */
@@ -104,23 +156,24 @@ export const SMALL_INTESTINE = (() => {
     v(0.2, 0.14, 0.06),
   ]
   // Rows of curling loops (prolate trochoids), each row running the other way, with loop size
-  // and depth varying so the coils overlap like real jejunum and ileum.
-  const bands = 5
-  const loops = 5
-  const stepsPerLoop = 10
+  // and depth varying so the coils overlap like real jejunum and ileum. Few, fat coils read
+  // better at phone size than many thin ones (plan-systems-3d §3.1).
+  const bands = 4
+  const loops = 4
+  const stepsPerLoop = 12
   for (let b = 0; b < bands; b++) {
-    const yc = -0.02 - b * 0.18
+    const yc = -0.05 - b * 0.2
     const dir = b % 2 === 0 ? -1 : 1
-    const halfWidth = 0.36 - 0.03 * Math.abs(b - 2)
+    const halfWidth = 0.37 - 0.03 * Math.abs(b - 1.5)
     const total = loops * stepsPerLoop
     for (let k = 0; k <= total; k++) {
       // Irregular winding speed and loop size so the coils don't look machine-made.
-      const th = (k / stepsPerLoop) * Math.PI * 2 + 0.9 * Math.sin(k * 0.21 + b * 2.3)
+      const th = (k / stepsPerLoop) * Math.PI * 2 + 0.8 * Math.sin(k * 0.19 + b * 2.3)
       const s = k / total
-      const R = 0.058 + 0.02 * Math.sin(th * 0.37 + b * 1.3) + 0.012 * Math.sin(k * 0.53 + b)
+      const R = 0.072 + 0.018 * Math.sin(th * 0.37 + b * 1.3) + 0.01 * Math.sin(k * 0.47 + b)
       const x = dir * (halfWidth - 2 * halfWidth * s) + dir * R * Math.cos(th + Math.PI) * 0.95
-      const y = yc + R * Math.sin(th + Math.PI) * (0.75 + 0.25 * Math.sin(k * 0.17 + b)) + 0.035 * Math.sin(s * Math.PI * 3 + b * 1.9)
-      const z = 0.15 + 0.08 * Math.sin(th * 0.5 + b * 1.7) + 0.035 * Math.cos(th * 1.3)
+      const y = yc + R * Math.sin(th + Math.PI) * (0.8 + 0.2 * Math.sin(k * 0.17 + b)) + 0.03 * Math.sin(s * Math.PI * 3 + b * 1.9)
+      const z = 0.15 + 0.07 * Math.sin(th * 0.5 + b * 1.7) + 0.03 * Math.cos(th * 1.3)
       pts.push(v(x, y, z))
     }
   }
@@ -157,16 +210,8 @@ export const APPENDIX = curve([v(-0.6, -0.96, 0.07), v(-0.58, -1.07, 0.1), v(-0.
 export const PANCREAS = curve([v(-0.13, 0.22, 0.0), v(0.05, 0.3, -0.04), v(0.28, 0.38, -0.08), v(0.5, 0.5, -0.1), v(0.62, 0.6, -0.12)])
 
 export const LIVER = { center: v(-0.22, 0.98, 0.04) }
-export const GALLBLADDER = { center: v(-0.34, 0.66, 0.2) }
+export const GALLBLADDER = { center: v(-0.36, 0.7, 0.18) }
 export const SPLEEN = { center: v(0.74, 0.74, -0.16) }
-
-export const STAGE_LABEL_ANCHOR: Record<StageId, Vector3> = {
-  mouth: MOUTH,
-  esophagus: v(0, 1.75, -0.06),
-  stomach: v(0.66, 0.82, 0.12),
-  smallIntestine: v(0.05, -0.38, 0.26),
-  largeIntestine: v(-0.72, -0.3, 0.04),
-}
 
 // ---------------------------------------------------------------------------------------------
 
@@ -224,3 +269,10 @@ export function particlePosition(p: Particle, t: number, out: Vector3): number {
   }
   return 0
 }
+
+/**
+ * Turn angle (radians) of a particle's slow tumble at sim minute t, from one of its seeds. The
+ * tumble follows the meal clock (it stops when the clock stops) and is off when motion is
+ * reduced (state/motion.ts, UI-7): then every particle keeps one fixed angle.
+ */
+export const tumble = (seed: number, t: number, reduced: boolean) => seed * Math.PI * 2 + (reduced ? 0 : t * 0.01)

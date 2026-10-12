@@ -1,27 +1,17 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import {
-  BackSide,
-  Color,
-  DoubleSide,
-  Euler,
-  InstancedMesh,
-  Matrix4,
-  PMREMGenerator,
-  Quaternion,
-  ShaderMaterial,
-  Vector3,
-  type BufferGeometry,
-} from 'three'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
+import { BufferGeometry, Euler, Float32BufferAttribute, InstancedMesh, Matrix4, MeshBasicMaterial, Quaternion, Vector3 } from 'three'
+import { NUTRIENT_KINDS, activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
-import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/human.ts'
-import { pylorusTransform, sharedGeometry } from './geometry.ts'
-import { prefersReducedMotion } from '../lib/webgl.ts'
-import { NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
+import { particlePosition, tumble } from '../anatomy/human.ts'
+import { bodyStateAt } from '../anatomy/bodyState.ts'
+import { useCalloutSpecs, useCallouts, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
+import { useMotion } from '../state/motion.ts'
+import { NUTRIENT_COLOR } from '../lib/colors.ts'
+import { ORGANS, sharedGeometry } from './geometry.ts'
+import { layerUniforms, outlineMaterial, particleMaterial, shellMaterial, tissueMaterial, type LayerUniforms } from './materials.ts'
+import { quality } from './quality.ts'
 
 interface Props {
   sim: Simulation
@@ -32,17 +22,19 @@ interface Props {
 }
 
 /**
- * One stylized body for one meal. Renders only when something changes (frameloop "demand"),
- * so a paused simulation costs nothing on a school laptop's battery.
+ * One stylized body for one meal. Renders only when something changes (frameloop "demand"): the
+ * clock moving (playing or scrubbing), the meal, the motion setting, a drag. A paused page draws
+ * nothing, which saves a school laptop's battery and a cheap phone's heat.
  */
 export default function BodyCanvas({ sim, label, onContextLost }: Props) {
   // Read outside <Canvas> and passed down, so the scene does not depend on context bridging.
   const clock = useBodyClock()
-  const minute = clock.useMinute()
-  const stage = activeStage(sim, minute)
+  const stage = useStage(sim, clock)
+  const reduced = useMotion((s) => s.reduced)
+  const q = useMemo(() => quality(), [])
   const [width, setWidth] = useState(0)
-  const specs = useLabels(stage, width)
-  const refs = useRef<Record<string, HTMLSpanElement | null>>({})
+  const invalidate = useRef<() => void>(() => {})
+  const { overlay, place } = useCallouts(useCalloutSpecs(stage, width), () => invalidate.current())
   const wrapper = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = wrapper.current
@@ -53,23 +45,27 @@ export default function BodyCanvas({ sim, label, onContextLost }: Props) {
   }, [])
 
   return (
-    <div className="relative h-full w-full" ref={wrapper}>
+    // data-particles says whether the food tumbles (reduced motion: "still"); the reduced-motion test reads it.
+    <div className="relative h-full w-full" ref={wrapper} data-body="3d" data-particles={reduced ? 'still' : 'tumbling'}>
       <Canvas
         frameloop="demand"
-        dpr={[1, 1.75]}
+        dpr={[1, q.dpr]}
         camera={{ position: [0, 0.7, 8.9], fov: 32 }}
-        gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
+        gl={{ antialias: q.antialias, alpha: true, powerPreference: 'low-power' }}
         aria-label={label}
         role="img"
-        onCreated={({ gl }) => {
+        onCreated={({ gl, invalidate: redraw }) => {
+          invalidate.current = () => redraw()
           gl.domElement.addEventListener('webglcontextlost', (e) => {
             e.preventDefault()
             onContextLost?.()
           })
+          // The ?debug=fps overlay (BodyView) reads draw calls and triangles from here.
+          ;(window as { __lifepeekGl?: unknown }).__lifepeekGl = gl.info
         }}
       >
         <Lighting />
-        <Body sim={sim} stage={stage} minute={minute} clock={clock} />
+        <Body sim={sim} clock={clock} reduced={reduced} />
         <OrbitControls
           makeDefault
           enablePan={false}
@@ -79,177 +75,100 @@ export default function BodyCanvas({ sim, label, onContextLost }: Props) {
           minPolarAngle={Math.PI * 0.2}
           maxPolarAngle={Math.PI * 0.8}
         />
-        <LabelProjector specs={specs} refs={refs} />
-        <Invalidator sim={sim} clock={clock} />
+        <LabelProjector place={place} />
+        <Invalidator sim={sim} clock={clock} reduced={reduced} />
       </Canvas>
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        {specs.map((spec) => (
-          <span
-            key={spec.key}
-            ref={(el) => {
-              refs.current[spec.key] = el
-            }}
-            style={{ visibility: 'hidden' }}
-            className={`absolute top-0 left-0 rounded-full px-2 py-0.5 text-xs leading-tight whitespace-nowrap shadow-sm ${LABEL_TONE[spec.tone]}`}
-          >
-            {spec.text}
-          </span>
-        ))}
-      </div>
+      {overlay}
     </div>
   )
 }
 
-/** Soft studio light from a procedural room — no HDR download, so it works offline. */
-function Lighting() {
-  const gl = useThree((s) => s.gl)
-  const scene = useThree((s) => s.scene)
+/**
+ * Where most of the meal is now. Re-renders only when that changes (a few times per meal), not
+ * every sim minute while playing.
+ */
+function useStage(sim: Simulation, clock: BodyClock): StageId {
+  const [stage, setStage] = useState(() => activeStage(sim, clock.now()))
+  const shown = useRef(stage)
   useEffect(() => {
-    const pmrem = new PMREMGenerator(gl)
-    const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-    scene.environment = env
-    return () => {
-      scene.environment = null
-      env.dispose()
-      pmrem.dispose()
+    const update = () => {
+      const next = activeStage(sim, clock.now())
+      if (next !== shown.current) setStage((shown.current = next))
     }
-  }, [gl, scene])
+    update()
+    return clock.subscribe(update)
+  }, [sim, clock])
+  return stage
+}
+
+/**
+ * Studio light without an environment map (no PMREM pass, nothing to download): a cool sky /
+ * warm ground hemisphere for the base, a key light from the upper right, a soft blue fill.
+ */
+function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[2.5, 4, 6]} intensity={1.2} />
-      <directionalLight position={[-4, -1, 2]} intensity={0.35} color="#cfe3ff" />
+      <hemisphereLight args={['#f4f7ff', '#8a6a62', 2.4]} />
+      <directionalLight position={[2.5, 4, 6]} intensity={3.4} />
+      <directionalLight position={[-4, -1, 2]} intensity={1.1} color="#d6e6ff" />
     </>
   )
 }
 
-/** Re-render the canvas whenever simulated time or the meal changes. */
-function Invalidator({ sim, clock }: { sim: Simulation; clock: BodyClock }) {
+/** Re-render the canvas whenever simulated time, the meal or the motion setting changes. */
+function Invalidator({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => clock.subscribe(() => invalidate()), [clock, invalidate])
-  useEffect(() => invalidate(), [sim, invalidate])
+  useEffect(() => invalidate(), [sim, reduced, invalidate])
   return null
 }
 
-/** X-ray style skin: transparent face-on, visible at the silhouette edges. */
-const skinMaterial = () =>
-  new ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    side: DoubleSide,
-    uniforms: { uColor: { value: new Color('#3d4c6b') }, uStrength: { value: 0.6 } },
-    vertexShader: /* glsl */ `
-      varying vec3 vNormal;
-      varying vec3 vView;
-      void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vNormal = normalize(normalMatrix * normal);
-        vView = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uStrength;
-      varying vec3 vNormal;
-      varying vec3 vView;
-      void main() {
-        float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vView)));
-        gl_FragColor = vec4(uColor, pow(rim, 2.4) * uStrength + 0.03);
-      }`,
-  })
+/** Organ highlight per frame: −1 faded (empty), 0 normal, 1 where the meal is now. */
+function writeState(u: LayerUniforms, sim: Simulation, t: number) {
+  const s = bodyStateAt(sim, t)
+  u.uFill.value = s.stomachFill
+  const state = u.uState.value
+  for (let i = 0; i < ORGANS.length; i++) {
+    const organ = ORGANS[i]!
+    switch (organ) {
+      case 'esophagus':
+        state[i] = s.stage === 'mouth' || s.stage === 'esophagus' ? 1 : 0
+        break
+      case 'stomach':
+      case 'smallIntestine':
+      case 'largeIntestine':
+        state[i] = s.stage === organ ? 1 : s.holds[organ] ? 0 : -1
+        break
+      default:
+        state[i] = 0
+    }
+  }
+}
 
-/** Centre the stomach scales around, so it swells and shrinks in place. */
-const STOMACH_PIVOT = STOMACH.getPointAt(0.45)
-
-function Body({ sim, stage, minute, clock }: { sim: Simulation; stage: StageId; minute: number; clock: BodyClock }) {
+function Body({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
   const geo = sharedGeometry()
-  const skin = useMemo(skinMaterial, [])
-  const pylorus = useMemo(() => {
-    const { pos, tan } = pylorusTransform()
-    const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), tan)
-    return { pos, q }
+  const mats = useMemo(() => {
+    const u = layerUniforms()
+    return { u, tissue: tissueMaterial(u), outline: outlineMaterial(u), shell: shellMaterial() }
   }, [])
-
-  // A full stomach is visibly bigger than an empty one (≈ 0.85× empty → 1.15× after a big meal).
-  const i = indexAt(sim, minute)
-  const inStomach = sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!
-  const swell = 0.86 + 0.3 * Math.min(1, inStomach / 650)
-  // Organs with no food in them fade back, so the eye goes to where the meal is.
-  const holds = { stomach: inStomach > 2, smallIntestine: sim.smallIntestineG[i]! > 1, largeIntestine: sim.colonG[i]! > 1 }
+  useEffect(
+    () => () => {
+      mats.tissue.dispose()
+      mats.outline.dispose()
+      mats.shell.dispose()
+    },
+    [mats],
+  )
+  // Runs before the scene is drawn (priority -1), so the uniforms belong to this frame's time.
+  useFrame(() => writeState(mats.u, sim, clock.now()), -1)
 
   return (
     <group>
-      <mesh geometry={geo.body} material={skin} renderOrder={20} />
-
-      <Tissue geometry={geo.liver} color="#7b2d2a" opacity={0.4} />
-      <Tissue geometry={geo.gallbladder} color="#5f8a3c" opacity={0.45} />
-      <Tissue geometry={geo.spleen} color="#7a2f45" opacity={0.3} />
-      <Tissue geometry={geo.pancreas} color="#e2b45f" opacity={0.5} />
-      <Tissue geometry={geo.appendix} color={ORGAN_COLOR.largeIntestine} opacity={0.45} />
-
-      <Tissue geometry={geo.pharynx} color={ORGAN_COLOR.esophagus} stage="esophagus" active={stage === 'mouth' || stage === 'esophagus'} />
-      <Tissue geometry={geo.esophagus} color={ORGAN_COLOR.esophagus} stage="esophagus" active={stage === 'esophagus'} />
-      <group position={STOMACH_PIVOT} scale={swell}>
-        <group position={STOMACH_PIVOT.clone().negate()}>
-          <Tissue geometry={geo.stomach} color={ORGAN_COLOR.stomach} stage="stomach" active={stage === 'stomach'} empty={!holds.stomach} />
-        </group>
-      </group>
-      <mesh geometry={geo.pylorus} position={pylorus.pos} quaternion={pylorus.q}>
-        <meshStandardMaterial color="#b2445a" roughness={0.5} transparent opacity={0.7} depthWrite={false} />
-      </mesh>
-      <Tissue
-        geometry={geo.smallIntestine}
-        color={ORGAN_COLOR.smallIntestine}
-        stage="smallIntestine"
-        active={stage === 'smallIntestine'}
-        empty={!holds.smallIntestine}
-      />
-      <Tissue
-        geometry={geo.largeIntestine}
-        color={ORGAN_COLOR.largeIntestine}
-        stage="largeIntestine"
-        active={stage === 'largeIntestine'}
-        empty={!holds.largeIntestine}
-      />
-
-      <Swarm sim={sim} clock={clock} />
+      <mesh geometry={geo.digestion} material={mats.tissue} />
+      <mesh geometry={geo.digestion} material={mats.outline} />
+      <mesh geometry={geo.shell} material={mats.shell} renderOrder={20} />
+      <Swarm sim={sim} clock={clock} reduced={reduced} />
     </group>
-  )
-}
-
-/** Wet-looking tissue: a clear-coated, translucent physical material. */
-function Tissue({
-  geometry,
-  color,
-  opacity,
-  stage,
-  active = false,
-  empty = false,
-}: {
-  geometry: BufferGeometry
-  color: string
-  opacity?: number
-  stage?: StageId
-  active?: boolean
-  empty?: boolean
-}) {
-  const base = opacity ?? (active ? 0.62 : empty ? 0.16 : 0.34)
-  return (
-    <mesh geometry={geometry} renderOrder={stage ? 2 : 1}>
-      <meshPhysicalMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={active ? 0.32 : 0.04}
-        roughness={0.38}
-        clearcoat={0.7}
-        clearcoatRoughness={0.25}
-        envMapIntensity={0.7}
-        transparent
-        opacity={base}
-        depthWrite={false}
-        side={DoubleSide}
-      />
-    </mesh>
   )
 }
 
@@ -259,15 +178,27 @@ const tmpQuat = new Quaternion()
 const tmpEuler = new Euler()
 const tmpMatrix = new Matrix4()
 
-/** Particles are drawn ~1.8× their modelled size with a white shell, so they read on a projector. */
+/** Particles are drawn ~1.8× their modelled size so they read on a projector. */
 const PARTICLE_SCALE = 1.8
-const OUTLINE_SCALE = 1.3
 
-function Swarm({ sim, clock }: { sim: Simulation; clock: BodyClock }) {
+/** One invisible draw that clears the depth buffer, so the food draws over the organs it is inside. */
+function DepthClear() {
+  const { geometry, material } = useMemo(() => {
+    const g = new BufferGeometry()
+    g.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3))
+    return { geometry: g, material: new MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }) }
+  }, [])
+  return <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} onBeforeRender={(gl) => gl.clearDepth()} />
+}
+
+function Swarm({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
   const geo = sharedGeometry()
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
-  const outlines = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
-  const still = useMemo(prefersReducedMotion, [])
+  const materials = useMemo(() => Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, particleMaterial(NUTRIENT_COLOR[k])])), []) as Record<
+    NutrientKind,
+    ReturnType<typeof particleMaterial>
+  >
+  useEffect(() => () => Object.values(materials).forEach((m) => m.dispose()), [materials])
   const byKind = useMemo(() => {
     const groups = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, [] as Simulation['particles']])) as Record<
       NutrientKind,
@@ -281,111 +212,50 @@ function Swarm({ sim, clock }: { sim: Simulation; clock: BodyClock }) {
     const t = clock.now()
     for (const kind of NUTRIENT_KINDS) {
       const mesh = meshes.current[kind]
-      const outline = outlines.current[kind]
-      if (!mesh || !outline) continue
+      if (!mesh) continue
       const list = byKind[kind]
       for (let i = 0; i < list.length; i++) {
         const p = list[i]!
         const s = particlePosition(p, t, tmpPos) * PARTICLE_SCALE
-        // Slow tumble for life; none when the user prefers reduced motion.
-        tmpEuler.set(p.seed[0] * 6.28, p.seed[1] * 6.28 + (still ? 0 : t * 0.01), p.seed[2] * 6.28)
+        // A slow tumble for life, following the meal clock; none when motion is reduced (UI-7).
+        tmpEuler.set(p.seed[0] * 6.28, tumble(p.seed[1], t, reduced), p.seed[2] * 6.28)
         tmpQuat.setFromEuler(tmpEuler)
         tmpMatrix.compose(tmpPos, tmpQuat, tmpScale.setScalar(s))
         mesh.setMatrixAt(i, tmpMatrix)
-        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale.setScalar(s * OUTLINE_SCALE))
-        outline.setMatrixAt(i, tmpMatrix)
       }
       mesh.instanceMatrix.needsUpdate = true
-      outline.instanceMatrix.needsUpdate = true
     }
   })
 
   return (
     <>
+      <DepthClear />
       {NUTRIENT_KINDS.map((kind) =>
         byKind[kind].length === 0 ? null : (
-          <group key={`${kind}-${byKind[kind].length}`}>
-            <instancedMesh
-              ref={(m) => {
-                outlines.current[kind] = m ?? undefined
-              }}
-              args={[geo.particles[kind], undefined, byKind[kind].length]}
-              renderOrder={9}
-              frustumCulled={false}
-            >
-              <meshBasicMaterial color="#ffffff" side={BackSide} />
-            </instancedMesh>
-            <instancedMesh
-              ref={(m) => {
-                meshes.current[kind] = m ?? undefined
-              }}
-              args={[geo.particles[kind], undefined, byKind[kind].length]}
-              renderOrder={10}
-              frustumCulled={false}
-            >
-              <meshStandardMaterial color={NUTRIENT_COLOR[kind]} emissive={NUTRIENT_COLOR[kind]} emissiveIntensity={0.5} roughness={0.35} />
-            </instancedMesh>
-          </group>
+          <instancedMesh
+            key={`${kind}-${byKind[kind].length}`}
+            ref={(m) => {
+              meshes.current[kind] = m ?? undefined
+            }}
+            args={[geo.particles[kind], materials[kind], byKind[kind].length]}
+            renderOrder={10}
+            frustumCulled={false}
+          />
         ),
       )}
     </>
   )
 }
 
-interface LabelSpec {
-  key: string
-  anchor: Vector3
-  text: string
-  /** 'active' = dark pill, 'stage' = light pill, 'context' = faint (organs not on the food's path). */
-  tone: 'active' | 'stage' | 'context'
-  hidden: boolean
-}
-
-const LABEL_STAGES: StageId[] = ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine']
-const LIVER_LABEL = new Vector3(-0.7, 1.3, 0.1)
-const PANCREAS_LABEL = new Vector3(0.36, 0.3, -0.1)
-
-function useLabels(stage: StageId, width: number): LabelSpec[] {
-  const { t } = useTranslation()
-  const compact = width < 340
-  const roomy = width >= 460
-  return [
-    ...LABEL_STAGES.map((s) => ({
-      key: s,
-      anchor: STAGE_LABEL_ANCHOR[s],
-      text: t(`stages.${s}.short`),
-      tone: (s === stage ? 'active' : 'stage') as LabelSpec['tone'],
-      hidden: compact && s !== stage,
-    })),
-    { key: 'liver', anchor: LIVER_LABEL, text: t('anatomy.liver'), tone: 'context' as const, hidden: !roomy },
-    { key: 'pancreas', anchor: PANCREAS_LABEL, text: t('anatomy.pancreas'), tone: 'context' as const, hidden: !roomy },
-  ]
-}
-
-/**
- * Organ labels are plain DOM on top of the canvas (crisp, translatable, no WebGL text); this
- * component only moves each one to where its 3D anchor is on screen.
- */
-function LabelProjector({ specs, refs }: { specs: LabelSpec[]; refs: React.RefObject<Record<string, HTMLSpanElement | null>> }) {
+/** Moves the organ labels to where their organs are on screen, every frame the scene draws. */
+function LabelProjector({ place }: { place: Callouts['place'] }) {
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
   const p = useMemo(() => new Vector3(), [])
-  useFrame(() => {
-    for (const spec of specs) {
-      const el = refs.current?.[spec.key]
-      if (!el) continue
-      p.copy(spec.anchor).project(camera)
-      const x = ((p.x + 1) / 2) * size.width
-      const y = ((1 - p.y) / 2) * size.height
-      el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
-      el.style.visibility = p.z > 1 || spec.hidden ? 'hidden' : 'visible'
-    }
-  })
+  const project: Project = (v) => {
+    p.copy(v).project(camera)
+    return p.z > 1 ? null : [((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height]
+  }
+  useFrame(() => place(project, size.width, size.height))
   return null
-}
-
-const LABEL_TONE: Record<LabelSpec['tone'], string> = {
-  active: 'bg-ink font-semibold text-white',
-  stage: 'bg-panel/85 text-ink-2',
-  context: 'bg-panel/70 text-ink-2',
 }
