@@ -17,13 +17,18 @@ export const NUTRIENT_COLOR: Record<NutrientKind, string> = {
 
 export const MEAL_COLOR = { a: '#0f766e', b: '#9d2f6a' } as const
 
-/** Organ colours, used by the 3D body, the flat diagram and the charts. Stomach and small intestine differ in lightness too, for projectors. */
+/**
+ * Organ colours, used by the 3D body, the flat diagram and the charts. Stomach and small intestine
+ * differ in lightness too, for projectors. The large intestine is a muted violet since the WP-17
+ * colour audit: the old brown (#9c6b57) was the stomach's twin for red–green colour-blind readers
+ * (ΔE 0.7), and the two touch. colors.test.ts checks every pair of organs that touch.
+ */
 export const ORGAN_COLOR: Record<StageId, string> = {
   mouth: '#d9536a',
   esophagus: '#d98b8b',
   stomach: '#c8405f',
   smallIntestine: '#f0a868',
-  largeIntestine: '#9c6b57',
+  largeIntestine: '#7870a8',
 }
 
 export const INK = '#14213d'

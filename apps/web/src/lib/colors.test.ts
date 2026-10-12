@@ -26,9 +26,11 @@ import {
   contrast,
   cvdDeltaE,
   deltaE,
+  luminance,
   oklch,
   pairs,
 } from './colorCheck.ts'
+import { FOOD_PATH, NEIGHBOURS, PARTICLE_EDGE, TONE_BY_NAME, outlineInk } from '../anatomy/tones.ts'
 
 /** colors.ts copies some CSS tokens for WebGL/canvas. This keeps the two copies identical. */
 const css = readFileSync(fileURLToPath(new URL('../styles.css', import.meta.url)), 'utf8')
@@ -158,5 +160,62 @@ describe('graph line colours', () => {
 
   it('the kept run is a neutral grey, so it is told apart by dash and label, never by hue', () => {
     expect(oklch(KEPT).c).toBeLessThan(0.05)
+  })
+})
+
+/**
+ * The body's colour audit (3D-5, WP-17). Organs are drawn with an outline, so an organ's shape is
+ * told from the page by its outline (WCAG 1.4.11 lets the boundary carry the contrast), and from
+ * its neighbours by hue (colour-blind safe) plus, on the projector, a near-black line.
+ * Nutrient colours are not checked on the paper on their own: every particle has a dark edge
+ * (PARTICLE_EDGE) and its own shape, so it never relies on its fill.
+ */
+describe('body colours', () => {
+  const tone = (name: string) => TONE_BY_NAME[name]!
+
+  it(`organs that touch stay apart for colour-blind readers (ΔE ≥ ${CVD_MIN}) and everyone else (ΔE ≥ ${NORMAL_MIN})`, () => {
+    const failing = NEIGHBOURS.flatMap(([a, b]) => {
+      const cvd = cvdDeltaE(tone(a), tone(b))
+      const normal = deltaE(tone(a), tone(b))
+      return cvd < CVD_MIN || normal < NORMAL_MIN ? [`${a}/${b} CVD ${fmt(cvd)} normal ${fmt(normal)}`] : []
+    })
+    expect(failing).toEqual([])
+  })
+
+  it.each(['normal', 'projector'] as const)(`every organ's %s outline is at least ${LINE_MIN}:1 on the page`, (look) => {
+    const page = look === 'projector' ? THEME.projector.paper2 : THEME.normal.paper2
+    const failing = Object.entries(TONE_BY_NAME)
+      .map(([name, hex]) => [name, contrast(outlineInk(hex, look), page)] as const)
+      .filter(([, c]) => c < LINE_MIN)
+      .map(([name, c]) => `${name} ${fmt(c)}:1`)
+    expect(failing).toEqual([])
+  })
+
+  it(`on the projector the line between two organs that touch is at least ${LINE_MIN}:1 on the lighter one`, () => {
+    const failing = NEIGHBOURS.flatMap(([a, b]) => {
+      const [light] = [tone(a), tone(b)].sort((x, y) => luminance(y) - luminance(x)) as [string, string]
+      const worst = Math.min(contrast(outlineInk(tone(a), 'projector'), light), contrast(outlineInk(tone(b), 'projector'), light))
+      return worst < LINE_MIN ? [`${a}/${b} ${fmt(worst)}:1`] : []
+    })
+    expect(failing).toEqual([])
+  })
+
+  it(`every food particle stands out where the food goes: by hue (CVD ΔE ≥ ${CVD_MIN}) or by its dark edge (≥ ${LINE_MIN}:1)`, () => {
+    const failing: string[] = []
+    for (const [kind, hex] of Object.entries(NUTRIENT_COLOR))
+      for (const organ of FOOD_PATH) {
+        const cvd = cvdDeltaE(hex, tone(organ))
+        const edge = contrast(PARTICLE_EDGE, tone(organ))
+        if (cvd < CVD_MIN && edge < LINE_MIN) failing.push(`${kind} in ${organ}: CVD ${fmt(cvd)}, edge ${fmt(edge)}:1`)
+      }
+    for (const name of THEMES) expect(contrast(PARTICLE_EDGE, THEME[name].paper2), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(failing).toEqual([])
+  })
+
+  it('outlineInk is the shader sum: organ × shade + lift, in linear RGB', () => {
+    // Black stays at the lift; white at shade + lift (the numbers in BODY_LOOK).
+    expect(outlineInk('#000000', 'normal')).toBe('#1d2230')
+    expect(outlineInk('#ffffff', 'projector')).toBe(outlineInk('#ffffff', 'projector'))
+    expect(luminance(outlineInk('#ffffff', 'projector'))).toBeLessThan(luminance(outlineInk('#ffffff', 'normal')))
   })
 })
