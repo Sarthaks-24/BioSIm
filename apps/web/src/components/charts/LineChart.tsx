@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 export interface Series {
   key: string
@@ -25,12 +25,41 @@ interface Props {
 }
 
 const W = 520
-const H = 220
-const M = { top: 12, right: 12, bottom: 30, left: 40 }
+const H = 240
+
+/**
+ * SVG text scales with the chart, so a fixed size would end up ~7 px on a phone. Instead we
+ * size labels so they render at 0.8125 rem — which follows projector mode and Hindi sizing.
+ */
+function useTextSize(svg: React.RefObject<SVGSVGElement | null>) {
+  const [units, setUnits] = useState(13)
+  useEffect(() => {
+    const el = svg.current
+    if (!el) return
+    const update = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      const width = el.clientWidth || W
+      setUnits(Math.min(30, (rem * 0.8125 * W) / width))
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    const mo = new MutationObserver(update)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-contrast', 'lang'] })
+    return () => {
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [svg])
+  return units
+}
 
 /** Small dependency-free SVG chart; one chart style everywhere. */
 export default function LineChart({ title, description, series, xMaxMin, yMax, yTicks, yUnit, cursorMin, xLabel }: Props) {
   const id = useId()
+  const ref = useRef<SVGSVGElement>(null)
+  const fs = useTextSize(ref)
+  const M = { top: 12, right: 12, bottom: fs * 2.6, left: fs * 2.8 }
   const iw = W - M.left - M.right
   const ih = H - M.top - M.bottom
   const x = (min: number) => M.left + (Math.min(min, xMaxMin) / xMaxMin) * iw
@@ -59,22 +88,24 @@ export default function LineChart({ title, description, series, xMaxMin, yMax, y
           {description}
         </span>
       </figcaption>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-labelledby={`${id}-desc`}>
+      <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-labelledby={`${id}-desc`} style={{ fontSize: fs }}>
         {yTicks.map((v) => (
           <g key={v}>
             <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} stroke="var(--color-rule)" strokeWidth={v === 0 ? 1.5 : 1} />
-            <text x={M.left - 6} y={y(v)} textAnchor="end" dominantBaseline="middle" className="tabular fill-ink-2 text-[11px]">
+            <text x={M.left - fs * 0.4} y={y(v)} textAnchor="end" dominantBaseline="middle" className="tabular fill-ink">
               {v}
-              {v === yTicks[yTicks.length - 1] ? yUnit : ''}
             </text>
           </g>
         ))}
+        <text x={M.left} y={M.top - 2} className="fill-ink-2" style={{ fontSize: fs * 0.85 }}>
+          {yUnit}
+        </text>
         {hours.map((h) => (
-          <text key={h} x={x(h * 60)} y={H - M.bottom + 16} textAnchor="middle" className="tabular fill-ink-2 text-[11px]">
+          <text key={h} x={x(h * 60)} y={H - M.bottom + fs * 1.2} textAnchor="middle" className="tabular fill-ink">
             {h}
           </text>
         ))}
-        <text x={W - M.right} y={H - 2} textAnchor="end" className="fill-ink-2 text-[11px]">
+        <text x={W - M.right} y={H - fs * 0.3} textAnchor="end" className="fill-ink-2">
           {xLabel}
         </text>
 
@@ -85,8 +116,8 @@ export default function LineChart({ title, description, series, xMaxMin, yMax, y
             d={path(s.values)}
             fill="none"
             stroke={s.color}
-            strokeWidth={2.5}
-            strokeDasharray={s.dashed ? '7 5' : undefined}
+            strokeWidth={3}
+            strokeDasharray={s.dashed ? '8 5' : undefined}
             strokeLinejoin="round"
           />
         ))}

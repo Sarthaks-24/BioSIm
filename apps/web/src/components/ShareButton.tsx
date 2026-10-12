@@ -1,32 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSim, shareSearch } from '../state/sim.ts'
-import { createShortLink } from '../lib/api.ts'
+import { useSim, shareQuery } from '../state/sim.ts'
 
-/** Copies a link that reopens this exact comparison. Uses a short link when the API is up. */
+/**
+ * Share this exact comparison. Uses the phone's share sheet (WhatsApp etc.) when there is one,
+ * otherwise copies the link — synchronously inside the click, so browsers allow it. If copying
+ * is blocked, the link is shown so it can be copied by hand.
+ */
 export default function ShareButton() {
-  const { t } = useTranslation()
-  const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const { t, i18n } = useTranslation()
+  const [status, setStatus] = useState<'idle' | 'copied' | 'manual'>('idle')
+  const [url, setUrl] = useState('')
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), [])
 
-  const share = async () => {
-    const query = shareSearch(useSim.getState())
-    const long = `${window.location.origin}/sim?${query}`
-    const code = await createShortLink(query)
-    const url = code ? `${window.location.origin}/s/${code}` : long
-    try {
-      await navigator.clipboard.writeText(url)
-      setStatus('copied')
-    } catch {
-      setStatus('failed')
+  const share = () => {
+    const link = `${window.location.origin}/sim?${shareQuery(useSim.getState(), i18n.language)}`
+    setUrl(link)
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      navigator.share({ title: 'BioSim', url: link }).catch(() => undefined)
+      return
     }
-    setTimeout(() => setStatus('idle'), 3000)
+    const copy = navigator.clipboard?.writeText(link)
+    if (!copy) {
+      setStatus('manual')
+      return
+    }
+    copy.then(
+      () => {
+        setStatus('copied')
+        if (timer.current) clearTimeout(timer.current)
+        timer.current = setTimeout(() => setStatus('idle'), 2500)
+      },
+      () => setStatus('manual'),
+    )
   }
 
   return (
-    <button type="button" onClick={share} className="rounded-full border border-rule px-4 py-2 text-sm font-semibold hover:bg-sunk">
-      <span aria-live="polite">
-        {status === 'copied' ? t('sim.shareCopied') : status === 'failed' ? t('sim.shareFailed') : t('sim.share')}
-      </span>
-    </button>
+    <div className="flex items-center gap-2">
+      <button type="button" onClick={share} className="rounded-full border border-rule px-4 py-2 text-sm font-semibold hover:bg-sunk">
+        <span aria-live="polite">{status === 'copied' ? t('sim.shareCopied') : t('sim.share')}</span>
+      </button>
+      {status === 'manual' && (
+        <label className="flex items-center gap-2 text-sm">
+          <span className="sr-only">{t('sim.shareManual')}</span>
+          <input
+            readOnly
+            value={url}
+            autoFocus
+            onFocus={(e) => e.target.select()}
+            className="w-56 rounded-lg border border-rule bg-white px-2 py-1.5 text-sm"
+          />
+        </label>
+      )}
+    </div>
   )
 }

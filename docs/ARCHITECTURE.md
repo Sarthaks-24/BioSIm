@@ -6,36 +6,43 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
                           + golden tests      ├─ flat 2D fallback (Canvas, same curves)
                                               ├─ charts, step-by-step text view
                                               └─ lib/api.ts ──► apps/api (Hono + libSQL)
-                                                                 short links, error reports
+                                                                 "report a mistake" only
 ```
 
 ## Rules that keep it maintainable
 
 1. **The engine has no UI dependencies.** It takes a meal and returns per-minute arrays,
    events and a particle schedule. If a number is wrong, the bug is in `packages/engine`, and
-   a test there should catch it.
+   a test there should catch it. Files: `stomach.ts` (emptying) → `transit.ts` (intestines and
+   absorption) → `glucose.ts` → `events.ts` (key moments) and `particles.ts`, run by
+   `simulate.ts`. Shared helpers (`stomachFraction`, `mealLocation`, `stageWindow`) live there
+   too, so every chart computes the same thing the same way.
 2. **One source for anatomy.** `apps/web/src/anatomy/anatomy.ts` defines the curves. The 3D
    models (`three/geometry.ts`), the flat fallback and the particle paths all read them, so food
    always travels inside the organs it is drawn in.
-3. **The URL is the saved state.** `?v=1&a=cola:1&b=cheeseburger:1,fries:1&t=120`.
-   `engine/share.ts` encodes it and checks its version. A short link is only a code that points
-   to that query.
-4. **The API is optional.** The web app talks to it only through `apps/web/src/lib/api.ts`, and
-   every call there fails soft.
-5. **No personal data.** There are no accounts. In error reports the email is optional and
-   used only to reply.
+3. **The URL is the saved state.** `?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=120&lang=hi`.
+   `engine/share.ts` encodes it and keeps the model version, so old links open with a note.
+   `hooks/useUrlSync.ts` is the only code that reads or writes it, always through the router.
+   The format is a contract with every link already shared: only add optional parameters.
+4. **The API is optional.** It only receives error reports. The web app talks to it only
+   through `apps/web/src/lib/api.ts`; if it's unreachable, the report opens as a GitHub issue.
+5. **No personal data.** There are no accounts, no emails and no IP addresses stored. The rate
+   limiter uses the connection address in memory only.
 
 ## Web app layout
 
 | Folder | Contents |
 |---|---|
-| `pages/` | One page per route: home, simulator, teach, science, short link, 404 |
-| `components/` | UI pieces: meal picker, timeline, stage panel, charts, lesson view, share, feedback |
-| `three/` | WebGL scene (lazy-loaded) |
-| `flat/` | Canvas fallback |
-| `state/sim.ts` | Zustand store holding meals, time, play and speed |
-| `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock for both meals) |
-| `i18n/` | `en.json`, `hi.json` (same keys; `hi` checked against `en`) |
+| `pages/` | One page per route: home, simulator, teach, science, error and 404 |
+| `components/` | UI pieces: meal picker, verdict line, timeline, stage panel, charts, lesson view, share, feedback |
+| `anatomy/` | The gut curves, torso outline and particle positions shared by 3D and flat views |
+| `three/` | WebGL scene and organ models (lazy-loaded) |
+| `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
+| `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
+| `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync` |
+| `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
+| `data/` | Loads the food files at build time |
+| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing |
 
 ## Performance
 

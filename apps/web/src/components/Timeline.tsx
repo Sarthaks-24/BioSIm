@@ -1,31 +1,49 @@
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@biosim/engine'
-import { useSim, type MealKey } from '../state/sim.ts'
-import { HORIZON_MIN, SPEEDS, TIMELINE_TICKS, formatClock, formatDuration, posToTime, timeToPos, type Speed } from '../lib/time.ts'
+import { useSim, mealLabel, presentMeals, type MealKey, type Sims } from '../state/sim.ts'
+import {
+  HORIZON_MIN,
+  KNEE_FRACTION,
+  KNEE_MIN,
+  PACES,
+  TIMELINE_TICKS,
+  TIMELINE_TICKS_NARROW,
+  formatDuration,
+  posToTime,
+  timeToPos,
+  type Pace,
+} from '../lib/time.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'
 
-interface Props {
-  sims: Partial<Record<MealKey, Simulation>>
+/** Key moments shown on the bar. Meal A uses diamonds above the bar, meal B circles below — shape and position, not just colour. */
+function useMarkers(sims: Sims) {
+  const { t } = useTranslation()
+  return presentMeals(sims).flatMap((k) => {
+    const e = sims[k].events
+    const raw: [string, number | null | undefined][] = [
+      [t('events.half'), e.stomachHalfEmptyMin],
+      [t('events.peak'), e.glucosePeak?.timeMin],
+      [t('events.colon'), e.halfLeftoversInColon?.typical],
+    ]
+    return raw
+      .filter((m): m is [string, number] => typeof m[1] === 'number' && m[1] <= HORIZON_MIN)
+      .map(([label, time]) => ({ k, time, label: `${mealLabel(k, t)}: ${label} — ${formatDuration(time, t)}` }))
+  })
 }
 
-/**
- * Scrubbable, non-linear timeline. The first 6 hours get most of the width because that is
- * where stomach emptying and blood sugar happen. Markers show each meal's key moments.
- */
-export default function Timeline({ sims }: Props) {
+export default function Timeline({ sims }: { sims: Sims }) {
   const { t } = useTranslation()
   const time = useSim((s) => s.time)
   const playing = useSim((s) => s.playing)
-  const speed = useSim((s) => s.speed)
-  const { setTime, togglePlay, restart, setSpeed, pause } = useSim.getState()
+  const pace = useSim((s) => s.pace)
+  const { setTime, togglePlay, restart, setPace, pause } = useSim.getState()
   const track = useRef<HTMLDivElement>(null)
+  const markers = useMarkers(sims)
 
   const timeFromPointer = (clientX: number) => {
     const rect = track.current!.getBoundingClientRect()
     return posToTime((clientX - rect.left) / rect.width)
   }
-
   const onPointerDown = (e: React.PointerEvent) => {
     pause()
     ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
@@ -34,7 +52,6 @@ export default function Timeline({ sims }: Props) {
   const onPointerMove = (e: React.PointerEvent) => {
     if (e.buttons === 1) setTime(timeFromPointer(e.clientX))
   }
-
   const onKeyDown = (e: React.KeyboardEvent) => {
     const step = e.shiftKey ? 60 : 10
     const keys: Record<string, number> = {
@@ -49,24 +66,41 @@ export default function Timeline({ sims }: Props) {
       e.preventDefault()
       pause()
       setTime(time + keys[e.key]!)
-    } else if (e.key === 'Home') {
+    } else if (e.key === 'Home' || e.key === 'End') {
       e.preventDefault()
-      setTime(0)
-    } else if (e.key === 'End') {
-      e.preventDefault()
-      setTime(HORIZON_MIN)
+      pause()
+      setTime(e.key === 'Home' ? 0 : HORIZON_MIN)
     }
   }
 
-  const speedLabel = (s: Speed) => formatDuration(s, t)
+  const marker = (m: { k: MealKey; time: number; label: string }, i: number) => (
+    <button
+      key={`${m.k}-${i}`}
+      type="button"
+      title={m.label}
+      aria-label={m.label}
+      onClick={() => {
+        pause()
+        setTime(m.time)
+      }}
+      className={`absolute z-10 grid size-5 -translate-x-1/2 place-items-center ${m.k === 'a' ? 'top-0' : 'bottom-5'}`}
+      style={{ left: `${timeToPos(m.time) * 100}%` }}
+    >
+      <span
+        aria-hidden="true"
+        className={m.k === 'a' ? 'size-2.5 rotate-45' : 'size-2.5 rounded-full'}
+        style={{ background: MEAL_COLOR[m.k] }}
+      />
+    </button>
+  )
 
   return (
-    <div className="rounded-xl border border-rule bg-panel px-4 pt-3 pb-4">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className="rounded-xl border border-rule bg-panel px-4 pt-3 pb-3">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={togglePlay}
-          className="flex h-10 min-w-24 items-center justify-center gap-2 rounded-full bg-ink px-4 font-semibold text-white"
+          className="flex h-11 min-w-28 items-center justify-center gap-2 rounded-full bg-ink px-5 font-semibold text-white"
         >
           <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
           {playing ? t('sim.pause') : t('sim.play')}
@@ -74,57 +108,44 @@ export default function Timeline({ sims }: Props) {
         <button
           type="button"
           onClick={restart}
-          className="grid size-10 place-items-center rounded-full border border-rule text-lg hover:bg-sunk"
+          className="grid size-11 place-items-center rounded-full border border-rule text-lg hover:bg-sunk"
           aria-label={t('sim.restart')}
           title={t('sim.restart')}
         >
           <span aria-hidden="true">⟲</span>
         </button>
-
-        <label className="ml-1 flex items-center gap-2 text-sm text-ink-2">
-          {t('sim.speed')}
+        <label className="flex items-center gap-2 text-sm text-ink-2">
+          <span className="sr-only sm:not-sr-only">{t('sim.speed')}</span>
           <select
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value) as Speed)}
-            className="rounded-lg border border-rule bg-panel px-2 py-1.5 text-ink"
+            value={pace}
+            onChange={(e) => setPace(Number(e.target.value) as Pace)}
+            className="rounded-lg border border-rule bg-panel px-2 py-2 text-sm text-ink"
           >
-            {SPEEDS.map((s) => (
-              <option key={s} value={s}>
-                {t('sim.speedValue', { label: speedLabel(s) })}
+            {PACES.map((p) => (
+              <option key={p} value={p}>
+                {t('sim.paceValue', { duration: p >= 60 ? t('units.minutes', { n: p / 60 }) : t('units.seconds', { n: p }) })}
               </option>
             ))}
           </select>
         </label>
-
-        <p className="ml-auto text-right" aria-live="off">
-          <span className="block text-xs text-ink-2">{t('sim.time')}</span>
-          <span className="tabular text-2xl font-extrabold leading-none">{formatClock(time)}</span>
-          <span className="text-sm text-ink-2"> h</span>
+        <p className="ml-auto text-right leading-tight">
+          <span className="tabular block text-xl font-extrabold sm:text-2xl">{formatDuration(time, t)}</span>
+          <span className="text-xs text-ink-2">{t('sim.afterEating')}</span>
         </p>
       </div>
 
-      <div className="relative select-none pt-5 pb-6">
-        {/* Event markers: A above the track, B below. */}
-        {(['a', 'b'] as const).map((k) => {
-          const sim = sims[k]
-          if (!sim || sim.meal.items.length === 0) return null
-          const marks = [sim.events.stomachHalfEmptyMin, sim.events.glucosePeak?.timeMin ?? null, sim.events.firstReachesColon.typical]
-          return marks.map((m, i) =>
-            m === null || m > HORIZON_MIN ? null : (
-              <span
-                key={`${k}-${i}`}
-                aria-hidden="true"
-                className="absolute size-2 -translate-x-1/2 rotate-45"
-                style={{
-                  left: `${timeToPos(m) * 100}%`,
-                  background: MEAL_COLOR[k],
-                  top: k === 'a' ? 6 : 'auto',
-                  bottom: k === 'b' ? 14 : 'auto',
-                }}
-              />
-            ),
-          )
-        })}
+      <div className="relative select-none pt-6 pb-10">
+        {markers.map(marker)}
+
+        {/* The bar is zoomed into the first 6 hours; the shaded part runs faster. */}
+        <div
+          aria-hidden="true"
+          className="absolute top-4 bottom-8 rounded-r-md bg-sunk/70"
+          style={{ left: `${KNEE_FRACTION * 100}%`, right: 0 }}
+        />
+        <span aria-hidden="true" className="absolute top-0 text-xs text-ink-2" style={{ left: `calc(${KNEE_FRACTION * 100}% + 0.5rem)` }}>
+          {t('sim.scaleBreak', { after: formatDuration(KNEE_MIN, t) })}
+        </span>
 
         <div
           ref={track}
@@ -134,7 +155,7 @@ export default function Timeline({ sims }: Props) {
           aria-valuemin={0}
           aria-valuemax={HORIZON_MIN}
           aria-valuenow={Math.round(time)}
-          aria-valuetext={formatDuration(time, t)}
+          aria-valuetext={`${formatDuration(time, t)} ${t('sim.afterEating')}`}
           aria-describedby="timeline-hint"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -143,7 +164,7 @@ export default function Timeline({ sims }: Props) {
         >
           <div className="absolute inset-y-0 left-0 rounded-full bg-ink/80" style={{ width: `${timeToPos(time) * 100}%` }} />
           <div
-            className="absolute top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-ink shadow"
+            className="absolute top-1/2 size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-ink shadow"
             style={{ left: `${timeToPos(time) * 100}%` }}
           />
         </div>
@@ -151,13 +172,28 @@ export default function Timeline({ sims }: Props) {
         {TIMELINE_TICKS.map((m) => (
           <span
             key={m}
-            className="tabular absolute bottom-0 -translate-x-1/2 text-[11px] text-ink-2 first:translate-x-0 last:-translate-x-full"
+            className={`tabular absolute bottom-3 -translate-x-1/2 text-xs font-semibold text-ink-2 first:translate-x-0 last:-translate-x-full ${
+              TIMELINE_TICKS_NARROW.includes(m) ? '' : 'max-sm:hidden'
+            }`}
             style={{ left: `${timeToPos(m) * 100}%` }}
           >
-            {m / 60}h
+            {t('units.hShort', { n: m / 60 })}
           </span>
         ))}
       </div>
+
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+        {presentMeals(sims).map((k) => (
+          <span key={k} className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className={k === 'a' ? 'size-2.5 rotate-45' : 'size-2.5 rounded-full'}
+              style={{ background: MEAL_COLOR[k] }}
+            />
+            {t('sim.markerKey', { meal: mealLabel(k, t) })}
+          </span>
+        ))}
+      </p>
       <p id="timeline-hint" className="sr-only">
         {t('sim.keyboardHint')}
       </p>

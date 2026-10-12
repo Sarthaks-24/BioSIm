@@ -3,6 +3,7 @@ import { Html, OrbitControls } from '@react-three/drei'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  BackSide,
   Color,
   DoubleSide,
   Euler,
@@ -19,19 +20,22 @@ import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulatio
 import { useSim } from '../state/sim.ts'
 import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/anatomy.ts'
 import { pylorusTransform, sharedGeometry } from './geometry.ts'
+import { prefersReducedMotion } from '../lib/webgl.ts'
 import { NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
 
 interface Props {
   sim: Simulation
   /** Accessible description of what the picture shows. */
   label: string
+  /** Called if the GPU drops the WebGL context (common on cheap phones); the parent shows the flat view instead. */
+  onContextLost?: () => void
 }
 
 /**
  * One stylized body for one meal. Renders only when something changes (frameloop "demand"),
  * so a paused simulation costs nothing on a school laptop's battery.
  */
-export default function BodyCanvas({ sim, label }: Props) {
+export default function BodyCanvas({ sim, label, onContextLost }: Props) {
   return (
     <Canvas
       frameloop="demand"
@@ -40,8 +44,11 @@ export default function BodyCanvas({ sim, label }: Props) {
       gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
       aria-label={label}
       role="img"
-      onCreated={(state) => {
-        if (import.meta.env.DEV) ((window as unknown as { __scenes?: unknown[] }).__scenes ??= []).push(state.scene)
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault()
+          onContextLost?.()
+        })
       }}
     >
       <Lighting />
@@ -136,6 +143,8 @@ function Body({ sim }: { sim: Simulation }) {
   const i = indexAt(sim, minute)
   const inStomach = sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!
   const swell = 0.86 + 0.3 * Math.min(1, inStomach / 650)
+  // Organs with no food in them fade back, so the eye goes to where the meal is.
+  const holds = { stomach: inStomach > 2, smallIntestine: sim.smallIntestineG[i]! > 1, largeIntestine: sim.colonG[i]! > 1 }
 
   return (
     <group>
@@ -151,14 +160,26 @@ function Body({ sim }: { sim: Simulation }) {
       <Tissue geometry={geo.esophagus} color={ORGAN_COLOR.esophagus} stage="esophagus" active={stage === 'esophagus'} />
       <group position={STOMACH_PIVOT} scale={swell}>
         <group position={STOMACH_PIVOT.clone().negate()}>
-          <Tissue geometry={geo.stomach} color={ORGAN_COLOR.stomach} stage="stomach" active={stage === 'stomach'} />
+          <Tissue geometry={geo.stomach} color={ORGAN_COLOR.stomach} stage="stomach" active={stage === 'stomach'} empty={!holds.stomach} />
         </group>
       </group>
       <mesh geometry={geo.pylorus} position={pylorus.pos} quaternion={pylorus.q}>
         <meshStandardMaterial color="#b2445a" roughness={0.5} transparent opacity={0.7} depthWrite={false} />
       </mesh>
-      <Tissue geometry={geo.smallIntestine} color={ORGAN_COLOR.smallIntestine} stage="smallIntestine" active={stage === 'smallIntestine'} />
-      <Tissue geometry={geo.largeIntestine} color={ORGAN_COLOR.largeIntestine} stage="largeIntestine" active={stage === 'largeIntestine'} />
+      <Tissue
+        geometry={geo.smallIntestine}
+        color={ORGAN_COLOR.smallIntestine}
+        stage="smallIntestine"
+        active={stage === 'smallIntestine'}
+        empty={!holds.smallIntestine}
+      />
+      <Tissue
+        geometry={geo.largeIntestine}
+        color={ORGAN_COLOR.largeIntestine}
+        stage="largeIntestine"
+        active={stage === 'largeIntestine'}
+        empty={!holds.largeIntestine}
+      />
 
       <Swarm sim={sim} />
       <Labels active={stage} />
@@ -173,14 +194,16 @@ function Tissue({
   opacity,
   stage,
   active = false,
+  empty = false,
 }: {
   geometry: BufferGeometry
   color: string
   opacity?: number
   stage?: StageId
   active?: boolean
+  empty?: boolean
 }) {
-  const base = opacity ?? (active ? 0.62 : 0.34)
+  const base = opacity ?? (active ? 0.62 : empty ? 0.16 : 0.34)
   return (
     <mesh geometry={geometry} renderOrder={stage ? 2 : 1}>
       <meshPhysicalMaterial
@@ -206,9 +229,15 @@ const tmpQuat = new Quaternion()
 const tmpEuler = new Euler()
 const tmpMatrix = new Matrix4()
 
+/** Particles are drawn ~1.8× their modelled size with a white shell, so they read on a projector. */
+const PARTICLE_SCALE = 1.8
+const OUTLINE_SCALE = 1.3
+
 function Swarm({ sim }: { sim: Simulation }) {
   const geo = sharedGeometry()
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
+  const outlines = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
+  const still = useMemo(prefersReducedMotion, [])
   const byKind = useMemo(() => {
     const groups = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, [] as Simulation['particles']])) as Record<
       NutrientKind,
@@ -222,18 +251,22 @@ function Swarm({ sim }: { sim: Simulation }) {
     const t = useSim.getState().time
     for (const kind of NUTRIENT_KINDS) {
       const mesh = meshes.current[kind]
-      if (!mesh) continue
+      const outline = outlines.current[kind]
+      if (!mesh || !outline) continue
       const list = byKind[kind]
       for (let i = 0; i < list.length; i++) {
         const p = list[i]!
-        const s = particlePosition(p, t, tmpPos)
-        tmpEuler.set(p.seed[0] * 6.28, p.seed[1] * 6.28 + t * 0.01, p.seed[2] * 6.28)
+        const s = particlePosition(p, t, tmpPos) * PARTICLE_SCALE
+        // Slow tumble for life; none when the user prefers reduced motion.
+        tmpEuler.set(p.seed[0] * 6.28, p.seed[1] * 6.28 + (still ? 0 : t * 0.01), p.seed[2] * 6.28)
         tmpQuat.setFromEuler(tmpEuler)
-        tmpScale.setScalar(s)
-        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale)
+        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale.setScalar(s))
         mesh.setMatrixAt(i, tmpMatrix)
+        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale.setScalar(s * OUTLINE_SCALE))
+        outline.setMatrixAt(i, tmpMatrix)
       }
       mesh.instanceMatrix.needsUpdate = true
+      outline.instanceMatrix.needsUpdate = true
     }
   })
 
@@ -241,24 +274,28 @@ function Swarm({ sim }: { sim: Simulation }) {
     <>
       {NUTRIENT_KINDS.map((kind) =>
         byKind[kind].length === 0 ? null : (
-          <instancedMesh
-            key={`${kind}-${byKind[kind].length}`}
-            ref={(m) => {
-              meshes.current[kind] = m ?? undefined
-            }}
-            args={[geo.particles[kind], undefined, byKind[kind].length]}
-            renderOrder={10}
-            frustumCulled={false}
-          >
-            <meshStandardMaterial
-              color={NUTRIENT_COLOR[kind]}
-              emissive={NUTRIENT_COLOR[kind]}
-              emissiveIntensity={0.45}
-              roughness={0.35}
-              transparent={kind === 'water'}
-              opacity={kind === 'water' ? 0.75 : 1}
-            />
-          </instancedMesh>
+          <group key={`${kind}-${byKind[kind].length}`}>
+            <instancedMesh
+              ref={(m) => {
+                outlines.current[kind] = m ?? undefined
+              }}
+              args={[geo.particles[kind], undefined, byKind[kind].length]}
+              renderOrder={9}
+              frustumCulled={false}
+            >
+              <meshBasicMaterial color="#ffffff" side={BackSide} />
+            </instancedMesh>
+            <instancedMesh
+              ref={(m) => {
+                meshes.current[kind] = m ?? undefined
+              }}
+              args={[geo.particles[kind], undefined, byKind[kind].length]}
+              renderOrder={10}
+              frustumCulled={false}
+            >
+              <meshStandardMaterial color={NUTRIENT_COLOR[kind]} emissive={NUTRIENT_COLOR[kind]} emissiveIntensity={0.5} roughness={0.35} />
+            </instancedMesh>
+          </group>
         ),
       )}
     </>
@@ -272,7 +309,7 @@ function Labels({ active }: { active: StageId }) {
   const width = useThree((s) => s.size.width)
   const compact = width < 340
   const roomy = width >= 460
-  const pill = 'block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] leading-tight shadow-sm'
+  const pill = 'block whitespace-nowrap rounded-full px-2 py-0.5 text-xs leading-tight shadow-sm'
   return (
     <>
       {/* Labels stay mounted and are hidden with CSS: mounting/unmounting drei <Html> while the
@@ -283,7 +320,7 @@ function Labels({ active }: { active: StageId }) {
             hidden={compact && s !== active}
             className={`${pill} ${s === active ? 'bg-ink font-semibold text-white' : 'bg-panel/85 text-ink-2'}`}
           >
-            {t(`stages.${s}.name`).replace(/\s*\(.*\)/, '')}
+            {t(`stages.${s}.short`)}
           </span>
         </Html>
       ))}

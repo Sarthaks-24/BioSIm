@@ -8,7 +8,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // No forced reloads: a new version takes over the next time the app is opened, never in the
+      // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'BioSim — Digestion Simulator',

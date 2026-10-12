@@ -1,57 +1,47 @@
 /**
- * The only place the web app talks to the API. Every call is optional: if the API is down or
- * not deployed, the app keeps working (long share links, feedback falls back to an error).
+ * The only place the web app talks to the API, which just receives "report a mistake" messages.
+ * If the API is down or not deployed, reports go through a pre-filled GitHub issue instead, so
+ * nothing the user typed is lost.
  */
 const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), 6000)
-  try {
-    const res = await fetch(`${BASE}${path}`, {
-      ...init,
-      signal: ctrl.signal,
-      headers: { 'content-type': 'application/json', ...init?.headers },
-    })
-    if (!res.ok) throw new Error(`API ${res.status}`)
-    return (await res.json()) as T
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
-/** Returns a short code for a comparison, e.g. "k3x9pq", or null if the API is unavailable. */
-export async function createShortLink(query: string): Promise<string | null> {
-  try {
-    const { code } = await request<{ code: string }>('/links', { method: 'POST', body: JSON.stringify({ query }) })
-    return code
-  } catch {
-    return null
-  }
-}
-
-export async function resolveShortLink(code: string): Promise<string | null> {
-  try {
-    const { query } = await request<{ query: string }>(`/links/${encodeURIComponent(code)}`)
-    return query
-  } catch {
-    return null
-  }
-}
+const ISSUES_URL = (import.meta.env.VITE_ISSUES_URL as string | undefined) ?? 'https://github.com/Sarthaks-24/BioSIm/issues/new'
 
 export interface FeedbackInput {
   location: string
   message: string
   source?: string
-  email?: string
+  /** The comparison being viewed (share-link query), so the report can be reproduced. */
   context: string
 }
 
 export async function sendFeedback(input: FeedbackInput): Promise<boolean> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 6000)
   try {
-    await request('/feedback', { method: 'POST', body: JSON.stringify(input) })
-    return true
+    const res = await fetch(`${BASE}/feedback`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+    return res.ok
   } catch {
     return false
+  } finally {
+    clearTimeout(timer)
   }
+}
+
+/** Fallback: open a GitHub issue with the report already filled in. */
+export function feedbackIssueUrl(input: FeedbackInput): string {
+  const body = [
+    `**Where:** ${input.location}`,
+    '',
+    input.message,
+    '',
+    input.source ? `**Source:** ${input.source}` : '',
+    `**Comparison:** ${window.location.origin}/sim?${input.context}`,
+  ].join('\n')
+  const params = new URLSearchParams({ title: `Mistake: ${input.location}`.slice(0, 120), body })
+  return `${ISSUES_URL}?${params}`
 }

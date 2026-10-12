@@ -20,10 +20,10 @@ It is built for classrooms:
 ```bash
 npm install
 npm run dev        # web app → http://localhost:5173
-npm run dev:api    # optional API (short links, error reports) → http://localhost:8787
+npm run dev:api    # optional API for "report a mistake" → http://localhost:8787
 ```
 
-The web app works without the API. Share links fall back to full-length URLs.
+The web app works without the API: links carry the whole comparison, and error reports fall back to a GitHub issue.
 
 ```bash
 npm run check      # validate foods, typecheck, unit tests, production build
@@ -37,7 +37,7 @@ npm run e2e -w @biosim/web   # browser smoke tests (needs: npx playwright instal
 | `packages/engine` | The model, in pure TypeScript: food schema, stomach emptying, gut transit and the blood-sugar band. Golden tests check it against published physiology. |
 | `content/foods` | One JSON file per food. Each holds only cited inputs: nutrients, glycemic index and sources. |
 | `apps/web` | The React + three.js app (PWA). Organs are modelled in code from shared anatomy curves. If WebGL is not available, a flat 2D diagram is shown instead. |
-| `apps/api` | Hono + SQLite/libSQL. Stores short links and "report a mistake" messages. It needs no accounts and stores no personal data. |
+| `apps/api` | Hono + SQLite/libSQL. Receives "report a mistake" messages. No accounts, no personal data. |
 | `docs/` | How the model works (with references), the architecture and the decisions behind it. |
 
 ## Add a food
@@ -58,3 +58,4 @@ The validator rejects numbers that don't add up.
   - `DATABASE_AUTH_TOKEN`: the database token
   - `ALLOWED_ORIGINS`: the origins allowed to call the API
   - `ADMIN_TOKEN`: the token for reading error reports
+  - `TRUST_PROXY=1`: only behind a proxy you control that sets `X-Forwarded-For`

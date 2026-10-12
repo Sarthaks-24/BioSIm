@@ -24,11 +24,18 @@
   --color-meal-a: #0f766e;
   --color-meal-b: #9d2f6a;
 
-  --color-carbs: #e0662b;
-  --color-protein: #7b4fd0;
-  --color-fat: #c79a00;
-  --color-fiber: #4f8a2b;
-  --color-water: #2f8fd0;
+  /* Nutrients: outside the pink/peach tissue range so particles stay visible inside organs. */
+  --color-carbs: #f2b705;
+  --color-protein: #6a3fd6;
+  --color-fat: #00a3a3;
+  --color-fiber: #3d8b1f;
+  --color-water: #1f7ae0;
+
+  /* Organs (also used by charts): stomach and small intestine differ in lightness for projectors. */
+  --color-stomach: #c8405f;
+  --color-small-intestine: #f0a868;
+  --color-large-intestine: #9c6b57;
+  --color-left-body: #b8c4c9;
 }
 
 :root {
@@ -43,8 +50,13 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * All text sizes are in rem (no px), so these two rules scale everything — including chart
+ * labels, which LineChart sizes from the root font size.
+ */
 html:lang(hi) {
-  /* Devanagari needs more line height for matras. */
+  /* Devanagari needs a larger size and more line height so the vowel marks (matras) stay legible. */
+  font-size: 106.25%;
   line-height: 1.7;
 }
 
@@ -55,7 +67,10 @@ html[data-contrast='high'] {
   --color-rule: #6b7a90;
   --color-paper: #ffffff;
   --color-panel: #ffffff;
-  font-size: 112.5%;
+  font-size: 118.75%;
+}
+html[data-contrast='high']:lang(hi) {
+  font-size: 125%;
 }
 
 body {

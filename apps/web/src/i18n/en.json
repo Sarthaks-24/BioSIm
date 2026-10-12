@@ -1,10 +1,5 @@
 {
-  "app": {
-    "name": "BioSim",
-    "tagline": "What happens to food inside you"
-  },
   "nav": {
-    "home": "Home",
     "simulator": "Simulator",
     "teach": "For teachers",
     "science": "Science & sources",
@@ -17,7 +12,6 @@
     "headline": "A can of cola leaves your stomach in about half an hour. A burger with fries can take four.",
     "lead": "BioSim shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds.",
     "cta": "Compare two meals",
-    "ctaSecondary": "See a ready-made comparison",
     "previewCaption": "Food still in the stomach after eating — computed by the BioSim model",
     "hours": "hours after eating",
     "how": {
@@ -42,7 +36,6 @@
     "mealA": "Meal A",
     "mealB": "Meal B",
     "addFood": "Add food",
-    "searchFoods": "Search foods",
     "servings": "Servings",
     "remove": "Remove {{name}}",
     "emptyMeal": "Add a food to start.",
@@ -51,22 +44,27 @@
     "pause": "Pause",
     "restart": "Back to the start",
     "speed": "Speed",
-    "speedValue": "1 s = {{label}}",
-    "time": "Time since eating",
     "timeline": "Timeline",
     "share": "Copy link",
     "shareCopied": "Link copied",
-    "shareFailed": "Copy failed — the link is in your address bar",
     "views": "View",
     "view3d": "Body",
     "viewLesson": "Step by step",
     "reportError": "Report a mistake",
-    "nowIn": "Most of the meal is in the",
-    "kcal": "{{value}} kcal",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
-    "oldLink": "This link was made with an older version of the model, so some numbers may differ slightly from when it was shared.",
+    "oldLink": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
     "keyboardHint": "Keys: Space play/pause, ← → move 10 minutes, Shift + ← → move 1 hour",
-    "follow": "Follow the meal"
+    "afterEating": "after eating",
+    "paceValue": "Play 2 days in {{duration}}",
+    "scaleBreak": "after {{after}}: faster",
+    "markerKey": "{{meal}}: key moments (tap to jump)",
+    "isHere": "{{meal}} is here",
+    "mealIsIn": "{{meal}} is in: {{stage}}",
+    "more": "More about this stage",
+    "shareManual": "Copy this link",
+    "capReached": "That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big.",
+    "unknownFoods": "Some foods in this link no longer exist and were left out ({{count}}).",
+    "overCap": "{{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough."
   },
   "stages": {
     "mouth": {
@@ -74,35 +72,40 @@
       "what": "Teeth cut and grind food while the tongue mixes it with saliva into a soft ball called a bolus.",
       "chemistry": "Salivary amylase starts breaking starch into smaller sugars. Lingual lipase begins on fat, but very little happens yet.",
       "absorbed": "Almost nothing is absorbed here.",
-      "fact": "Your salivary glands make roughly 1 to 1.5 litres of saliva a day."
+      "fact": "Your salivary glands make roughly 1 to 1.5 litres of saliva a day.",
+      "short": "Mouth"
     },
     "esophagus": {
       "name": "Food pipe (oesophagus)",
       "what": "Waves of muscle contraction, called peristalsis, push each swallow down to the stomach in a few seconds.",
       "chemistry": "No digestion happens here. Mucus helps the bolus slide.",
       "absorbed": "Nothing is absorbed.",
-      "fact": "Peristalsis works even upside down — astronauts can swallow in space."
+      "fact": "Peristalsis works even upside down — astronauts can swallow in space.",
+      "short": "Food pipe"
     },
     "stomach": {
       "name": "Stomach",
       "what": "The stomach stores the meal, churns it with acid into a thick liquid called chyme, and lets it out a little at a time through the pyloric sphincter.",
       "chemistry": "Hydrochloric acid unfolds proteins and kills many microbes. Pepsin starts cutting proteins into shorter chains. Liquids leave first; solids must be ground to tiny pieces before they can leave.",
       "absorbed": "Very little — some water, alcohol and a few drugs.",
-      "fact": "The more calories a meal has, the more slowly it leaves: the small intestine signals the stomach to deliver only a few calories per minute."
+      "fact": "The more calories a meal has, the more slowly it leaves: the small intestine signals the stomach to deliver only a few calories per minute.",
+      "short": "Stomach"
     },
     "smallIntestine": {
       "name": "Small intestine",
       "what": "Chyme moves through about 6 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption.",
       "chemistry": "Bile from the liver breaks fat into tiny droplets. Pancreatic enzymes — amylase, lipase, trypsin — and enzymes on the villi finish breaking food into sugars, amino acids, fatty acids and glycerol.",
       "absorbed": "Most nutrients and most of the water are absorbed here into the blood and lymph.",
-      "fact": "The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court."
+      "fact": "The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court.",
+      "short": "Small intestine"
     },
     "largeIntestine": {
       "name": "Large intestine",
       "what": "What could not be digested — mainly fibre — moves slowly through the colon and is stored until it leaves the body.",
       "chemistry": "Gut bacteria ferment fibre, making gases and short-chain fatty acids that feed the colon’s own cells. Some vitamins, such as vitamin K, are made by bacteria here.",
       "absorbed": "Most of the remaining water and salts.",
-      "fact": "This is the slowest part of the journey: commonly a day or more."
+      "fact": "This is the slowest part of the journey: commonly a day or more.",
+      "short": "Large intestine"
     }
   },
   "nutrients": {
@@ -110,42 +113,36 @@
     "protein": "Protein",
     "fat": "Fat",
     "fiber": "Fibre",
-    "water": "Water",
-    "shape": {
-      "carbs": "sphere",
-      "protein": "cube",
-      "fat": "drop",
-      "fiber": "rod",
-      "water": "small bead"
-    }
+    "water": "Water"
   },
   "charts": {
     "stomach": "Food left in the stomach",
     "stomachDesc": "Percentage of what was eaten that is still in the stomach",
     "glucose": "Blood sugar",
-    "glucoseDesc": "Typical rise above fasting level for a healthy adult. The shaded band shows how much people differ.",
+    "glucoseDesc": "Typical rise above the normal (fasting) level for a healthy adult. The shaded band shows how much people differ.",
     "where": "Where the meal has gone",
     "whereDesc": "Of everything eaten (by weight), how much is in each place or already absorbed",
     "absorbed": "Absorbed into the body",
     "hoursAxis": "Hours after eating",
-    "percentAxis": "%",
-    "mgdlAxis": "mg/dL above fasting",
-    "fasting": "fasting"
+    "mgdlAxis": "mg/dL above normal",
+    "leftBody": "Left the body"
   },
   "events": {
     "title": "Key moments",
-    "eating": "Finished eating",
     "half": "Half has left the stomach",
-    "mostly": "Stomach 90% empty",
-    "colon": "First reaches large intestine",
+    "colon": "Half the leftovers reach the large intestine",
     "absorbed": "Nutrients mostly absorbed",
-    "exit": "First remains leave the body",
-    "peak": "Blood sugar peak",
+    "exit": "Leftovers start leaving the body",
+    "peak": "Blood sugar rise (above normal)",
     "peakValue": "+{{low}} to +{{high}} mg/dL",
     "never": "Not within 48 h",
     "none": "No real rise",
-    "typical": "typical",
-    "range": "range {{low}}–{{high}}"
+    "usually": "usually {{low}}–{{high}}",
+    "peakHint": "mg/dL is how sugar in blood is measured; normal before eating is about 70–100.",
+    "peakAt": "highest after {{time}}",
+    "noNutrients": "Nothing to absorb (no calories)",
+    "exitHint": "Depends mostly on the person, not the meal",
+    "noLeftovers": "Almost nothing left over"
   },
   "lesson": {
     "title": "Step by step",
@@ -155,7 +152,6 @@
     "happens": "What happens",
     "print": "Print",
     "meal": "Meal",
-    "nutrientsTitle": "What’s in this meal",
     "per": "Total",
     "chemistry": "Chemistry"
   },
@@ -165,12 +161,12 @@
     "where": "Where is the mistake?",
     "message": "What’s wrong, and what should it say?",
     "source": "Source, if you have one (book, paper, link)",
-    "email": "Email, if you’d like a reply (optional)",
     "send": "Send report",
     "sent": "Thanks — report sent.",
-    "failed": "Couldn’t send the report. Check your connection and try again.",
+    "failed": "Couldn’t reach the BioSim server.",
     "close": "Close",
-    "privacy": "Don’t include personal or health information. Students: you don’t need to give an email."
+    "privacy": "Please don’t include names, emails or health information.",
+    "openIssue": "Send it as a GitHub issue instead"
   },
   "disclaimer": {
     "short": "Educational model of a typical healthy adult. Not medical advice.",
@@ -192,7 +188,7 @@
       "Why do drinks leave the stomach before solid food?",
       "Fibre is never absorbed. Where does it end up, and what eats it?",
       "Why is blood sugar shown as a band instead of one number?",
-      "Roti and dal versus white rice: which gives a gentler blood sugar curve, and why?"
+      "Roti and dal versus white rice: which gives a gentler blood sugar curve? Look at each food’s glycemic index on the Science page."
     ],
     "tipsTitle": "Practical tips",
     "tips": [
@@ -214,7 +210,8 @@
       "Models a healthy adult only — not children, pregnancy, diabetes or digestive illness.",
       "Blood sugar is a typical shape, not a prediction for any one person.",
       "Exercise, sleep, stress and drinks with the meal all change real results.",
-      "Glycemic index values for mixed and home-cooked dishes vary between studies."
+      "Glycemic index values for mixed and home-cooked dishes vary between studies.",
+      "Fibre isn't modelled on its own: its slowing effect on blood sugar shows up through each food's glycemic index."
     ],
     "version": "Model version {{version}}",
     "foodsTitle": "Food data",
@@ -231,12 +228,26 @@
   "units": {
     "min": "{{n}} min",
     "h": "{{n}} h",
-    "hm": "{{h}} h {{m}} min"
+    "hm": "{{h}} h {{m}} min",
+    "minutes": "{{n}} min",
+    "seconds": "{{n}} s",
+    "hShort": "{{n}}h",
+    "kcal": "{{n}} kcal"
   },
   "anatomy": {
     "liver": "Liver",
-    "pancreas": "Pancreas",
-    "gallbladder": "Gallbladder",
-    "appendix": "Appendix"
+    "pancreas": "Pancreas"
+  },
+  "verdict": {
+    "single": "Half of {{meal}} has left the stomach after {{time}}.",
+    "kcalOne": "{{meal}} has {{kcal}} kcal. The stomach lets only about 2 kcal through per minute, so more calories take longer.",
+    "similar": "Both meals leave the stomach at about the same speed.",
+    "faster": "{{fast}} leaves the stomach about {{x}}× faster than {{slow}}.",
+    "detail": "Half gone from the stomach: Meal A after {{a}}, Meal B after {{b}}. Meal A has {{kcalA}} kcal, Meal B has {{kcalB}} kcal — and the stomach lets only about {{rate}} kcal through per minute."
+  },
+  "error": {
+    "title": "Something didn’t load",
+    "body": "This often happens right after BioSim is updated. Reloading fixes it.",
+    "reload": "Reload"
   }
 }

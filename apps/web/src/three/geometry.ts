@@ -26,6 +26,7 @@ import {
   SMALL_INTESTINE,
   SPLEEN,
   STOMACH,
+  TORSO_PROFILE,
   stomachRadius,
 } from '../anatomy/anatomy.ts'
 
@@ -170,25 +171,7 @@ function buildSpleen(): BufferGeometry {
 }
 
 function buildBody(): BufferGeometry {
-  const profile = [
-    [0.0, -1.78],
-    [0.5, -1.74],
-    [0.82, -1.55],
-    [0.93, -1.2],
-    [0.9, -0.75],
-    [0.8, -0.25],
-    [0.79, 0.25],
-    [0.88, 0.85],
-    [0.98, 1.45],
-    [1.03, 1.8],
-    [0.98, 1.97],
-    [0.8, 2.08],
-    [0.52, 2.17],
-    [0.28, 2.23],
-    [0.19, 2.3],
-    [0.17, 2.46],
-    [0.0, 2.48],
-  ].map(([x, y]) => new Vector2(x!, y!))
+  const profile = ([...TORSO_PROFILE, [0, 2.48]] as [number, number][]).map(([x, y]) => new Vector2(x!, y!))
   const torso = new LatheGeometry(profile, 64)
   // Flatter at the back than the front, like a real chest and belly.
   sculpt(torso, (v) => v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5)))

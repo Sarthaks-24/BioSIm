@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router'
-import { MODEL_VERSION, encodeShareState } from '@biosim/engine'
-import { useSim } from '../state/sim.ts'
+import { MODEL_VERSION, PARAMS } from '@biosim/engine'
+import { useSim, mealLabel, MEAL_KEYS, type MealKey, type Sims } from '../state/sim.ts'
 import { useClock } from '../hooks/useClock.ts'
+import { useUrlSync } from '../hooks/useUrlSync.ts'
 import { useSimulation } from '../hooks/useSimulation.ts'
-import { DEFAULT_PRESET } from '../lib/presets.ts'
-import { hasWebGL } from '../lib/webgl.ts'
 import { localized } from '../i18n/index.ts'
 import MealPicker from '../components/MealPicker.tsx'
 import BodyView from '../components/BodyView.tsx'
@@ -17,6 +15,7 @@ import LessonView from '../components/LessonView.tsx'
 import Legend from '../components/Legend.tsx'
 import ShareButton from '../components/ShareButton.tsx'
 import FeedbackDialog from '../components/FeedbackDialog.tsx'
+import Verdict from '../components/Verdict.tsx'
 import { GlucoseChart, StomachChart, WhereChart } from '../components/charts/SimCharts.tsx'
 import { MEAL_COLOR } from '../lib/colors.ts'
 
@@ -24,34 +23,19 @@ type View = 'body' | 'lesson'
 
 export default function Simulator() {
   const { t, i18n } = useTranslation()
-  const location = useLocation()
   const [view, setView] = useState<View>('body')
   const a = useSim((s) => s.a)
   const b = useSim((s) => s.b)
   const linkVersion = useSim((s) => s.linkModelVersion)
-  const simA = useSimulation(a)
-  const simB = useSimulation(b)
-  const sims = { a: simA, b: simB }
+  const sims: Sims = { a: useSimulation(a), b: useSimulation(b) }
   useClock()
-
-  // Load the comparison from the URL; an empty URL opens the classic cola-vs-burger lesson.
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    if (params.has('a') || params.has('b')) useSim.getState().loadFromUrl(location.search)
-    else useSim.setState({ a: DEFAULT_PRESET.a, b: DEFAULT_PRESET.b, time: 0, playing: false, linkModelVersion: null })
-  }, [location.search])
-
-  // Keep the address bar shareable as meals change (without adding history entries).
-  useEffect(() => {
-    const query = encodeShareState({ a, b, t: 0 }).toString()
-    window.history.replaceState(window.history.state, '', `/sim?${query}`)
-  }, [a, b])
+  useUrlSync()
 
   // Space toggles play when focus isn't in a form control.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement
-      if (e.code !== 'Space' || el.closest('input, select, textarea, button, [role="slider"], dialog')) return
+      if (e.code !== 'Space' || el.closest('input, select, textarea, button, [role="slider"], dialog, summary')) return
       e.preventDefault()
       useSim.getState().togglePlay()
     }
@@ -59,11 +43,15 @@ export default function Simulator() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const describe = (key: 'a' | 'b') => {
-    const sim = sims[key]
-    const names = sim.meal.items.map((i) => localized(i.food.name, i18n.language)).join(', ')
-    return `${key === 'a' ? t('sim.mealA') : t('sim.mealB')}: ${names}`
-  }
+  const describe = (k: MealKey) => `${mealLabel(k, t)}: ${sims[k].meal.items.map((i) => localized(i.food.name, i18n.language)).join(', ')}`
+
+  const unknown = MEAL_KEYS.reduce((n, k) => n + sims[k].meal.unknownIds.length, 0)
+  const overCap = MEAL_KEYS.filter((k) => sims[k].meal.overCap)
+  const notes = [
+    linkVersion !== null && linkVersion !== MODEL_VERSION && t('sim.oldLink'),
+    unknown > 0 && t('sim.unknownFoods', { count: unknown }),
+    ...overCap.map((k) => t('sim.overCap', { meal: mealLabel(k, t), kcal: PARAMS.maxMealKcal })),
+  ].filter(Boolean) as string[]
 
   const tab = (v: View) => `rounded-full px-4 py-1.5 text-sm font-semibold ${view === v ? 'bg-ink text-white' : 'hover:bg-sunk'}`
 
@@ -71,20 +59,21 @@ export default function Simulator() {
     <div className="mx-auto max-w-7xl px-4 py-5">
       <h1 className="sr-only">{t('sim.title')}</h1>
 
-      {linkVersion !== null && linkVersion !== MODEL_VERSION && (
-        <p role="note" className="mb-3 rounded-lg border border-rule bg-panel px-3 py-2 text-sm">
-          {t('sim.oldLink')}
+      {notes.map((n) => (
+        <p key={n} role="note" className="mb-3 rounded-lg border border-rule bg-panel px-3 py-2 text-sm">
+          {n}
         </p>
-      )}
+      ))}
 
       <div className="no-print mb-4 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-rule bg-panel p-4" style={{ borderTop: `4px solid ${MEAL_COLOR.a}` }}>
-          <MealPicker meal="a" />
-        </div>
-        <div className="rounded-xl border border-rule bg-panel p-4" style={{ borderTop: `4px solid ${MEAL_COLOR.b}` }}>
-          <MealPicker meal="b" />
-        </div>
+        {MEAL_KEYS.map((k) => (
+          <div key={k} className="rounded-xl border border-rule bg-panel p-4" style={{ borderTop: `4px solid ${MEAL_COLOR[k]}` }}>
+            <MealPicker meal={k} />
+          </div>
+        ))}
       </div>
+
+      <Verdict sims={sims} />
 
       <div className="no-print mb-4 flex flex-wrap items-center gap-2">
         <div role="group" aria-label={t('sim.views')} className="flex gap-1 rounded-full border border-rule p-1">
@@ -95,7 +84,7 @@ export default function Simulator() {
             {t('sim.viewLesson')}
           </button>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex flex-wrap items-center gap-3">
           <FeedbackDialog />
           <ShareButton />
         </div>
@@ -105,40 +94,42 @@ export default function Simulator() {
         <LessonView sims={sims} />
       ) : (
         <>
-          {!hasWebGL() && <p className="mb-3 rounded-lg border border-rule bg-panel px-3 py-2 text-sm">{t('sim.noWebgl')}</p>}
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            {/* A and B always side by side — the comparison is the point, even on a phone. */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
-              {(['a', 'b'] as const).map((k) => (
-                <div
-                  key={k}
-                  className="relative h-[52vh] min-h-72 overflow-hidden rounded-xl border border-rule bg-[radial-gradient(ellipse_at_50%_40%,#fbfdfc,#e4ece9)] lg:h-[60vh]"
-                >
-                  <span
-                    className="absolute top-3 left-3 z-10 rounded-full px-2.5 py-0.5 text-sm font-extrabold text-white"
-                    style={{ background: MEAL_COLOR[k] }}
-                  >
-                    {k.toUpperCase()}
-                  </span>
-                  {sims[k].meal.items.length > 0 ? (
-                    <BodyView sim={sims[k]} label={describe(k)} />
-                  ) : (
-                    <p className="grid h-full place-items-center p-6 text-center text-ink-2">
-                      {t(k === 'b' ? 'sim.pickBoth' : 'sim.emptyMeal')}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* On small screens the controls come right under the bodies; the reading panel after. */}
-            <div className="order-last lg:order-none lg:row-span-2">
-              <StagePanel sims={sims} />
-            </div>
             <div>
-              <Timeline sims={sims} />
+              {/* A and B always side by side — the comparison is the point, even on a phone. */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                {MEAL_KEYS.map((k) => (
+                  <div
+                    key={k}
+                    className="relative h-[44vh] min-h-64 overflow-hidden rounded-xl border border-rule bg-[radial-gradient(ellipse_at_50%_40%,#fbfdfc,#e4ece9)] lg:h-[60vh]"
+                  >
+                    <span
+                      className="absolute top-3 left-3 z-10 rounded-full px-2.5 py-0.5 text-sm font-extrabold text-white"
+                      style={{ background: MEAL_COLOR[k] }}
+                    >
+                      {k.toUpperCase()}
+                    </span>
+                    {sims[k].meal.items.length > 0 ? (
+                      <BodyView sim={sims[k]} label={describe(k)} />
+                    ) : (
+                      <p className="grid h-full place-items-center p-6 text-center text-ink-2">
+                        {t(k === 'b' ? 'sim.pickBoth' : 'sim.emptyMeal')}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
               <div className="mt-2 px-1">
                 <Legend />
               </div>
+            </div>
+            {/* On small screens the reading panel comes after the controls. */}
+            <div className="order-last lg:order-none lg:row-span-2">
+              <StagePanel sims={sims} />
+            </div>
+            {/* On phones the controls stick to the bottom so Play stays in reach while watching. */}
+            <div className="z-20 max-lg:sticky max-lg:bottom-0 max-lg:-mx-4 max-lg:bg-paper/95 max-lg:px-4 max-lg:pt-2 max-lg:pb-2 max-lg:backdrop-blur">
+              <Timeline sims={sims} />
             </div>
           </div>
 

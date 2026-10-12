@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { buildMeal, simulate } from '@biosim/engine'
+import { buildMeal, simulate, stomachFraction } from '@biosim/engine'
 import { lookupFood } from '../data/foods.ts'
 import { DEFAULT_PRESET, PRESETS, presetHref } from '../lib/presets.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'
@@ -15,11 +15,9 @@ function EmptyingRace() {
       (['a', 'b'] as const).map((k) => {
         const meal = buildMeal(DEFAULT_PRESET[k], lookupFood)
         const sim = simulate(meal, { particles: 0 })
-        const total = meal.total.massG || 1
         const pts: string[] = []
         for (let m = 0; m <= 360; m += 3) {
-          // Share of the meal still in the stomach, counting the meal as fully eaten from t = 0.
-          const pct = m < sim.stomachArrivalMin ? 1 : (sim.stomachLiquidG[m]! + sim.stomachSolidG[m]!) / total
+          const pct = stomachFraction(sim, m)
           pts.push(`${(m / 360) * 600},${20 + (1 - pct) * 240}`)
         }
         return { k, d: `M${pts.join('L')}`, name: meal.items.map((i) => localized(i.food.name, i18n.language)).join(' + ') }
@@ -90,9 +88,6 @@ export default function Home() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/sim" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">
               {t('home.cta')}
-            </Link>
-            <Link to={presetHref(PRESETS[1]!)} className="rounded-full border border-ink px-6 py-3 text-lg font-semibold hover:bg-sunk">
-              {t('home.ctaSecondary')}
             </Link>
           </div>
         </div>

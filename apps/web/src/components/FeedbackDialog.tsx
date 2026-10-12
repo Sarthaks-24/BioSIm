@@ -1,28 +1,38 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { sendFeedback } from '../lib/api.ts'
-import { useSim, shareSearch } from '../state/sim.ts'
+import { feedbackIssueUrl, sendFeedback, type FeedbackInput } from '../lib/api.ts'
+import { useSim, shareQuery } from '../state/sim.ts'
 
-/** "Report a mistake" — the credibility loop. Uses the native <dialog> for focus handling. */
+/**
+ * "Report a mistake" — the credibility loop. No email or other personal data is asked for.
+ * If the server can't be reached, the same report opens as a pre-filled GitHub issue, so
+ * nothing typed is lost.
+ */
 export default function FeedbackDialog() {
   const { t } = useTranslation()
   const ref = useRef<HTMLDialogElement>(null)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
+  const [fallback, setFallback] = useState('')
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formEl = e.currentTarget
     const form = new FormData(formEl)
-    setStatus('sending')
-    const ok = await sendFeedback({
+    const input: FeedbackInput = {
       location: String(form.get('location') ?? ''),
       message: String(form.get('message') ?? ''),
       source: String(form.get('source') ?? '') || undefined,
-      email: String(form.get('email') ?? '') || undefined,
-      context: shareSearch(useSim.getState()),
-    })
-    setStatus(ok ? 'sent' : 'failed')
-    if (ok) formEl.reset()
+      context: shareQuery(useSim.getState()),
+    }
+    setStatus('sending')
+    const ok = await sendFeedback(input)
+    if (ok) {
+      setStatus('sent')
+      formEl.reset()
+    } else {
+      setFallback(feedbackIssueUrl(input))
+      setStatus('failed')
+    }
   }
 
   const field = 'mt-1 w-full rounded-lg border border-rule bg-white px-3 py-2'
@@ -61,15 +71,18 @@ export default function FeedbackDialog() {
             {t('feedback.source')}
             <input name="source" maxLength={500} className={field} />
           </label>
-          <label className="block text-sm font-semibold">
-            {t('feedback.email')}
-            <input name="email" type="email" maxLength={200} className={field} autoComplete="email" />
-          </label>
           <p className="text-xs text-ink-2">{t('feedback.privacy')}</p>
-          <p role="status" className="text-sm font-semibold">
+          <div role="status" className="text-sm font-semibold">
             {status === 'sent' && t('feedback.sent')}
-            {status === 'failed' && t('feedback.failed')}
-          </p>
+            {status === 'failed' && (
+              <p>
+                {t('feedback.failed')}{' '}
+                <a href={fallback} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                  {t('feedback.openIssue')}
+                </a>
+              </p>
+            )}
+          </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => ref.current?.close()} className="rounded-full px-4 py-2 font-semibold hover:bg-sunk">
               {t('feedback.close')}

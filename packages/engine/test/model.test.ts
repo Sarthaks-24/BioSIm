@@ -19,7 +19,13 @@ import { lookup } from './fixtures.ts'
  * citation. See docs/MODEL.md.
  */
 
-const run = (...ids: string[]) => simulate(buildMeal(ids.map((foodId) => ({ foodId, servings: 1 })), lookup))
+const run = (...ids: string[]) =>
+  simulate(
+    buildMeal(
+      ids.map((foodId) => ({ foodId, servings: 1 })),
+      lookup,
+    ),
+  )
 const leftPct = (sim: Simulation, minutesAfterEating: number) =>
   stomachFraction(sim, indexAt(sim, minutesAfterEating + sim.meal.eatingMin)) * 100
 const rise = (sim: Simulation, t: number) => sim.glucose.typical[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl

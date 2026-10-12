@@ -1,96 +1,100 @@
 # The BioSim model
 
-Model version: see `MODEL_VERSION` in `packages/engine/src/params.ts`. Every tunable number lives
-in that file next to its source. If you change one, bump `MODEL_VERSION` and update the golden
-tests. Old share links still open; the app tells the viewer that the numbers may differ.
+**Model version:** see `MODEL_VERSION` in `packages/engine/src/params.ts`.
+
+Every tunable number lives in `params.ts`, next to its source. If you change one:
+
+- bump `MODEL_VERSION`;
+- run `npm run calibrate -w @biosim/engine` to see the outputs next to their published targets;
+- update the golden tests.
+
+Old share links still open. The app tells the viewer the numbers may differ from when the link was shared.
+
+## Glossary
+
+| Term | Meaning |
+|---|---|
+| Stage | One of mouth, oesophagus (code: `esophagus`), stomach, small intestine, large intestine (code: `largeIntestine`; "colon" in params) |
+| Leftovers | What reaches the large intestine apart from water: fibre plus the little that isn't absorbed |
+| t½, t90 | Time until 50 % / 90 % of the meal (by weight) has left the stomach |
+| GI | Glycemic index: blood-sugar area after 50 g of a food's carbohydrate, as a % of 50 g glucose |
+| Fibre / fiber | Same thing. The UI uses UK spelling; the code uses US spelling |
 
 ## What is computed and what is fixed
 
-| Stage | How | Why |
+| Stage | How | Source |
 |---|---|---|
-| Mouth | Eating time from portion size (about 35 g/min for solids, about 1 min for a drink) | Illustrative assumption |
-| Oesophagus | About 8 s | OpenStax A&P 2e §23.3: 4–8 s for solids, about 1 s for liquids |
-| **Stomach** | **Computed from the meal** | Stomach emptying depends on the food. Everything else depends mostly on the person. |
-| Small intestine | Fixed: typically 4 h, range 3–5.7 h | OpenStax §23.5 (3–5 h); Nandhra et al. 2023 capsule reference range |
-| Large intestine | Fixed: typically 22 h, range 12–29 h | OpenStax §23.5 (12–24 h); Nandhra et al. 2023 (study means 16–29 h) |
-| **Blood glucose** | **Computed from the meal** | From carbohydrate, glycemic index, emptying speed, protein and fat |
+| Mouth | Eating time from portion size (~35 g/min for solids, ~1 min for a drink) | Illustrative assumption |
+| Oesophagus | ~6 s | OpenStax A&P 2e §23.3 (4–8 s solids, ~1 s liquids) |
+| **Stomach** | **Computed from the meal** | See below |
+| Small intestine | Fixed transit: typical 4 h, range 3–5.7 h | OpenStax §23.5; Nandhra et al. 2023 |
+| Large intestine | Fixed transit: typical 22 h, range 12–29 h | OpenStax §23.5; Nandhra et al. 2023 |
+| **Absorption & blood glucose** | **Computed from the meal** | See below |
 
-### Stomach emptying
+Transit through the intestines varies far more between people than between meals. The model therefore uses typical values and shows the range wherever times are displayed.
 
-The meal is split into a **liquid** phase and a **solid** phase. For each phase, the fraction still
-in the stomach is a power-exponential (Elashoff et al. 1982):
+## Stomach emptying
 
-```
-retention(t) = 2^-((t / t½)^β)
-```
+### Liquids (no lag)
 
-**Liquids** use β = 1, which is a simple exponential. Their half-time is
-`max(16 min, kcal_liquid / (2 × 2.13 kcal/min))`:
+Water empties exponentially, with a half-time of 16 min (Ziessman et al. 2009).
 
-- Water empties with a half-time of about 16 min (Ziessman et al. 2009).
-- Drinks with calories are held back by the duodenum to about 2.13 kcal/min (Brener et al. 1983).
+A drink with calories can't empty faster than the duodenum lets energy through: about 2.13 kcal per minute (Brener et al. 1983). It therefore empties in a straight line. The slower of the two curves wins.
 
-**Solids** use β = 1.3, which gives the lag-then-steady shape. Their half-time is
-`30 min lag + (kcal_solid + kcal_liquid) / (2 × 2.13)`:
+### Solids
 
-- The lag comes from Siegel et al. 1988: 31 ± 8 min for an egg meal.
-- The calories of drinks taken with the meal also count, because the small intestine's feedback
-  limits **total** calories.
-- Fat, protein and carbohydrate slow emptying equally per kcal (Hunt & Stubbs 1975). So fat-rich
-  meals empty slowly simply because they carry more kcal per gram.
+Solids must first be ground small, which gives a lag phase. After that they empty in a straight line at about 1.4 kcal/min.
 
-**Golden test:** a standard 255 kcal solid meal stays within the consensus normal ranges for
-scintigraphy (Abell et al. 2008). It must have 37–90 % left at 1 h, 30–60 % at 2 h and ≤10 % at 4 h.
+- **Lag.** The emptying rate ramps up over 2 × 20 min. That gives a 20 min lag as the straight-line intercept, which is how Siegel et al. 1988 define it.
+- **Rate.** 1.4 kcal/min is calibrated so the consensus 255 kcal test meal sits mid-range in the scintigraphy norms (Abell et al. 2008). Those norms are 37–90 % left at 1 h, 30–60 % at 2 h and ≤10 % at 4 h; the model gives 78 %, 45 % and 0 %.
+- **Drinks with the meal.** The kcal of a drink taken with a solid meal use up part of the solids' time budget, so a sugary drink delays the food a little.
+- **Fat, protein and carbohydrate** slow emptying equally per kcal (Hunt & Stubbs 1975). Fatty meals take longer simply because they carry more kcal.
 
-### Intestines
+**Meal cap.** The model is meant for meals up to **1500 kcal**. The picker won't build a larger meal. A link with a larger meal opens with a warning. A meal at the cap still empties within ~16 h.
 
-Each intestine is a fixed-delay pipe, using the typical transit times above. While food is in the
-small intestine, this share of each nutrient is absorbed (OpenStax §23.7):
+## Absorption (one model for everything)
 
-| Nutrient | Absorbed in small intestine |
-|---|---|
-| Carbohydrate | 95 % |
-| Protein | 90 % |
-| Fat | 95 % |
-| Water | 80 % |
-| Fibre | 0 % |
+Each nutrient that reaches the small intestine is absorbed first-order, at its own speed:
 
-The colon absorbs 90 % of the water that reaches it. Mass is conserved: there is a test for it.
+| Nutrient | Time constant | Share absorbed in small intestine |
+|---|---|---|
+| Sugars / starch | 10 min | 95 % |
+| Protein | 40 min | 90 % |
+| Fat | 60 min | 95 % |
+| Water | 20 min | 80 % |
+| Fibre | — | 0 % |
 
-### Blood glucose
+So most absorption happens early, in the jejunum, and fat later, after bile has worked on it (OpenStax §23.7). The carbohydrate time constant is calibrated with the glucose curve; the others are modelling assumptions.
 
-1. As carbohydrate leaves the stomach, it is weighted by its glycemic index.
-2. Fat and protein then blunt it by `1 / (1 + 0.15 × (2·protein + fat) / carbs)`, with a floor of
-   0.6. Protein counts twice as much as fat, gram for gram (Moghaddam et al. 2006).
-3. It is absorbed with a 10-minute time constant.
-4. Plasma glucose rises, and is pulled back by baseline clearance plus an insulin-action term that
-   builds up while glucose is raised. That structure follows the Bergman minimal model (1979).
+The large intestine absorbs 90 % of the water that reaches it, slowly. Whatever is left eventually leaves the body.
 
-A food's GI is measured on the whole food, so it already includes that food's own stomach
-emptying. To avoid counting the slow emptying of solids twice, a single correction factor is
-calibrated so that simulated white bread (GI 75) gives 75 % of the 2-hour glucose area of 50 g
-glucose. That is the definition of GI (Brouns et al. 2005).
+Mass is conserved at every minute: stomach + intestines + absorbed + left the body = eaten. A test checks this.
+
+## Blood glucose
+
+1. The carbohydrate being absorbed is weighted by its food's glycemic index. This uses the **same** absorption as above, so the glucose curve and the "absorbed" numbers always agree.
+2. Fat and protein blunt it by `1 / (1 + 0.15 × (2·protein + fat) / carbs)`, with a floor of 0.6. Protein counts double, gram for gram (Moghaddam et al. 2006).
+3. Plasma glucose rises. Baseline clearance and an insulin-action term that builds while glucose is raised pull it back down. The structure follows the Bergman minimal model (1979); the constants are calibrated.
+4. Foods with no published GI have too little carbohydrate to test, so they count as having no glycemic effect.
+
+A food's GI already includes how slowly that food leaves the stomach. One correction factor stops solids being slowed twice. It is calibrated so simulated white bread (GI 75) gives 75 % of the 2-hour glucose area of 50 g glucose, which is the definition of GI (Brouns et al. 2005).
 
 **Golden tests:**
 
-- 50 g glucose peaks at +30–60 mg/dL within 30–60 min and is near baseline by 2 h. Real meals peak
-  at about 46–50 min (Freckmann et al. 2007).
+- 50 g glucose peaks at +30–60 mg/dL within 30–60 min and is near baseline by 2 h.
+- A starchy solid meal peaks later, but within 75 min. Meal studies peak at ~46–50 min (Freckmann et al. 2007); the model gives ~60 min.
 - Fat and protein flatten the curve.
-- Water does nothing.
 
-The display is a **band**, not a number: 0.65× to 1.45× the typical curve. This reflects how much
-glycemic responses differ between people.
+The display is a **band**, from 0.65× to 1.45× the typical curve, because glycemic responses vary a lot between people.
 
 ## Known limits
 
-- It models a healthy adult only. It does not model children, pregnancy, diabetes or digestive
-  illness.
+- It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
 - Milk clots in the stomach and really empties more slowly than the liquid model shows.
-- Glycemic-index values vary between studies and varieties (rice: about 50 to over 90).
-- Peaks for solid meals come out somewhat later and lower than continuous-glucose-monitor data. The
-  model leans conservative.
-- Most constants in the β and insulin terms are calibrated to the golden tests, not measured.
-  `params.ts` marks which is which.
+- Fibre isn't modelled on its own. Its effect on blood sugar shows up only through each food's GI.
+- GI values vary between studies and varieties (rice ranges from about 50 to over 90).
+- Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.
+- The insulin constants, the absorption time constants other than carbohydrate, and the eating pace are calibrated or assumed, not measured. `params.ts` says which.
 
 ## References
 
@@ -99,19 +103,21 @@ glycemic responses differ between people.
 3. Bergman RN, et al. Quantitative estimation of insulin sensitivity. *Am J Physiol* 1979;236:E667–E677.
 4. Brener W, Hendrix TR, McHugh PR. Regulation of the gastric emptying of glucose. *Gastroenterology* 1983;85:76–82.
 5. Brouns F, et al. Glycaemic index methodology. *Nutr Res Rev* 2005;18:145–171.
-6. Elashoff JD, Reedy TJ, Meyer JH. Analysis of gastric emptying data. *Gastroenterology* 1982;83:1306–1312.
-7. Freckmann G, et al. Continuous glucose profiles in healthy subjects. *J Diabetes Sci Technol* 2007;1:695–703.
-8. Hunt JN, Stubbs DF. The volume and energy content of meals as determinants of gastric emptying. *J Physiol* 1975;245:209–225.
-9. Moghaddam E, Vogt JA, Wolever TMS. Effects of fat and protein on glycemic responses. *J Nutr* 2006;136:2506–2511.
-10. Nandhra GK, et al. Gastrointestinal transit times in health as determined using ingestible capsule systems: a systematic review. *J Clin Med* 2023;12:5272.
-11. OpenStax. *Anatomy and Physiology 2e*, ch. 23. Rice University.
-12. Siegel JA, et al. Biphasic nature of gastric emptying. *Gut* 1988;29:85–89.
-13. Wang YT, et al. Regional gastrointestinal transit and pH in 215 healthy volunteers. *Aliment Pharmacol Ther* 2015;42:761–772.
-14. Ziessman HA, et al. Liquid gastric emptying. *J Nucl Med* 2009;50:726–731.
+6. Freckmann G, et al. Continuous glucose profiles in healthy subjects. *J Diabetes Sci Technol* 2007;1:695–703.
+7. Hunt JN, Stubbs DF. The volume and energy content of meals as determinants of gastric emptying. *J Physiol* 1975;245:209–225.
+8. Moghaddam E, Vogt JA, Wolever TMS. Effects of fat and protein on glycemic responses. *J Nutr* 2006;136:2506–2511.
+9. Nandhra GK, et al. Gastrointestinal transit times in health as determined using ingestible capsule systems: a systematic review. *J Clin Med* 2023;12:5272.
+10. OpenStax. *Anatomy and Physiology 2e*, ch. 23. Rice University.
+11. Siegel JA, et al. Biphasic nature of gastric emptying. *Gut* 1988;29:85–89.
+12. Wang YT, et al. Regional gastrointestinal transit and pH in 215 healthy volunteers. *Aliment Pharmacol Ther* 2015;42:761–772.
+13. Ziessman HA, et al. Liquid gastric emptying. *J Nucl Med* 2009;50:726–731.
 
-The food data comes from USDA FoodData Central (SR Legacy), the Indian Nutrient Databank
-(Vijayakumar et al. 2024, built on IFCT 2017) and Atkinson et al. 2008. Each food file cites its own
-sources.
+The food data comes from:
 
-**Still needed:** sign-off from a named physiology or biology reviewer before the pilot with
-teachers.
+- USDA FoodData Central (SR Legacy)
+- the Indian Nutrient Databank (Vijayakumar et al. 2024, built on IFCT 2017)
+- Atkinson et al. 2008
+
+Each food file cites its own sources.
+
+**Still needed:** sign-off from a named physiology or biology reviewer before the teacher pilot.

@@ -14,6 +14,26 @@ import type { Particle, StageId } from '@biosim/engine'
 const v = (x: number, y: number, z: number) => new Vector3(x, y, z)
 const curve = (pts: Vector3[], tension = 0.5) => new CatmullRomCurve3(pts, false, 'catmullrom', tension)
 
+/** Body silhouette as [radius, height] pairs, bottom to neck. The 3D lathe and the flat outline both use it. */
+export const TORSO_PROFILE: [number, number][] = [
+  [0.0, -1.78],
+  [0.5, -1.74],
+  [0.82, -1.55],
+  [0.93, -1.2],
+  [0.9, -0.75],
+  [0.8, -0.25],
+  [0.79, 0.25],
+  [0.88, 0.85],
+  [0.98, 1.45],
+  [1.03, 1.8],
+  [0.98, 1.97],
+  [0.8, 2.08],
+  [0.52, 2.17],
+  [0.28, 2.23],
+  [0.19, 2.3],
+  [0.17, 2.46],
+]
+
 export const MOUTH = v(0, 2.64, 0.22)
 
 /** Mouth → back of the throat → top of the oesophagus. */
@@ -141,7 +161,7 @@ export const GALLBLADDER = { center: v(-0.34, 0.66, 0.2) }
 export const SPLEEN = { center: v(0.74, 0.74, -0.16) }
 
 export const STAGE_LABEL_ANCHOR: Record<StageId, Vector3> = {
-  mouth: v(0, 2.64, 0.22),
+  mouth: MOUTH,
   esophagus: v(0, 1.75, -0.06),
   stomach: v(0.66, 0.82, 0.12),
   smallIntestine: v(0.05, -0.38, 0.26),

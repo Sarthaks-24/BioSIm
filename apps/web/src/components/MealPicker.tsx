@@ -1,14 +1,15 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MAX_ITEMS, MAX_SERVINGS } from '@biosim/engine'
+import { MAX_ITEMS, PARAMS, SERVING_STEPS } from '@biosim/engine'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { localized } from '../i18n/index.ts'
-import { useSim, type MealKey } from '../state/sim.ts'
+import { useSim, mealLabel, type MealKey } from '../state/sim.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'
 
 export default function MealPicker({ meal }: { meal: MealKey }) {
   const { t, i18n } = useTranslation()
   const items = useSim((s) => s[meal])
+  const capBlocked = useSim((s) => s.capBlocked === meal)
   const { addFood, setServings, removeFood } = useSim.getState()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -16,12 +17,12 @@ export default function MealPicker({ meal }: { meal: MealKey }) {
   const listId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const lang = i18n.language
-  const title = meal === 'a' ? t('sim.mealA') : t('sim.mealB')
+  const title = mealLabel(meal, t)
 
   const options = useMemo(() => {
     const q = query.trim().toLowerCase()
     return FOODS.filter((f) => !items.some((i) => i.foodId === f.id)).filter(
-      (f) => !q || f.name.en.toLowerCase().includes(q) || (f.name.hi ?? '').includes(q) || f.id.includes(q),
+      (f) => !q || Object.values(f.name).some((n) => n?.toLowerCase().includes(q)) || f.id.includes(q),
     )
   }, [query, items])
 
@@ -38,7 +39,7 @@ export default function MealPicker({ meal }: { meal: MealKey }) {
           {meal.toUpperCase()}
         </span>
         <h2 className="text-lg font-semibold">{title}</h2>
-        {items.length > 0 && <span className="tabular ml-auto text-sm text-ink-2">{t('sim.kcal', { value: Math.round(kcal) })}</span>}
+        {items.length > 0 && <span className="tabular ml-auto text-sm text-ink-2">{t('units.kcal', { n: Math.round(kcal) })}</span>}
       </div>
 
       {items.length === 0 && <p className="mb-2 text-sm text-ink-2">{meal === 'b' ? t('sim.pickBoth') : t('sim.emptyMeal')}</p>}
@@ -62,16 +63,18 @@ export default function MealPicker({ meal }: { meal: MealKey }) {
                 className="tabular rounded-full bg-sunk px-1.5 py-0.5 text-sm"
                 title={localized(food.serving.label, lang)}
               >
-                {[0.5, 1, 1.5, 2, 3, 4, MAX_SERVINGS].map((n) => (
-                  <option key={n} value={n}>
-                    ×{n}
-                  </option>
-                ))}
+                {[...new Set<number>([...SERVING_STEPS, item.servings])]
+                  .sort((x, y) => x - y)
+                  .map((n) => (
+                    <option key={n} value={n}>
+                      ×{n}
+                    </option>
+                  ))}
               </select>
               <button
                 type="button"
                 onClick={() => removeFood(meal, item.foodId)}
-                className="grid size-6 place-items-center rounded-full text-ink-2 hover:bg-sunk hover:text-ink"
+                className="-my-1 grid size-9 place-items-center rounded-full text-lg text-ink-2 hover:bg-sunk hover:text-ink"
                 aria-label={t('sim.remove', { name })}
               >
                 ×
@@ -80,6 +83,12 @@ export default function MealPicker({ meal }: { meal: MealKey }) {
           )
         })}
       </ul>
+
+      {capBlocked && (
+        <p role="alert" className="mb-2 text-sm font-semibold text-meal-b">
+          {t('sim.capReached', { kcal: PARAMS.maxMealKcal })}
+        </p>
+      )}
 
       {items.length < MAX_ITEMS && (
         <div className="relative">

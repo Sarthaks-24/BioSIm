@@ -10,6 +10,7 @@ import {
   SMALL_INTESTINE,
   STAGE_LABEL_ANCHOR,
   STOMACH,
+  TORSO_PROFILE,
   particlePosition,
   stomachRadius,
 } from '../anatomy/anatomy.ts'
@@ -20,25 +21,6 @@ import { INK, NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'
  * the 3D view, drawn front-on with Canvas 2D.
  */
 
-/** Same silhouette as the 3D body (see three/geometry.ts buildBody). */
-const TORSO: [number, number][] = [
-  [0.0, -1.78],
-  [0.5, -1.74],
-  [0.82, -1.55],
-  [0.93, -1.2],
-  [0.9, -0.75],
-  [0.8, -0.25],
-  [0.79, 0.25],
-  [0.88, 0.85],
-  [0.98, 1.45],
-  [1.03, 1.8],
-  [0.98, 1.97],
-  [0.8, 2.08],
-  [0.52, 2.17],
-  [0.28, 2.23],
-  [0.19, 2.3],
-  [0.17, 2.46],
-]
 /** Liver outline: tall right lobe (viewer's left) tapering to a thin left lobe over the stomach. */
 const LIVER_OUTLINE: [number, number][] = [
   [-0.8, 1.05],
@@ -62,7 +44,7 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
-    const draw = () => paint(canvas, sim, useSim.getState().time, (s) => t(`stages.${s}.name`))
+    const draw = () => paint(canvas, sim, useSim.getState().time, (s) => t(`stages.${s}.short`))
     draw()
     const unsub = useSim.subscribe((s, prev) => s.time !== prev.time && draw())
     const ro = new ResizeObserver(draw)
@@ -80,8 +62,11 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const { clientWidth: w, clientHeight: h } = canvas
   if (w === 0 || h === 0) return
-  canvas.width = w * dpr
-  canvas.height = h * dpr
+  // Reallocating the canvas every frame is slow on exactly the devices this fallback is for.
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr)
+    canvas.height = Math.round(h * dpr)
+  }
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -97,8 +82,8 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
   ctx.strokeStyle = 'rgba(70,83,110,0.55)'
   ctx.lineWidth = 1.5
   ctx.beginPath()
-  TORSO.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
-  for (let i = TORSO.length - 1; i >= 0; i--) ctx.lineTo(X(-TORSO[i]![0]), Y(TORSO[i]![1]))
+  TORSO_PROFILE.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
+  for (let i = TORSO_PROFILE.length - 1; i >= 0; i--) ctx.lineTo(X(-TORSO_PROFILE[i]![0]), Y(TORSO_PROFILE[i]![1]))
   ctx.closePath()
   ctx.stroke()
   ctx.beginPath()
@@ -110,7 +95,7 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
     ctx.stroke()
   }
 
-  // Liver and pancreas for context (not on the food's path).
+  // Liver for context (not on the food's path).
   ctx.beginPath()
   LIVER_OUTLINE.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
   ctx.closePath()
@@ -163,7 +148,7 @@ function paint(canvas: HTMLCanvasElement, sim: Simulation, time: number, stageNa
   for (const part of sim.particles) {
     const s = particlePosition(part, time, p)
     if (s <= 0) continue
-    drawShape(ctx, part.kind, X(p.x), Y(p.y), Math.max(2.5, 0.035 * scale) * s)
+    drawShape(ctx, part.kind, X(p.x), Y(p.y), Math.max(3.5, 0.055 * scale) * s)
   }
 
   // Active stage label
@@ -208,5 +193,9 @@ function drawShape(ctx: CanvasRenderingContext2D, kind: NutrientKind, x: number,
       break
   }
   ctx.fill()
+  // White outline keeps particles visible against the pink tissue, especially on projectors.
   ctx.globalAlpha = 1
+  ctx.lineWidth = 1.5
+  ctx.strokeStyle = '#ffffff'
+  ctx.stroke()
 }

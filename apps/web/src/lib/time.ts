@@ -1,12 +1,14 @@
 import type { TFunction } from 'i18next'
+import { PARAMS } from '@biosim/engine'
 
-export const HORIZON_MIN = 48 * 60
+export const HORIZON_MIN = PARAMS.horizonMin
 
 /**
  * The timeline is not linear: the first 6 hours (stomach, blood sugar, absorption) are where
  * most of the action is, so they get 60 % of the bar. The slow large-intestine part gets the rest.
+ * Playback moves along the BAR at a steady pace, so those 6 hours also get 60 % of the playing time.
  */
-const KNEE_MIN = 6 * 60
+export const KNEE_MIN = 6 * 60
 const KNEE_POS = 0.6
 
 export function timeToPos(min: number): number {
@@ -21,12 +23,17 @@ export function posToTime(pos: number): number {
   return KNEE_MIN + ((p - KNEE_POS) / (1 - KNEE_POS)) * (HORIZON_MIN - KNEE_MIN)
 }
 
-export const TIMELINE_TICKS = [0, 60, 120, 180, 240, 360, 720, 1440, 2160, 2880]
+export const KNEE_FRACTION = KNEE_POS
 
-/** "45 min", "3 h", "3 h 20 min" — rounded sensibly for the size of the number. */
+export const TIMELINE_TICKS = [0, 60, 120, 180, 240, 360, 720, 1440, 2160, 2880]
+/** Ticks kept on narrow screens so labels don't collide. */
+export const TIMELINE_TICKS_NARROW = [0, 120, 240, 360, 1440, 2880]
+
+/** "35 min", "3 h", "3 h 20 min" — rounded to 5 minutes so the model doesn't pretend to be precise. */
 export function formatDuration(min: number, t: TFunction): string {
   const m = Math.max(0, Math.round(min))
-  if (m < 60) return t('units.min', { n: m })
+  if (m < 10) return t('units.min', { n: m })
+  if (m < 60) return t('units.min', { n: Math.round(m / 5) * 5 })
   if (m >= 12 * 60) return t('units.h', { n: Math.round(m / 60) })
   const h = Math.floor(m / 60)
   const rest = Math.round((m - h * 60) / 5) * 5
@@ -35,12 +42,7 @@ export function formatDuration(min: number, t: TFunction): string {
   return t('units.hm', { h, m: rest })
 }
 
-/** Compact clock for the timeline readout, e.g. "3:05" or "26:40". */
-export function formatClock(min: number): string {
-  const m = Math.max(0, Math.floor(min))
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
-}
-
-/** Speed presets: simulated minutes per real second. */
-export const SPEEDS = [2, 10, 30, 120, 360] as const
-export type Speed = (typeof SPEEDS)[number]
+/** Playback paces: seconds to play the whole 2-day bar. */
+export const PACES = [240, 120, 60, 30] as const
+export type Pace = (typeof PACES)[number]
+export const DEFAULT_PACE: Pace = 60

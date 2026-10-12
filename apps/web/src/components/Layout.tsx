@@ -3,6 +3,7 @@ import { NavLink, Outlet, ScrollRestoration, Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@biosim/engine'
 import { readPref, writePref } from '../lib/prefs.ts'
+import { INK, ORGAN_COLOR } from '../lib/colors.ts'
 
 function Logo() {
   // A stylized stomach-and-gut mark: the loop the app is about.
@@ -11,11 +12,11 @@ function Logo() {
       <path
         d="M11 3v6c0 3 2 4 5 4h3c4 0 7 3 7 7s-3 8-9 8c-5 0-9-3-9-7 0-3 2-5 5-5"
         fill="none"
-        stroke="#d9536a"
+        stroke={ORGAN_COLOR.mouth}
         strokeWidth="4"
         strokeLinecap="round"
       />
-      <circle cx="13" cy="20" r="2.2" fill="#14213d" />
+      <circle cx="13" cy="20" r="2.2" fill={INK} />
     </svg>
   )
 }
