@@ -13,11 +13,11 @@ Run it on every WP that changes the body (first in WP-16) and in the release gat
 
 ## Steps
 
-1. In the worktree being checked (before it is merged):
+1. In your checkout (the worktree being checked, before it is merged):
 
    ```bash
-   cd /e/BioSim/.claude/worktrees/wp-NN && npm run build -w @lifepeek/web
-   cd /e/BioSim/.claude/worktrees/wp-NN && npm run preview -w @lifepeek/web -- --host --port 4173
+   npm run build -w @lifepeek/web
+   npm run preview -w @lifepeek/web -- --host --port 4173
    ```
 
    Vite prints a `Network:` address such as `http://192.168.1.23:4173/`.

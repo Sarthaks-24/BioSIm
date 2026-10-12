@@ -17,7 +17,7 @@ Rules for the reviewer:
   `[1]` and `[2]`; `[1]` was added with the reduced-motion setting) and the paragraph under "गलती की रिपोर्ट करना"
   (`privacy.sections[1].intro[0]`) are new wording; please check them closely.
 
-## Renamed lines (BioSim → LifePeek, only the name changed)
+## Renamed lines (old name → LifePeek, only the name changed)
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
