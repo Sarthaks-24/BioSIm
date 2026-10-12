@@ -114,7 +114,7 @@ export default function Layout() {
               <Logo />
               LifePeek
             </Link>
-            <nav aria-label="Main" className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+            <nav aria-label={t('nav.main')} className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
               <NavLink to="/sim" className={nav}>
                 {t('nav.simulator')}
               </NavLink>
@@ -135,14 +135,15 @@ export default function Layout() {
               >
                 {t('nav.projector')}
               </button>
+              {/* The name starts with the words on the button (WCAG 2.5.3), read in their own language;
+                  what the button does follows, for screen readers only, in the page's language. */}
               <button
                 type="button"
                 onClick={() => void i18n.changeLanguage(i18n.language === 'hi' ? 'en' : 'hi')}
-                aria-label={t('nav.languageLabel')}
-                lang={i18n.language === 'hi' ? 'en' : 'hi'}
                 className="rounded-full border border-rule px-3 py-1.5 text-sm font-semibold hover:bg-sunk"
               >
-                {t('nav.language')}
+                <span lang={i18n.language === 'hi' ? 'en' : 'hi'}>{t('nav.language')}</span>
+                <span className="sr-only"> ({t('nav.languageLabel')})</span>
               </button>
             </div>
           </div>

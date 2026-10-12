@@ -13,3 +13,37 @@ for (const route of GATE_ROUTES.axe) {
     await checkAxe(page, { mode, failOn: mode === 'report' ? ['critical'] : [] })
   })
 }
+
+test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives it back to its button', async ({ page }) => {
+  await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  const button = page.getByRole('button', { name: /^How we know: / }).filter({ visible: true }).first()
+  const panel = page.getByRole('dialog', { name: /^How we know: / })
+
+  await button.focus()
+  await page.keyboard.press('Enter')
+  // The panel itself, not its first link (a source at the bottom): read from the top.
+  await expect(panel).toBeFocused()
+  expect(await panel.evaluate((el) => el.scrollTop)).toBe(0)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+  await expect(button).toBeFocused()
+
+  // The panel sits at the end of the page; tabbing past its last link must not leave the page.
+  await page.keyboard.press('Enter')
+  await expect(panel).toBeFocused()
+  const links = await panel.getByRole('link').count()
+  expect(links).toBeGreaterThan(0)
+  for (let i = 0; i < links; i++) await page.keyboard.press('Tab')
+  await expect(panel.getByRole('link').last()).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(panel).toBeHidden()
+  await expect(button).toBeFocused()
+})
+
+test('the header names its menu and the language button by the words it shows (WCAG 2.5.3)', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
+  const language = page.getByRole('button', { name: /^भाषा: हिन्दी/ })
+  await expect(language).toBeVisible()
+  await expect(language.locator('[lang="hi"]')).toHaveText('भाषा: हिन्दी')
+})
