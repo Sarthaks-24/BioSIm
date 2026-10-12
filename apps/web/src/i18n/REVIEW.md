@@ -158,7 +158,7 @@ in later work packages). Notes for the reviewer:
 | `signals.gut.stomach.contentG.name` | Food in the stomach | आमाशय में भोजन | draft |
 | `signals.gut.stomach.contentG.short` | In stomach | आमाशय में | draft |
 | `signals.gut.stomach.contentG.desc` | Grams of the meal still in the stomach, as eaten (food and drink). | भोजन और पेय का कितना भाग (ग्राम में) अभी आमाशय में है, उसी रूप में जैसा खाया-पिया गया था। | draft |
-| `signals.gut.stomach.contentG.summary` | The stomach holds {{start}} g at the start. Half of the meal has left by {{half}}, and it is almost empty by {{empty}}. | शुरू में आमाशय में {{start}} ग्राम भोजन है। {{half}} तक आधा भोजन निकल जाता है, और {{empty}} तक आमाशय लगभग खाली हो जाता है। | draft |
+| `signals.gut.stomach.contentG.summary` | The stomach holds {{start}} g at the start. Half of the meal's food energy has left by {{half}}. | शुरू में आमाशय में {{start}} ग्राम भोजन है। {{half}} तक भोजन की आधी ऊर्जा निकल जाती है। | draft |
 | `signals.gut.stomach.liquidG.name` | Drink in the stomach | आमाशय में पेय | draft |
 | `signals.gut.stomach.liquidG.short` | Drink | पेय | draft |
 | `signals.gut.stomach.liquidG.desc` | Grams of the meal's drinks still in the stomach. | भोजन के साथ लिए गए पेय का कितना भाग (ग्राम में) अभी आमाशय में है। | draft |
@@ -211,7 +211,7 @@ in later work packages). Notes for the reviewer:
 | `signals.event.stomachHalfEmpty.name` | Half has left the stomach | आधा भोजन आमाशय से निकल गया | draft |
 | `signals.event.glucosePeak.name` | Blood sugar highest | रक्त शर्करा सबसे अधिक | draft |
 | `signals.event.glucoseBackToBase.name` | Blood sugar back near the before-meal level | रक्त शर्करा खाने से पहले के स्तर के पास लौटी | draft |
-| `signals.event.mostlyAbsorbed.name` | Nutrients mostly absorbed | पोषक तत्व ज़्यादातर अवशोषित | draft |
+| `signals.event.mostlyAbsorbed.name` | Carbs, protein and fat mostly absorbed | कार्बोहाइड्रेट, प्रोटीन और वसा ज़्यादातर अवशोषित | draft |
 | `signals.event.firstLeftovers.name` | Leftovers start leaving the body | अवशेष शरीर से बाहर निकलने लगे | draft |
 | `signals.event.firstLeftovers.desc` | Depends mostly on the person, not the meal | यह भोजन पर नहीं, मुख्य रूप से व्यक्ति पर निर्भर करता है | draft |
 | `signals.event.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
@@ -337,6 +337,45 @@ stomach graph (the ring marks when half the meal's food ENERGY has left; the gra
 | `graph.halfEnergyLeft` | Half the energy has left the stomach | आधी ऊर्जा आमाशय से निकल गई | draft |
 | `graph.halfTitle` | The ring: half has left the stomach | गोला: आधा भोजन आमाशय से निकल गया | draft |
 | `limits.glucoseSameHighest` | More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too. | यहाँ एक ही भोजन या पेय ज़्यादा लेने से सबसे ऊँचा बिंदु नहीं बढ़ता, केवल यह बढ़ता है कि रक्त शर्करा कितनी देर ऊँची रहती है: आमाशय भोजन को एक स्थिर गति से आगे भेजता है (मीठे पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट), मात्रा चाहे जितनी हो। असली लोगों में बड़ी मात्रा से सबसे ऊँचा बिंदु भी आमतौर पर थोड़ा बढ़ता है। | draft |
+
+## Dock, Now line and summary sentence (WP-14)
+
+The Now line under the body says where the food is and what that organ does (`now.stages.*` are
+short lines written for it; "More" opens v1's full `stages.*` texts). The summary sentence is v1's
+verdict for "this meal" and "the kept meal": the reason is given only when it is true. `dock.*` are
+the timeline's key-moment markers and the label over its squeezed part ("6 h → 48 h squeezed").
+Two existing lines were reworded for honesty (verification council S6, S7), in their rows above
+(`signals.event.mostlyAbsorbed.name`, `signals.gut.stomach.contentG.summary`): "mostly absorbed" is
+about carbohydrate, protein and fat only, and the stomach graph's summary no longer has an
+"almost empty by …" time (no catalog moment gives it).
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `now.label` | Where the meal is now | भोजन अभी कहाँ है | draft |
+| `now.more` | More | और | draft |
+| `now.moreAbout` | {{stage}}: more about this stage | {{stage}}: इस चरण के बारे में और | draft |
+| `now.chemistry` | Chemistry | रासायनिक क्रिया | draft |
+| `now.absorbed` | Absorbed here | यहाँ अवशोषित | draft |
+| `now.stages.mouth` | teeth grind food and saliva starts on starch | दाँत भोजन पीसते हैं, लार मंड को तोड़ना शुरू करती है | draft |
+| `now.stages.esophagus` | muscle waves push each swallow down to the stomach | पेशियों की लहरें हर निवाले को नीचे धकेलती हैं | draft |
+| `now.stages.stomach` | acid and churning turn food into chyme | अम्ल और मथना भोजन को काइम में बदलते हैं | draft |
+| `now.stages.smallIntestine` | nutrients are absorbed into the body | पोषक तत्व शरीर में अवशोषित होते हैं | draft |
+| `now.stages.largeIntestine` | water is taken back from the leftovers | बचे हुए भाग से पानी वापस लिया जाता है | draft |
+| `summary.label` | Summary | सारांश | draft |
+| `summary.single` | Half of the food energy in {{meal}} has left the stomach after {{time}}. | {{meal}} की आधी ऊर्जा {{time}} बाद आमाशय से निकल चुकी है। | draft |
+| `summary.singleWater` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
+| `summary.similar` | {{a}} and {{b}} leave the stomach at about the same speed. | {{a}} और {{b}} लगभग एक ही गति से आमाशय से निकलते हैं। | draft |
+| `summary.faster` | {{fast}} leaves the stomach about {{x}}× faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} गुना तेज़ी से आमाशय से निकलता है। | draft |
+| `summary.reasonDrink` | {{fast}} is only a drink: drinks start leaving straight away, while solid food is ground first. | {{fast}} केवल एक पेय है: पेय तुरंत निकलने लगते हैं, जबकि ठोस भोजन पहले पीसा जाता है। | draft |
+| `summary.reasonCalories` | {{slow}} has more food energy ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach lets only a little through each minute. | {{slow}} में अधिक ऊर्जा है ({{kcalSlow}} बनाम {{kcalFast}} किलो कैलोरी), और आमाशय हर मिनट थोड़ा-सा ही आगे जाने देता है। | draft |
+| `summary.thisMeal` | this meal | यह भोजन | draft |
+| `summary.keptMeal` | the kept meal | रखा गया भोजन | draft |
+| `dock.squeezed` | {{from}} → {{to}} squeezed | {{from}} → {{to}} सिकोड़ा गया | draft |
+| `dock.moments` | Key moments of this meal | इस भोजन के मुख्य पल | draft |
+| `dock.keptMoments` | Key moments of the kept meal | रखे गए भोजन के मुख्य पल | draft |
+| `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
+| `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया: {{name}}, {{time}} | draft |
+| `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
 
 ## Sign-off
 

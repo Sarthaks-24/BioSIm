@@ -16,6 +16,8 @@
 //   curves no longer use three.js (anatomy/spline.ts; three's maths moved into the 3D chunk) and
 //   the "How we know" panel + source list load when first opened: /sim 189.2 → 177.7 KB,
 //   /next 195.0 → 181.4 KB, 3D body 249.2 → 258.9 KB.
+//   WP-14 (2026-10-13): the dock's key moments, the Now line and the summary sentence are first
+//   paint; the "More" stage text and the report form load on first use: /next 183.0 → 188.8 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

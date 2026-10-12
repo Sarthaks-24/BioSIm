@@ -428,7 +428,7 @@
           "name": "Food in the stomach",
           "short": "In stomach",
           "desc": "Grams of the meal still in the stomach, as eaten (food and drink).",
-          "summary": "The stomach holds {{start}} g at the start. Half of the meal has left by {{half}}, and it is almost empty by {{empty}}."
+          "summary": "The stomach holds {{start}} g at the start. Half of the meal's food energy has left by {{half}}."
         },
         "liquidG": {
           "name": "Drink in the stomach",
@@ -534,7 +534,7 @@
         "name": "Blood sugar back near the before-meal level"
       },
       "mostlyAbsorbed": {
-        "name": "Nutrients mostly absorbed"
+        "name": "Carbs, protein and fat mostly absorbed"
       },
       "firstLeftovers": {
         "name": "Leftovers start leaving the body",
@@ -599,6 +599,39 @@
     "already": "This meal is the one kept",
     "tag": "Kept: {{meal}}",
     "remove": "Stop comparing with {{meal}}"
+  },
+  "now": {
+    "label": "Where the meal is now",
+    "more": "More",
+    "moreAbout": "{{stage}}: more about this stage",
+    "chemistry": "Chemistry",
+    "absorbed": "Absorbed here",
+    "stages": {
+      "mouth": "teeth grind food and saliva starts on starch",
+      "esophagus": "muscle waves push each swallow down to the stomach",
+      "stomach": "acid and churning turn food into chyme",
+      "smallIntestine": "nutrients are absorbed into the body",
+      "largeIntestine": "water is taken back from the leftovers"
+    }
+  },
+  "summary": {
+    "label": "Summary",
+    "single": "Half of the food energy in {{meal}} has left the stomach after {{time}}.",
+    "singleWater": "Half of {{meal}} has left the stomach after {{time}}.",
+    "similar": "{{a}} and {{b}} leave the stomach at about the same speed.",
+    "faster": "{{fast}} leaves the stomach about {{x}}× faster than {{slow}}.",
+    "reasonDrink": "{{fast}} is only a drink: drinks start leaving straight away, while solid food is ground first.",
+    "reasonCalories": "{{slow}} has more food energy ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach lets only a little through each minute.",
+    "thisMeal": "this meal",
+    "keptMeal": "the kept meal"
+  },
+  "dock": {
+    "squeezed": "{{from}} → {{to}} squeezed",
+    "moments": "Key moments of this meal",
+    "keptMoments": "Key moments of the kept meal",
+    "marker": "{{name}}, {{time}}",
+    "keptMarker": "Kept: {{name}}, {{time}}",
+    "usually": "{{time}} (usually {{low}} to {{high}})"
   },
   "graph": {
     "label": "Graph of {{name}}, from eating to 48 hours later",
