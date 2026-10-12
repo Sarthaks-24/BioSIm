@@ -14,6 +14,8 @@ interface Props {
   kept: Pick<Series, 'values'> | null
   /** A second line on the same axis (energy used), if the graph has one. */
   second?: Pick<Series, 'values'> | null
+  /** The run's clock step in minutes (`run.stepMin`): index i of a series is minute i·stepMin. */
+  stepMin?: number
   /** Writes the values at `min` into the strip's readouts (text only). */
   readout: (min: number, run: number, kept: number | null) => void
 }
@@ -24,7 +26,7 @@ interface Props {
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing and causes no
  * layout; the readouts are text written at ~10 Hz. Same x scale as the dock thumb (lib/axis.ts).
  */
-export default function Playhead({ width, height, domain, run, kept, second = null, readout }: Props) {
+export default function Playhead({ width, height, domain, run, kept, second = null, stepMin = 1, readout }: Props) {
   const head = useRef<HTMLDivElement>(null)
   const runDot = useRef<HTMLSpanElement>(null)
   const keptDot = useRef<HTMLSpanElement>(null)
@@ -36,13 +38,13 @@ export default function Playhead({ width, height, domain, run, kept, second = nu
   useEffect(() => {
     let lastText = -Infinity
     const draw = (min: number) => {
-      const r = valueAt(run, min)
-      const k = kept ? valueAt(kept, min) : null
+      const r = valueAt(run, min, stepMin)
+      const k = kept ? valueAt(kept, min, stepMin) : null
       if (width > 0) {
         head.current!.style.transform = `translateX(${xAt(min, width).toFixed(1)}px)`
         place(runDot, yAt(r, domain, height))
         if (k !== null) place(keptDot, yAt(k, domain, height))
-        if (second) place(secondDot, yAt(valueAt(second, min), domain, height))
+        if (second) place(secondDot, yAt(valueAt(second, min, stepMin), domain, height))
       }
       const now = performance.now()
       if (now - lastText >= READOUT_MS || !useClock.getState().playing) {
@@ -61,7 +63,7 @@ export default function Playhead({ width, height, domain, run, kept, second = nu
       offTime()
       offPlay()
     }
-  }, [width, height, domain, run, kept, second])
+  }, [width, height, domain, run, kept, second, stepMin])
 
   return (
     <div

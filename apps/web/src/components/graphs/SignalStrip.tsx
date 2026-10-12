@@ -43,6 +43,8 @@ interface Props {
   summary?: string
   /** The graphs show one at a time under tabs (phone, projector, short screen): the tab names it. */
   tabbed?: boolean
+  /** The run's clock (`run.stepMin`, `run.horizonMin`): index i of every series is minute i·stepMin. */
+  clock?: { stepMin: number; horizonMin: number }
 }
 
 /**
@@ -68,6 +70,9 @@ function useSize<T extends HTMLElement>() {
   }, [])
   return [ref, size] as const
 }
+
+/** The human run's clock (PARAMS: 1-minute steps for 48 h), for callers that pass none. */
+const RUN_CLOCK = { stepMin: 1, horizonMin: HORIZON_MIN }
 
 const sameBox = (a: Box | null, b: Box | null) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h)
 
@@ -105,6 +110,7 @@ export default function SignalStrip({
   title,
   summary,
   tabbed = false,
+  clock = RUN_CLOCK,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -124,7 +130,7 @@ export default function SignalStrip({
     const x = (min: number) => xAt(min, width)
     const y = (v: number) => yAt(v, domain, height)
     const line = (values: Float32Array) => {
-      const s = samplesOf(values)
+      const s = samplesOf(values, clock.horizonMin, clock.stepMin)
       return { d: linePath(s.t, s.v, x, y), points: polyline(s.t, s.v, x, y) }
     }
     const run = line(series.values)
@@ -132,7 +138,10 @@ export default function SignalStrip({
     const secondLine = second ? line(second.series.values) : null
     return {
       run: run.d,
-      band: series.low && series.high ? bandPath(samplesOf(series.high), samplesOf(series.low), x, y) : null,
+      band:
+        series.low && series.high
+          ? bandPath(samplesOf(series.high, clock.horizonMin, clock.stepMin), samplesOf(series.low, clock.horizonMin, clock.stepMin), x, y)
+          : null,
       kept: keptLine?.d ?? null,
       second: secondLine?.d ?? null,
       secondEndY: second ? y(second.series.values[second.series.values.length - 1]!) : null,
@@ -140,7 +149,7 @@ export default function SignalStrip({
       // Every drawn line, for keeping the labels off them.
       points: [run.points, keptLine?.points, secondLine?.points].filter((p) => !!p),
     }
-  }, [series, kept, second, marker, width, height, domain])
+  }, [series, kept, second, marker, width, height, domain, clock])
 
   // The words on the plot (the ring's label, the second line's name) go where they cross no line.
   // Measured after layout and placed before paint; hidden until placed, and when nothing fits.
@@ -184,15 +193,15 @@ export default function SignalStrip({
         if (el) el.textContent = formatSignal(v, s.meta, t, lang)
       }
       const total = (el: HTMLSpanElement | null, s: Series | null | undefined) => {
-        if (el && s) el.textContent = t('graph.soFar', { value: formatSignal(valueAt(s, min), s.meta, t, lang) })
+        if (el && s) el.textContent = t('graph.soFar', { value: formatSignal(valueAt(s, min, clock.stepMin), s.meta, t, lang) })
       }
       write(runText.current, r)
       if (k !== null) write(keptText.current, k)
-      if (second) write(secondText.current, valueAt(second.series, min), second.series)
+      if (second) write(secondText.current, valueAt(second.series, min, clock.stepMin), second.series)
       total(runTotal.current, totals?.run)
       total(secondTotal.current, totals?.second)
     },
-    [series, second, totals, t, lang],
+    [series, second, totals, clock, t, lang],
   )
 
   // Dragging on the graph scrubs the shared clock (G2). pan-y keeps the page scrollable on a phone.
@@ -404,6 +413,7 @@ export default function SignalStrip({
             run={series}
             kept={kept}
             second={second?.series ?? null}
+            stepMin={clock.stepMin}
             readout={readout}
           />
         </div>
