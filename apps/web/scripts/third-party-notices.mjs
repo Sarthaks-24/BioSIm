@@ -1,7 +1,8 @@
 // Writes public/THIRD_PARTY_NOTICES.txt: the licence text of every npm package the web app ships.
 // Usage (from apps/web):  node scripts/third-party-notices.mjs          -> write the file
 //                         node scripts/third-party-notices.mjs --check  -> also fail on a bad licence
-// It walks the production dependency tree of apps/web/package.json. That can list a few packages
+// It walks the production dependency tree of apps/web/package.json, plus SHIPPED_BUILD_DEPS: build
+// tools' runtime code that ends up in dist (the Workbox service worker). That can list a few packages
 // the bundler later tree-shakes away; listing extra notices is harmless, missing one is not.
 import fs from 'node:fs'
 import path from 'node:path'
@@ -44,6 +45,11 @@ SOFTWARE.`,
   'Apache-2.0': (pkg) => `Copyright ${author(pkg)}. Licensed under the Apache License, Version 2.0
 (the package ships no LICENSE file; the full licence text is at the end of this file).`,
 }
+// Dev dependencies whose code is copied into dist, so their notices ship too. vite-plugin-pwa
+// (workbox-build) bundles these Workbox runtime modules into dist/sw.js and dist/workbox-*.js:
+// core, routing + precaching (precache and the app-shell fallback), strategies + expiration (the
+// NetworkFirst cache for stats.json). Their own dependencies (e.g. idb) are walked as usual.
+const SHIPPED_BUILD_DEPS = ['workbox-core', 'workbox-routing', 'workbox-precaching', 'workbox-strategies', 'workbox-expiration']
 const LICENSE_FILE = /^(licen[cs]e|copying|notice)(\.(md|txt|markdown))?$/i
 
 const seen = new Map() // real path -> info
@@ -81,6 +87,10 @@ function walk(name, fromDir) {
 
 const webPkg = JSON.parse(fs.readFileSync(path.join(webDir, 'package.json'), 'utf8'))
 for (const dep of Object.keys(webPkg.dependencies ?? {})) walk(dep, webDir)
+for (const dep of SHIPPED_BUILD_DEPS) {
+  if (!findPackage(dep, webDir)) problems.push(`${dep}: not installed, but its code ships in the service worker`)
+  walk(dep, webDir)
+}
 
 const pkgs = [...seen.values()].filter((p) => !p.own).sort((a, b) => a.name.localeCompare(b.name))
 const rule = '-'.repeat(78)
@@ -122,6 +132,8 @@ console.log(`third-party notices: ${pkgs.length} packages -> ${path.relative(pro
 
 if (CHECK) {
   if (!/SIL OPEN FONT LICENSE/i.test(out)) problems.push('SIL Open Font License text for the fonts is missing')
+  for (const dep of SHIPPED_BUILD_DEPS) if (!out.includes(`
+${dep} `)) problems.push(`${dep}: notice missing`)
   if (problems.length) {
     console.error('Licence check failed:\n- ' + problems.join('\n- '))
     process.exit(1)
