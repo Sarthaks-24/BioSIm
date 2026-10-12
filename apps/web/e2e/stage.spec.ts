@@ -52,13 +52,14 @@ test.describe('/next stage', () => {
     }
   })
 
-  test('on a phone the body and Play are in the first screen', async ({ page }) => {
+  test('on a phone the body, a graph and Play are in the first screen', async ({ page }) => {
     onlyIn('phone')
     for (const url of ['/next', '/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi']) {
       await page.goto(url)
       await page.waitForLoadState('networkidle')
       await expectInFirstScreen(page, {
         body: page.getByRole('img', { name: /^(The body|शरीर)/ }),
+        graph: page.locator('figure svg[role="img"]').filter({ visible: true }),
         Play: page.getByRole('button', { name: /^(Play|चलाएँ)$/ }),
       })
     }
@@ -68,7 +69,8 @@ test.describe('/next stage', () => {
     await page.goto('/next')
     await expect(page.getByRole('img', { name: NEXT_BODY, exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Keep to compare' }).click()
-    await expect(page.getByText('Kept: Cola', { exact: true })).toBeVisible()
+    // The meal bar's tag comes first; the graphs label their dashed line the same way.
+    await expect(page.getByText('Kept: Cola', { exact: true }).first()).toBeVisible()
     await expect.poll(() => params(page).get('b')).toBe('cola:1')
     // The same meal can't be kept twice.
     await expect(page.getByRole('button', { name: 'Keep to compare' })).toBeDisabled()
@@ -80,9 +82,9 @@ test.describe('/next stage', () => {
 
   test('a link with a kept run opens with its tag', async ({ page }) => {
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1')
-    await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true })).toBeVisible()
+    await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).first()).toBeVisible()
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi')
-    await expect(page.getByText(/^रखा गया: .+ \+ .+$/)).toBeVisible()
+    await expect(page.getByText(/^रखा गया: .+ \+ .+$/).first()).toBeVisible()
   })
 
   test('adding a food updates the link', async ({ page }) => {

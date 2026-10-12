@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   /** The button that opened it: the popover sits under it and focus goes back to it on close. */
@@ -51,22 +52,27 @@ export default function Popover({ anchor, onClose, label, children, className = 
       done(false)
     }
     const onMove = () => done(false)
+    // Scrolling inside the panel itself (a long "How we know") keeps it open.
+    const onScroll = (e: Event) => {
+      if (!panel.current?.contains(e.target as Node)) done(false)
+    }
     // Focus the first control inside, so keyboard users land in the panel.
     panel.current?.querySelector<HTMLElement>('button, a, input')?.focus()
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onDown, true)
     window.addEventListener('resize', onMove)
     // Any scroll moves the button away from the panel (the meal bar's chips scroll sideways).
-    window.addEventListener('scroll', onMove, true)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
-      window.removeEventListener('scroll', onMove, true)
+      window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('pointerdown', onDown, true)
       window.removeEventListener('resize', onMove)
     }
   }, [anchor])
 
-  return (
+  // In <body>, so a parent with CSS containment (the graph column) can never clip or move it.
+  return createPortal(
     <div
       ref={panel}
       role="dialog"
@@ -75,6 +81,7 @@ export default function Popover({ anchor, onClose, label, children, className = 
       className={`fixed z-40 max-w-[calc(100vw-1rem)] rounded-control border border-rule2 bg-shelf p-3 text-ink ${className}`}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   )
 }

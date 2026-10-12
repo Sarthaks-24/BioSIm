@@ -15,23 +15,31 @@ interface Props {
 
 /**
  * The clock dock at the bottom of the stage (layout only: it owns no state). A Shelf surface with
- * the one rule above it. From 1024 px up one row of Play, clock and track; on phones the clock
- * sits above the track, so the track gets the whole width and never moves when the clock's text
- * gets longer. It is a normal grid row of the stage, so it reserves its own height and never
- * covers the body; on phones it also pads for the home indicator (safe area). About 72 px tall.
+ * the one rule above it. It is a normal grid row of the stage, so it reserves its own height and
+ * never covers the body; on phones it also pads for the home indicator (safe area). About 72 px tall.
+ *
+ * The track always starts `--plot-gutter` in from the graph column's left edge and ends where the
+ * graphs end, so the graphs' playheads stand straight above its thumb (WP-12):
+ * - phones: Play on the left, the clock above the track (the track never moves when the clock's
+ *   text gets longer); Play plus its gap is exactly the gutter;
+ * - from 1024 px up the dock takes the stage's two columns (it must sit in a `grid-cols-subgrid`
+ *   parent): Play and clock under the body, the track under the graph column, behind the same rule.
  */
 export default function Dock({ label, play, clock, pace, children }: Props) {
   return (
-    <section aria-label={label} className="border-t border-rule2 bg-shelf pb-[env(safe-area-inset-bottom)]">
-      <div className="flex min-h-16 items-center gap-3 px-3 lg:min-h-18 lg:gap-4 lg:px-4">
-        {play}
-        <div className="flex min-w-0 flex-1 flex-col pt-1.5 lg:flex-row lg:items-center lg:gap-4 lg:pt-0">
-          <div className="flex shrink-0 items-center gap-3 lg:gap-4">
-            <div className="tabular text-clock-sm font-extrabold lg:text-clock">{clock}</div>
-            {pace}
-          </div>
-          <div className="min-w-0 flex-1">{children}</div>
+    <section
+      aria-label={label}
+      className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 border-t border-rule2 bg-shelf px-3 pt-1.5 pb-[env(safe-area-inset-bottom)] lg:col-span-2 lg:grid-cols-subgrid lg:gap-x-0 lg:p-0"
+    >
+      <div className="contents lg:flex lg:min-h-18 lg:items-center lg:gap-4 lg:px-4">
+        <div className="row-span-2">{play}</div>
+        <div className="flex shrink-0 items-center gap-3 lg:gap-4">
+          <div className="tabular text-clock-sm font-extrabold lg:text-clock">{clock}</div>
+          {pace}
         </div>
+      </div>
+      <div className="col-start-2 min-w-0 lg:flex lg:h-full lg:items-center lg:border-l lg:border-rule2 lg:pr-4 lg:pl-[calc(1rem+var(--plot-gutter))]">
+        <div className="min-w-0 flex-1">{children}</div>
       </div>
     </section>
   )

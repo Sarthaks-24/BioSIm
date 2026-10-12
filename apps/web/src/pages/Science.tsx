@@ -1,29 +1,25 @@
+import { useEffect } from 'react'
+import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { FOODS } from '../data/foods.ts'
 import { localized } from '../i18n/index.ts'
-
-/** Every model reference, in one place. Keep in sync with packages/engine/src/params.ts. */
-const REFERENCES = [
-  'Abell TL, Camilleri M, Donohoe K, et al. Consensus recommendations for gastric emptying scintigraphy. Am J Gastroenterol 2008;103(3):753–763.',
-  'Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281–2283.',
-  'Bergman RN, Ider YZ, Bowden CR, Cobelli C. Quantitative estimation of insulin sensitivity. Am J Physiol 1979;236(6):E667–E677.',
-  'Brener W, Hendrix TR, McHugh PR. Regulation of the gastric emptying of glucose. Gastroenterology 1983;85(1):76–82.',
-  'Brouns F, Bjorck I, Frayn KN, et al. Glycaemic index methodology. Nutr Res Rev 2005;18(1):145–171.',
-  'Elashoff JD, Reedy TJ, Meyer JH. Analysis of gastric emptying data. Gastroenterology 1982;83(6):1306–1312.',
-  'Freckmann G, Hagenlocher S, Baumstark A, et al. Continuous glucose profiles in healthy subjects under everyday life conditions and after different meals. J Diabetes Sci Technol 2007;1(5):695–703.',
-  'Hunt JN, Stubbs DF. The volume and energy content of meals as determinants of gastric emptying. J Physiol 1975;245(1):209–225.',
-  'Moghaddam E, Vogt JA, Wolever TMS. The effects of fat and protein on glycemic responses in nondiabetic humans. J Nutr 2006;136(10):2506–2511.',
-  'Nandhra GK, Chaichanavichkij P, Birch M, Scott SM. Gastrointestinal transit times in health as determined using ingestible capsule systems: a systematic review. J Clin Med 2023;12(16):5272.',
-  'OpenStax. Anatomy and Physiology 2e, chapter 23: The Digestive System. Rice University, 2022.',
-  'Siegel JA, Urbain JL, Adler LP, et al. Biphasic nature of gastric emptying. Gut 1988;29(1):85–89.',
-  'Wang YT, Mohammed SD, Farmer AD, et al. Regional gastrointestinal transit and pH studied in 215 healthy volunteers using the wireless motility capsule. Aliment Pharmacol Ther 2015;42(6):761–772.',
-  'Ziessman HA, Chander A, Clarke JO, Ramos A, Wahl RL. The added diagnostic value of liquid gastric emptying compared with solid emptying alone. J Nucl Med 2009;50(5):726–731.',
-]
+import { REFERENCES } from '../lib/references.ts'
 
 export default function Science() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
+  const { hash } = useLocation()
+  const target = decodeURIComponent(hash.slice(1))
+
+  // The graphs' "How we know" links point at one reference or food (#freckmann2007, #food:cola).
+  // The page loads lazily, so scroll once it is here, as About does. The router changes the hash
+  // without a real navigation, so CSS :target never matches; the entry is marked from `target`.
+  useEffect(() => {
+    if (target) document.getElementById(target)?.scrollIntoView({ block: 'center' })
+  }, [target])
+  const marked = (id: string) => (id === target ? 'bg-sunk' : '')
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-10 leading-relaxed">
       <h1 className="text-4xl font-extrabold tracking-tight">{t('science.title')}</h1>
@@ -62,7 +58,7 @@ export default function Science() {
           </thead>
           <tbody>
             {FOODS.map((f) => (
-              <tr key={f.id} className="border-b border-rule align-top">
+              <tr key={f.id} id={`food:${f.id}`} className={`border-b border-rule align-top ${marked(`food:${f.id}`)}`}>
                 <th scope="row" className="py-3 pr-3 text-left">
                   <span aria-hidden="true">{f.emoji} </span>
                   {localized(f.name, lang)}
@@ -96,9 +92,19 @@ export default function Science() {
       </div>
 
       <h2 className="mt-10 mb-4 text-2xl font-extrabold">{t('science.references')}</h2>
-      <ol className="list-decimal space-y-2 pl-6 text-sm">
+      <ol className="list-decimal space-y-1 pl-6 text-sm">
         {REFERENCES.map((r) => (
-          <li key={r}>{r}</li>
+          <li key={r.id} id={r.id} className={`rounded-control px-1 py-0.5 ${marked(r.id)}`}>
+            {r.citation}
+            {r.url && (
+              <>
+                {' '}
+                <a href={r.url} className="underline underline-offset-2" target="_blank" rel="noreferrer">
+                  {new URL(r.url).hostname}
+                </a>
+              </>
+            )}
+          </li>
         ))}
       </ol>
       <p className="mt-8 text-sm text-ink-2">{t('disclaimer.long')}</p>

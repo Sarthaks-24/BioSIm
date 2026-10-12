@@ -81,6 +81,21 @@
 
 :root {
   color-scheme: light;
+  /*
+   * Graph marks (components/graphs). Lines 2 px (2.5 px on phones, where they are drawn smaller),
+   * the kept run dashed 6 4 (KEPT_DASH in colors.ts), the "how people differ" band a light wash.
+   * WP-17 makes them heavier for the projector.
+   */
+  --strip-line: 2.5px;
+  --strip-kept-dash: 6 4;
+  --strip-band-opacity: 0.14;
+  /* A Shelf-coloured halo round labels drawn over the lines, so they stay readable where they cross. */
+  --strip-halo: 0 0 2px var(--color-shelf), 0 0 2px var(--color-shelf), 0 0 4px var(--color-shelf), 0 0 4px var(--color-shelf);
+}
+@media (width >= 64rem) {
+  :root {
+    --strip-line: 2px;
+  }
 }
 
 html {

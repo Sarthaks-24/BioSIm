@@ -41,7 +41,7 @@ export const GATE_ROUTES = {
   /** Body, one graph and Play in the first phone screen, 390×844 (project phone). */
   firstScreen: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-12' },
+    { url: '/next', plan: 'enforce' },
   ],
   /** No clipped text in Hindi (WP-18 adds the +40 % pseudo-locale). */
   clippedText: [

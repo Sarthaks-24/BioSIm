@@ -297,6 +297,27 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
 | `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
 
+| `units.words.mgdl` | milligrams of sugar in each decilitre (a tenth of a litre) of blood | रक्त के हर डेसीलीटर (लीटर का दसवाँ भाग) में शर्करा, मिलीग्राम में | draft |
+| `units.words.g` | grams (1000 g = 1 kg) | ग्राम (1000 ग्राम = 1 किलो) | draft |
+| `units.words.kcal` | kilocalories of food energy | भोजन की ऊर्जा, किलो कैलोरी में | draft |
+| `units.words.kcalPerH` | kilocalories of food energy per hour | प्रति घंटे भोजन की ऊर्जा, किलो कैलोरी में | draft |
+| `graph.label` | Graph of {{name}}, from eating to 48 hours later | {{name}} का ग्राफ़, खाने से 48 घंटे बाद तक | draft |
+| `graph.howFor` | How we know: {{name}} | हमें कैसे पता है: {{name}} | draft |
+| `graph.unit` | Unit | इकाई | draft |
+| `graph.unitIs` | {{unit}}: {{words}} | {{unit}}: {{words}} | draft |
+| `graph.howSure` | How sure we are | हम कितने निश्चित हैं | draft |
+| `graph.limits` | Known limits | ज्ञात सीमाएँ | draft |
+| `graph.sources` | Sources | स्रोत | draft |
+| `graph.foodData` | Food data: | भोजन के आँकड़े: | draft |
+| `graph.kept` | Kept | रखा गया | draft |
+| `graph.stretched` | Scale stretched to fit this meal | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
+| `graph.range` | {{low}}–{{high}} | {{low}}–{{high}} | draft |
+| `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |
+| `graph.highestTitle` | The ring: highest point | गोला: सबसे ऊँचा बिंदु | draft |
+| `graph.highestNote` | The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level. | गोला दिखाता है कि इस भोजन के बाद रक्त शर्करा कब सबसे अधिक होती है। 5 mg/dL या उससे कम बढ़ने पर गोला नहीं बनता: रक्त शर्करा खाने से पहले के स्तर के पास ही रहती है। | draft |
+| `graph.halfLeft` | Half has left | आधा निकल गया | draft |
+| `graph.halfNote` | The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring. | गोला दिखाता है कि भोजन की आधी ऊर्जा कब आमाशय से निकल गई (पानी के लिए: उसका आधा वज़न)। पेय पहले निकलते हैं, इसलिए इस ग्राफ़ पर ग्राम गोले से पहले ही आधे रह सकते हैं। | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___
