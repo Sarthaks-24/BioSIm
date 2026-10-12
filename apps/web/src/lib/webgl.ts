@@ -14,7 +14,3 @@ export function hasWebGL(): boolean {
   }
   return cached
 }
-
-export function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-}

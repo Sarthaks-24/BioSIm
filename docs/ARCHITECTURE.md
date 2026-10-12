@@ -53,9 +53,9 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 | `pages/` | One page per route: home, simulator, teach, science, error and 404 |
 | `components/` | UI pieces: meal picker, verdict line, timeline, stage panel, charts, lesson view, share, feedback |
 | `components/kit/`, `components/stage/` | v2: the flat component kit, and the zones of the one-screen stage at `/next` (`pages/Stage.tsx`): meal bar, food sheet, keep button and kept tag, body pane, layer bar, graph column, notes, dock slider |
-| `anatomy/` | One file per organism (`human.ts`): the gut curves, torso outline and particle positions shared by 3D and flat views |
+| `anatomy/` | One file per organism (`human.ts`): the gut curves, torso and arm outline, stomach stretch and particle positions shared by 3D and flat views; `bodyState.ts` (what the picture shows at a time, read from the signals the registry's `drives` name), `callouts.ts` + `CalloutOverlay.tsx` (organ labels with leaders that never overlap), `tones.ts` (organ colours) |
 | `registry/` | Organisms, systems and organs as data (`human/`), checked by `registry.test.ts`. A new system is one entry plus a flat and a 3D layer |
-| `three/` | WebGL scene and organ models (lazy-loaded) |
+| `three/` | WebGL scene and organ models (lazy-loaded): `geometry.ts` (one merged digestion mesh), `materials.ts` (opaque lit organs, fresnel rim, ink outline, rim-only skin), `quality.ts` (pixel-ratio cap) |
 | `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
 | `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
 | `state/clock.ts`, `state/motion.ts` | v2 (`/next`): the meal clock (`useClock`, read per frame without re-rendering; `useMealClock` runs playback) and the one reduced-motion flag (`useMotion`) |
@@ -67,8 +67,13 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 ## Performance
 
 - The canvas renders on demand. A paused simulation draws nothing.
-- Both bodies share one set of geometry, and particles are instanced: one draw call per
-  nutrient.
+- The lit organs are opaque and write depth (no sorting, little overdraw), and the whole
+  digestion layer is one mesh: one draw for the organs, one for their outline. Particles are
+  instanced with their edge in the same shader: one draw call per nutrient. About 10 draws in all.
+- The device pixel ratio is capped at 1.5 (1.25 and no MSAA when `deviceMemory ≤ 2`); no
+  environment map. `?debug=fps` shows fps, draws, draw calls and triangles (docs/PHONE-CHECK.md).
+- The flat body draws the organs once per active-organ change on one canvas and only the
+  stomach and food per frame, on a second canvas the size of the gut.
 - The 3D chunk loads only on the simulator page. The PWA precaches everything for offline use.
 - three.js is bundled from its source modules (`vite.config.ts`), so the flat body's few maths
   classes ride with the page and the rest stays in the lazy 3D chunk, which only a device with
