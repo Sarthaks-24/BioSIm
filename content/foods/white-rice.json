@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "white-rice",
+  "name": {
+    "en": "White rice (cooked)",
+    "hi": "सफ़ेद चावल (पका हुआ)"
+  },
+  "emoji": "🍚",
+  "category": "grain",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 cup (158 g)",
+      "hi": "1 कप (158 ग्राम)"
+    },
+    "grams": 158
+  },
+  "nutrients": {
+    "energyKcal": 205,
+    "carbsG": 43.9,
+    "sugarsG": 0.1,
+    "fiberG": 0.6,
+    "proteinG": 4.3,
+    "fatG": 0.4,
+    "waterG": 108
+  },
+  "glycemicIndex": {
+    "value": 73,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Rice, white, long-grain, regular, cooked, FDC ID 168878.",
+      "url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "GI varies a lot by variety (about 50 to over 90); parboiled and basmati rice are often lower.",
+    "hi": "चावल की किस्म के अनुसार GI बहुत बदलता है (लगभग 50 से 90 से अधिक); उसना (parboiled) और बासमती चावल का GI अक्सर कम होता है।"
+  }
+}

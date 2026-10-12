@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "idli",
+  "name": {
+    "en": "Idli",
+    "hi": "इडली"
+  },
+  "emoji": "⚪",
+  "category": "grain",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "2 idlis (about 45 g each)",
+      "hi": "2 इडली (लगभग 45 ग्राम प्रत्येक)"
+    },
+    "grams": 90
+  },
+  "nutrients": {
+    "energyKcal": 124,
+    "carbsG": 25.4,
+    "sugarsG": 0.4,
+    "fiberG": 2.1,
+    "proteinG": 4.1,
+    "fatG": 0.3,
+    "waterG": 58
+  },
+  "glycemicIndex": {
+    "value": 60,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "Indian Nutrient Databank",
+      "citation": "Vijayakumar A, Dubasi HB, Awasthi A, Jaacks LM. Development of an Indian Food Composition Database. Curr Dev Nutr 2024;8(7):103790. Recipe ASC144 \"Idli\", built from IFCT 2017. Water estimated by difference.",
+      "url": "https://github.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "Nutrients scaled from the databank's per-100 g values to two 45 g idlis. GI 60 was measured in India for idli with chutney.",
+    "hi": "पोषक मान डेटाबैंक के प्रति 100 ग्राम मानों से दो 45 ग्राम इडली के लिए निकाले गए हैं। चटनी के साथ इडली का GI 60 भारत में मापा गया।"
+  }
+}

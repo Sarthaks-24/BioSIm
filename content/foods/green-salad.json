@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "green-salad",
+  "name": {
+    "en": "Green salad (no dressing)",
+    "hi": "हरा सलाद (बिना ड्रेसिंग)"
+  },
+  "emoji": "🥗",
+  "category": "vegetable",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 bowl: lettuce, cucumber, tomato (150 g)",
+      "hi": "1 कटोरी: सलाद पत्ता, खीरा, टमाटर (150 ग्राम)"
+    },
+    "grams": 150
+  },
+  "nutrients": {
+    "energyKcal": 24,
+    "carbsG": 3.7,
+    "sugarsG": 2.6,
+    "fiberG": 1.5,
+    "proteinG": 1.5,
+    "fatG": 0.2,
+    "waterG": 142
+  },
+  "glycemicIndex": null,
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Lettuce, green leaf, raw (50 g), FDC ID 169249.",
+      "url": "https://fdc.nal.usda.gov/food-details/169249/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Cucumber, with peel, raw (50 g), FDC ID 168409.",
+      "url": "https://fdc.nal.usda.gov/food-details/168409/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Tomatoes, red, ripe, raw (50 g), FDC ID 170457.",
+      "url": "https://fdc.nal.usda.gov/food-details/170457/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "Too little carbohydrate to measure a glycemic index.",
+    "hi": "ग्लाइसेमिक इंडेक्स मापने के लिए बहुत कम कार्बोहाइड्रेट।"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "water",
+  "name": {
+    "en": "Water",
+    "hi": "पानी"
+  },
+  "emoji": "💧",
+  "category": "drink",
+  "phase": "liquid",
+  "serving": {
+    "label": {
+      "en": "1 glass (250 mL)",
+      "hi": "1 गिलास (250 मि.ली.)"
+    },
+    "grams": 250
+  },
+  "nutrients": {
+    "energyKcal": 0,
+    "carbsG": 0,
+    "sugarsG": 0,
+    "fiberG": 0,
+    "proteinG": 0,
+    "fatG": 0,
+    "waterG": 250
+  },
+  "glycemicIndex": null,
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Beverages, water, tap, drinking, FDC ID 174158.",
+      "url": "https://fdc.nal.usda.gov/food-details/174158/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    }
+  ]
+}

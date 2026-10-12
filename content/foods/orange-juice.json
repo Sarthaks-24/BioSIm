@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "orange-juice",
+  "name": {
+    "en": "Orange juice",
+    "hi": "संतरे का रस"
+  },
+  "emoji": "🧃",
+  "category": "drink",
+  "phase": "liquid",
+  "serving": {
+    "label": {
+      "en": "1 glass (250 mL)",
+      "hi": "1 गिलास (250 मि.ली.)"
+    },
+    "grams": 262
+  },
+  "nutrients": {
+    "energyKcal": 118,
+    "carbsG": 26.7,
+    "sugarsG": 22.0,
+    "fiberG": 0.5,
+    "proteinG": 1.8,
+    "fatG": 0.5,
+    "waterG": 231
+  },
+  "glycemicIndex": {
+    "value": 50,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Orange juice, raw, FDC ID 169098.",
+      "url": "https://fdc.nal.usda.gov/food-details/169098/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ]
+}

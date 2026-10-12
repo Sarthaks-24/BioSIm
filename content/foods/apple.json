@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "apple",
+  "name": {
+    "en": "Apple",
+    "hi": "सेब"
+  },
+  "emoji": "🍎",
+  "category": "fruit",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 medium apple (182 g)",
+      "hi": "1 मध्यम सेब (182 ग्राम)"
+    },
+    "grams": 182
+  },
+  "nutrients": {
+    "energyKcal": 95,
+    "carbsG": 20.8,
+    "sugarsG": 18.9,
+    "fiberG": 4.4,
+    "proteinG": 0.5,
+    "fatG": 0.3,
+    "waterG": 156
+  },
+  "glycemicIndex": {
+    "value": 36,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Apples, raw, with skin, FDC ID 171688.",
+      "url": "https://fdc.nal.usda.gov/food-details/171688/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "GI 36 is the average of all published apple studies.",
+    "hi": "GI 36 सभी प्रकाशित सेब अध्ययनों का औसत है।"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "cola",
+  "name": {
+    "en": "Cola",
+    "hi": "कोला"
+  },
+  "emoji": "🥤",
+  "category": "drink",
+  "phase": "liquid",
+  "serving": {
+    "label": {
+      "en": "1 can (330 mL)",
+      "hi": "1 कैन (330 मि.ली.)"
+    },
+    "grams": 344
+  },
+  "nutrients": {
+    "energyKcal": 144,
+    "carbsG": 35.6,
+    "sugarsG": 34.2,
+    "fiberG": 0,
+    "proteinG": 0,
+    "fatG": 0,
+    "waterG": 307
+  },
+  "glycemicIndex": {
+    "value": 63,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Beverages, carbonated, cola, regular, FDC ID 174852.",
+      "url": "https://fdc.nal.usda.gov/food-details/174852/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "GI 63 is the value measured for Coca-Cola (USA).",
+    "hi": "GI 63 कोका-कोला (अमेरिका) के लिए मापा गया मान है।"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "cheeseburger",
+  "name": {
+    "en": "Cheeseburger",
+    "hi": "चीज़बर्गर"
+  },
+  "emoji": "🍔",
+  "category": "fast-food",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 fast-food cheeseburger (119 g)",
+      "hi": "1 फ़ास्ट-फ़ूड चीज़बर्गर (119 ग्राम)"
+    },
+    "grams": 119
+  },
+  "nutrients": {
+    "energyKcal": 313,
+    "carbsG": 31.8,
+    "sugarsG": 7.4,
+    "fiberG": 1.3,
+    "proteinG": 15.4,
+    "fatG": 14.0,
+    "waterG": 54
+  },
+  "glycemicIndex": {
+    "value": 66,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Fast foods, cheeseburger; single, regular patty; plain, FDC ID 170320.",
+      "url": "https://fdc.nal.usda.gov/food-details/170320/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "No GI has been published for a cheeseburger; the value for a fast-food hamburger (66) is used.",
+    "hi": "चीज़बर्गर का GI प्रकाशित नहीं है; फ़ास्ट-फ़ूड हैमबर्गर का मान (66) लिया गया है।"
+  }
+}

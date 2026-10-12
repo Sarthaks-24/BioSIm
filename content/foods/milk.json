@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "milk",
+  "name": {
+    "en": "Milk (full fat)",
+    "hi": "दूध (फुल क्रीम)"
+  },
+  "emoji": "🥛",
+  "category": "dairy",
+  "phase": "liquid",
+  "serving": {
+    "label": {
+      "en": "1 glass (250 mL)",
+      "hi": "1 गिलास (250 मि.ली.)"
+    },
+    "grams": 258
+  },
+  "nutrients": {
+    "energyKcal": 157,
+    "carbsG": 12.4,
+    "sugarsG": 12.4,
+    "fiberG": 0,
+    "proteinG": 8.1,
+    "fatG": 8.4,
+    "waterG": 227
+  },
+  "glycemicIndex": {
+    "value": 39,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Milk, whole, 3.25% milkfat, FDC ID 171265.",
+      "url": "https://fdc.nal.usda.gov/food-details/171265/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "Milk proteins clot in the stomach, so real milk can empty more like a soft solid than this model shows. Sugars set equal to carbohydrate (the database lists slightly more sugar than carbohydrate, a known quirk).",
+    "hi": "दूध का प्रोटीन आमाशय में जम जाता है, इसलिए असल में दूध इस मॉडल से कुछ धीरे खाली हो सकता है।"
+  }
+}

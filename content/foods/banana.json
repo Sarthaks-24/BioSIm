@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "banana",
+  "name": {
+    "en": "Banana",
+    "hi": "केला"
+  },
+  "emoji": "🍌",
+  "category": "fruit",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 medium banana (118 g)",
+      "hi": "1 मध्यम केला (118 ग्राम)"
+    },
+    "grams": 118
+  },
+  "nutrients": {
+    "energyKcal": 105,
+    "carbsG": 23.9,
+    "sugarsG": 14.4,
+    "fiberG": 3.1,
+    "proteinG": 1.3,
+    "fatG": 0.4,
+    "waterG": 88
+  },
+  "glycemicIndex": {
+    "value": 51,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Bananas, raw, FDC ID 173944.",
+      "url": "https://fdc.nal.usda.gov/food-details/173944/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ]
+}

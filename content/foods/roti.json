@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "roti",
+  "name": {
+    "en": "Roti / chapati (whole wheat)",
+    "hi": "रोटी / चपाती (गेहूँ)"
+  },
+  "emoji": "🫓",
+  "category": "grain",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "2 rotis (72 g)",
+      "hi": "2 रोटी (72 ग्राम)"
+    },
+    "grams": 72
+  },
+  "nutrients": {
+    "energyKcal": 146,
+    "carbsG": 25.7,
+    "sugarsG": 0.7,
+    "fiberG": 4.5,
+    "proteinG": 4.2,
+    "fatG": 2.6,
+    "waterG": 34
+  },
+  "glycemicIndex": {
+    "value": 52,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "Indian Nutrient Databank",
+      "citation": "Vijayakumar A, Dubasi HB, Awasthi A, Jaacks LM. Development of an Indian Food Composition Database. Curr Dev Nutr 2024;8(7):103790. Recipe ASC096 \"Chapati/Roti\", built from IFCT 2017. Water estimated by difference.",
+      "url": "https://github.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "GI 52 is the published value for chapatti; another study of wheat roti found 62.",
+    "hi": "चपाती का प्रकाशित GI 52 है; गेहूँ की रोटी पर एक अन्य अध्ययन में 62 मिला।"
+  }
+}

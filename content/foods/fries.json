@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "fries",
+  "name": {
+    "en": "French fries",
+    "hi": "फ़्रेंच फ़्राइज़"
+  },
+  "emoji": "🍟",
+  "category": "fast-food",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 medium portion (117 g)",
+      "hi": "1 मध्यम हिस्सा (117 ग्राम)"
+    },
+    "grams": 117
+  },
+  "nutrients": {
+    "energyKcal": 378,
+    "carbsG": 45.3,
+    "sugarsG": 0.2,
+    "fiberG": 4.6,
+    "proteinG": 4.0,
+    "fatG": 18.1,
+    "waterG": 43
+  },
+  "glycemicIndex": {
+    "value": 63,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): McDONALD'S, french fries, FDC ID 170721.",
+      "url": "https://fdc.nal.usda.gov/food-details/170721/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ]
+}

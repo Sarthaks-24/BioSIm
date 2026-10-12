@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "boiled-egg",
+  "name": {
+    "en": "Boiled egg",
+    "hi": "उबला अंडा"
+  },
+  "emoji": "🥚",
+  "category": "egg",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 large egg (50 g)",
+      "hi": "1 बड़ा अंडा (50 ग्राम)"
+    },
+    "grams": 50
+  },
+  "nutrients": {
+    "energyKcal": 78,
+    "carbsG": 0.6,
+    "sugarsG": 0.6,
+    "fiberG": 0,
+    "proteinG": 6.3,
+    "fatG": 5.3,
+    "waterG": 37
+  },
+  "glycemicIndex": null,
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Egg, whole, cooked, hard-boiled, FDC ID 173424.",
+      "url": "https://fdc.nal.usda.gov/food-details/173424/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "Eggs have almost no carbohydrate, so they have no glycemic index.",
+    "hi": "अंडे में लगभग कार्बोहाइड्रेट नहीं होता, इसलिए इसका ग्लाइसेमिक इंडेक्स नहीं होता।"
+  }
+}

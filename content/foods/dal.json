@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "dal",
+  "name": {
+    "en": "Dal (masoor)",
+    "hi": "दाल (मसूर)"
+  },
+  "emoji": "🥣",
+  "category": "legume",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "1 katori (150 g)",
+      "hi": "1 कटोरी (150 ग्राम)"
+    },
+    "grams": 150
+  },
+  "nutrients": {
+    "energyKcal": 81,
+    "carbsG": 8.1,
+    "sugarsG": 1,
+    "fiberG": 3.0,
+    "proteinG": 3.5,
+    "fatG": 3.8,
+    "waterG": 125
+  },
+  "glycemicIndex": {
+    "value": 32,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "Indian Nutrient Databank",
+      "citation": "Vijayakumar A, Dubasi HB, Awasthi A, Jaacks LM. Development of an Indian Food Composition Database. Curr Dev Nutr 2024;8(7):103790. Recipe ASC157 \"Whole masoor (Masoor ki dal)\", built from IFCT 2017. Water estimated by difference.",
+      "url": "https://github.com/lindsayjaacks/Indian-Nutrient-Databank-INDB-",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ],
+  "notes": {
+    "en": "Cooked dal as served has not been GI-tested; the published value for lentils (32) is used.",
+    "hi": "परोसी गई पकी दाल का GI नहीं मापा गया है; मसूर/दालों का प्रकाशित मान (32) लिया गया है।"
+  }
+}

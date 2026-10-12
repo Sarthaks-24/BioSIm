@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+@import '@fontsource/atkinson-hyperlegible-next/400.css';
+@import '@fontsource/atkinson-hyperlegible-next/600.css';
+@import '@fontsource/atkinson-hyperlegible-next/800.css';
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/noto-sans-devanagari/600.css';
+
+/*
+ * Lab-paper palette: cool pale paper, textbook ink, translucent tissue.
+ * Light on purpose — classroom projectors wash out dark UIs.
+ * Meal A / B and each nutrient also differ by shape or letter, never colour alone.
+ */
+@theme {
+  --font-sans: 'Atkinson Hyperlegible Next', 'Noto Sans Devanagari', system-ui, sans-serif;
+
+  --color-paper: #eef3f1;
+  --color-panel: #f8fbfa;
+  --color-sunk: #e1e9e6;
+  --color-rule: #c3d0cc;
+  --color-ink: #14213d;
+  --color-ink-2: #46536e;
+  --color-tissue: #d9536a;
+
+  --color-meal-a: #0f766e;
+  --color-meal-b: #9d2f6a;
+
+  --color-carbs: #e0662b;
+  --color-protein: #7b4fd0;
+  --color-fat: #c79a00;
+  --color-fiber: #4f8a2b;
+  --color-water: #2f8fd0;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html:lang(hi) {
+  /* Devanagari needs more line height for matras. */
+  line-height: 1.7;
+}
+
+/* Projector mode: stronger ink, thicker rules, bigger base size. */
+html[data-contrast='high'] {
+  --color-ink: #000000;
+  --color-ink-2: #1d2433;
+  --color-rule: #6b7a90;
+  --color-paper: #ffffff;
+  --color-panel: #ffffff;
+  font-size: 112.5%;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html {
+    background: white;
+  }
+}

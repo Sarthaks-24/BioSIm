@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "white-bread",
+  "name": {
+    "en": "White bread",
+    "hi": "सफ़ेद ब्रेड"
+  },
+  "emoji": "🍞",
+  "category": "grain",
+  "phase": "solid",
+  "serving": {
+    "label": {
+      "en": "2 slices (50 g)",
+      "hi": "2 स्लाइस (50 ग्राम)"
+    },
+    "grams": 50
+  },
+  "nutrients": {
+    "energyKcal": 133,
+    "carbsG": 23.4,
+    "sugarsG": 2.8,
+    "fiberG": 1.4,
+    "proteinG": 4.4,
+    "fatG": 1.7,
+    "waterG": 18
+  },
+  "glycemicIndex": {
+    "value": 75,
+    "reference": "glucose"
+  },
+  "sources": [
+    {
+      "label": "USDA FoodData Central",
+      "citation": "U.S. Department of Agriculture, FoodData Central, SR Legacy (2018): Bread, white, commercially prepared, FDC ID 174924.",
+      "url": "https://fdc.nal.usda.gov/food-details/174924/nutrients",
+      "fields": [
+        "nutrients",
+        "serving"
+      ]
+    },
+    {
+      "label": "International GI tables 2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care 2008;31(12):2281-2283.",
+      "url": "https://doi.org/10.2337/dc08-1239",
+      "fields": [
+        "glycemicIndex"
+      ]
+    }
+  ]
+}
