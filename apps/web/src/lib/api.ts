@@ -1,10 +1,13 @@
 /**
  * The only place the web app talks to the API, which just receives "report a mistake" messages.
- * If the API is down or not deployed, reports go through a pre-filled GitHub issue instead, so
- * nothing the user typed is lost.
+ *
+ * In production there is no API (VITE_API_URL is empty): the report opens as a pre-filled GitHub
+ * issue in a new tab and nothing is sent anywhere until the user submits it there. With an API,
+ * reports are POSTed, and if that fails the same GitHub issue is offered, so nothing typed is lost.
  */
-// `||` (not `??`) so an empty value in .env falls back to the default too.
-const BASE = ((import.meta.env.VITE_API_URL as string | undefined) || '/api').replace(/\/$/, '')
+const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').replace(/\/$/, '')
+/** True only when an API address is set at build time (local development). */
+export const HAS_API = Boolean(API_URL)
 const ISSUES_URL = (import.meta.env.VITE_ISSUES_URL as string | undefined) || 'https://github.com/Sarthaks-24/lifepeek/issues/new'
 
 export interface FeedbackInput {
@@ -19,7 +22,7 @@ export async function sendFeedback(input: FeedbackInput): Promise<boolean> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 6000)
   try {
-    const res = await fetch(`${BASE}/feedback`, {
+    const res = await fetch(`${API_URL}/feedback`, {
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'content-type': 'application/json' },
@@ -33,7 +36,7 @@ export async function sendFeedback(input: FeedbackInput): Promise<boolean> {
   }
 }
 
-/** Fallback: open a GitHub issue with the report already filled in. */
+/** The report as a GitHub "new issue" link, already filled in (template .github/ISSUE_TEMPLATE/mistake.md). */
 export function feedbackIssueUrl(input: FeedbackInput): string {
   const body = [
     `**Where:** ${input.location}`,
@@ -43,6 +46,6 @@ export function feedbackIssueUrl(input: FeedbackInput): string {
     input.source ? `**Source:** ${input.source}` : '',
     `**Comparison:** ${window.location.origin}/sim?${input.context}`,
   ].join('\n')
-  const params = new URLSearchParams({ title: `Mistake: ${input.location}`.slice(0, 120), body })
+  const params = new URLSearchParams({ template: 'mistake.md', title: `Mistake: ${input.location}`.slice(0, 120), body })
   return `${ISSUES_URL}?${params}`
 }

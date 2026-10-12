@@ -4,6 +4,7 @@ import { PARAMS, indexAt, mealLocation, stomachFraction, type MealLocation } fro
 import { useSim, mealLabel, presentMeals, type Sims } from '../../state/sim.ts'
 import { INK, LEFT_BODY, MEAL_COLOR, ORGAN_COLOR } from '../../lib/colors.ts'
 import LineChart, { type Series } from './LineChart.tsx'
+import MedicalNote from '../MedicalNote.tsx'
 
 export function StomachChart({ sims }: { sims: Sims }) {
   const { t } = useTranslation()
@@ -78,13 +79,12 @@ export function GlucoseChart({ sims }: { sims: Sims }) {
       xLabel={t('charts.hoursAxis')}
     />
   )
-  return xMax > 5 * 60 ? (
+  return (
     <div>
       {chart}
-      <p className="mt-1 text-xs text-ink-2">{t('charts.glucoseTail')}</p>
+      {xMax > 5 * 60 && <p className="mt-1 text-xs text-ink-2">{t('charts.glucoseTail')}</p>}
+      <MedicalNote text="graph" className="mt-1 text-xs text-ink-2" />
     </div>
-  ) : (
-    chart
   )
 }
 

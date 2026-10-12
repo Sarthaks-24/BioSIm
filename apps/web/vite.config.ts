@@ -32,7 +32,7 @@ export default defineConfig({
         // The 3D chunk is large; still cache it so the app works offline in class.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // Plain files that must reach the server, not the app shell.
-        navigateFallbackDenylist: [/^\/api\//, /^\/THIRD_PARTY_NOTICES\.txt$/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/THIRD_PARTY_NOTICES\.txt$/, /^\/robots\.txt$/, /^\/sitemap\.xml$/],
       },
     }),
   ],

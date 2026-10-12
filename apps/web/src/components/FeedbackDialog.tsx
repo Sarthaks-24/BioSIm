@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { feedbackIssueUrl, sendFeedback, type FeedbackInput } from '../lib/api.ts'
+import { HAS_API, feedbackIssueUrl, sendFeedback, type FeedbackInput } from '../lib/api.ts'
 import { useSim, shareQuery } from '../state/sim.ts'
 
 /**
  * "Report a mistake" — the credibility loop. No email or other personal data is asked for.
- * If the server can't be reached, the same report opens as a pre-filled GitHub issue, so
- * nothing typed is lost.
+ * Without an API (production) the report opens straight away as a pre-filled GitHub issue in a
+ * new tab, and nothing is sent until the user submits it there. With an API it is POSTed, and if
+ * that fails the same GitHub issue is offered, so nothing typed is lost. Either way the dialog
+ * warns that GitHub issues are public.
  */
 export default function FeedbackDialog() {
   const { t } = useTranslation()
@@ -24,6 +26,10 @@ export default function FeedbackDialog() {
       source: String(form.get('source') ?? '') || undefined,
       context: shareQuery(useSim.getState()),
     }
+    if (!HAS_API) {
+      window.open(feedbackIssueUrl(input), '_blank', 'noopener')
+      return
+    }
     setStatus('sending')
     const ok = await sendFeedback(input)
     if (ok) {
@@ -36,6 +42,7 @@ export default function FeedbackDialog() {
   }
 
   const field = 'mt-1 w-full rounded-lg border border-rule bg-white px-3 py-2'
+  const warning = <p className="text-xs font-semibold text-ink">{t('feedback.publicWarning')}</p>
 
   return (
     <>
@@ -72,18 +79,22 @@ export default function FeedbackDialog() {
             <input name="source" maxLength={500} className={field} />
           </label>
           <p className="text-xs text-ink-2">{t('feedback.privacy')}</p>
+          {!HAS_API && warning}
           <div role="status" className="text-sm font-semibold">
             {status === 'sent' && t('feedback.sent')}
             {status === 'failed' && (
-              <p>
-                {t('feedback.failed')}{' '}
-                <a href={fallback} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                  {t('feedback.openIssue')}
-                </a>
-              </p>
+              <div className="space-y-1">
+                <p>
+                  {t('feedback.failed')}{' '}
+                  <a href={fallback} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                    {t('feedback.openIssue')}
+                  </a>
+                </p>
+                {warning}
+              </div>
             )}
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <button type="button" onClick={() => ref.current?.close()} className="rounded-full px-4 py-2 font-semibold hover:bg-sunk">
               {t('feedback.close')}
             </button>
@@ -92,7 +103,7 @@ export default function FeedbackDialog() {
               disabled={status === 'sending'}
               className="rounded-full bg-ink px-4 py-2 font-semibold text-white disabled:opacity-60"
             >
-              {t('feedback.send')}
+              {HAS_API ? t('feedback.send') : t('feedback.openIssueDirect')}
             </button>
           </div>
         </form>

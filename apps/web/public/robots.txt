@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lifepeek.vercel.app/sitemap.xml

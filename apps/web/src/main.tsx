@@ -10,6 +10,8 @@ import { ErrorPage, NotFound } from './pages/Misc.tsx'
 const Simulator = lazy(() => import('./pages/Simulator.tsx'))
 const Teach = lazy(() => import('./pages/Teach.tsx'))
 const Science = lazy(() => import('./pages/Science.tsx'))
+const About = lazy(() => import('./pages/About.tsx'))
+const Privacy = lazy(() => import('./pages/Privacy.tsx'))
 
 const page = (el: React.ReactNode) => <Suspense fallback={<p className="p-10 text-center text-ink-2">…</p>}>{el}</Suspense>
 
@@ -22,6 +24,8 @@ const router = createBrowserRouter([
       { path: '/sim', element: page(<Simulator />) },
       { path: '/teach', element: page(<Teach />) },
       { path: '/science', element: page(<Science />) },
+      { path: '/about', element: page(<About />) },
+      { path: '/privacy', element: page(<Privacy />) },
       { path: '*', element: <NotFound /> },
     ],
   },

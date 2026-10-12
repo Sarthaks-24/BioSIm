@@ -33,7 +33,8 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    its sources from `core/sources.ts`. `test/catalog.test.ts` pins the frozen list and its shape,
    and `test/retired-names.test.ts` fails if an old name comes back.
 5. **The API is optional.** It only receives error reports. The web app talks to it only
-   through `apps/web/src/lib/api.ts`; if it's unreachable, the report opens as a GitHub issue.
+   through `apps/web/src/lib/api.ts`, and only when `VITE_API_URL` is set. Without it (production),
+   the report opens as a pre-filled GitHub issue; with it, a failed POST offers the same issue.
 6. **No personal data.** There are no accounts, no emails and no IP addresses stored. The rate
    limiter uses the connection address in memory only.
 
