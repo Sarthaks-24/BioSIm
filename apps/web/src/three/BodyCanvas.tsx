@@ -18,7 +18,7 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useSim } from '../state/sim.ts'
-import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/anatomy.ts'
+import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/human.ts'
 import { pylorusTransform, sharedGeometry } from './geometry.ts'
 import { prefersReducedMotion } from '../lib/webgl.ts'
 import { NUTRIENT_COLOR, ORGAN_COLOR } from '../lib/colors.ts'

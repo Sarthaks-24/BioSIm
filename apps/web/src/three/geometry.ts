@@ -28,7 +28,7 @@ import {
   STOMACH,
   TORSO_PROFILE,
   stomachRadius,
-} from '../anatomy/anatomy.ts'
+} from '../anatomy/human.ts'
 
 /**
  * Every organ is modelled in code from the anatomy curves, so the models, the flat fallback and
