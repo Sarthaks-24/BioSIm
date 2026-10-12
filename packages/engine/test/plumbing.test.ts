@@ -14,6 +14,7 @@ import {
   computeEvents,
   decodeMeal,
   emptyingCurves,
+  energySignals,
   glucoseCurve,
   makeParticles,
   simulate,
@@ -41,7 +42,8 @@ function paramsWith(path: string, value: number): Params {
 }
 
 describe('simulate input', () => {
-  it('SimInput with a lookup gives exactly the same run as a built Meal', () => {
+  // 15 runs × 16 full series compared: ~1.5 s alone, more on a busy machine, so a longer timeout.
+  it('SimInput with a lookup gives exactly the same run as a built Meal', { timeout: 20_000 }, () => {
     for (const raw of ['glucose-50:1', 'standard-meal:1,water:1', 'fatty-meal:1.5', 'water:1', '']) {
       const items = decodeMeal(raw)
       const fromMeal = simulate(buildMeal(items, lookup), { particles: 8 })
@@ -58,6 +60,12 @@ describe('simulate input', () => {
   it('an unknown organism throws (the UI never passes one)', () => {
     const frog = { organism: 'frog', items: [] } as unknown as SimInput
     expect(() => simulate(frog, { lookup })).toThrow(/unknown organism "frog"/)
+  })
+
+  it('an unknown profile throws (share.ts drops an unknown `who` before it gets here)', () => {
+    const teen = { items: [], profile: 'teen-ref' } as unknown as SimInput
+    expect(() => simulate(teen, { lookup })).toThrow(/unknown profile "teen-ref"/)
+    expect(simulate({ items: [] }, { lookup }).profile).toBe('adult-ref')
   })
 
   it('a SimInput without a lookup throws instead of guessing', () => {
@@ -123,6 +131,21 @@ describe('ctx.params: modules read the params they are given', () => {
     const curves = emptyingCurves(meal)
     const later = makeParticles(meal, curves, 5, 12, paramsWith('smallIntestine.typicalMin', PARAMS.smallIntestine.typicalMin + 60))
     makeParticles(meal, curves, 5, 12).forEach((p, i) => expect(later[i]!.colonIn - p.colonIn).toBeCloseTo(60, 9))
+  })
+
+  it('energy/energyBalance.ts', () => {
+    const n = 3
+    const absorbedG = {
+      carbs: new Float64Array([0, 1, 2]),
+      protein: new Float64Array(n),
+      fat: new Float64Array([0, 1, 1]),
+      fiber: new Float64Array(n),
+      water: new Float64Array(n),
+    }
+    const person = { restingKcalPerDay: 2400 }
+    expect([...energySignals(absorbedG, person, 1).inTotal]).toEqual([0, 13, 17])
+    expect([...energySignals(absorbedG, person, 1, paramsWith('energy.atwaterKcalPerG.fat', 0)).inTotal]).toEqual([0, 4, 8])
+    expect([...energySignals(absorbedG, person, 1).usedRate]).toEqual([100, 100, 100])
   })
 
   it('only params.ts, simulate.ts, meal.ts and share.ts read PARAMS.* (comments and strings aside)', () => {

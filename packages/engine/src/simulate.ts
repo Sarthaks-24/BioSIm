@@ -10,7 +10,9 @@ import { makeParticles, type Particle } from './particles.ts'
 import type { SignalTable } from './core/signal.ts'
 import { buildMoments, buildSignalTable } from './core/table.ts'
 import { PROVIDES } from './core/catalog.ts'
-import { DEFAULT_ORGANISM, type OrganismId, type OrganismModel, type SimInput } from './core/organism.ts'
+import { DEFAULT_ORGANISM, DEFAULT_PROFILE, type OrganismId, type OrganismModel, type ProfileId, type SimInput } from './core/organism.ts'
+import { PROFILES, isProfileId, type ProfileDef } from './core/profile.ts'
+import { energySignals } from './energy/energyBalance.ts'
 
 /**
  * The human model: MODEL_VERSION, the 48 h clock and the PARAMS set. This is the one place the
@@ -28,10 +30,11 @@ export const HUMAN_MODEL: OrganismModel<Params> = {
 /** Every organism the engine can run. Later organisms are loaded lazily (plan-organisms item 16). */
 export const ORGANISM_MODELS: { readonly [O in OrganismId]: OrganismModel<Params> } = { human: HUMAN_MODEL }
 
-/** What every module of one run reads: the organism's model and its parameters. */
+/** What every module of one run reads: the organism's model, its parameters and the stated person. */
 interface SimContext {
   model: OrganismModel<Params>
   params: Params
+  profile: ProfileDef
 }
 
 export interface SimOptions {
@@ -50,6 +53,8 @@ export interface SimOptions {
 export interface Simulation extends SignalTable {
   modelVersion: number
   meal: Meal
+  /** The stated person this run is about (energy.usedRate). Run metadata, not a signal. */
+  profile: ProfileId
   curves: Record<FoodPhase, EmptyingCurve>
   /** Minute the meal starts arriving in the stomach (end of eating + swallow). */
   stomachArrivalMin: number
@@ -95,11 +100,11 @@ const isMeal = (input: SimInput | Meal): input is Meal => 'liquid' in input
 
 /**
  * Two ways in, one model:
- *   - `simulate(meal)`: a built Meal (every v1 caller and test);
+ *   - `simulate(meal)`: a built Meal (every v1 caller and test), for the default person;
  *   - `simulate({ organism?, items, profile? }, { lookup })`: the organism-ready input. The foods
  *     are looked up by id with `lookup`, exactly as `buildMeal` does.
- * An unknown organism throws: the UI never passes one (a link's unknown `o` already became human
- * in share.ts).
+ * An unknown organism or profile throws: the UI never passes one (a link's unknown `o` already
+ * became human, and an unknown `who` was dropped, in share.ts).
  */
 export function simulate(meal: Meal, opts?: SimOptions): Simulation
 export function simulate(input: SimInput, opts: SimOptions & { lookup: FoodLookup }): Simulation
@@ -111,7 +116,9 @@ export function simulate(input: SimInput | Meal, opts: SimOptions & { lookup?: F
   if (isMeal(input)) meal = input
   else if (opts.lookup) meal = buildMeal(input.items, opts.lookup)
   else throw new Error('simulate: a SimInput needs opts.lookup to find its foods')
-  return simulateHuman(meal, { model, params: model.params }, opts.particles ?? 48)
+  const profileId: string = isMeal(input) ? DEFAULT_PROFILE[model.id] : (input.profile ?? DEFAULT_PROFILE[model.id])
+  if (!isProfileId(profileId) || PROFILES[profileId].organism !== model.id) throw new Error(`simulate: unknown profile "${profileId}"`)
+  return simulateHuman(meal, { model, params: model.params, profile: PROFILES[profileId] }, opts.particles ?? 48)
 }
 
 function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simulation {
@@ -208,9 +215,13 @@ function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simu
   )
   const particles = makeParticles(meal, curves, arrival, particleCount, params)
 
+  // --- Energy in vs used: Atwater kcal of the absorbed grams, and the person's resting use -------
+  const energy = energySignals(absorbedG, ctx.profile, step, params)
+
   const run = {
     modelVersion: ctx.model.modelVersion,
     meal,
+    profile: ctx.profile.id,
     curves,
     stomachArrivalMin: arrival,
     stepMin: step,
@@ -227,7 +238,7 @@ function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simu
   }
   return {
     ...run,
-    signals: buildSignalTable(run),
+    signals: buildSignalTable(run, energy),
     moments: buildMoments(run),
     rhythms: new Map(),
     horizonMin: params.horizonMin,

@@ -100,6 +100,19 @@ export const PARAMS = {
   /** Less than this many grams of fibre reaching the colon counts as "almost nothing left over". */
   residueThresholdG: 1,
 
+  energy: {
+    /**
+     * Atwater general factors, kcal per gram: 4.0 protein, 9.0 fat, 4.0 carbohydrate (FAO 2003,
+     * Food and Nutrition Paper 77, §3.5.1). Applied to the absorbed grams for energy.inRate.
+     * Fibre's energy (gut bacteria ferment some of it) is left out.
+     */
+    atwaterKcalPerG: {
+      carbs: 4,
+      protein: 4,
+      fat: 9,
+    },
+  },
+
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,

@@ -1,7 +1,7 @@
 /**
  * O-0: organism-ready, human-only. Every ID in the catalog is organism-neutral; the organism and
  * the stated person (profile) are separate inputs. Only the human exists in v2.0.
- * WP-06 adds `core/profile.ts` (the profile data). Plan: plans/v2 plan-organisms.md.
+ * The profile data live in `core/profile.ts`. Plan: plans/v2 plan-organisms.md.
  */
 import type { MealItem } from '../meal.ts'
 import type { ActiveSignalId } from './catalog.ts'
@@ -23,7 +23,7 @@ export interface HumanInput {
   /** Absent ⇒ human, forever. */
   organism?: 'human'
   items: MealItem[]
-  /** Absent ⇒ DEFAULT_PROFILE.human. The engine does not read it yet (WP-06 adds the energy signals). */
+  /** Absent ⇒ DEFAULT_PROFILE.human. Sets energy.usedRate (core/profile.ts). */
   profile?: ProfileId
 }
 /** Later: | { organism: 'plant'; conditions: {...}; profile: 'leaf-ref' }. */

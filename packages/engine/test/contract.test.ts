@@ -18,16 +18,10 @@ const calls = scanGoldenCalls(dirname(fileURLToPath(import.meta.url)))
 const report = goldenCoverage(calls)
 
 /**
- * Active signals the engine does not produce yet: they need the stated person (core/profile.ts).
- * WP-06 builds them with their golden tests and EMPTIES this list.
- */
-const BUILT_IN_WP06 = ['energy.inRate', 'energy.inTotal', 'energy.usedRate', 'energy.usedTotal']
-
-/**
  * Ratchet: the number of calls never goes down, so unwrapping a test (golden → plain it) fails here
  * even when other tests still cover its IDs. Raise these when you add tests.
  */
-const AT_LEAST = { golden: 17, fails: 1, pinned: 7 }
+const AT_LEAST = { golden: 22, fails: 1, pinned: 9 }
 
 describe('golden coverage', () => {
   it('the scan finds the wrapped physiology tests', () => {
@@ -39,11 +33,11 @@ describe('golden coverage', () => {
   })
 
   it('every active simulated signal and every event has a sourced golden test', () => {
-    expect(report.missingSourced.filter((id) => !BUILT_IN_WP06.includes(id))).toEqual([])
+    expect(report.missingSourced).toEqual([])
   })
 
   it('every active assumption signal has a golden or pinned test, and a known-limit text', () => {
-    expect(report.missingAny.filter((id) => !BUILT_IN_WP06.includes(id))).toEqual([])
+    expect(report.missingAny).toEqual([])
     expect(report.missingLimit).toEqual([])
   })
 
@@ -63,14 +57,9 @@ describe('golden coverage', () => {
 describe('what the engine produces', () => {
   const sim = simulate(buildMeal([{ foodId: 'standard-meal', servings: 1 }], lookup))
 
-  it('signals = every active human signal except those WP-06 builds', () => {
-    expect([...sim.signals.keys()].sort()).toEqual(HUMAN_PROVIDES.filter((id) => !BUILT_IN_WP06.includes(id)).sort())
-  })
-
-  it('the WP-06 list is exactly what is not built and not covered (empty it when WP-06 lands)', () => {
-    const notBuilt = HUMAN_PROVIDES.filter((id) => !sim.signals.has(id))
-    expect(notBuilt).toEqual(BUILT_IN_WP06)
-    expect([...report.missingSourced, ...report.missingAny].sort()).toEqual([...BUILT_IN_WP06].sort())
+  it('signals = every active human signal, one value per minute', () => {
+    expect([...sim.signals.keys()].sort()).toEqual([...HUMAN_PROVIDES].sort())
+    for (const [id, s] of sim.signals) expect(s.values, id).toHaveLength(sim.length)
   })
 
   it('moments = every event', () => {

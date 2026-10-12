@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest'
 import {
   EVENT_IDS,
   PARAMS,
+  PROFILES,
   buildMeal,
   decodeMeal,
+  energySignals,
   findFirst,
   indexAt,
   mealLocation,
@@ -70,6 +72,16 @@ describe('signal table', () => {
     expect(g.low).toEqual(Float32Array.from(sim.glucose.low))
     expect(g.high).toEqual(Float32Array.from(sim.glucose.high))
     expect(sim.signals.get('gut.small.contentG')!.low).toBeUndefined()
+  })
+
+  it('the energy series are Float32 copies of energySignals() for the run’s profile', () => {
+    const sim = run('cheeseburger:1,fries:1,cola:1')
+    const e = energySignals(sim.absorbedG, PROFILES[sim.profile], sim.stepMin)
+    for (const k of ['inRate', 'inTotal', 'usedRate', 'usedTotal'] as const) {
+      const s = sim.signals.get(`energy.${k}`)!
+      expect(s.meta.id).toBe(`energy.${k}`)
+      expect(s.values).toEqual(Float32Array.from(e[k]))
+    }
   })
 
   it('series carry their sources plus food:<id> for every food in the meal', () => {
