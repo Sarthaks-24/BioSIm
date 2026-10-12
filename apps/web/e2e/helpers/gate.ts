@@ -42,10 +42,15 @@ export const GATE_ROUTES = {
     { url: `${V1_SIM}&lang=hi`, plan: 'report' },
     { url: '/next?lang=hi', plan: 'pending:WP-18' },
   ],
-  /** Reduced motion: no auto-play, and a paused page draws no frames (project reduced). */
+  /**
+   * Reduced motion: no auto-play, and a paused page draws no frames (project reduced).
+   * WP-08 built the clock and motion stores (state/clock.ts, state/motion.ts; their unit tests
+   * check that a paused clock asks for no frames). /next is the first page that uses them, so
+   * WP-11 sets this entry to 'enforce'.
+   */
   reducedMotion: [
     { url: V1_SIM, plan: 'report' },
-    { url: '/next', plan: 'pending:WP-08' },
+    { url: '/next', plan: 'pending:WP-11' },
   ],
   /** 30 fps while playing, flat body, 6× CPU throttle (project perf). */
   fps: [

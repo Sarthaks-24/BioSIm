@@ -13,9 +13,9 @@ Rules for the reviewer:
 - The launch date and the project email on the privacy page are placeholders in angle brackets until
   the maintainer fills them in (in `en.json`, `hi.json` and this file).
 - "डायबिटीज़" is used instead of "मधुमेह" because students hear it more. Please confirm.
-- On the privacy page, the first two items of "आपके डिवाइस पर क्या रहता है" (`privacy.sections[0].items[0]`
-  and `[1]`) and the paragraph under "गलती की रिपोर्ट करना" (`privacy.sections[1].intro[0]`) are new wording;
-  please check them closely.
+- On the privacy page, the first three items of "आपके डिवाइस पर क्या रहता है" (`privacy.sections[0].items[0]`,
+  `[1]` and `[2]`; `[1]` was added with the reduced-motion setting) and the paragraph under "गलती की रिपोर्ट करना"
+  (`privacy.sections[1].intro[0]`) are new wording; please check them closely.
 
 ## Renamed lines (BioSim → LifePeek, only the name changed)
 
@@ -59,9 +59,10 @@ Rules for the reviewer:
 | `privacy.sections[0].title` | What stays on your device | आपके डिवाइस पर क्या रहता है | draft |
 | `privacy.sections[0].intro[0]` | LifePeek saves a few things **in your own browser only**. They are never sent to us: | LifePeek कुछ चीज़ें **सिर्फ़ आपके अपने ब्राउज़र में** सहेजता है। ये हमें कभी नहीं भेजी जातीं: | draft |
 | `privacy.sections[0].items[0]` | your language (English or Hindi), whether Projector mode is on, and whether you have closed the "not medical advice" note; | आपकी भाषा (अंग्रेज़ी या हिन्दी), प्रोजेक्टर मोड चालू है या नहीं, और आपने "चिकित्सकीय सलाह नहीं" वाली सूचना बंद की है या नहीं; | draft |
-| `privacy.sections[0].items[1]` | a one-time note that the page has just reloaded after an update error (deleted when you close the tab); | अपडेट में गड़बड़ी के बाद पेज के दोबारा लोड होने का एक बार का निशान (टैब बंद करते ही मिट जाता है); | draft |
-| `privacy.sections[0].items[2]` | a copy of the app, so it works offline in class; | ऐप की एक कॉपी, ताकि कक्षा में इंटरनेट के बिना भी चले; | draft |
-| `privacy.sections[0].items[3]` | the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you. | आपने जो भोजन चुने, वे पेज के पते (लिंक) में रहते हैं। शेयर किए गए लिंक में सिर्फ़ भोजन होते हैं, आपके बारे में कुछ नहीं। | draft |
+| `privacy.sections[0].items[1]` | whether you have chosen less movement on screen (reduced motion); | आपने स्क्रीन पर कम हलचल चुनी है या नहीं; | draft |
+| `privacy.sections[0].items[2]` | a one-time note that the page has just reloaded after an update error (deleted when you close the tab); | अपडेट में गड़बड़ी के बाद पेज के दोबारा लोड होने का एक बार का निशान (टैब बंद करते ही मिट जाता है); | draft |
+| `privacy.sections[0].items[3]` | a copy of the app, so it works offline in class; | ऐप की एक कॉपी, ताकि कक्षा में इंटरनेट के बिना भी चले; | draft |
+| `privacy.sections[0].items[4]` | the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you. | आपने जो भोजन चुने, वे पेज के पते (लिंक) में रहते हैं। शेयर किए गए लिंक में सिर्फ़ भोजन होते हैं, आपके बारे में कुछ नहीं। | draft |
 | `privacy.sections[0].outro[0]` | You can delete all of this by clearing the site data for lifepeek.vercel.app in your browser settings. | अपने ब्राउज़र की सेटिंग में lifepeek.vercel.app का साइट डेटा मिटाकर आप यह सब हटा सकते हैं। | draft |
 | `privacy.sections[1].title` | Reporting a mistake | गलती की रिपोर्ट करना | draft |
 | `privacy.sections[1].intro[0]` | When you press **Report a mistake**, LifePeek opens a **GitHub issue** in a new tab with your report already filled in. **Nothing is sent to us. Your report text reaches GitHub only inside the link that opens the form, and nothing is published until you press Submit there.** You choose whether to send it. | जब आप **गलती बताएँ** दबाते हैं, तो LifePeek एक नए टैब में **GitHub issue** खोलता है जिसमें आपकी रिपोर्ट पहले से भरी होती है। **हमें कुछ नहीं भेजा जाता। आपकी रिपोर्ट का टेक्स्ट सिर्फ़ उस लिंक के अंदर GitHub तक पहुँचता है जो फ़ॉर्म खोलता है, और जब तक आप वहाँ Submit नहीं दबाते, कुछ भी प्रकाशित नहीं होता।** भेजना है या नहीं, यह आप तय करते हैं। | draft |
