@@ -32,6 +32,8 @@ interface Props {
   profile: ProfileId
   /** What the marks on this graph mean, and other graph-specific limits. */
   notes?: ReactNode
+  /** The graph's name, when it is not the signal's (a two-line graph). */
+  title?: string
 }
 
 /**
@@ -39,11 +41,11 @@ interface Props {
  * we are, the known limits, whose body it is, and the sources (each linked to its entry on the
  * Science page). Long caveats live here instead of under the graph.
  */
-export default function HowWeKnow({ meta, sourceIds, profile, notes }: Props) {
+export default function HowWeKnow({ meta, sourceIds, profile, notes, title }: Props) {
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement>(null)
-  const name = t(`${meta.i18nKey}.name`)
+  const name = title ?? t(`${meta.i18nKey}.name`)
   const label = t('graph.howFor', { name })
   const papers = sourceIds.filter((id) => !id.startsWith('food:'))
   const foods = sourceIds.filter((id) => id.startsWith('food:'))

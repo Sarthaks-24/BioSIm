@@ -318,6 +318,16 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `graph.halfLeft` | Half has left | आधा निकल गया | draft |
 | `graph.halfNote` | The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring. | गोला दिखाता है कि भोजन की आधी ऊर्जा कब आमाशय से निकल गई (पानी के लिए: उसका आधा वज़न)। पेय पहले निकलते हैं, इसलिए इस ग्राफ़ पर ग्राम गोले से पहले ही आधे रह सकते हैं। | draft |
 
+## Energy graph (WP-13)
+
+The energy graph's readouts: "Coming in 120 kcal/h (340 kcal so far)", "Used 65 kcal/h (98 kcal so far)".
+The words the framing test (`framing.test.ts`) bans in Hindi start with खराब, हानिकारक, खतरनाक; please
+add any other word that would make a food sound good or bad, or tell students to "burn it off".
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `graph.soFar` | ({{value}} so far) | (अब तक {{value}}) | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___

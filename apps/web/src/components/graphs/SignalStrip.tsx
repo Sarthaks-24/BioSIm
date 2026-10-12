@@ -1,9 +1,9 @@
-import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ChartableSeries, type Series } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS } from '../../lib/time.ts'
-import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks } from '../../lib/axis.ts'
+import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks, type Domain } from '../../lib/axis.ts'
 import { formatNumber, formatSignal } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import { LineSwatch } from '../stage/KeptTag.tsx'
@@ -23,6 +23,22 @@ interface Props {
   /** A line under the graph (the blood-sugar "not medical advice" note). */
   footer?: ReactNode
   className?: string
+  /** The y range, when the organism's registry overrides the catalog's (`signalOverrides`). */
+  range?: Domain
+  /**
+   * A second line on the same axis with its own name, status and label on the line (energy used at
+   * rest). It gets no kept ghost: it is the same for every meal.
+   */
+  second?: { series: Series; label: string } | null
+  /**
+   * Running totals written after this run's readouts ("340 kcal so far"), for graphs of a rate
+   * (energy). The kept run shows its rate only, so the header stays short.
+   */
+  totals?: { run: Series; second: Series | null } | null
+  /** The graph's name, when it is not the first line's (a two-line graph is named for both). */
+  title?: string
+  /** Read by screen readers after the name: what the graph shows, in one or two sentences. */
+  summary?: string
 }
 
 /**
@@ -58,19 +74,35 @@ function useSize<T extends HTMLElement>() {
  *   fixed range (`displayRange`), the same for every meal, stretched once only if a value would
  *   not fit. Labels are HTML (they wrap, scale and get Devanagari line height); the SVG holds lines.
  * - The kept run is a dashed grey line with an end label, never told apart by hue alone.
+ * - A second line (energy used at rest, WP-13) shares the axis: orange, named and rated in the
+ *   readouts with its own status, labelled on the line itself, never given a kept ghost.
  * - The playhead and the readouts follow the meal clock outside React (Playhead). Dragging on the
  *   graph pauses and moves the clock, like the dock.
  */
-export default function SignalStrip({ series, kept, keptName, marker, info, footer, className = '' }: Props) {
+export default function SignalStrip({
+  series,
+  kept,
+  keptName,
+  marker,
+  info,
+  footer,
+  className = '',
+  range,
+  second,
+  totals,
+  title,
+  summary,
+}: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const meta = series.meta
   const titleId = useId()
+  const summaryId = useId()
   const [plot, { width, height, rem }] = useSize<HTMLDivElement>()
 
   const { domain, stretched } = useMemo(
-    () => domainFor(meta.displayRange ?? [0, 1], [series.values, series.low, series.high, kept?.values]),
-    [meta, series, kept],
+    () => domainFor(range ?? meta.displayRange ?? [0, 1], [series.values, series.low, series.high, kept?.values, second?.series.values]),
+    [range, meta, series, kept, second],
   )
   const ticks = useMemo(() => yTicks(domain, series.values[0]), [domain, series])
 
@@ -88,18 +120,33 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
       band: series.low && series.high ? bandPath(samplesOf(series.high), samplesOf(series.low), x, y) : null,
       kept: kept ? line(kept.values) : null,
       keptEnd: kept ? end(kept.values) : null,
+      second: second ? line(second.series.values) : null,
+      secondEnd: second ? end(second.series.values) : null,
       marker: marker ? { x: x(marker.atMin), y: y(valueAt(series, marker.atMin)) } : null,
     }
-  }, [series, kept, marker, width, height, domain])
+  }, [series, kept, second, marker, width, height, domain])
 
+  // Readout text: the value of this run, the kept run and the second line, and running totals if any.
   const runText = useRef<HTMLSpanElement>(null)
   const keptText = useRef<HTMLSpanElement>(null)
+  const secondText = useRef<HTMLSpanElement>(null)
+  const runTotal = useRef<HTMLSpanElement>(null)
+  const secondTotal = useRef<HTMLSpanElement>(null)
   const readout = useCallback(
-    (_min: number, r: number, k: number | null) => {
-      if (runText.current) runText.current.textContent = formatSignal(r, meta, t, lang)
-      if (keptText.current && k !== null) keptText.current.textContent = formatSignal(k, meta, t, lang)
+    (min: number, r: number, k: number | null) => {
+      const write = (el: HTMLSpanElement | null, v: number, s: Series = series) => {
+        if (el) el.textContent = formatSignal(v, s.meta, t, lang)
+      }
+      const total = (el: HTMLSpanElement | null, s: Series | null | undefined) => {
+        if (el && s) el.textContent = t('graph.soFar', { value: formatSignal(valueAt(s, min), s.meta, t, lang) })
+      }
+      write(runText.current, r)
+      if (k !== null) write(keptText.current, k)
+      if (second) write(secondText.current, valueAt(second.series, min), second.series)
+      total(runTotal.current, totals?.run)
+      total(secondTotal.current, totals?.second)
     },
-    [meta, t, lang],
+    [series, second, totals, t, lang],
   )
 
   // Dragging on the graph scrubs the shared clock (G2). pan-y keeps the page scrollable on a phone.
@@ -118,14 +165,27 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
     if (e.currentTarget.hasPointerCapture(e.pointerId)) useClock.getState().setSimMin(timeAt(e.clientX))
   }
 
-  const name = t(`${meta.i18nKey}.name`)
+  const name = title ?? t(`${meta.i18nKey}.name`)
+  // With two lines each readout says which line it is; with one, the graph's name does.
+  const named = !!second
+  // Phones show name and value only (plan-graphs §3.5): the totals, like the second line's label,
+  // need the room of a desktop column; on a phone "How we know" gives them in its summary.
+  const totalSpan = (ref: RefObject<HTMLSpanElement | null>) => totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
+  // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
+  const group = 'inline-flex flex-wrap items-center gap-x-1.5'
   return (
-    <figure aria-labelledby={titleId} className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}>
+    <figure
+      aria-labelledby={titleId}
+      aria-describedby={summary ? summaryId : undefined}
+      className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}>
       {/*
-       * Phones: the tab above already names the graph, so the header is one row: values, status, ⓘ.
+       * Phones: the tab above already names the graph, so the header is one row: values, status, ⓘ
+       * (a two-line graph: status and ⓘ, then its longer values under them).
        * From 1024 px up: name, status and ⓘ, then the values under them.
        */}
-      <figcaption className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 [grid-template-areas:'read_status_info'] lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read']">
+      <figcaption
+        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read'] ${named ? "gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']" : "[grid-template-areas:'read_status_info']"}`}
+      >
         <span id={titleId} className="text-control font-semibold text-ink [grid-area:title] max-lg:sr-only">
           {name}
         </span>
@@ -134,16 +194,26 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
         </span>
         <span className="[grid-area:info]">{info}</span>
         <span className="tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read]">
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className={group}>
             <LineSwatch />
-            <span className="sr-only">{t('stage.thisMeal')}: </span>
-            <span ref={runText} className="font-semibold text-ink" />
+            <span className={named ? 'text-ink-2' : 'sr-only'}>{named ? t(`${meta.i18nKey}.short`) : `${t('stage.thisMeal')}: `}</span>
+            <span ref={runText} className="font-semibold whitespace-nowrap text-ink" />
+            {totalSpan(runTotal)}
           </span>
+          {second && (
+            <span className={`${group} text-ink-2`}>
+              <LineSwatch color="var(--color-energy-used)" />
+              {t(`${second.series.meta.i18nKey}.short`)}
+              <span ref={secondText} className="font-semibold whitespace-nowrap text-ink" />
+              {totalSpan(secondTotal)}
+              <StatusTag status={second.series.meta.status} />
+            </span>
+          )}
           {kept && (
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-ink-2">
+            <span className={`${group} text-ink-2`}>
               <LineSwatch kept />
               {t('graph.kept')}
-              <span ref={keptText} className="font-semibold" />
+              <span ref={keptText} className="font-semibold whitespace-nowrap" />
             </span>
           )}
           {stretched && <span className="text-ink-2">{t('graph.stretched')}</span>}
@@ -217,6 +287,14 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
                   className="fill-none stroke-kept [stroke-dasharray:var(--strip-kept-dash)] [stroke-width:var(--strip-line)]"
                 />
               )}
+              {paths.second && (
+                <path
+                  data-line="second"
+                  d={paths.second}
+                  className="fill-none stroke-energy-used [stroke-width:var(--strip-line)]"
+                  strokeLinecap="round"
+                />
+              )}
               <path
                 data-line="run"
                 d={paths.run}
@@ -236,7 +314,19 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
               {marker.label}
             </span>
           )}
-          {paths?.keptEnd && (
+          {paths?.secondEnd && second && (
+            // Over the right end of its line, right of the 6 h knee, where the food energy has
+            // mostly come in already, so the label sits on empty graph paper.
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-1 max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
+              style={{ bottom: height - paths.secondEnd.y + 5 }}
+            >
+              {second.label}
+            </span>
+          )}
+          {/* A second line's label takes the right end; the kept line is then named in the readouts. */}
+          {paths?.keptEnd && !second && (
             <span
               aria-hidden="true"
               className="pointer-events-none absolute right-1 max-w-[80%] text-right text-caption leading-tight text-ink-2 [text-shadow:var(--strip-halo)]"
@@ -245,9 +335,22 @@ export default function SignalStrip({ series, kept, keptName, marker, info, foot
               {t('keep.tag', { meal: keptName })}
             </span>
           )}
-          <Playhead width={width} height={height} domain={domain} run={series} kept={kept} readout={readout} />
+          <Playhead
+            width={width}
+            height={height}
+            domain={domain}
+            run={series}
+            kept={kept}
+            second={second?.series ?? null}
+            readout={readout}
+          />
         </div>
       </div>
+      {summary && (
+        <span id={summaryId} hidden>
+          {summary}
+        </span>
+      )}
       {footer}
     </figure>
   )
