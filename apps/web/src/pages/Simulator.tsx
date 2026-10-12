@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION, PARAMS } from '@lifepeek/engine'
-import { useSim, mealLabel, MEAL_KEYS, type MealKey, type Sims } from '../state/sim.ts'
+import { useSim, mealLabel, shareQuery, MEAL_KEYS, type MealKey, type Sims } from '../state/sim.ts'
 import { useClock } from '../hooks/useClock.ts'
 import { useUrlSync } from '../hooks/useUrlSync.ts'
 import { useSimulation } from '../hooks/useSimulation.ts'
@@ -88,7 +88,7 @@ export default function Simulator() {
           </button>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-3">
-          <FeedbackDialog />
+          <FeedbackDialog context={() => shareQuery(useSim.getState())} />
           <ShareButton />
         </div>
       </div>

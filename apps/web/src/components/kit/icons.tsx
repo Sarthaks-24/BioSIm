@@ -93,3 +93,11 @@ export const CheckIcon = () => (
     <path d="m4.5 10.5 3.5 3.5 7.5-8" />
   </Icon>
 )
+
+/** Report a mistake: a flag on its pole. */
+export const FlagIcon = () => (
+  <Icon width="18" height="18">
+    <path d="M5 17.5V3.5" />
+    <path d="M5 4h9.5l-2 3.5 2 3.5H5" />
+  </Icon>
+)

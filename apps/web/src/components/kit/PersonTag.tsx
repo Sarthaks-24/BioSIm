@@ -6,13 +6,15 @@ interface Props {
   profile: ProfileId
   /** Opens "How we know" for the person. Without it the tag is plain text. */
   onInfo?: () => void
+  /** Whether the panel `onInfo` opens is showing. */
+  expanded?: boolean
 }
 
 /**
  * Whose body the model is: "Adult model ⓘ" in the meal bar (`profiles.<id>.tag`; the longer
  * `.desc` is its tooltip). Quiet ink-2 text, so it informs without competing with the meal.
  */
-export default function PersonTag({ profile, onInfo }: Props) {
+export default function PersonTag({ profile, onInfo, expanded }: Props) {
   const { t } = useTranslation()
   const tag = t(`profiles.${profile}.tag`)
   const desc = t(`profiles.${profile}.desc`)
@@ -28,6 +30,8 @@ export default function PersonTag({ profile, onInfo }: Props) {
     <button
       type="button"
       onClick={onInfo}
+      aria-haspopup="dialog"
+      aria-expanded={expanded}
       title={desc}
       className={`${look} min-h-11 rounded-control px-2 hover:bg-sunk2 hover:text-ink lg:min-h-9`}
     >
