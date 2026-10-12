@@ -30,8 +30,9 @@ test('adding a food updates the link, and leaving and coming back keeps the meal
   await expect(page).toHaveURL(/a=water%3A1%2Capple%3A1/)
   await page.getByRole('link', { name: 'For teachers' }).click()
   await page.getByRole('link', { name: 'Simulator' }).click()
-  await expect(page).toHaveURL(/a=water%3A1%2Capple%3A1/)
+  // The simulator writes the link when it mounts, so wait for it to be back on screen first.
   await expect(page.getByRole('region', { name: 'Meal A' }).getByText('Apple', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/a=water%3A1%2Capple%3A1/)
 })
 
 test('meal size cap blocks adding more and says why', async ({ page }) => {
