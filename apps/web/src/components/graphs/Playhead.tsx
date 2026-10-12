@@ -12,6 +12,8 @@ interface Props {
   domain: Domain
   run: Pick<Series, 'values'>
   kept: Pick<Series, 'values'> | null
+  /** A second line on the same axis (energy used), if the graph has one. */
+  second?: Pick<Series, 'values'> | null
   /** Writes the values at `min` into the strip's readouts (text only). */
   readout: (min: number, run: number, kept: number | null) => void
 }
@@ -22,10 +24,11 @@ interface Props {
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing and causes no
  * layout; the readouts are text written at ~10 Hz. Same x scale as the dock thumb (lib/axis.ts).
  */
-export default function Playhead({ width, height, domain, run, kept, readout }: Props) {
+export default function Playhead({ width, height, domain, run, kept, second = null, readout }: Props) {
   const head = useRef<HTMLDivElement>(null)
   const runDot = useRef<HTMLSpanElement>(null)
   const keptDot = useRef<HTMLSpanElement>(null)
+  const secondDot = useRef<HTMLSpanElement>(null)
   // The latest readout writer, so a new function each render doesn't restart the subscription.
   const write = useRef(readout)
   write.current = readout
@@ -39,6 +42,7 @@ export default function Playhead({ width, height, domain, run, kept, readout }: 
         head.current!.style.transform = `translateX(${xAt(min, width).toFixed(1)}px)`
         place(runDot, yAt(r, domain, height))
         if (k !== null) place(keptDot, yAt(k, domain, height))
+        if (second) place(secondDot, yAt(valueAt(second, min), domain, height))
       }
       const now = performance.now()
       if (now - lastText >= READOUT_MS || !useClock.getState().playing) {
@@ -57,7 +61,7 @@ export default function Playhead({ width, height, domain, run, kept, readout }: 
       offTime()
       offPlay()
     }
-  }, [width, height, domain, run, kept])
+  }, [width, height, domain, run, kept, second])
 
   return (
     <div
@@ -68,6 +72,7 @@ export default function Playhead({ width, height, domain, run, kept, readout }: 
       className="pointer-events-none absolute inset-y-0 -left-px w-0.5 bg-ink will-change-transform"
     >
       {kept && <span ref={keptDot} className="absolute top-0 left-1/2 size-2.5 rounded-full border-2 border-kept bg-shelf" />}
+      {second && <span ref={secondDot} className="absolute top-0 left-1/2 size-3 rounded-full border-2 border-shelf bg-energy-used" />}
       <span ref={runDot} className="absolute top-0 left-1/2 size-3 rounded-full border-2 border-shelf bg-run" />
     </div>
   )

@@ -615,6 +615,7 @@
     "highestTitle": "The ring: highest point",
     "highestNote": "The ring marks when blood sugar is highest after this meal. A rise of 5 mg/dL or less gets no ring: blood sugar stays near the before-meal level.",
     "halfLeft": "Half has left",
-    "halfNote": "The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring."
+    "halfNote": "The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring.",
+    "soFar": "({{value}} so far)"
   }
 }

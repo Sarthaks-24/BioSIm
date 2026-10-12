@@ -61,6 +61,12 @@ describe('fixed y range', () => {
     expect(domainFor([60, 200], [f([55, 90])])).toEqual({ domain: [50, 200], stretched: true })
   })
 
+  it('does not stretch for rounding noise just outside the range', () => {
+    expect(domainFor([0, 200], [f([-1.7e-12, 120, 0])])).toEqual({ domain: [0, 200], stretched: false })
+    expect(domainFor([0, 600], [f([0, 602])])).toEqual({ domain: [0, 600], stretched: false })
+    expect(domainFor([0, 600], [f([0, 1376])])).toEqual({ domain: [0, 1400], stretched: true })
+  })
+
   it('labels the top, the before-meal value when well inside, and the bottom', () => {
     expect(yTicks([60, 200], 90)).toEqual([200, 90, 60])
     expect(yTicks([0, 1000], 0)).toEqual([1000, 500, 0])

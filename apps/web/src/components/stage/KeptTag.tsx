@@ -4,8 +4,8 @@ import { useRunStore } from '../../state/run.ts'
 import { CloseIcon } from '../kit/index.ts'
 import { mealKcalRounded, mealNames } from './mealText.ts'
 
-/** The line sample the graphs use for each run, so the meal bar doubles as their key. */
-export function LineSwatch({ kept = false }: { kept?: boolean }) {
+/** The line sample the graphs use for each run (and energy used), so the meal bar doubles as their key. */
+export function LineSwatch({ kept = false, color = 'var(--color-run)' }: { kept?: boolean; color?: string }) {
   return (
     <svg viewBox="0 0 22 4" width="22" height="4" aria-hidden="true" focusable="false" className="shrink-0 overflow-visible">
       <line
@@ -15,7 +15,7 @@ export function LineSwatch({ kept = false }: { kept?: boolean }) {
         y2="2"
         strokeWidth="3"
         strokeLinecap={kept ? 'butt' : 'round'}
-        style={{ stroke: kept ? KEPT : 'var(--color-run)' }}
+        style={{ stroke: kept ? KEPT : color }}
         strokeDasharray={kept ? KEPT_DASH : undefined}
       />
     </svg>
