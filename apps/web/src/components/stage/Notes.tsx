@@ -35,7 +35,7 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
     <div className="border-b border-rule2 bg-shelf px-3 py-1.5 lg:px-4">
       <ul className="flex flex-col gap-1">
         {firstRun && (
-          <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <li data-first-run="" className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <p className="flex min-w-0 flex-1 basis-80 items-start gap-2 text-control">
               <span className="mt-px text-ink-2">
                 <InfoIcon />

@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HAS_API, feedbackIssueUrl, sendFeedback, type FeedbackInput } from '../lib/api.ts'
-import { useSim, shareQuery } from '../state/sim.ts'
 
 /**
  * "Report a mistake" — the credibility loop. No email or other personal data is asked for.
@@ -9,8 +8,22 @@ import { useSim, shareQuery } from '../state/sim.ts'
  * new tab, and nothing is sent until the user submits it there. With an API it is POSTed, and if
  * that fails the same GitHub issue is offered, so nothing typed is lost. Either way the dialog
  * warns that GitHub issues are public.
+ *
+ * Used by v1 /sim (its underlined link) and the v2 stage (a button in the meal bar, `trigger`).
+ * Each page passes its own run as a link query (`context`), so the form needs neither store.
  */
-export default function FeedbackDialog() {
+export default function FeedbackDialog({
+  context,
+  trigger,
+  openOnMount = false,
+}: {
+  /** The run being viewed, as a link query ("v=2&a=cola:1…"), so the report can be reproduced. */
+  context: () => string
+  /** The button that opens the form, given the function that opens it. Default: v1's underlined link. */
+  trigger?: (open: () => void) => ReactNode
+  /** Open the form as soon as it mounts (the v2 stage loads it on the first click). */
+  openOnMount?: boolean
+}) {
   const { t } = useTranslation()
   const ref = useRef<HTMLDialogElement>(null)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
@@ -24,7 +37,7 @@ export default function FeedbackDialog() {
       location: String(form.get('location') ?? ''),
       message: String(form.get('message') ?? ''),
       source: String(form.get('source') ?? '') || undefined,
-      context: shareQuery(useSim.getState()),
+      context: context(),
     }
     if (!HAS_API) {
       window.open(feedbackIssueUrl(input), '_blank', 'noopener')
@@ -44,18 +57,21 @@ export default function FeedbackDialog() {
   const field = 'mt-1 w-full rounded-lg border border-rule bg-white px-3 py-2'
   const warning = <p className="text-xs font-semibold text-ink">{t('feedback.publicWarning')}</p>
 
+  const open = () => {
+    setStatus('idle')
+    ref.current?.showModal()
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  useEffect(() => void (openOnMount && open()), [])
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setStatus('idle')
-          ref.current?.showModal()
-        }}
-        className="text-sm font-semibold underline underline-offset-4"
-      >
-        {t('sim.reportError')}
-      </button>
+      {trigger ? (
+        trigger(open)
+      ) : (
+        <button type="button" onClick={open} className="text-sm font-semibold underline underline-offset-4">
+          {t('sim.reportError')}
+        </button>
+      )}
       <dialog
         ref={ref}
         aria-labelledby="fb-title"

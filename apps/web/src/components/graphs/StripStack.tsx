@@ -1,6 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useMemo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type ActiveSignalId, type ChartableSeries, type ProfileId, type Series, type Simulation } from '@lifepeek/engine'
+import { valueAt, type ActiveSignalId, type ChartableSeries, type ProfileId, type Series, type Simulation } from '@lifepeek/engine'
 import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
 import { KNEE_MIN, formatDuration } from '../../lib/time.ts'
@@ -64,21 +64,24 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
   const lang = i18n.language
   // The run's table holds only active signals.
   const id = series.meta.id as ActiveSignalId
-  const ring = stripMarker(id, run)
   const glucose = id === 'blood.glucose'
-  const totalOf = (of: ActiveSignalId) => {
-    const total = TOTAL_OF[of]
-    return (total && run.signals.get(total)) || null
-  }
-  const runTotal = totalOf(id)
-  const totals = runTotal && { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null }
+  // Built once per run (and language), not per render: SignalStrip's paths, label placement and
+  // playhead are memoised on these objects (verify-1 C10).
+  const totals = useMemo(() => {
+    const totalOf = (of: ActiveSignalId) => {
+      const total = TOTAL_OF[of]
+      return (total && run.signals.get(total)) || null
+    }
+    const runTotal = totalOf(id)
+    return runTotal ? { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null } : null
+  }, [run, id, second])
   const title = second ? t('stage.strips.energy') : undefined
-
-  const marker = ring && {
-    atMin: ring.atMin,
-    value: ring.value,
-    label: t(ring.labelKey, { value: formatNumber(ring.value, series.meta, lang) }),
-  }
+  const marker = useMemo(() => {
+    const ring = stripMarker(id, run)
+    return ring && { atMin: ring.atMin, value: ring.value, label: t(ring.labelKey, { value: formatNumber(ring.value, series.meta, lang) }) }
+  }, [id, run, series, t, lang])
+  const secondLine = useMemo(() => second && { series: second, label: t('status.sameEveryMeal') }, [second, t])
+  const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
 
   // Energy: what came in and what the resting body used in the first 6 h (the same window for
   // every meal, so two meals compare), then the G6 sentence: "When more comes in than is used,
@@ -87,8 +90,8 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
     totals?.second &&
     t(`${series.meta.i18nKey}.summary`, {
       time: formatDuration(KNEE_MIN, t),
-      in: formatNumber(totals.run.values[KNEE_MIN]!, totals.run.meta, lang),
-      used: formatNumber(totals.second.values[KNEE_MIN]!, totals.second.meta, lang),
+      in: formatNumber(valueAt(totals.run, KNEE_MIN, run.stepMin), totals.run.meta, lang),
+      used: formatNumber(valueAt(totals.second, KNEE_MIN, run.stepMin), totals.second.meta, lang),
     })
 
   const notes = glucose ? (
@@ -119,11 +122,12 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
       marker={marker}
       className={className}
       range={range}
-      second={second && { series: second, label: t('status.sameEveryMeal') }}
+      second={secondLine}
       totals={totals}
       title={title}
       summary={summary || undefined}
       tabbed={tabbed}
+      clock={clock}
       info={
         <HowWeKnow
           meta={series.meta}

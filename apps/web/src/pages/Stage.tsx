@@ -9,7 +9,7 @@ import BodyPane from '../components/stage/BodyPane.tsx'
 import GraphColumn from '../components/stage/GraphColumn.tsx'
 import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
-import Scrubber from '../components/stage/Scrubber.tsx'
+import Timeline2 from '../components/stage/Timeline2.tsx'
 
 /**
  * The v2 one-screen stage (UI-1), at the unlisted /next until WP-19 swaps it in for /sim.
@@ -47,7 +47,10 @@ export default function Stage() {
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
     // dock's timeline (on a phone the Play button and its gap), so graphs and timeline share x.
-    <div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]">
+    <div
+      data-stage=""
+      className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
+    >
       <h1 className="sr-only">{t('sim.title')}</h1>
       <div className="lg:col-span-2">
         <MealBar />
@@ -55,7 +58,7 @@ export default function Stage() {
       <div className="lg:col-span-2">
         <Notes run={run} kept={kept} />
       </div>
-      <BodyPane run={run} />
+      <BodyPane run={run} kept={kept} />
       {/*
        * On a phone the graph row has a fixed height, the same for every tab (so the body never
        * jumps when the tab changes), sized for the tallest: blood sugar with its medical note.
@@ -67,7 +70,7 @@ export default function Stage() {
       {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
       <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
         <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />}>
-          <Scrubber />
+          <Timeline2 run={run} kept={kept} />
         </Dock>
       </div>
     </div>

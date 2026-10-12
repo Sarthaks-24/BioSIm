@@ -1,0 +1,33 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { Simulation } from '@lifepeek/engine'
+import { compareSummary, singleSummary } from '../../lib/summary.ts'
+import { LineSwatch } from './KeptTag.tsx'
+
+/**
+ * The summary sentence (council verdict #3): the answer in one sentence, under the body, so
+ * nobody has to read a graph to get the point. One meal: when half of it has left the stomach.
+ * With a kept meal: which stomach empties faster, about how many times, and why, only when the
+ * reason is true (lib/summary.ts). The reason is the quieter second sentence; on a phone it
+ * gives way to the body (the headline stays).
+ */
+export default function SummaryLine({ run, kept, className = '' }: { run: Simulation; kept: Simulation | null; className?: string }) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language
+  const summary = useMemo(() => (kept ? compareSummary(run, kept, t, lang) : singleSummary(run, t, lang)), [run, kept, t, lang])
+  if (!summary) return null
+  return (
+    <p data-summary={kept ? 'compare' : 'single'} className={`flex items-start gap-2 text-control text-ink ${className}`}>
+      <span className="sr-only">{t('summary.label')}: </span>
+      {/* Both lines' samples when comparing, as in the graphs' legend: the sentence is about them. */}
+      <span aria-hidden="true" className="mt-[0.6lh] flex shrink-0 flex-col gap-1 max-sm:hidden">
+        <LineSwatch />
+        {kept && <LineSwatch kept />}
+      </span>
+      <span>
+        <strong className="font-semibold">{summary.headline}</strong>
+        {summary.reason && <span className="text-ink-2 max-sm:hidden"> {summary.reason}</span>}
+      </span>
+    </p>
+  )
+}
