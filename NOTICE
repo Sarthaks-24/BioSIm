@@ -1,0 +1,25 @@
+LifePeek (formerly BioSim)
+Copyright 2026 Sarthak (GitHub: Sarthaks-24)
+
+This product includes software developed by the LifePeek project
+(https://github.com/Sarthaks-24/lifepeek, live at https://lifepeek.vercel.app).
+
+The source code is licensed under the Apache License, Version 2.0 (see LICENSE).
+The project's own lesson text, translations, illustrations and food-file
+structure and labels are licensed under Creative Commons Attribution 4.0
+International (see LICENSE-CONTENT.md).
+
+Nutrient and glycemic-index values copied from other sources are NOT licensed
+by this project. They remain under their owners' terms and are cited in each
+food file and listed in DATA-SOURCES.md.
+
+The name "LifePeek" and its logo are not licensed under either licence.
+If you publish a modified version, please give it a different name
+(see TRADEMARKS.md).
+
+Attribution request: if you redistribute or build on this work, please keep
+this NOTICE file and credit "LifePeek by Sarthak (github.com/Sarthaks-24)"
+in your About page or documentation.
+
+Bundled third-party software and fonts keep their own licences; see
+THIRD_PARTY_NOTICES.txt, which is generated at build time.

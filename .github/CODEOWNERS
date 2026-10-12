@@ -1,0 +1,5 @@
+# Every file is reviewed by the maintainer. When co-maintainers join, add lines
+# below this one; the LAST matching line wins, e.g.:
+#   /packages/engine/     @Sarthaks-24
+#   /apps/web/src/i18n/   @Sarthaks-24 @<hindi-reviewer>
+*       @Sarthaks-24

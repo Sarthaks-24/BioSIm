@@ -2,10 +2,12 @@
   "name": "@lifepeek/web",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "notices": "node scripts/third-party-notices.mjs --check",
+    "build": "npm run notices && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
