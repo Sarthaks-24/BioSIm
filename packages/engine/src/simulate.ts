@@ -1,6 +1,6 @@
-import type { Meal } from './meal.ts'
+import { buildMeal, type FoodLookup, type Meal } from './meal.ts'
 import type { FoodPhase } from './schema.ts'
-import { MODEL_VERSION, PARAMS } from './params.ts'
+import { MODEL_VERSION, PARAMS, type Params } from './params.ts'
 import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind, type StageId } from './nutrients.ts'
 import { emptyingCurves, retention, stomachShare, type EmptyingCurve } from './stomach.ts'
 import { runSegment } from './transit.ts'
@@ -9,6 +9,35 @@ import { computeEvents, type SimEvents } from './events.ts'
 import { makeParticles, type Particle } from './particles.ts'
 import type { SignalTable } from './core/signal.ts'
 import { buildMoments, buildSignalTable } from './core/table.ts'
+import { PROVIDES } from './core/catalog.ts'
+import { DEFAULT_ORGANISM, type OrganismId, type OrganismModel, type SimInput } from './core/organism.ts'
+
+/**
+ * The human model: MODEL_VERSION, the 48 h clock and the PARAMS set. This is the one place the
+ * engine hands PARAMS to the model; modules get it from the run's context (`ctx.params`).
+ */
+export const HUMAN_MODEL: OrganismModel<Params> = {
+  id: 'human',
+  modelVersion: MODEL_VERSION,
+  horizonMin: PARAMS.horizonMin,
+  stepMin: PARAMS.stepMin,
+  params: PARAMS,
+  provides: PROVIDES.human,
+}
+
+/** Every organism the engine can run. Later organisms are loaded lazily (plan-organisms item 16). */
+export const ORGANISM_MODELS: { readonly [O in OrganismId]: OrganismModel<Params> } = { human: HUMAN_MODEL }
+
+/** What every module of one run reads: the organism's model and its parameters. */
+interface SimContext {
+  model: OrganismModel<Params>
+  params: Params
+}
+
+export interface SimOptions {
+  /** Dots for the picture (default 48). 0 = none (tests, summaries). */
+  particles?: number
+}
 
 /**
  * Runs the whole model for one meal, minute by minute for 48 h:
@@ -62,27 +91,51 @@ export interface Simulation extends SignalTable {
 
 const zeros = (n: number) => new Float64Array(n)
 
-export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulation {
-  const step = PARAMS.stepMin
-  const n = Math.floor(PARAMS.horizonMin / step) + 1
-  const curves = emptyingCurves(meal)
+const isMeal = (input: SimInput | Meal): input is Meal => 'liquid' in input
+
+/**
+ * Two ways in, one model:
+ *   - `simulate(meal)`: a built Meal (every v1 caller and test);
+ *   - `simulate({ organism?, items, profile? }, { lookup })`: the organism-ready input. The foods
+ *     are looked up by id with `lookup`, exactly as `buildMeal` does.
+ * An unknown organism throws: the UI never passes one (a link's unknown `o` already became human
+ * in share.ts).
+ */
+export function simulate(meal: Meal, opts?: SimOptions): Simulation
+export function simulate(input: SimInput, opts: SimOptions & { lookup: FoodLookup }): Simulation
+export function simulate(input: SimInput | Meal, opts: SimOptions & { lookup?: FoodLookup } = {}): Simulation {
+  const organism: string = isMeal(input) ? DEFAULT_ORGANISM : (input.organism ?? DEFAULT_ORGANISM)
+  if (!Object.hasOwn(ORGANISM_MODELS, organism)) throw new Error(`simulate: unknown organism "${organism}"`)
+  const model = ORGANISM_MODELS[organism as OrganismId]
+  let meal: Meal
+  if (isMeal(input)) meal = input
+  else if (opts.lookup) meal = buildMeal(input.items, opts.lookup)
+  else throw new Error('simulate: a SimInput needs opts.lookup to find its foods')
+  return simulateHuman(meal, { model, params: model.params }, opts.particles ?? 48)
+}
+
+function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simulation {
+  const { params } = ctx
+  const step = params.stepMin
+  const n = Math.floor(params.horizonMin / step) + 1
+  const curves = emptyingCurves(meal, params)
   const eatingMin = meal.eatingMin
-  const arrival = eatingMin + PARAMS.esophagus.transitMin
+  const arrival = eatingMin + params.esophagus.transitMin
 
   // --- Stomach: what's inside and what leaves each minute -------------------------------------
   const stomachLiquidG = zeros(n)
   const stomachSolidG = zeros(n)
   const outflow = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, zeros(n)])) as Record<NutrientKind, Float64Array>
   const glycemicOutflow = zeros(n)
-  const blunt = bluntingFactor(meal)
+  const blunt = bluntingFactor(meal, params)
 
   for (const phase of ['liquid', 'solid'] as const) {
     const totals = meal[phase]
     if (totals.massG <= 0) continue
     const curve = curves[phase]
     const store = phase === 'liquid' ? stomachLiquidG : stomachSolidG
-    // GI already includes a food's own emptying speed; see PARAMS.glucose.solidGlycemicCorrection.
-    const glycemicWeight = (totals.gi / 100) * blunt * (phase === 'solid' ? PARAMS.glucose.solidGlycemicCorrection : 1)
+    // GI already includes a food's own emptying speed; see params.glucose.solidGlycemicCorrection.
+    const glycemicWeight = (totals.gi / 100) * blunt * (phase === 'solid' ? params.glucose.solidGlycemicCorrection : 1)
     let prev = 1
     for (let i = 0; i < n; i++) {
       const t = i * step
@@ -101,18 +154,18 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
   }
 
   // --- Intestines -----------------------------------------------------------------------------
-  const siT = PARAMS.smallIntestine.typicalMin / step
-  const coT = PARAMS.colon.typicalMin / step
+  const siT = params.smallIntestine.typicalMin / step
+  const coT = params.colon.typicalMin / step
   const smallIntestineG = zeros(n)
   const colonG = zeros(n)
   const excretedG = zeros(n)
   const leftoversInColonCum = zeros(n)
   const absorbedG = {} as Record<NutrientKind, Float64Array>
   for (const k of NUTRIENT_KINDS) {
-    const small = runSegment(outflow[k], siT, PARAMS.absorbedInSmallIntestine[k], PARAMS.absorptionTauMin[k])
+    const small = runSegment(outflow[k], siT, params.absorbedInSmallIntestine[k], params.absorptionTauMin[k])
     const large =
       k === 'water'
-        ? runSegment(small.outflow, coT, PARAMS.colonWaterAbsorbed, PARAMS.colonWaterTauMin)
+        ? runSegment(small.outflow, coT, params.colonWaterAbsorbed, params.colonWaterTauMin)
         : runSegment(small.outflow, coT, 0, 1)
     const abs = zeros(n)
     let inColon = 0
@@ -134,25 +187,29 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
   }
 
   // --- Blood glucose: driven by the same carb absorption, weighted by GI ------------------------
-  const glycemic = runSegment(glycemicOutflow, siT, PARAMS.absorbedInSmallIntestine.carbs, PARAMS.absorptionTauMin.carbs)
+  const glycemic = runSegment(glycemicOutflow, siT, params.absorbedInSmallIntestine.carbs, params.absorptionTauMin.carbs)
   const glycemicRate = zeros(n)
   for (let i = 0; i < n; i++) glycemicRate[i] = glycemic.absorbedCum[i]! - (i > 0 ? glycemic.absorbedCum[i - 1]! : 0)
-  const glucose = glucoseCurve(glycemicRate, step)
+  const glucose = glucoseCurve(glycemicRate, step, params)
 
-  const events = computeEvents(meal, {
-    arrival,
-    stomachLiquidG,
-    stomachSolidG,
-    absorbedG,
-    leftoversInColonCum,
-    glucoseTypical: glucose.typical,
-    step,
-    n,
-  })
-  const particles = makeParticles(meal, curves, arrival, opts.particles ?? 48)
+  const events = computeEvents(
+    meal,
+    {
+      arrival,
+      stomachLiquidG,
+      stomachSolidG,
+      absorbedG,
+      leftoversInColonCum,
+      glucoseTypical: glucose.typical,
+      step,
+      n,
+    },
+    params,
+  )
+  const particles = makeParticles(meal, curves, arrival, particleCount, params)
 
   const run = {
-    modelVersion: MODEL_VERSION,
+    modelVersion: ctx.model.modelVersion,
     meal,
     curves,
     stomachArrivalMin: arrival,
@@ -173,7 +230,7 @@ export function simulate(meal: Meal, opts: { particles?: number } = {}): Simulat
     signals: buildSignalTable(run),
     moments: buildMoments(run),
     rhythms: new Map(),
-    horizonMin: PARAMS.horizonMin,
+    horizonMin: params.horizonMin,
   }
 }
 
@@ -232,6 +289,7 @@ export function activeStage(sim: Simulation, tMin: number): StageId {
 /** When each stage is busy with this meal (minutes), for the step-by-step text. Null = not reached. */
 export function stageWindow(sim: Simulation, stage: StageId): { start: number; end: number } | null {
   const e = sim.events
+  const siTypicalMin = HUMAN_MODEL.params.smallIntestine.typicalMin
   if (sim.meal.items.length === 0) return null
   switch (stage) {
     case 'mouth':
@@ -239,13 +297,13 @@ export function stageWindow(sim: Simulation, stage: StageId): { start: number; e
     case 'esophagus':
       return { start: e.eatingEndMin, end: sim.stomachArrivalMin }
     case 'stomach':
-      return { start: sim.stomachArrivalMin, end: e.stomach90EmptyMin ?? PARAMS.horizonMin }
+      return { start: sim.stomachArrivalMin, end: e.stomach90EmptyMin ?? sim.horizonMin }
     case 'smallIntestine':
       return {
         start: sim.stomachArrivalMin,
-        end: Math.max(e.absorptionMostlyDoneMin ?? 0, (e.stomach90EmptyMin ?? 0) + PARAMS.smallIntestine.typicalMin),
+        end: Math.max(e.absorptionMostlyDoneMin ?? 0, (e.stomach90EmptyMin ?? 0) + siTypicalMin),
       }
     case 'largeIntestine':
-      return e.halfLeftoversInColon ? { start: e.halfLeftoversInColon.typical, end: e.firstExit?.typical ?? PARAMS.horizonMin } : null
+      return e.halfLeftoversInColon ? { start: e.halfLeftoversInColon.typical, end: e.firstExit?.typical ?? sim.horizonMin } : null
   }
 }

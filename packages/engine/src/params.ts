@@ -142,9 +142,20 @@ export const PARAMS = {
     backToBaseMgDl: 5,
   },
 
-  /** Simulated window: 48 h at 1-minute resolution. Share links clamp `t` to this. */
+  /**
+   * Simulated window: 48 h at 1-minute resolution. The run carries both (`run.horizonMin`,
+   * `run.stepMin`); share links clamp `t` to this.
+   */
   horizonMin: 48 * 60,
   stepMin: 1,
 } as const
 
-export type Params = typeof PARAMS
+/** Same shape as PARAMS, with plain `number`s instead of the literal values. */
+type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> }
+
+/**
+ * The shape of the human parameter set. Model modules take one of these as an argument (the
+ * `ctx.params` rule) instead of reading PARAMS, so a test or a later organism can pass its own
+ * numbers. PARAMS stays the human set.
+ */
+export type Params = Widen<typeof PARAMS>

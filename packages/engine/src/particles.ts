@@ -1,7 +1,7 @@
 import type { Meal } from './meal.ts'
 import type { FoodPhase } from './schema.ts'
 import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind } from './nutrients.ts'
-import { PARAMS } from './params.ts'
+import { PARAMS, type Params } from './params.ts'
 import { emptiedAt, type EmptyingCurve } from './stomach.ts'
 
 /**
@@ -49,7 +49,13 @@ function absorptionDelay(u: number, tau: number, T: number): number {
 /** Water is so heavy it would drown out everything else visually; count it at a quarter weight. */
 const VISUAL_WEIGHT: Record<NutrientKind, number> = { carbs: 1, protein: 1, fat: 1, fiber: 1, water: 0.25 }
 
-export function makeParticles(meal: Meal, curves: Record<FoodPhase, EmptyingCurve>, arrival: number, count: number): Particle[] {
+export function makeParticles(
+  meal: Meal,
+  curves: Record<FoodPhase, EmptyingCurve>,
+  arrival: number,
+  count: number,
+  params: Params = PARAMS,
+): Particle[] {
   if (meal.items.length === 0 || count <= 0) return []
   const rand = mulberry32(hashString(meal.items.map((i) => `${i.food.id}:${i.servings}`).join(',')))
 
@@ -64,8 +70,8 @@ export function makeParticles(meal: Meal, curves: Record<FoodPhase, EmptyingCurv
   const totalWeight = buckets.reduce((a, b) => a + b.weight, 0)
   if (totalWeight <= 0) return []
 
-  const si = PARAMS.smallIntestine.typicalMin
-  const co = PARAMS.colon.typicalMin
+  const si = params.smallIntestine.typicalMin
+  const co = params.colon.typicalMin
   const particles: Particle[] = []
   for (const b of buckets) {
     const k = Math.max(1, Math.round((b.weight / totalWeight) * count))
@@ -76,10 +82,10 @@ export function makeParticles(meal: Meal, curves: Record<FoodPhase, EmptyingCurv
       const colonIn = stomachOut + si
       const colonOut = colonIn + co
       let absorbedAt: number | null = null
-      if (rand() < PARAMS.absorbedInSmallIntestine[b.kind]) {
-        absorbedAt = stomachOut + absorptionDelay(rand(), PARAMS.absorptionTauMin[b.kind], si)
-      } else if (b.kind === 'water' && rand() < PARAMS.colonWaterAbsorbed) {
-        absorbedAt = colonIn + absorptionDelay(rand(), PARAMS.colonWaterTauMin, co)
+      if (rand() < params.absorbedInSmallIntestine[b.kind]) {
+        absorbedAt = stomachOut + absorptionDelay(rand(), params.absorptionTauMin[b.kind], si)
+      } else if (b.kind === 'water' && rand() < params.colonWaterAbsorbed) {
+        absorbedAt = colonIn + absorptionDelay(rand(), params.colonWaterTauMin, co)
       }
       particles.push({
         kind: b.kind,

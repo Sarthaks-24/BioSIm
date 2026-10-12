@@ -1,6 +1,6 @@
 import type { Meal } from './meal.ts'
 import type { NutrientKind, Range } from './nutrients.ts'
-import { PARAMS } from './params.ts'
+import { PARAMS, type Params } from './params.ts'
 import { stomachShare } from './stomach.ts'
 
 export interface SimEvents {
@@ -17,7 +17,7 @@ export interface SimEvents {
   firstExit: Range | null
   glucosePeak: { timeMin: number; riseMgDl: Range } | null
   /**
-   * First minute after the peak when typical glucose is within PARAMS.glucose.backToBaseMgDl of
+   * First minute after the peak when typical glucose is within params.glucose.backToBaseMgDl of
    * fasting (a display threshold). Null if there is no peak, or it does not happen within the run.
    */
   glucoseBackToBaseMin: number | null
@@ -37,7 +37,7 @@ interface EventInput {
   n: number
 }
 
-export function computeEvents(meal: Meal, s: EventInput): SimEvents {
+export function computeEvents(meal: Meal, s: EventInput, params: Params = PARAMS): SimEvents {
   const firstIndex = (test: (i: number) => boolean): number | null => {
     for (let i = 0; i < s.n; i++) if (test(i)) return i * s.step
     return null
@@ -54,10 +54,10 @@ export function computeEvents(meal: Meal, s: EventInput): SimEvents {
   const finalAbsorbed = absorbedEnergyG(s.n - 1)
   const absorptionMostlyDoneMin = finalAbsorbed > 0.5 ? firstIndex((i) => absorbedEnergyG(i) >= finalAbsorbed * 0.9) : null
 
-  const si = PARAMS.smallIntestine
-  const co = PARAMS.colon
+  const si = params.smallIntestine
+  const co = params.colon
   const leftovers = s.leftoversInColonCum[s.n - 1]!
-  const hasLeftovers = leftovers >= PARAMS.residueThresholdG
+  const hasLeftovers = leftovers >= params.residueThresholdG
   const halfIn = hasLeftovers ? firstIndex((i) => s.leftoversInColonCum[i]! >= leftovers * 0.5) : null
   const firstIn = hasLeftovers ? firstIndex((i) => s.leftoversInColonCum[i]! >= leftovers * 0.05) : null
   // Spread between people comes from transit times, which don't depend on the meal.
@@ -66,7 +66,7 @@ export function computeEvents(meal: Meal, s: EventInput): SimEvents {
 
   let peakIdx = 0
   for (let i = 1; i < s.n; i++) if (s.glucoseTypical[i]! > s.glucoseTypical[peakIdx]!) peakIdx = i
-  const g = PARAMS.glucose
+  const g = params.glucose
   const peakRise = s.glucoseTypical[peakIdx]! - g.fastingMgDl
   const hasPeak = peakRise >= 1
   let backToBaseIdx: number | null = null
