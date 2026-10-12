@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { STAGES, activeStage, type StageId } from '@biosim/engine'
+import { STAGES, activeStage, type StageId } from '@lifepeek/engine'
 import { useSim, mealLabel, presentMeals, type MealKey, type Sims } from '../state/sim.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'
 

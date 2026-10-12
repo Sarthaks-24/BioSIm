@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { NUTRIENT_KINDS, type NutrientKind } from '@biosim/engine'
+import { NUTRIENT_KINDS, type NutrientKind } from '@lifepeek/engine'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 
 /** Same shapes as the 3D/flat particles, so colour is never the only cue. */

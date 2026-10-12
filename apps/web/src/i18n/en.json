@@ -10,9 +10,9 @@
   },
   "home": {
     "headline": "A can of cola leaves your stomach in about half an hour. A burger with fries can take four.",
-    "lead": "BioSim shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds.",
+    "lead": "LifePeek shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds.",
     "cta": "Compare two meals",
-    "previewCaption": "Food still in the stomach after eating — computed by the BioSim model",
+    "previewCaption": "Food still in the stomach after eating — computed by the LifePeek model",
     "hours": "hours after eating",
     "how": {
       "title": "How it works",
@@ -165,18 +165,18 @@
     "source": "Source, if you have one (book, paper, link)",
     "send": "Send report",
     "sent": "Thanks — report sent.",
-    "failed": "Couldn’t reach the BioSim server.",
+    "failed": "Couldn’t reach the LifePeek server.",
     "close": "Close",
     "privacy": "Please don’t include names, emails or health information.",
     "openIssue": "Send it as a GitHub issue instead"
   },
   "disclaimer": {
     "short": "Educational model of a typical healthy adult. Not medical advice.",
-    "long": "BioSim is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions."
+    "long": "LifePeek is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions."
   },
   "teach": {
-    "title": "Using BioSim in class",
-    "lead": "BioSim is built for a projector and a 40-minute lesson on nutrition and digestion (for example, the “Life Processes” chapter).",
+    "title": "Using LifePeek in class",
+    "lead": "LifePeek is built for a projector and a 40-minute lesson on nutrition and digestion (for example, the “Life Processes” chapter).",
     "plan": "A simple lesson plan",
     "steps": [
       "Ask the class to predict: which leaves the stomach first — a can of cola or a burger with fries? Which raises blood sugar more?",
@@ -207,7 +207,7 @@
     "modelTitle": "What is computed",
     "modelBody": "Stomach emptying is computed from the meal. Drinks start leaving straight away — water within minutes, drinks with calories at about 2 kcal per minute. Solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal per minute, so meals with more calories take longer. (In the model a bigger meal empties at the same rate; real stomachs speed up a little for big meals.) Blood sugar is computed from the carbohydrate being absorbed, its glycemic index, and the slowing effect of fat and protein.",
     "fixedTitle": "What is fixed",
-    "fixedBody": "Time in the small and large intestine varies far more between people than between meals, so BioSim uses typical published values and shows the range.",
+    "fixedBody": "Time in the small and large intestine varies far more between people than between meals, so LifePeek uses typical published values and shows the range.",
     "limitsTitle": "Limits",
     "limits": [
       "Models a healthy adult only — not children, pregnancy, diabetes or digestive illness.",
@@ -252,7 +252,7 @@
   },
   "error": {
     "title": "Something didn’t load",
-    "body": "This often happens right after BioSim is updated. Reloading fixes it.",
+    "body": "This often happens right after LifePeek is updated. Reloading fixes it.",
     "reload": "Reload"
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Prints the model's key outputs next to the published targets they are calibrated against.
- * Run after changing params.ts:  npm run calibrate -w @biosim/engine
+ * Run after changing params.ts:  npm run calibrate -w @lifepeek/engine
  */
 import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'

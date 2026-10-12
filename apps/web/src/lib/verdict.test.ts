@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMeal, decodeMeal, simulate } from '@biosim/engine'
+import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 import { PRESETS } from './presets.ts'
 import { verdictData } from './verdict.ts'

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import type { Range, Simulation } from '@biosim/engine'
+import type { Range, Simulation } from '@lifepeek/engine'
 import { mealLabel, presentMeals, type Sims } from '../state/sim.ts'
 import { formatDuration } from '../lib/time.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'

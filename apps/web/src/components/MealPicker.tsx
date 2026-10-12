@@ -1,6 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MAX_ITEMS, PARAMS, SERVING_STEPS } from '@biosim/engine'
+import { MAX_ITEMS, PARAMS, SERVING_STEPS } from '@lifepeek/engine'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { localized } from '../i18n/index.ts'
 import { useSim, mealLabel, type MealKey } from '../state/sim.ts'

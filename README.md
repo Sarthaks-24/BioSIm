@@ -27,7 +27,7 @@ The web app works without the API: links carry the whole comparison, and error r
 
 ```bash
 npm run check      # validate foods, typecheck, unit tests, production build
-npm run e2e -w @biosim/web   # browser smoke tests (needs: npx playwright install chromium)
+npm run e2e -w @lifepeek/web   # browser smoke tests (needs: npx playwright install chromium)
 ```
 
 ## What's where
@@ -52,9 +52,9 @@ The validator rejects numbers that don't add up.
 
 ## Deploy
 
-- **Web:** any static host. `npm run build -w @biosim/web` writes `apps/web/dist`. Rewrite all paths to `index.html` (`vercel.json` is included). Set `VITE_API_URL` if the API is on another origin.
-- **API:** any Node 20+ host. Run `npm start -w @biosim/api` with these settings (see `apps/api/.env.example`):
-  - `DATABASE_URL`: a Turso/libSQL URL, or `file:biosim.db`
+- **Web:** any static host. `npm run build -w @lifepeek/web` writes `apps/web/dist`. Rewrite all paths to `index.html` (`vercel.json` is included). Set `VITE_API_URL` if the API is on another origin.
+- **API:** any Node 20+ host. Run `npm start -w @lifepeek/api` with these settings (see `apps/api/.env.example`):
+  - `DATABASE_URL`: a Turso/libSQL URL, or `file:lifepeek.db`
   - `DATABASE_AUTH_TOKEN`: the database token
   - `ALLOWED_ORIGINS`: the origins allowed to call the API
   - `ADMIN_TOKEN`: the token for reading error reports

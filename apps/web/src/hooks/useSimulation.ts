@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { buildMeal, simulate, type MealItem, type Simulation } from '@biosim/engine'
+import { buildMeal, simulate, type MealItem, type Simulation } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 
 /** Recomputes only when the meal changes (a 48 h run takes a few milliseconds). */

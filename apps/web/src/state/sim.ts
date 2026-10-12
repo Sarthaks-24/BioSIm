@@ -10,7 +10,7 @@ import {
   type MealItem,
   type ShareLang,
   type Simulation,
-} from '@biosim/engine'
+} from '@lifepeek/engine'
 import { HORIZON_MIN, DEFAULT_PACE, type Pace } from '../lib/time.ts'
 import { lookupFood } from '../data/foods.ts'
 

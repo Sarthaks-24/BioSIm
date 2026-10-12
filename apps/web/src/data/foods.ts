@@ -1,4 +1,4 @@
-import { Food, type FoodLookup } from '@biosim/engine'
+import { Food, type FoodLookup } from '@lifepeek/engine'
 
 /**
  * Foods live in /content/foods/*.json (one file per food, cited inputs only) and are bundled

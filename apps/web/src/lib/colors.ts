@@ -1,4 +1,4 @@
-import type { NutrientKind, StageId } from '@biosim/engine'
+import type { NutrientKind, StageId } from '@lifepeek/engine'
 
 /**
  * Mirrors the tokens in styles.css for places CSS can't reach (WebGL, canvas, SVG fills).

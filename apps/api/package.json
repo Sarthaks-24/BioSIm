@@ -1,5 +1,5 @@
 {
-  "name": "@biosim/api",
+  "name": "@lifepeek/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@biosim/engine": "*",
+    "@lifepeek/engine": "*",
     "@hono/node-server": "^2.1.4",
     "@libsql/client": "^0.18.0",
     "drizzle-orm": "^0.45.4",

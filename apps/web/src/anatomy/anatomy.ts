@@ -1,5 +1,5 @@
 import { CatmullRomCurve3, Vector3 } from 'three'
-import type { Particle, StageId } from '@biosim/engine'
+import type { Particle, StageId } from '@lifepeek/engine'
 
 /**
  * Stylized but anatomically arranged digestive tract, in scene units (≈ 1 unit = 20 cm).

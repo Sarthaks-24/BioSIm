@@ -2,7 +2,7 @@
  * Per-device conveniences only (language, projector mode). Storage can be unavailable in
  * private windows or locked-down school browsers, so every access is guarded.
  */
-const PREFIX = 'biosim:'
+const PREFIX = 'lifepeek:'
 
 export function readPref(key: string): string | null {
   try {

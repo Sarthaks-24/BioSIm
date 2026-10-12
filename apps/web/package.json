@@ -1,5 +1,5 @@
 {
-  "name": "@biosim/web",
+  "name": "@lifepeek/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@biosim/engine": "*",
+    "@lifepeek/engine": "*",
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
     "@fontsource/noto-sans-devanagari": "^5.3.0",
     "@react-three/drei": "^10.7.9",

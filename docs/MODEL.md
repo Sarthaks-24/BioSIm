@@ -1,11 +1,11 @@
-# The BioSim model
+# The LifePeek model
 
 **Model version:** see `MODEL_VERSION` in `packages/engine/src/params.ts`.
 
 Every tunable number lives in `params.ts`, next to its source. If you change one:
 
 - bump `MODEL_VERSION`;
-- run `npm run calibrate -w @biosim/engine` to see the outputs next to their published targets;
+- run `npm run calibrate -w @lifepeek/engine` to see the outputs next to their published targets;
 - update the golden tests.
 
 Old share links still open. The app tells the viewer the numbers may differ from when the link was shared.

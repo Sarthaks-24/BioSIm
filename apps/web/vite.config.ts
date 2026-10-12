@@ -13,12 +13,13 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'BioSim — Digestion Simulator',
-        short_name: 'BioSim',
-        description: 'Compare what happens to two meals inside your body.',
+        name: 'LifePeek — Digestion Simulator',
+        short_name: 'LifePeek',
+        description: 'LifePeek: peek inside living things. Compare what happens to two meals inside your body.',
         theme_color: '#14213d',
         background_color: '#eef3f1',
         display: 'standalone',
+        id: '/',
         start_url: '/',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

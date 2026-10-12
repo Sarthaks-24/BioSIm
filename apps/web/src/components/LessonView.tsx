@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { STAGES, stageWindow, type Simulation, type StageId } from '@biosim/engine'
+import { STAGES, stageWindow, type Simulation, type StageId } from '@lifepeek/engine'
 import { mealLabel, presentMeals, type Sims } from '../state/sim.ts'
 import { localized } from '../i18n/index.ts'
 import { formatDuration } from '../lib/time.ts'

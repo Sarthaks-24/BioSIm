@@ -1,4 +1,4 @@
-import type { Meal } from '@biosim/engine'
+import type { Meal } from '@lifepeek/engine'
 import { presentMeals, type MealKey, type Sims } from '../state/sim.ts'
 
 /**
