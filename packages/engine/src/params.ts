@@ -1,11 +1,11 @@
 /**
  * Every tunable number in the model lives here, next to where it comes from.
  * Changing any value = bump MODEL_VERSION and update the golden tests.
- * Full references: docs/MODEL.md
+ * Full references and a glossary: docs/MODEL.md
  */
 
-/** Bumped whenever outputs change for the same input. Stored in share links. */
-export const MODEL_VERSION = 1
+/** Bumped whenever outputs change for the same input. Stored in share links as `v=`. */
+export const MODEL_VERSION = 2
 
 export const PARAMS = {
   eating: {
@@ -18,8 +18,8 @@ export const PARAMS = {
   },
 
   esophagus: {
-    /** Esophageal transit of a swallowed bolus is a few seconds (~5–10 s). */
-    transitMin: 8 / 60,
+    /** A swallow reaches the stomach in about 4–8 s for solids, ~1 s for liquids (OpenStax A&P 2e §23.3). */
+    transitMin: 6 / 60,
   },
 
   stomach: {
@@ -31,17 +31,28 @@ export const PARAMS = {
      * carbohydrate slow emptying equally per kcal (Hunt & Stubbs 1975).
      */
     energyKcalPerMin: 2.13,
-    /** Solids must be ground small before leaving: lag 31 ± 8 min for an egg meal (Siegel et al. 1988). */
-    solidLagMin: 30,
     /**
-     * Power-exponential shape (Elashoff et al. 1982): retention = 2^-((t/t½)^β).
-     * β = 1 is a pure exponential (liquids); β > 1 gives the lag-then-linear shape of solids.
+     * Solid meals empty more slowly per kcal than sugary drinks. Calibrated so the consensus
+     * 255 kcal test meal sits mid-range in the scintigraphy norms (Abell et al. 2008: 1 h 37–90 %,
+     * 2 h 30–60 %, 4 h ≤ 10 % left), which implies ~1.4 kcal/min.
      */
-    liquidBeta: 1,
-    solidBeta: 1.3,
+    solidKcalPerMin: 1.4,
+    /**
+     * Solids must be ground small before they can leave. Siegel et al. 1988 measured a lag of
+     * 31 ± 8 min (egg meal) by intercept; we ramp the emptying rate up over twice the lag, which
+     * gives the same intercept. 20 min keeps early glucose rises close to meal-test data.
+     */
+    solidLagMin: 20,
   },
 
-  /** Fraction of each nutrient absorbed by the end of the small intestine (typical healthy adult). */
+  /**
+   * Largest meal the model is meant for. Emptying data come from meals up to roughly this size
+   * (Hunt & Stubbs 1975 pooled meals up to ~1250 mL); above it the stomach stretches and the
+   * model is not reliable, so the app warns and won't let you add more.
+   */
+  maxMealKcal: 1500,
+
+  /** Fraction of each nutrient absorbed by the end of the small intestine (OpenStax §23.7). */
   absorbedInSmallIntestine: {
     carbs: 0.95,
     protein: 0.9,
@@ -49,8 +60,22 @@ export const PARAMS = {
     water: 0.8,
     fiber: 0,
   },
-  /** Fraction of the water reaching the colon that the colon absorbs. */
+  /**
+   * How quickly each nutrient is absorbed once it is in the small intestine (first-order time
+   * constant, minutes). Sugars go fastest, mostly in the first part (jejunum); fat is slowest
+   * and needs bile, so much of it is absorbed further down (OpenStax §23.7). Carbs' value is
+   * calibrated together with the glucose curve; the others are modelling assumptions.
+   */
+  absorptionTauMin: {
+    carbs: 10,
+    protein: 40,
+    fat: 60,
+    water: 20,
+    fiber: 1,
+  },
+  /** Fraction of the water reaching the colon that the colon absorbs, and how gradually. */
   colonWaterAbsorbed: 0.9,
+  colonWaterTauMin: 300,
 
   smallIntestine: {
     /**
@@ -72,11 +97,12 @@ export const PARAMS = {
     highMin: 29 * 60,
   },
 
+  /** Less than this many grams reaching the colon counts as "nothing left over". */
+  residueThresholdG: 3,
+
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,
-    /** Time for sugar leaving the stomach to be absorbed into blood (first-order). */
-    absorptionTauMin: 10,
     /** Baseline (insulin-independent) return toward fasting. */
     clearanceTauMin: 40,
     /**
@@ -85,9 +111,9 @@ export const PARAMS = {
      * Bergman minimal model (Bergman et al. 1979); constants are calibrated, not measured.
      */
     insulinTauMin: 25,
-    insulinGain: 0.00006,
+    insulinGain: 0.00015,
     /** Calibrated so 50 g glucose in water peaks ~+50 mg/dL at ~30–60 min (see golden tests). */
-    gainMgDlPerG: 5,
+    gainMgDlPerG: 8,
     /**
      * Fat and protein blunt the glucose rise of a mixed meal; GI values are not additive.
      * Gram for gram protein blunts about twice as much as fat (Moghaddam et al. 2006).
@@ -101,15 +127,13 @@ export const PARAMS = {
      * twice. This factor undoes it, calibrated so simulated white bread (GI 75) gives 75 % of the
      * 2-hour glucose area of 50 g glucose — the definition of GI (Brouns et al. 2005).
      */
-    solidGlycemicCorrection: 1.45,
-    /** Inter-person spread shown as a band (glycemic responses vary ~20–40 % between people). */
+    solidGlycemicCorrection: 2.25,
+    /** Between-person spread shown as a band (glycemic responses vary ~20–40 % between people). */
     bandLow: 0.65,
     bandHigh: 1.45,
-    /** Used only when a food with carbs is missing a GI (should not happen; schema forbids ≥5 g). */
-    defaultGi: 55,
   },
 
-  /** Simulated window: 48 h at 1-minute resolution. */
+  /** Simulated window: 48 h at 1-minute resolution. Share links clamp `t` to this. */
   horizonMin: 48 * 60,
   stepMin: 1,
 } as const

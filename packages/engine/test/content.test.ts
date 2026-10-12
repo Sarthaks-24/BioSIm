@@ -30,7 +30,7 @@ describe('real foods', () => {
     expect(cola).toBeGreaterThanOrEqual(20)
     expect(cola).toBeLessThanOrEqual(45)
     expect(burger.events.stomachHalfEmptyMin!).toBeGreaterThan(150)
-    expect(burger.events.stomachMostlyEmptyMin!).toBeGreaterThan(4 * 60)
+    expect(burger.events.stomach90EmptyMin!).toBeGreaterThan(4 * 60)
   })
 
   it('lesson claim: roti + dal gives a gentler blood sugar curve than white rice', () => {
@@ -44,6 +44,19 @@ describe('real foods', () => {
     const juice = run('orange-juice:1').events.glucosePeak!
     expect(juice.timeMin).toBeLessThan(apple.timeMin)
     expect(juice.riseMgDl.typical).toBeGreaterThan(apple.riseMgDl.typical)
+  })
+
+  it('every single food empties from the stomach within 8 h (OpenStax: 2–4 h typical, 6 h+ for fatty meals)', () => {
+    for (const f of foods) {
+      const t90 = run(`${f.id}:1`).events.stomach90EmptyMin
+      expect(t90, f.id).not.toBeNull()
+      expect(t90!, f.id).toBeLessThan(8 * 60)
+    }
+  })
+
+  it('no meal the picker allows can exceed the cap silently', () => {
+    expect(run('cheeseburger:5,fries:5').meal.overCap).toBe(true)
+    expect(run('cheeseburger:1,fries:1').meal.overCap).toBe(false)
   })
 
   it('water leaves faster than milk', () => {

@@ -1,11 +1,11 @@
 /**
- * A gut segment as a fixed-delay pipe: what enters at minute τ leaves at τ + T.
- * While inside, a fraction `absorb` of it is absorbed at a steady rate.
+ * A gut segment as a pipe: what enters at minute τ leaves at τ + T.
+ * While inside, a fraction `absorb` of it is absorbed, quickly at first and then more slowly
+ * (first-order with time constant `tau`), so most absorption happens near the start of the
+ * segment — as it does in the small intestine.
  *
- * Small- and large-intestine transit times are NOT computed from the food — they vary far more
- * between people than between meals — so we use cited typical values and show ranges in the UI.
- *
- * Implemented with prefix sums so a 48 h simulation stays O(n).
+ * Transit times are NOT computed from the food — they vary far more between people than
+ * between meals — so we use cited typical values and show ranges in the UI.
  */
 export interface SegmentResult {
   /** Grams inside the segment at each minute. */
@@ -16,32 +16,47 @@ export interface SegmentResult {
   absorbedCum: Float64Array
 }
 
-export function runSegment(inflow: Float64Array, transitMin: number, absorb: number): SegmentResult {
+export function runSegment(inflow: Float64Array, transitMin: number, absorb: number, tauMin: number): SegmentResult {
   const n = inflow.length
   const T = Math.max(1, Math.round(transitMin))
-  const p0 = new Float64Array(n) // Σ inflow(τ), τ ≤ t
-  const p1 = new Float64Array(n) // Σ τ·inflow(τ), τ ≤ t
-  let s0 = 0
-  let s1 = 0
-  for (let t = 0; t < n; t++) {
-    s0 += inflow[t]!
-    s1 += t * inflow[t]!
-    p0[t] = s0
-    p1[t] = s1
-  }
-  const at = (arr: Float64Array, i: number) => (i < 0 ? 0 : arr[Math.min(i, n - 1)]!)
-
   const content = new Float64Array(n)
   const outflow = new Float64Array(n)
   const absorbedCum = new Float64Array(n)
+
+  if (absorb === 0) {
+    // Nothing absorbed: the segment just holds a sliding window of the inflow (fast path).
+    let window = 0
+    for (let t = 0; t < n; t++) {
+      window += inflow[t]!
+      if (t - T >= 0) {
+        window -= inflow[t - T]!
+        outflow[t] = inflow[t - T]!
+      }
+      content[t] = Math.max(0, window)
+    }
+    return { content, outflow, absorbedCum }
+  }
+
+  // Fraction of a parcel still present after `age` minutes inside the segment.
+  const remaining = new Float64Array(T)
+  const norm = 1 - Math.exp(-T / tauMin)
+  for (let age = 0; age < T; age++) remaining[age] = 1 - (absorb * (1 - Math.exp(-age / tauMin))) / norm
+
+  for (let s = 0; s < n; s++) {
+    const v = inflow[s]!
+    if (v === 0) continue
+    const end = Math.min(n, s + T)
+    for (let t = s; t < end; t++) content[t]! += v * remaining[t - s]!
+    if (s + T < n) outflow[s + T]! += v * (1 - absorb)
+  }
+
+  // Mass balance: everything that entered is either still inside, has left, or was absorbed.
+  let entered = 0
+  let exited = 0
   for (let t = 0; t < n; t++) {
-    const w0 = at(p0, t) - at(p0, t - T)
-    const w1 = at(p1, t) - at(p1, t - T)
-    // Each parcel in the window has been inside for (t-τ) minutes and lost absorb·(t-τ)/T of itself.
-    content[t] = Math.max(0, (1 - (absorb * t) / T) * w0 + (absorb / T) * w1)
-    outflow[t] = (1 - absorb) * (t - T >= 0 ? inflow[t - T]! : 0)
-    const exitedCum = (1 - absorb) * at(p0, t - T)
-    absorbedCum[t] = Math.max(0, at(p0, t) - content[t]! - exitedCum)
+    entered += inflow[t]!
+    exited += outflow[t]!
+    absorbedCum[t] = Math.max(0, entered - content[t]! - exited)
   }
   return { content, outflow, absorbedCum }
 }

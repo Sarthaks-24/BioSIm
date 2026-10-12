@@ -1,44 +1,47 @@
-import { buildMeal, simulate, indexAt } from '../src/index.ts'
-import { lookup } from '../test/fixtures.ts'
+/**
+ * Prints the model's key outputs next to the published targets they are calibrated against.
+ * Run after changing params.ts:  npm run calibrate -w @biosim/engine
+ */
+import { readFileSync, readdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { buildMeal, decodeMeal, indexAt, parseFood, simulate, stomachFraction, type Simulation } from '../src/index.ts'
+import { lookup as fixtureLookup } from '../test/fixtures.ts'
 
-for (const id of ['water-test', 'glucose-50', 'standard-meal', 'bread-50', 'fatty-meal']) {
-  const sim = simulate(buildMeal([{ foodId: id, servings: 1 }], lookup))
-  const ret = (t: number) => {
-    const i = indexAt(sim, t)
-    return (((sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!) / sim.meal.total.massG) * 100).toFixed(0)
-  }
-  const gl = sim.glucose.typical
-  console.log(
-    id,
-    'half',
-    sim.curves.liquid.halfTimeMin.toFixed(0),
-    sim.curves.solid.halfTimeMin.toFixed(0),
-    'ret 1h/2h/4h',
-    ret(60),
-    ret(120),
-    ret(240),
-    'events',
-    JSON.stringify({
-      h: sim.events.stomachHalfEmptyMin,
-      m: sim.events.stomachMostlyEmptyMin,
-      abs: sim.events.absorptionMostlyDoneMin,
-      peak: sim.events.glucosePeak && [sim.events.glucosePeak.timeMin, sim.events.glucosePeak.riseMgDl.typical.toFixed(0)],
-    }),
-    'glu 30/60/120/180',
-    [30, 60, 120, 180].map((t) => gl[indexAt(sim, t)]!.toFixed(0)).join('/'),
-    'absorbed carbs',
-    sim.absorbedG.carbs[sim.length - 1]!.toFixed(1),
-    'particles',
-    sim.particles.length,
-  )
-}
+const dir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../content/foods')
+const foods = readdirSync(dir).map((f) => parseFood(JSON.parse(readFileSync(join(dir, f), 'utf8'))))
+const lookup = (id: string) => fixtureLookup(id) ?? foods.find((f) => f.id === id)
+const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 
-// GI check: 2-hour incremental area under the glucose curve relative to 50 g glucose.
-const iauc = (id: string) => {
-  const sim = simulate(buildMeal([{ foodId: id, servings: 1 }], lookup))
+const pct = (sim: Simulation, t: number) => (stomachFraction(sim, indexAt(sim, t + sim.meal.eatingMin)) * 100).toFixed(0)
+const iauc = (sim: Simulation) => {
   let a = 0
   for (let t = 0; t <= 120; t++) a += Math.max(0, sim.glucose.typical[t]! - 90)
   return a
 }
-const ref = iauc('glucose-50')
-console.log('GI ratio bread-50 (target 0.75):', (iauc('bread-50') / ref).toFixed(3))
+
+const rows = [
+  ['water-test:1', 'water t½ ~16 min (Ziessman 2009)'],
+  ['glucose-50:1', '50 g glucose: peak +30–60 at 30–60 min; 2 h near baseline'],
+  ['standard-meal:1', 'Abell 2008: 1 h 37–90 %, 2 h 30–60 %, 4 h ≤10 %'],
+  ['bread-50:1', 'GI 75 → iAUC ratio 0.75'],
+  ['fatty-meal:1', 'high-fat meal: stomach ≥6 h (OpenStax §23.4)'],
+  ['cola:1', 'home page: cola ~half out in ~30 min'],
+  ['cheeseburger:1,fries:1', 'home page: burger + fries takes hours'],
+  ['cheeseburger:2,fries:2', 'near the 1500 kcal cap'],
+]
+const ref = iauc(run('glucose-50:1'))
+for (const [meal, target] of rows) {
+  const sim = run(meal!)
+  const e = sim.events
+  console.log(
+    meal!.padEnd(24),
+    `kcal ${sim.meal.total.energyKcal.toFixed(0).padStart(4)}`,
+    `t50 ${e.stomachHalfEmptyMin} t90 ${e.stomach90EmptyMin}`,
+    `ret 1/2/4h ${pct(sim, 60)}/${pct(sim, 120)}/${pct(sim, 240)}%`,
+    `peak ${e.glucosePeak ? `+${e.glucosePeak.riseMgDl.typical.toFixed(0)}@${e.glucosePeak.timeMin}` : '-'}`,
+    `abs90 ${e.absorptionMostlyDoneMin}`,
+    `iAUC ${(iauc(sim) / ref).toFixed(2)}`,
+    `| ${target}`,
+  )
+}
