@@ -8,9 +8,18 @@ import { particlePosition, tumble } from '../anatomy/human.ts'
 import { bodyStateAt } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
 import { useMotion } from '../state/motion.ts'
+import { useProjector } from '../hooks/useProjector.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { ORGANS, sharedGeometry } from './geometry.ts'
-import { layerUniforms, outlineMaterial, particleMaterial, shellMaterial, tissueMaterial, type LayerUniforms } from './materials.ts'
+import {
+  layerUniforms,
+  outlineMaterial,
+  particleMaterial,
+  setLook,
+  shellMaterial,
+  tissueMaterial,
+  type LayerUniforms,
+} from './materials.ts'
 import { quality } from './quality.ts'
 
 interface Props {
@@ -161,6 +170,13 @@ function Body({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; redu
   )
   // Runs before the scene is drawn (priority -1), so the uniforms belong to this frame's time.
   useFrame(() => writeState(mats.u, sim, clock.now()), -1)
+  // The projector look (3D-5): wider, near-black outlines, less fade. Same shaders, new uniforms.
+  const projector = useProjector()
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    setLook(mats.u, projector ? 'projector' : 'normal')
+    invalidate()
+  }, [mats, projector, invalidate])
 
   return (
     <group>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { DEFAULT_ORGANISM, SIGNALS, isChartable, type ActiveSignalId, type ChartableSeries, type Simulation } from '@lifepeek/engine'
 import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
+import { useStripTab } from '../../state/stripTab.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
 import { shortMealNames } from './mealText.ts'
@@ -81,7 +82,8 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
     () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && run.signals.has(s.signals[0]!)),
     [system, run],
   )
-  const [tab, setTab] = useState(slots[0]?.id ?? '')
+  // The picked tab lives in a store, so the keymap can switch it too (S/B/E, WP-15).
+  const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
   const visible = tabbed ? slots.filter((s) => s.id === shown) : slots
@@ -95,7 +97,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
       aria-labelledby="graphs-title"
       // Size and layout containment: the readouts change ~10 times a second while playing, and the
       // rest of the stage never needs to be laid out again for that (its size comes from the grid).
-      className="flex min-h-0 flex-col gap-2 border-rule2 bg-shelf px-3 py-2 [contain:size_layout] max-lg:border-t lg:gap-4 lg:border-l lg:px-4 lg:py-3"
+      className="flex min-h-0 flex-col gap-2 border-rule2 bg-shelf px-3 py-2 [contain:size_layout] max-lg:border-t lg:gap-4 lg:border-l lg:px-4 lg:py-3 in-data-[contrast=high]:gap-2"
     >
       <h2 id="graphs-title" className="sr-only">
         {t('stage.graphs')}
@@ -105,7 +107,9 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
           label={t('stage.graphs')}
           options={slots.map((s) => ({ id: s.id, label: t(`stage.strips.${s.id}`) }))}
           value={shown ?? ''}
-          onChange={setTab}
+          onChange={useStripTab.getState().show}
+          // On the projector the tab is the graph's only title (the strip hides its own): title size.
+          className="in-data-[contrast=high]:*:text-title"
         />
       )}
       <StripStack weights={visible.map(() => 1)}>

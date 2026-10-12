@@ -31,10 +31,11 @@
   --color-fiber: #3d8b1f;
   --color-water: #1f7ae0;
 
-  /* Organs (also used by charts): stomach and small intestine differ in lightness for projectors. */
+  /* Organs (also used by charts): stomach and small intestine differ in lightness for projectors;
+     the large intestine is violet so it never looks like the stomach to colour-blind eyes (WP-17). */
   --color-stomach: #c8405f;
   --color-small-intestine: #f0a868;
-  --color-large-intestine: #9c6b57;
+  --color-large-intestine: #7870a8;
   --color-left-body: #b8c4c9;
 
   /*
@@ -86,14 +87,23 @@
   color-scheme: light;
   /*
    * Graph marks (components/graphs). Lines 2 px (2.5 px on phones, where they are drawn smaller),
-   * the kept run dashed 6 4 (KEPT_DASH in colors.ts), the "how people differ" band a light wash.
-   * WP-17 makes them heavier for the projector.
+   * the kept run dashed 6 4 (KEPT_DASH in colors.ts), the "how people differ" band a light wash
+   * with no edge, a 1 px grid, a 5 px ring on the marked moment, a 2 px playhead. Readouts are
+   * caption size. The projector block below makes all of these heavier (G9).
    */
   --strip-line: 2.5px;
   --strip-kept-dash: 6 4;
   --strip-band-opacity: 0.14;
+  --strip-band-edge: 0px;
+  --strip-grid: 1px;
+  --strip-ring: 5px;
+  --strip-playhead: 2px;
+  --strip-readout: 1em;
   /* A Shelf-coloured halo round labels drawn over the lines, so they stay readable where they cross. */
   --strip-halo: 0 0 2px var(--color-shelf), 0 0 2px var(--color-shelf), 0 0 4px var(--color-shelf), 0 0 4px var(--color-shelf);
+  /* Organ labels on the body: caption-sized words on 1 px leaders. */
+  --callout-text: 0.75rem;
+  --callout-leader: 1px;
 }
 @media (width >= 64rem) {
   :root {
@@ -119,21 +129,42 @@ html:lang(hi) {
   line-height: 1.7;
 }
 
-/* Projector mode: stronger ink, thicker rules, bigger base size. */
+/*
+ * Projector mode (WP-17, UI-5 + G9): fit the 1280×800 box, don't zoom it. The root goes to
+ * 112.5 % (18 px), the zones shrink to fit, and the things the back row must read get bigger on
+ * their own: captions (graph ticks, legends, the dock's hours) 18 px, readouts 24 px, graph lines
+ * 4 px, organ labels 18 px. Light on purpose: a projector washes out dark UIs. One graph shows at
+ * a time, as tabs (GraphColumn); the stage hides the site nav and keeps the footer to one line
+ * (Layout). Hindi keeps its own step up (106.25 % of the projector size).
+ */
 html[data-contrast='high'] {
   --color-ink: #000000;
   --color-ink-2: #1d2433;
   --color-rule: #6b7a90;
   --color-paper: #ffffff;
   --color-panel: #ffffff;
-  font-size: 118.75%;
+  font-size: 112.5%;
+  --text-caption: 1rem;
+  --text-micro: 0.875rem;
+  /* Graph marks: thick lines and a solid grid survive a washed-out projector; the band gets twice
+     the wash and an edge line, because a faint fill vanishes. Dashes grow with the line. */
+  --strip-line: 4px;
+  --strip-kept-dash: 10 7;
+  --strip-band-opacity: 0.28;
+  --strip-band-edge: 1.5px;
+  --strip-grid: 1.5px;
+  --strip-ring: 7px;
+  --strip-playhead: 3px;
+  --strip-readout: 1.3334rem;
+  --callout-text: 1rem;
+  --callout-leader: 2px;
 }
 html[data-contrast='high']:lang(hi) {
-  font-size: 125%;
+  font-size: 119.5%;
 }
 
 /* v2 projector tokens: white surfaces, darker rule and grid, so the zones survive a washed-out
-   projector. Graph line colours stay the same as on a phone; WP-17 makes the lines thicker. */
+   projector. Graph line colours stay the same as on a phone; only their weight changes. */
 html[data-contrast='high'] {
   --color-paper2: #ffffff;
   --color-shelf: #ffffff;
@@ -152,6 +183,10 @@ html:lang(hi) {
   --text-caption--line-height: 1.6;
   --text-micro: 0.875rem;
   --text-micro--line-height: 1.6;
+}
+html[data-contrast='high']:lang(hi) {
+  --text-caption: 1rem;
+  --text-micro: 0.875rem;
 }
 
 body {

@@ -1,5 +1,5 @@
-import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, type IUniform } from 'three'
-import { FADE_TONE } from '../anatomy/tones.ts'
+import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
+import { BODY_LOOK, FADE_TONE, PARTICLE_EDGE, linearRgb, type BodyLook } from '../anatomy/tones.ts'
 import { ORGANS } from './geometry.ts'
 
 /**
@@ -20,13 +20,34 @@ export interface LayerUniforms {
   uState: IUniform<number[]>
   /** Outline width as a share of the distance to the camera (constant on screen). */
   uOutline: IUniform<number>
+  /** How far an empty organ fades (BODY_LOOK.fade). */
+  uFadeAmount: IUniform<number>
+  /** Outline = organ colour × uShade + uLift, linear RGB (BODY_LOOK, outlineInk). */
+  uShade: IUniform<number>
+  uLift: IUniform<Vector3>
 }
 
-export const layerUniforms = (): LayerUniforms => ({
-  uFill: { value: 0 },
-  uState: { value: ORGANS.map(() => 0) },
-  uOutline: { value: 0.0016 },
-})
+export const layerUniforms = (): LayerUniforms => {
+  const u: LayerUniforms = {
+    uFill: { value: 0 },
+    uState: { value: ORGANS.map(() => 0) },
+    uOutline: { value: 0 },
+    uFadeAmount: { value: 0 },
+    uShade: { value: 0 },
+    uLift: { value: new Vector3() },
+  }
+  setLook(u, 'normal')
+  return u
+}
+
+/** Switches the organs between the normal and the projector look (3D-5); no new shader. */
+export function setLook(u: LayerUniforms, look: BodyLook) {
+  const l = BODY_LOOK[look]
+  u.uOutline.value = l.outlineWidth
+  u.uFadeAmount.value = l.fade
+  u.uShade.value = l.outlineShade
+  u.uLift.value.fromArray(l.outlineLift)
+}
 
 const N = ORGANS.length
 
@@ -38,6 +59,7 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
     shader.uniforms.uFill = u.uFill
     shader.uniforms.uState = u.uState
     shader.uniforms.uFade = { value: FADE }
+    shader.uniforms.uFadeAmount = u.uFadeAmount
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
@@ -59,6 +81,7 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         `#include <common>
         uniform float uState[${N}];
         uniform vec3 uFade;
+        uniform float uFadeAmount;
         varying float vOrgan;
         float organState() { return uState[int(vOrgan + 0.5)]; }`,
       )
@@ -68,7 +91,7 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         float lpState = organState();
         float lpFaded = max(0.0, -lpState);
         float lpActive = max(0.0, lpState);
-        diffuseColor.rgb = mix(diffuseColor.rgb, uFade * (0.78 + 0.22 * diffuseColor.rgb / max(0.001, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)))), lpFaded * 0.5);`,
+        diffuseColor.rgb = mix(diffuseColor.rgb, uFade * (0.78 + 0.22 * diffuseColor.rgb / max(0.001, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)))), lpFaded * uFadeAmount);`,
       )
       .replace(
         '#include <opaque_fragment>',
@@ -89,13 +112,14 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
 /**
  * Inverted hull: the organs' back faces, pushed out along the normal by a fixed share of the
  * camera distance, in a dark shade of each organ's own colour. Where an organ's edge meets the
- * paper or another organ, a thin outline shows. Faded organs get a fainter line.
+ * paper or another organ, a thin outline shows. Faded organs get a fainter line. On the
+ * projector the line is wider and near-black (setLook).
  */
 export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
   return new ShaderMaterial({
     side: BackSide,
     vertexColors: true,
-    uniforms: { uFill: u.uFill, uState: u.uState, uOutline: u.uOutline, uFade: { value: FADE } },
+    uniforms: { uFill: u.uFill, uState: u.uState, uOutline: u.uOutline, uShade: u.uShade, uLift: u.uLift, uFade: { value: FADE } },
     vertexShader: /* glsl */ `
       attribute float organ;
       attribute float inflate;
@@ -115,11 +139,14 @@ export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
       }`,
     fragmentShader: /* glsl */ `
       uniform vec3 uFade;
+      uniform float uShade;
+      uniform vec3 uLift;
       varying vec3 vInk;
       varying float vFaded;
       void main() {
-        // A deep shade of the organ's own colour, not black: soft, and still 3:1 on the paper.
-        vec3 ink = vInk * 0.3 + vec3(0.012, 0.016, 0.03);
+        // A deep shade of the organ's own colour: soft, and still 3:1 on the paper; near-black on
+        // the projector (outlineInk in anatomy/tones.ts is the same sum, for the colour audit).
+        vec3 ink = vInk * uShade + uLift;
         gl_FragColor = vec4(mix(ink, uFade * 0.62, vFaded * 0.75), 1.0);
         #include <colorspace_fragment>
       }`,
@@ -154,6 +181,11 @@ export const shellMaterial = () =>
       }`,
   })
 
+/** PARTICLE_EDGE in linear RGB, as GLSL numbers. */
+const EDGE = linearRgb(PARTICLE_EDGE)
+  .map((c) => c.toFixed(4))
+  .join(', ')
+
 /**
  * Food particles: a standard material with a dark fresnel edge in the same pass (plan §3.5: one
  * draw per nutrient instead of a fill and an outline pass). The edge keeps a pale particle
@@ -165,7 +197,7 @@ export function particleMaterial(color: string): MeshStandardMaterial {
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <opaque_fragment>',
       `float edge = pow(1.0 - saturate(dot(normalize(normal), normalize(vViewPosition))), 2.0);
-      outgoingLight = mix(outgoingLight, vec3(0.03, 0.04, 0.09), smoothstep(0.35, 0.8, edge));
+      outgoingLight = mix(outgoingLight, vec3(${EDGE}), smoothstep(0.35, 0.8, edge));
       #include <opaque_fragment>`,
     )
   }

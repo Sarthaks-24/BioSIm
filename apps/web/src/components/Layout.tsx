@@ -47,15 +47,20 @@ export default function Layout() {
   useCanonical()
 
   const footerLink = 'inline-block py-1 underline-offset-2 hover:text-ink hover:underline'
+  // Header controls are 44 px tall on phones and tablets, 36 px from 1024 px up (kit sizes, A11).
+  const target = 'inline-flex min-h-11 items-center lg:min-h-9'
   const nav = ({ isActive }: { isActive: boolean }) =>
-    `rounded-full px-3 py-1.5 text-sm font-semibold ${isActive ? 'bg-ink text-white' : 'hover:bg-sunk'}`
+    `${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${isActive ? 'bg-ink text-white' : 'hover:bg-sunk'}`
+  // On the projector the stage keeps the footer to one line (council 2026-10-13 #7): the medical
+  // note, who made it, About, Privacy and the model version. The rest is one click away on About.
+  const extra = fit ? 'in-data-[contrast=high]:hidden' : ''
 
   const footer = (
     <footer className={`no-print border-t border-rule ${fit ? 'lg:border-rule2 lg:bg-paper2' : ''}`}>
       <div
         className={
           fit
-            ? 'flex flex-col gap-1 px-4 py-2 text-caption text-ink-2 lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-6 lg:py-1.5'
+            ? 'flex flex-col gap-1 px-4 py-2 text-caption text-ink-2 lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-6 lg:py-1.5 in-data-[contrast=high]:text-micro'
             : 'mx-auto max-w-7xl space-y-3 px-4 py-5 text-sm text-ink-2'
         }
       >
@@ -76,17 +81,17 @@ export default function Layout() {
               {t('footer.privacy')}
             </Link>
           </li>
-          <li>
+          <li className={extra}>
             <Link to="/stats" className={footerLink}>
               {t('stats.footer')}
             </Link>
           </li>
-          <li>
+          <li className={extra}>
             <Link to="/about#licences" className={footerLink}>
               {t('footer.licences')}
             </Link>
           </li>
-          <li>
+          <li className={extra}>
             {/* A plain file on the server, not an app page: a normal link, not a router link. */}
             <a href="/THIRD_PARTY_NOTICES.txt" className={footerLink}>
               {t('footer.notices')}
@@ -108,13 +113,20 @@ export default function Layout() {
           {t('nav.skip')}
         </a>
         <header className="no-print border-b border-rule bg-paper/90 backdrop-blur">
-          {/* The stage uses the full width, so its header does too (edges line up with the meal bar). */}
-          <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 px-4 ${fit ? 'py-2' : 'mx-auto max-w-7xl py-3'}`}>
+          {/* The stage uses the full width, so its header does too (edges line up with the meal bar).
+              On a phone its two rows of 44 px controls get almost no padding: the body needs the room. */}
+          <div
+            className={`flex flex-wrap items-center gap-x-4 px-4 ${fit ? 'py-0.5 lg:py-1.5' : 'mx-auto max-w-7xl gap-y-1 py-2 lg:py-3'}`}
+          >
             <Link to="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
               <Logo />
               LifePeek
             </Link>
-            <nav aria-label={t('nav.main')} className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+            {/* The projector shows one page, the stage, to a room: its site nav is hidden there (UI-5). */}
+            <nav
+              aria-label={t('nav.main')}
+              className={`order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto ${fit ? 'in-data-[contrast=high]:hidden' : ''}`}
+            >
               <NavLink to="/sim" className={nav}>
                 {t('nav.simulator')}
               </NavLink>
@@ -131,7 +143,7 @@ export default function Layout() {
                 type="button"
                 aria-pressed={projector}
                 onClick={() => setProjector((p) => !p)}
-                className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${fit ? 'max-lg:hidden' : ''}`}
+                className={`${target} rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${fit ? 'max-lg:hidden' : ''}`}
               >
                 {t('nav.projector')}
               </button>
@@ -140,7 +152,7 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={() => void i18n.changeLanguage(i18n.language === 'hi' ? 'en' : 'hi')}
-                className="rounded-full border border-rule px-3 py-1.5 text-sm font-semibold hover:bg-sunk"
+                className={`${target} rounded-full border border-rule px-3 text-sm font-semibold whitespace-nowrap hover:bg-sunk`}
               >
                 <span lang={i18n.language === 'hi' ? 'en' : 'hi'}>{t('nav.language')}</span>
                 <span className="sr-only"> ({t('nav.languageLabel')})</span>
