@@ -18,6 +18,10 @@
 //   /next 195.0 → 181.4 KB, 3D body 249.2 → 258.9 KB.
 //   WP-14 (2026-10-13): the dock's key moments, the Now line and the summary sentence are first
 //   paint; the "More" stage text and the report form load on first use: /next 183.0 → 188.8 KB.
+//   WP-17 follow-up (2026-10-13): merged main was /next 190.6 KB. The projector's graph marks
+//   moved to one CSS block, the 3D look's colour maths into the 3D chunk, and the English text
+//   only About, Privacy, Teach and Science use is fetched with those pages (i18n loadPageText):
+//   /next 190.6 → 186.6 KB, /sim 181.1 → 177.8 KB, Home 157.3 → 154.0 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

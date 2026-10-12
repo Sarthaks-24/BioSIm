@@ -62,6 +62,36 @@ for (const lang of ['en', 'hi'] as const) {
   })
 }
 
+// The whole lesson on one projector screen (after WP-14): a meal compared with a kept one, mid-way.
+// The summary sentence and the Now line are in the window, nothing scrolls, and every graph's
+// plot is still at least 250 px tall. If they ever compete, the summary wins, then the Now line.
+for (const lang of ['en', 'hi'] as const) {
+  test(`projector lesson view (${lang}): summary, Now line and a ≥ 250 px plot on every tab, no scroll`, async ({ page }) => {
+    onlyIn('projector')
+    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
+    const group = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
+    await expect(group).toBeVisible()
+    const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
+    if (await ok.isVisible()) await ok.click()
+    const inWindow = async (selector: string) => {
+      const el = page.locator(selector).filter({ visible: true }).first()
+      await expect(el, selector).toBeVisible()
+      const box = (await el.boundingBox())!
+      expect(box.y + box.height, `${selector} bottom`).toBeLessThanOrEqual(800)
+    }
+    await inWindow('[data-summary="compare"]')
+    await inWindow('[data-now]')
+    for (const tab of await group.getByRole('button').allTextContents()) {
+      await group.getByRole('button', { name: tab, exact: true }).click()
+      const plot = page.locator('figure svg[role="img"]').filter({ visible: true })
+      await expect(plot).toHaveCount(1)
+      await expect.poll(async () => (await plot.boundingBox())!.height, { message: `${tab}: plot height` }).toBeGreaterThanOrEqual(250)
+      const m = await page.evaluate(() => [document.documentElement.scrollHeight, innerHeight])
+      expect(m[0], `${tab}: page height`).toBeLessThanOrEqual(m[1]!)
+    }
+  })
+}
+
 test('the stage keeps its site nav when projector mode is off', async ({ page }) => {
   onlyIn('projector')
   await page.goto('/next')

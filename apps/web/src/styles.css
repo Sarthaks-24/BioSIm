@@ -190,11 +190,22 @@ html[data-contrast='high'] {
     font-size: 1.3334rem;
     line-height: 1.25;
   }
+  /* Running totals ("(so far 55 kcal)") a step down, so a rate and its total share one line. */
+  & [data-total] {
+    font-size: var(--text-micro);
+  }
   & [data-callout] {
     font-size: 1rem;
   }
   & svg:has(~ [data-callout]) line {
     stroke-width: 2px;
+  }
+}
+/* The projector's graph column is wider (the body has room to spare): one big graph, its header
+   on fewer lines. The dock's timeline follows (it shares the stage's columns). */
+@media (width >= 64rem) {
+  html[data-contrast='high'] [data-stage] {
+    grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 1fr);
   }
 }
 

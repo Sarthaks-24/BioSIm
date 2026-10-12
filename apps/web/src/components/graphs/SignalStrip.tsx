@@ -226,7 +226,7 @@ export default function SignalStrip({
   // Phones show name and value only (plan-graphs §3.5): the totals, like the second line's label,
   // need the room of a desktop column; on a phone "How we know" gives them in its summary.
   const totalSpan = (ref: RefObject<HTMLSpanElement | null>) =>
-    totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
+    totals && <span ref={ref} data-total="" className="whitespace-nowrap text-ink-2 max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
   return (
