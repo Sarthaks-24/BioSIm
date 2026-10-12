@@ -125,6 +125,8 @@ export function RunStrip({ series, run, kept, keptName, profile, range, second, 
           sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
           profile={profile}
           notes={notes}
+          // More of the same food stays up longer at the same highest point (capped release).
+          limits={glucose ? [t('limits.glucoseSameHighest')] : undefined}
         />
       }
       // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).

@@ -39,6 +39,17 @@ describe('real foods', () => {
     expect(rotiDal.riseMgDl.typical).toBeLessThan(rice.riseMgDl.typical)
   })
 
+  it('cola ×1 and ×4 both read "Highest: 121": capped release, so 4 cans stay up longer, not higher (council MUST 2)', () => {
+    const one = run('cola:1')
+    const four = run('cola:4')
+    const highest = (sim: ReturnType<typeof run>) => Math.round(Math.max(...sim.glucose.typical))
+    expect(highest(one)).toBe(121)
+    expect(highest(four)).toBe(121)
+    expect(four.events.glucosePeak!.timeMin).toBe(one.events.glucosePeak!.timeMin)
+    // Back near the before-meal level much later: the extra sugar shows as time, not height.
+    expect(four.events.glucoseBackToBaseMin!).toBeGreaterThan(2.5 * one.events.glucoseBackToBaseMin!)
+  })
+
   it('juice raises blood sugar faster than the whole fruit', () => {
     const apple = run('apple:1').events.glucosePeak!
     const juice = run('orange-juice:1').events.glucosePeak!

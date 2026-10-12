@@ -31,8 +31,10 @@ export interface PanelProps {
   /** The run's sources: the signal's own plus `food:<id>` for each food in the meal. */
   sourceIds: readonly SourceId[]
   profile: ProfileId
-  /** What the marks on this graph mean, and other graph-specific limits. */
+  /** What the marks on this graph mean. */
   notes?: ReactNode
+  /** Known limits of this graph beyond its signal's own (`limitKey`), as sentences. */
+  limits?: readonly string[]
 }
 
 /**
@@ -48,6 +50,7 @@ export default function HowWeKnowPanel({
   sourceIds,
   profile,
   notes,
+  limits = [],
   anchor,
   label,
   onClose,
@@ -78,7 +81,16 @@ export default function HowWeKnowPanel({
           </Section>
         )}
         {notes}
-        {meta.limitKey && <Section title={t('graph.limits')}>{t(meta.limitKey)}</Section>}
+        {(meta.limitKey || limits.length > 0) && (
+          <Section title={t('graph.limits')}>
+            <span className="flex flex-col gap-1">
+              {meta.limitKey && <span>{t(meta.limitKey)}</span>}
+              {limits.map((l) => (
+                <span key={l}>{l}</span>
+              ))}
+            </span>
+          </Section>
+        )}
         <Section title={t(`profiles.${profile}.tag`)}>{t(`profiles.${profile}.desc`)}</Section>
         <Section title={t('graph.sources')}>
           <ul className="flex flex-wrap gap-x-3 gap-y-1">

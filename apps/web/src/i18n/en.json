@@ -548,7 +548,8 @@
     "glucoseBand": "The shaded band is a best guess of how much healthy people differ.",
     "energyInAtwater": "Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out.",
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
-    "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it."
+    "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
+    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too."
   },
   "profiles": {
     "adult-ref": {

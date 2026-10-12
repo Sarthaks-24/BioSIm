@@ -180,6 +180,39 @@ describe('blood glucose', () => {
     expect(sim.events.absorptionMostlyDoneMin).toBeNull()
   })
 
+  golden(
+    ['gut.stomach.liquidG', 'event.stomachHalfEmpty'],
+    ['brener1983'],
+    'a glucose drink 4× as big leaves at the same ~2.13 kcal/min, so it takes about 4× as long (Brener et al. 1983)',
+    () => {
+      const one = simulate(buildMeal([{ foodId: 'glucose-50', servings: 1 }], lookup)).events
+      const four = simulate(buildMeal([{ foodId: 'glucose-50', servings: 4 }], lookup)).events
+      const ratio = four.stomach90EmptyMin! / one.stomach90EmptyMin!
+      expect(ratio).toBeGreaterThan(3.5)
+      expect(ratio).toBeLessThan(4.5)
+    },
+  )
+
+  // Council MUST 2 (2026-10-13): cola ×1 and ×4 both read "Highest: 121". Not a bug: the release
+  // is capped (above), the rise depends on the rate sugar arrives, and insulin action brings the
+  // curve down before even one serving has left the stomach. So a bigger portion of the same food
+  // keeps blood sugar up for longer at the same highest point. Real people usually reach a
+  // somewhat higher point with a bigger portion: "How we know" says so (limits.glucoseSameHighest).
+  pinned(
+    ['blood.glucose', 'event.glucosePeak'],
+    'more of the same food: the same highest point, raised for longer (capped release; known limit limits.glucoseSameHighest)',
+    () => {
+      const of = (servings: number) => simulate(buildMeal([{ foodId: 'glucose-50', servings }], lookup))
+      const above = (sim: Simulation) => sim.glucose.typical.filter((g) => g > PARAMS.glucose.fastingMgDl + 5).length
+      const one = of(1)
+      for (const n of [2, 4]) {
+        const more = of(n)
+        expect(Math.abs(more.events.glucosePeak!.riseMgDl.typical - one.events.glucosePeak!.riseMgDl.typical)).toBeLessThan(0.5)
+        expect(above(more)).toBeGreaterThan(1.5 * above(one))
+      }
+    },
+  )
+
   pinned('blood.glucose', 'the band always brackets the typical curve', () => {
     const sim = run('glucose-50')
     for (let i = 0; i < sim.length; i += 37) {
