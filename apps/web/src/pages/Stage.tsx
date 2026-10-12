@@ -43,7 +43,7 @@ export default function Stage() {
   }, [])
 
   return (
-    <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto]">
+    <div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto]">
       <h1 className="sr-only">{t('sim.title')}</h1>
       <div className="lg:col-span-2">
         <MealBar />
