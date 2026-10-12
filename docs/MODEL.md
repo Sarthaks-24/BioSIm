@@ -49,7 +49,7 @@ Solids must first be ground small, which gives a lag phase. After that they empt
 - **Rate.** 1.4 kcal/min is calibrated so the consensus 255 kcal test meal sits mid-range in the scintigraphy norms (Abell et al. 2008). Those norms are 37–90 % left at 1 h, 30–60 % at 2 h and ≤10 % at 4 h; the model gives 78 %, 45 % and 0 %.
 - **Drinks with the meal.** The kcal of a drink taken with a solid meal use up part of the solids' time budget, so a sugary drink delays the food a little.
 - **Fat, protein and carbohydrate** slow emptying equally per kcal (Hunt & Stubbs 1975). Fatty meals take longer simply because they carry more kcal.
-- **Assumption:** the solid rate is the same for small and big meals. Real stomachs empty a little faster (in kcal/min) after bigger meals, so the model is slow for very large meals. Making the rate depend on meal size is deferred until it can be calibrated without breaking the checks above.
+- **Assumption:** the solid rate is the same for small and big meals. Real stomachs empty a little faster (in kcal/min) after bigger meals, so the model is slow for very large meals, and somewhat slow for everyday ones too (see Known limits). Making the rate depend on meal size is deferred until it can be calibrated without breaking the checks above.
 
 **Meal cap.** The model is meant for meals up to **1500 kcal**. The picker won't build a larger meal. A link with a larger meal opens with a warning. A meal at the cap still empties within ~16 h.
 
@@ -159,6 +159,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 - It models a healthy adult only: not children, pregnancy, diabetes or digestive illness.
 - Energy used is a resting formula for one reference adult (see Energy in vs used), not a measurement.
 - Milk clots in the stomach and really empties more slowly than the liquid model shows.
+- Everyday meals leave the stomach more slowly than textbooks say. OpenStax §23.4 gives 2–4 h for the stomach to empty after a meal; with its fixed 1.4 kcal/min solid rate the model takes ~4.5 h to empty 90 % of 2 rotis + dal or a portion of fries, and ~7.9 h for a burger with fries. A test marks this as a known limit; fixing it means a new model version and a physiology reviewer.
 - Fibre isn't modelled on its own. Its effect on blood sugar shows up only through each food's GI.
 - GI values vary between studies and varieties (rice ranges from about 50 to over 90).
 - Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.

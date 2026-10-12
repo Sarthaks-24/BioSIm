@@ -1,8 +1,13 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   PARAMS,
   activeStage,
   buildMeal,
+  decodeMeal,
+  parseFood,
   indexAt,
   mealLocation,
   simulate,
@@ -33,6 +38,12 @@ const run = (...ids: string[]) =>
       lookup,
     ),
   )
+/** The shipped foods (content/foods), for checks about everyday meals rather than test meals. */
+const foodsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../content/foods')
+const foods = readdirSync(foodsDir)
+  .filter((f) => f.endsWith('.json'))
+  .map((f) => parseFood(JSON.parse(readFileSync(join(foodsDir, f), 'utf8'))))
+const runFoods = (meal: string) => simulate(buildMeal(decodeMeal(meal), (id) => foods.find((f) => f.id === id)), { particles: 0 })
 const leftPct = (sim: Simulation, minutesAfterEating: number) =>
   stomachFraction(sim, indexAt(sim, minutesAfterEating + sim.meal.eatingMin)) * 100
 const rise = (sim: Simulation, t: number) => sim.glucose.typical[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl
@@ -76,6 +87,16 @@ describe('gastric emptying', () => {
   golden('gut.stomach.contentG', ['openstax-ap2e-23'], 'a high-fat meal is still being emptied after 6 h (OpenStax A&P 2e §23.4)', () => {
     expect(run('fatty-meal').events.stomach90EmptyMin!).toBeGreaterThanOrEqual(6 * 60)
   })
+
+  golden.fails(
+    ['gut.stomach.contentG', 'gut.stomach.solidG'],
+    ['openstax-ap2e-23'],
+    'an ordinary meal (2 rotis + dal, or a portion of fries) is 90 % emptied within 2–4 h (OpenStax A&P 2e §23.4)',
+    'docs/MODEL.md Known limits: the fixed 1.4 kcal/min solid rate empties everyday meals slowly (both ~4.5 h; burger + fries ~7.9 h)',
+    () => {
+      for (const meal of ['roti:2,dal:1', 'fries:1']) expect(runFoods(meal).events.stomach90EmptyMin!, meal).toBeLessThanOrEqual(4 * 60)
+    },
+  )
 
   golden('event.stomachHalfEmpty', ['hunt1975'], 'emptying order: water < sugary drink < light meal < heavy fatty meal', () => {
     const order = ['water-test', 'glucose-50', 'standard-meal', 'fatty-meal'].map((id) => run(id).events.stomachHalfEmptyMin!)
