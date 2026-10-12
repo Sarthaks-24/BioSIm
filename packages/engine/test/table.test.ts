@@ -17,7 +17,7 @@ import {
   simulate,
   stomachFraction,
   valueAt,
-  window,
+  windowOf,
 } from '../src/index.ts'
 
 /**
@@ -133,20 +133,20 @@ describe('series helpers', () => {
     expect(findFirst(s, (v) => v >= 20, 0, 5)).toBe(10)
   })
 
-  it('window returns every point when it fits, and keeps peaks when it decimates', () => {
-    const all = window(s, 0, 7, 100)
+  it('windowOf returns every point when it fits, and keeps peaks when it decimates', () => {
+    const all = windowOf(s, 0, 7, 100)
     expect([...all.t]).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
-    const few = window(s, 0, 7, 4)
+    const few = windowOf(s, 0, 7, 4)
     expect(few.v.length).toBeLessThanOrEqual(4)
     expect(Math.max(...few.v)).toBe(40)
     expect(Math.min(...few.v)).toBe(0)
     for (let k = 1; k < few.t.length; k++) expect(few.t[k]!).toBeGreaterThan(few.t[k - 1]!)
-    expect(window(s, 5, 2, 10).t).toHaveLength(0)
+    expect(windowOf(s, 5, 2, 10).t).toHaveLength(0)
   })
 
-  it('window on a real run stays within the point budget', () => {
+  it('windowOf on a real run stays within the point budget', () => {
     const g = run('cola:1').signals.get('blood.glucose')!
-    const w = window(g, 0, PARAMS.horizonMin, 300)
+    const w = windowOf(g, 0, PARAMS.horizonMin, 300)
     expect(w.t.length).toBeLessThanOrEqual(300)
     expect(Math.max(...w.v)).toBe(Math.max(...g.values))
   })

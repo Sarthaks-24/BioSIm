@@ -63,8 +63,9 @@ export function valueAt(series: Pick<Series, 'values'>, tMin: number, stepMin = 
 /**
  * Min/max decimation of [fromMin, toMin] to at most `maxPoints` points, for graph paths. Each
  * bucket keeps its lowest and highest point, in time order, so peaks are never lost.
+ * (Named `windowOf`, not `window`, so importing it never shadows the browser's `window`.)
  */
-export function window(
+export function windowOf(
   series: Pick<Series, 'values'>,
   fromMin: number,
   toMin: number,

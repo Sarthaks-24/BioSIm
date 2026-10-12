@@ -16,7 +16,11 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    a test there should catch it. Files: `stomach.ts` (emptying) → `transit.ts` (intestines and
    absorption) → `glucose.ts` → `events.ts` (key moments) and `particles.ts`, run by
    `simulate.ts`. Shared helpers (`stomachFraction`, `mealLocation`, `stageWindow`) live there
-   too, so every chart computes the same thing the same way.
+   too, so every chart computes the same thing the same way. Modules take their numbers as an
+   argument (`params`, from the run's context); only `simulate.ts` hands them `PARAMS`, the
+   human set. The run carries its own clock (`run.horizonMin`, `run.stepMin`, `run.length`), and
+   `simulate({ organism?, items, profile? }, { lookup })` is the organism-ready way in
+   (`simulate(meal)` still works). `test/plumbing.test.ts` guards this.
 2. **One source for anatomy.** `apps/web/src/anatomy/anatomy.ts` defines the curves. The 3D
    models (`three/geometry.ts`), the flat fallback and the particle paths all read them, so food
    always travels inside the organs it is drawn in.
@@ -24,6 +28,10 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    `engine/share.ts` encodes it and keeps the model version, so old links open with a note.
    `hooks/useUrlSync.ts` is the only code that reads or writes it, always through the router.
    The format is a contract with every link already shared: only add optional parameters.
+   v2 adds `o` (organism: absent means human, forever, and `o=human` is never written; an
+   unknown `o` opens human and is reported as `unknownOrganism`), `who` (profile), `layer` and
+   `in` (inside view); `bo` is reserved. `apps/web/src/lib/v1-links.fixture.ts` lists every v1
+   link, and `lib/links.test.ts` checks that each still opens the same meals.
 4. **Signal IDs are a contract.** Every number the app draws, prints, reads aloud or puts in a
    link has one ID in `packages/engine/src/core/catalog.ts` (the glossary, frozen 2026-10-12),
    such as `blood.glucose` or `gut.stomach.contentG`. Share links, i18n keys (`signals.<id>.*`),

@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next'
 import { PARAMS } from '@lifepeek/engine'
 
+/** v1 only: the 48 h bar. New code (WP-09+) reads the run's own clock, `run.horizonMin`. */
 export const HORIZON_MIN = PARAMS.horizonMin
 
 /**
