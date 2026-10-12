@@ -80,7 +80,6 @@ export default function HowWeKnowPanel({
             </span>
           </Section>
         )}
-        {notes}
         {(meta.limitKey || limits.length > 0) && (
           <Section title={t('graph.limits')}>
             <span className="flex flex-col gap-1">
@@ -91,6 +90,8 @@ export default function HowWeKnowPanel({
             </span>
           </Section>
         )}
+        {/* After this line's own limits, so they are not read as the limits of a second line in the notes (energy used at rest). */}
+        {notes}
         <Section title={t(`profiles.${profile}.tag`)}>{t(`profiles.${profile}.desc`)}</Section>
         <Section title={t('graph.sources')}>
           <ul className="flex flex-wrap gap-x-3 gap-y-1">

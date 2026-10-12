@@ -16,12 +16,15 @@ export function mealNames(items: readonly MealItem[], lang: string): string {
     .join(' + ')
 }
 
-/** A food's name without its details: "Roti / chapati (whole wheat)" → "Roti", "Dal (masoor)" → "Dal". */
+/**
+ * A food's name without its details: "Roti / chapati (whole wheat)" → "Roti", "Dal (masoor)" → "Dal".
+ * A name that is all details ("(test meal)") stays whole rather than becoming empty.
+ */
 export const shortFoodName = (name: string) =>
   name
     .replace(/\s*\([^)]*\)/g, '')
     .split(' / ')[0]!
-    .trim()
+    .trim() || name
 
 /**
  * A meal in few words, for the graphs' legend: short food names, the first two foods and "…" for

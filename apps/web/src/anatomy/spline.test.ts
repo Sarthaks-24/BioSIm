@@ -50,8 +50,17 @@ describe('Spline3 (anatomy curves without three.js)', () => {
 it('only the 3D body (src/three) imports three.js, so the pages load none of it (check-budget.mjs)', () => {
   const src = join(import.meta.dirname, '..')
   const files = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f))
-  const offenders = files.filter(
-    (f) => !f.startsWith('three') && /from '(three|@react-three\/[^']+)(\/[^']*)?'/.test(readFileSync(join(src, f), 'utf8')),
-  )
+  // `from 'three'`, `import('three')` (a lazy chunk the page would still fetch) and a bare `import 'three'`.
+  const importsThree = /(?:\bfrom\s*|\bimport\s*\(?\s*)['"](?:three|@react-three\/[^'"]+)(?:\/[^'"]*)?['"]/
+  for (const line of [
+    `import { Vector3 } from 'three'`,
+    `await import('three/src/math/Vector3.js')`,
+    `import "three"`,
+    `import '@react-three/fiber'`,
+  ]) {
+    expect(importsThree.test(line), line).toBe(true)
+  }
+  expect(importsThree.test(`import { x } from './three-ish.ts'`)).toBe(false)
+  const offenders = files.filter((f) => !f.startsWith('three') && importsThree.test(readFileSync(join(src, f), 'utf8')))
   expect(offenders).toEqual([])
 })

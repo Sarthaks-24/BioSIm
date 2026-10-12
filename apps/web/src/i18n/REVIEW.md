@@ -109,8 +109,8 @@ Rules for the reviewer:
 | `about.makerTitle` | Who made it | इसे किसने बनाया | draft |
 | `about.maker` | LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources. | LifePeek को {{name}} ने बनाया है। इसकी हर संख्या का स्रोत दिया गया है, और गलती की हर रिपोर्ट को प्रकाशित स्रोतों से जाँचा जाता है। | draft |
 | `about.sourcesTitle` | Where the numbers come from | संख्याएँ कहाँ से आती हैं | draft |
-| `about.sources` | Each food is described only by cited values: its nutrients from USDA FoodData Central or the Indian Nutrient Databank, and, where it applies, its glycemic index from the International GI tables (Atkinson et al. 2008). The model computes everything else. | हर भोजन के लिए सिर्फ़ स्रोत सहित मान लिए गए हैं: उसके पोषक तत्व USDA FoodData Central या Indian Nutrient Databank से, और जहाँ लागू हो, उसका ग्लाइसेमिक इंडेक्स अंतरराष्ट्रीय GI तालिकाओं (Atkinson et al. 2008) से। बाकी सब कुछ मॉडल गणना करके निकालता है। | draft |
-| `about.sourcesLink` | Every food and its sources | हर भोजन और उसके स्रोत | draft |
+| `about.sources` | Each food is described only by cited values: its nutrients from USDA FoodData Central or the Indian Nutrient Databank, and, where it applies, its glycemic index from the International GI tables (Atkinson et al. 2008). The model computes everything else. | हर खाद्य पदार्थ के लिए सिर्फ़ स्रोत सहित मान लिए गए हैं: उसके पोषक तत्व USDA FoodData Central या Indian Nutrient Databank से, और जहाँ लागू हो, उसका ग्लाइसेमिक इंडेक्स अंतरराष्ट्रीय GI तालिकाओं (Atkinson et al. 2008) से। बाकी सब कुछ मॉडल गणना करके निकालता है। | draft |
+| `about.sourcesLink` | Every food and its sources | हर खाद्य पदार्थ और उसके स्रोत | draft |
 | `about.licencesTitle` | Licences | लाइसेंस | draft |
 | `about.licenceCode` | Code: Apache License 2.0. Keep the NOTICE file in copies. | कोड: Apache License 2.0। इसकी कॉपी में NOTICE फ़ाइल साथ रखें। | draft |
 | `about.licenceContent` | Lesson text, translations, illustrations, docs, and our own food-file structure and labels: CC BY 4.0. Credit: “LifePeek by {{name}}, https://lifepeek.vercel.app, CC BY 4.0”. | पाठ की सामग्री, अनुवाद, चित्र, दस्तावेज़, और भोजन-फ़ाइलों की हमारी अपनी बनावट और नाम: CC BY 4.0। श्रेय ऐसे दें: “LifePeek by {{name}}, https://lifepeek.vercel.app, CC BY 4.0”। | draft |
@@ -118,7 +118,7 @@ Rules for the reviewer:
 | `about.licenceName` | The LifePeek name and logo: not licensed. Forks must use a different name. | LifePeek नाम और लोगो: इनका लाइसेंस नहीं दिया गया है। फ़ोर्क को कोई दूसरा नाम रखना होगा। | draft |
 | `about.licenceLibraries` | Bundled libraries and fonts: their own licences. | साथ में शामिल लाइब्रेरी और फ़ॉन्ट: उनके अपने लाइसेंस। | draft |
 | `about.reportTitle` | Found a mistake? | कोई गलती दिखी? | draft |
-| `about.report` | Spotted a wrong number or explanation? Use “Report a mistake” in the simulator. | कोई गलत संख्या या व्याख्या दिखी? सिमुलेटर में “गलती बताएँ” का उपयोग करें। | draft |
+| `about.report` | Spotted a wrong number or explanation? Use “Report a mistake” in the simulator. | कोई गलत संख्या या व्याख्या दिखी? सिम्युलेटर में “गलती बताएँ” का उपयोग करें। | draft |
 | `about.openIssue` | Open an issue on GitHub | GitHub पर issue खोलें | draft |
 | `about.privacyTitle` | Privacy | गोपनीयता | draft |
 | `about.privacy` | LifePeek has no accounts, no ads, no cookies and no analytics, and collects no personal data. | LifePeek में कोई अकाउंट, विज्ञापन, कुकी या एनालिटिक्स नहीं है, और यह कोई निजी डेटा इकट्ठा नहीं करता। | draft |
@@ -197,11 +197,11 @@ in later work packages). Notes for the reviewer:
 | `signals.blood.glucose.summaryNone` | Blood sugar stays near {{start}} mg/dL: this meal has almost no sugar or starch. | रक्त शर्करा लगभग {{start}} mg/dL पर रहती है: इस भोजन में लगभग कोई शर्करा या मंड (स्टार्च) नहीं है। | draft |
 | `signals.energy.inRate.name` | Energy coming in | आने वाली ऊर्जा | draft |
 | `signals.energy.inRate.short` | Coming in | आ रही | draft |
-| `signals.energy.inRate.desc` | Food energy entering the blood each hour, from absorbed carbohydrate, protein and fat. | अवशोषित कार्बोहाइड्रेट, प्रोटीन और वसा से हर घंटे रक्त में आने वाली भोजन-ऊर्जा। | draft |
-| `signals.energy.inRate.summary` | In the first {{time}}, about {{in}} kcal from this meal entered the blood, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later. | पहले {{time}} में इस भोजन से लगभग {{in}} किलो कैलोरी रक्त में पहुँची, और आराम करते शरीर ने लगभग {{used}} किलो कैलोरी खर्च की। जब खर्च से ज़्यादा ऊर्जा आती है, तो शरीर बची हुई ऊर्जा को बाद के लिए जमा कर लेता है। | draft |
+| `signals.energy.inRate.desc` | Food energy entering the body each hour, from absorbed carbohydrate, protein and fat. | अवशोषित कार्बोहाइड्रेट, प्रोटीन और वसा से हर घंटे शरीर में आने वाली भोजन-ऊर्जा। | draft |
+| `signals.energy.inRate.summary` | In the first {{time}}, about {{in}} kcal from this meal entered the body, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later. | पहले {{time}} में इस भोजन से लगभग {{in}} किलो कैलोरी शरीर में पहुँची, और आराम करते शरीर ने लगभग {{used}} किलो कैलोरी खर्च की। जब खर्च से ज़्यादा ऊर्जा आती है, तो शरीर बची हुई ऊर्जा को बाद के लिए जमा कर लेता है। | draft |
 | `signals.energy.inTotal.name` | Energy taken in so far | अब तक ली गई ऊर्जा | draft |
 | `signals.energy.inTotal.short` | Taken in | ली गई | draft |
-| `signals.energy.inTotal.desc` | Food energy from this meal that has entered the blood so far. | इस भोजन से अब तक रक्त में पहुँची कुल ऊर्जा। | draft |
+| `signals.energy.inTotal.desc` | Food energy from this meal that has entered the body so far. | इस भोजन से अब तक शरीर में पहुँची कुल ऊर्जा। | draft |
 | `signals.energy.usedRate.name` | Energy used at rest | आराम में खर्च होने वाली ऊर्जा | draft |
 | `signals.energy.usedRate.short` | Used | खर्च | draft |
 | `signals.energy.usedRate.desc` | Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the adult model. | वयस्क मॉडल में, आराम की हालत में शरीर को ज़िंदा रखने (साँस, धड़कन, गर्म रहना) के लिए हर घंटे खर्च होने वाली ऊर्जा। | draft |
@@ -217,7 +217,7 @@ in later work packages). Notes for the reviewer:
 | `signals.event.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
 | `limits.glucoseTail` | After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner. | बड़े, वसायुक्त भोजन के बाद मॉडल रक्त शर्करा में एक छोटी, धीमी पूँछ दिखाता है; असली शरीर में यह आमतौर पर कुछ जल्दी सामान्य हो जाती है। | draft |
 | `limits.glucoseBand` | The shaded band is a best guess of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
-| `limits.energyInAtwater` | Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out. | कार्बोहाइड्रेट, प्रोटीन और वसा के लिए प्रति ग्राम 4, 4 और 9 किलो कैलोरी के मानक मान लिए गए हैं, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मान पहले से ही मानकर चलते हैं कि भोजन का कुछ भाग शरीर में अवशोषित नहीं होता, फिर भी मॉडल इन्हें केवल अवशोषित भाग पर लगाता है, इसलिए आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे की थोड़ी ऊर्जा नहीं गिनी गई है। | draft |
+| `limits.energyInAtwater` | Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted. | हर ग्राम कार्बोहाइड्रेट या प्रोटीन को 4 किलो कैलोरी और हर ग्राम वसा को 9 किलो कैलोरी गिना जाता है, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मानक संख्याएँ पहले से मानकर चलती हैं कि भोजन का थोड़ा भाग शरीर के अंदर नहीं जा पाता। मॉडल भी केवल उतना ही गिनता है जितना शरीर के अंदर गया, इसलिए वह भाग दो बार छूट जाता है और आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे में मौजूद थोड़ी-सी ऊर्जा नहीं गिनी गई है। | draft |
 | `limits.energyUsedResting` | This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal. | यह आराम करते एक वयस्क (ICMR-NIN 2020 का संदर्भ वयस्क, 65 किलो) के लिए एक सूत्र है, कोई माप नहीं। यह भोजन के साथ नहीं बदलता। | draft |
 | `limits.backToBase` | "Back near the before-meal level" means within 5 mg/dL of it. | "खाने से पहले के स्तर के पास" का अर्थ है उससे 5 mg/dL के भीतर। | draft |
 | `profiles.adult-ref.tag` | Adult model | वयस्क मॉडल | draft |
@@ -238,7 +238,7 @@ The `/stats` page, its footer link, and one new line on the privacy page (`priva
 | `stats.footer` | Stats | आँकड़े | draft |
 | `stats.title` | LifePeek in numbers | LifePeek आँकड़ों में | draft |
 | `stats.lead` | Only numbers that are already public. They are updated once a week. | सिर्फ़ वे संख्याएँ जो पहले से सार्वजनिक हैं। इन्हें हफ़्ते में एक बार अपडेट किया जाता है। | draft |
-| `stats.noTracking` | **We don't count visitors.** LifePeek has no server, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose. | **हम आने वालों की गिनती नहीं करते।** LifePeek का कोई सर्वर नहीं है, कोई कुकी नहीं और कोई एनालिटिक्स नहीं, इसलिए हमें नहीं पता कि कितने सिमुलेशन चलाए जाते हैं। ऐसा जान-बूझकर है। | draft |
+| `stats.noTracking` | **We don't count visitors.** LifePeek has no server of its own, no cookies and no analytics, so we don't know how many simulations are run. That is on purpose. | **हम आने वालों की गिनती नहीं करते।** LifePeek का अपना कोई सर्वर नहीं है, कोई कुकी नहीं और कोई एनालिटिक्स नहीं, इसलिए हमें नहीं पता कि कितने सिमुलेशन चलाए जाते हैं। ऐसा जान-बूझकर है। | draft |
 | `stats.mistakesTitle` | Mistakes reported and fixed | बताई गई और ठीक की गई गलतियाँ | draft |
 | `stats.mistakesLead` | Counted from the public “Report a mistake” issues on GitHub, over the last {{weeks}} weeks. A mistake counts as fixed when its issue is closed as done. | GitHub पर सार्वजनिक “गलती बताएँ” issue से गिनी गईं, पिछले {{weeks}} हफ़्तों में। कोई गलती तब ठीक मानी जाती है जब उसका issue काम पूरा होने पर बंद किया जाता है। | draft |
 | `stats.loading` | Loading the numbers… | संख्याएँ लोड हो रही हैं… | draft |
@@ -297,10 +297,16 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
 | `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
 
+## Graphs (WP-12)
+
+The graphs on the new screen: their labels, the ⓘ "How we know" panel, and the units in words.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
 | `units.words.mgdl` | milligrams of sugar in each decilitre (a tenth of a litre) of blood | रक्त के हर डेसीलीटर (लीटर का दसवाँ भाग) में शर्करा, मिलीग्राम में | draft |
 | `units.words.g` | grams (1000 g = 1 kg) | ग्राम (1000 ग्राम = 1 किलो) | draft |
 | `units.words.kcal` | kilocalories of food energy | भोजन की ऊर्जा, किलो कैलोरी में | draft |
-| `units.words.kcalPerH` | kilocalories of food energy per hour | प्रति घंटे भोजन की ऊर्जा, किलो कैलोरी में | draft |
+| `units.words.kcalPerH` | kilocalories of energy per hour | प्रति घंटे ऊर्जा, किलो कैलोरी में | draft |
 | `graph.label` | Graph of {{name}}, from eating to 48 hours later | {{name}} का ग्राफ़, खाने से 48 घंटे बाद तक | draft |
 | `graph.howFor` | How we know: {{name}} | हमें कैसे पता है: {{name}} | draft |
 | `graph.unit` | Unit | इकाई | draft |
@@ -308,7 +314,7 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `graph.howSure` | How sure we are | हम कितने निश्चित हैं | draft |
 | `graph.limits` | Known limits | ज्ञात सीमाएँ | draft |
 | `graph.sources` | Sources | स्रोत | draft |
-| `graph.foodData` | Food data: | भोजन के आँकड़े: | draft |
+| `graph.foodData` | Food data: | खाद्य आँकड़े: | draft |
 | `graph.stretched` | Scale stretched to fit this meal | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
 | `graph.range` | {{low}}–{{high}} | {{low}}–{{high}} | draft |
 | `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |
@@ -336,7 +342,29 @@ stomach graph (the ring marks when half the meal's food ENERGY has left; the gra
 |---|---|---|---|
 | `graph.halfEnergyLeft` | Half the energy has left the stomach | आधी ऊर्जा आमाशय से निकल गई | draft |
 | `graph.halfTitle` | The ring: half has left the stomach | गोला: आधा भोजन आमाशय से निकल गया | draft |
-| `limits.glucoseSameHighest` | More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. In real people a bigger portion usually raises the highest point a little too. | यहाँ एक ही भोजन या पेय ज़्यादा लेने से सबसे ऊँचा बिंदु नहीं बढ़ता, केवल यह बढ़ता है कि रक्त शर्करा कितनी देर ऊँची रहती है: आमाशय भोजन को एक स्थिर गति से आगे भेजता है (मीठे पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट), मात्रा चाहे जितनी हो। असली लोगों में बड़ी मात्रा से सबसे ऊँचा बिंदु भी आमतौर पर थोड़ा बढ़ता है। | draft |
+| `limits.glucoseSameHighest` | More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people. | यहाँ एक ही भोजन या पेय ज़्यादा लेने से सबसे ऊँचा बिंदु नहीं बढ़ता, केवल यह बढ़ता है कि रक्त शर्करा कितनी देर ऊँची रहती है: आमाशय भोजन को एक स्थिर गति से आगे भेजता है (मीठे पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट), मात्रा चाहे जितनी हो। असली लोगों में बड़ी मात्रा सबसे ऊँचे बिंदु पर और क्या असर डाल सकती है, यह मॉडल में शामिल नहीं है। | draft |
+
+## Verification fixes (FIX-B)
+
+Strings changed after the first verification council. `home.headline` now says when HALF of each
+meal has left the stomach (the model: cola about 35 min, burger with fries about 4.5 h).
+`stages.smallIntestine.what` now says 3 metres (OpenStax: about 3 m in a living person).
+`limits.energyInAtwater` (above) is rewritten in simpler words for a class 7–10 student; please check it closely.
+`nav.main` is the screen-reader name of the top menu. `graph.loadFailed` and `graph.retry` show in
+a graph's ⓘ panel when its text could not be downloaded (offline). Rows above that changed in the same pass are
+back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.noTracking`,
+`units.words.kcalPerH`, `limits.glucoseSameHighest`, `about.sources`, `about.sourcesLink`,
+`about.report` (सिम्युलेटर) and `graph.foodData` (खाद्य आँकड़े).
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `home.headline` | Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours. | कोला के एक कैन का आधा भाग लगभग आधे घंटे में आमाशय से निकल जाता है। फ्राइज़ के साथ बर्गर के आधे भाग को चार घंटे से ज़्यादा लगते हैं। | draft |
+| `home.example.appleJuice` | Apple vs orange juice | सेब बनाम संतरे का रस | draft |
+| `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
+| `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
+| `nav.main` | Main | मुख्य | draft |
+| `graph.loadFailed` | This didn’t load. Check the internet connection and try again. | यह लोड नहीं हो सका। इंटरनेट कनेक्शन देखें और फिर से कोशिश करें। | draft |
+| `graph.retry` | Try again | फिर से कोशिश करें | draft |
 
 ## Sign-off
 
