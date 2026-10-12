@@ -1,5 +1,5 @@
 {
-  "name": "biosim",
+  "name": "lifepeek",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,12 +8,12 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @biosim/web",
-    "dev:api": "npm run dev -w @biosim/api",
-    "build": "npm run build -w @biosim/web",
+    "dev": "npm run dev -w @lifepeek/web",
+    "dev:api": "npm run dev -w @lifepeek/api",
+    "build": "npm run build -w @lifepeek/web",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "validate": "npm run validate -w @biosim/engine",
+    "validate": "npm run validate -w @lifepeek/engine",
     "format": "prettier --write .",
     "check": "npm run validate && npm run typecheck && npm run test && npm run build"
   },
@@ -21,6 +21,6 @@
     "prettier": "^3.9.0"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": "22.x"
   }
 }

@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { feedback, type Db } from './db.ts'
 
 /**
- * The BioSim API does one job: receive "report a mistake" messages so the science can be
+ * The LifePeek API does one job: receive "report a mistake" messages so the science can be
  * checked. It stores no personal data — no accounts, no emails, no IP addresses.
  * (Share links don't need a server: the whole comparison lives in the URL.)
  */

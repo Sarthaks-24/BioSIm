@@ -18,7 +18,7 @@ export default function ShareButton() {
     const link = `${window.location.origin}/sim?${shareQuery(useSim.getState(), i18n.language)}`
     setUrl(link)
     if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-      navigator.share({ title: 'BioSim', url: link }).catch(() => undefined)
+      navigator.share({ title: 'LifePeek', url: link }).catch(() => undefined)
       return
     }
     const copy = navigator.clipboard?.writeText(link)

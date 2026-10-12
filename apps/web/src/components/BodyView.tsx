@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@biosim/engine'
+import type { Simulation } from '@lifepeek/engine'
 import FlatBody from '../flat/FlatBody.tsx'
 import { hasWebGL } from '../lib/webgl.ts'
 

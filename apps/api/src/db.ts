@@ -34,7 +34,7 @@ const SCHEMA = [
 export type Db = LibSQLDatabase
 
 export async function openDb(
-  url = process.env.DATABASE_URL ?? 'file:biosim.db',
+  url = process.env.DATABASE_URL ?? 'file:lifepeek.db',
   authToken = process.env.DATABASE_AUTH_TOKEN,
 ): Promise<{ db: Db; client: Client }> {
   const client = createClient(authToken ? { url, authToken } : { url })

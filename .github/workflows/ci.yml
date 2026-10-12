@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - name: Validate food files
@@ -23,6 +23,6 @@ jobs:
       - name: Browser smoke tests
         run: |
           npx playwright install --with-deps chromium
-          npm run e2e -w @biosim/web
+          npm run e2e -w @lifepeek/web
         env:
           CI: 'true'

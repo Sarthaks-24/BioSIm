@@ -14,7 +14,7 @@ import {
   type Curve,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import type { NutrientKind } from '@biosim/engine'
+import type { NutrientKind } from '@lifepeek/engine'
 import {
   APPENDIX,
   ESOPHAGUS,

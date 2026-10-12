@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MODEL_VERSION, PARAMS } from '@biosim/engine'
+import { MODEL_VERSION, PARAMS } from '@lifepeek/engine'
 import { useSim, mealLabel, MEAL_KEYS, type MealKey, type Sims } from '../state/sim.ts'
 import { useClock } from '../hooks/useClock.ts'
 import { useUrlSync } from '../hooks/useUrlSync.ts'

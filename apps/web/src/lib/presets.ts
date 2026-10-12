@@ -1,4 +1,4 @@
-import { encodeShareState, type MealItem } from '@biosim/engine'
+import { encodeShareState, type MealItem } from '@lifepeek/engine'
 
 export interface Preset {
   key: 'colaBurger' | 'rotiRice' | 'appleJuice' | 'waterMilk'

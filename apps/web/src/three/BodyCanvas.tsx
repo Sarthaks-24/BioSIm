@@ -16,7 +16,7 @@ import {
   type BufferGeometry,
 } from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@biosim/engine'
+import { NUTRIENT_KINDS, activeStage, indexAt, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useSim } from '../state/sim.ts'
 import { STAGE_LABEL_ANCHOR, STOMACH, particlePosition } from '../anatomy/anatomy.ts'
 import { pylorusTransform, sharedGeometry } from './geometry.ts'

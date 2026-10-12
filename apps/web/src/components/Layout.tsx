@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, ScrollRestoration, Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { MODEL_VERSION } from '@biosim/engine'
+import { MODEL_VERSION } from '@lifepeek/engine'
 import { readPref, writePref } from '../lib/prefs.ts'
 import { INK, ORGAN_COLOR } from '../lib/colors.ts'
 
@@ -42,7 +42,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
             <Logo />
-            BioSim
+            LifePeek
           </Link>
           <nav aria-label="Main" className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
             <NavLink to="/sim" className={nav}>

@@ -33,8 +33,8 @@ const router = createBrowserRouter([
 // in the same tab can reload again.
 window.addEventListener('vite:preloadError', (e) => {
   try {
-    if (sessionStorage.getItem('biosim:reloaded')) return
-    sessionStorage.setItem('biosim:reloaded', '1')
+    if (sessionStorage.getItem('lifepeek:reloaded')) return
+    sessionStorage.setItem('lifepeek:reloaded', '1')
   } catch {
     return // storage blocked: show the error page instead of risking a loop
   }
@@ -43,7 +43,7 @@ window.addEventListener('vite:preloadError', (e) => {
 })
 setTimeout(() => {
   try {
-    sessionStorage.removeItem('biosim:reloaded')
+    sessionStorage.removeItem('lifepeek:reloaded')
   } catch {
     // ignore
   }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Vector3, type Curve } from 'three'
-import { activeStage, type NutrientKind, type Simulation, type StageId } from '@biosim/engine'
+import { activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useSim } from '../state/sim.ts'
 import {
   ESOPHAGUS,

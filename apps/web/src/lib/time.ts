@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { PARAMS } from '@biosim/engine'
+import { PARAMS } from '@lifepeek/engine'
 
 export const HORIZON_MIN = PARAMS.horizonMin
 

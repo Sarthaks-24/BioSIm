@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PARAMS, indexAt, mealLocation, stomachFraction, type MealLocation } from '@biosim/engine'
+import { PARAMS, indexAt, mealLocation, stomachFraction, type MealLocation } from '@lifepeek/engine'
 import { useSim, mealLabel, presentMeals, type Sims } from '../../state/sim.ts'
 import { INK, LEFT_BODY, MEAL_COLOR, ORGAN_COLOR } from '../../lib/colors.ts'
 import LineChart, { type Series } from './LineChart.tsx'

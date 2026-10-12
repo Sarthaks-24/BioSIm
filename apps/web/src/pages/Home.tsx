@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { buildMeal, simulate, stomachFraction } from '@biosim/engine'
+import { buildMeal, simulate, stomachFraction } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 import { DEFAULT_PRESET, PRESETS, presetHref } from '../lib/presets.ts'
 import { MEAL_COLOR } from '../lib/colors.ts'

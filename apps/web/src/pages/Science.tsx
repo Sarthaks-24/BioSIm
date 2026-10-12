@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { MODEL_VERSION } from '@biosim/engine'
+import { MODEL_VERSION } from '@lifepeek/engine'
 import { FOODS } from '../data/foods.ts'
 import { localized } from '../i18n/index.ts'
 
