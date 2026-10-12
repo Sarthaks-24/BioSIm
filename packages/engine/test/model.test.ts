@@ -43,7 +43,11 @@ const foodsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../cont
 const foods = readdirSync(foodsDir)
   .filter((f) => f.endsWith('.json'))
   .map((f) => parseFood(JSON.parse(readFileSync(join(foodsDir, f), 'utf8'))))
-const runFoods = (meal: string) => simulate(buildMeal(decodeMeal(meal), (id) => foods.find((f) => f.id === id)), { particles: 0 })
+const runFoods = (meal: string) =>
+  simulate(
+    buildMeal(decodeMeal(meal), (id) => foods.find((f) => f.id === id)),
+    { particles: 0 },
+  )
 const leftPct = (sim: Simulation, minutesAfterEating: number) =>
   stomachFraction(sim, indexAt(sim, minutesAfterEating + sim.meal.eatingMin)) * 100
 const rise = (sim: Simulation, t: number) => sim.glucose.typical[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl
