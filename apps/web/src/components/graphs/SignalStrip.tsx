@@ -220,6 +220,8 @@ export default function SignalStrip({
     totals && <span ref={ref} className="whitespace-nowrap text-ink-2 max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
+  // A readout's number: caption size, 24 px on the projector (G9).
+  const value = 'font-semibold whitespace-nowrap [font-size:var(--strip-readout)] in-data-[contrast=high]:leading-tight'
   return (
     <figure
       aria-labelledby={titleId}
@@ -265,14 +267,14 @@ export default function SignalStrip({
             <span className={named ? 'text-ink-2' : kept ? 'text-ink-2 max-lg:sr-only' : 'sr-only'}>
               {named ? t(`${meta.i18nKey}.short`) : kept ? runName : `${t('stage.thisMeal')}: `}
             </span>
-            <span ref={runText} className="font-semibold whitespace-nowrap text-ink" />
+            <span ref={runText} className={`${value} text-ink`} />
             {totalSpan(runTotal)}
           </span>
           {second && (
             <span className={`${group} text-ink-2`}>
               <LineSwatch color="var(--color-energy-used)" />
               {t(`${second.series.meta.i18nKey}.short`)}
-              <span ref={secondText} className="font-semibold whitespace-nowrap text-ink" />
+              <span ref={secondText} className={`${value} text-ink`} />
               {totalSpan(secondTotal)}
               <StatusTag status={second.series.meta.status} quiet />
             </span>
@@ -281,7 +283,7 @@ export default function SignalStrip({
             <span className={`${group} text-ink-2 max-lg:[grid-area:kept]`}>
               <LineSwatch kept />
               <span>{t('keep.tag', { meal: keptName })}</span>
-              <span ref={keptText} className="font-semibold whitespace-nowrap" />
+              <span ref={keptText} className={value} />
             </span>
           )}
           {stretched && <span className="text-ink-2 max-lg:[grid-area:note]">{t('graph.stretched')}</span>}
@@ -322,7 +324,7 @@ export default function SignalStrip({
               height={height}
               className="absolute inset-0 overflow-visible"
             >
-              <g className="stroke-grid" strokeWidth="1" shapeRendering="crispEdges">
+              <g className="stroke-grid [stroke-width:var(--strip-grid)]" shapeRendering="crispEdges">
                 {ticks.slice(0, -1).map((v, i) => (
                   <line
                     key={i}
@@ -347,7 +349,14 @@ export default function SignalStrip({
                 strokeDasharray="0 4"
                 strokeLinecap="round"
               />
-              {paths.band && <path data-line="band" d={paths.band} className="fill-run [fill-opacity:var(--strip-band-opacity)]" />}
+              {paths.band && (
+                // The edge line shows only on the projector (--strip-band-edge), where a faint fill vanishes.
+                <path
+                  data-line="band"
+                  d={paths.band}
+                  className="fill-run stroke-run [fill-opacity:var(--strip-band-opacity)] [stroke-opacity:0.55] [stroke-width:var(--strip-band-edge)]"
+                />
+              )}
               {paths.kept && (
                 <path
                   data-line="kept"
@@ -370,7 +379,13 @@ export default function SignalStrip({
                 strokeLinejoin="round"
                 strokeLinecap="round"
               />
-              {paths.marker && <circle cx={paths.marker.x} cy={paths.marker.y} r="5" className="fill-shelf stroke-ink" strokeWidth="2" />}
+              {paths.marker && (
+                <circle
+                  cx={paths.marker.x}
+                  cy={paths.marker.y}
+                  className="fill-shelf stroke-ink [r:var(--strip-ring)] [stroke-width:2] in-data-[contrast=high]:[stroke-width:3]"
+                />
+              )}
             </svg>
           )}
           {paths?.marker && marker && (

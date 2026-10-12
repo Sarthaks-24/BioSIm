@@ -159,21 +159,29 @@ test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no 
   )
 })
 
-test('on the projector the graphs show one at a time, each plot at least 120 px tall (EN and HI)', async ({ page }) => {
+// Council 2026-10-13 #7 (WP-17): on the projector ONE graph shows at a time, big enough for the
+// back row: its plot at least 250 px tall at 1280 × 800, with a kept meal, in English and Hindi.
+test('on the projector the graphs show one at a time, each plot at least 250 px tall (EN and HI)', async ({ page }) => {
   onlyIn('projector')
   for (const [url, tabs] of [
     ['/next?v=2&a=cheeseburger:1,fries:1&b=cola:1', ['Stomach', 'Blood sugar', 'Energy']],
     ['/next?v=2&a=cheeseburger:1,fries:1&b=cola:1&lang=hi', ['आमाशय', 'रक्त शर्करा', 'ऊर्जा']],
   ] as const) {
     await page.goto(url)
+    // The first-visit medical note sits above the stage until it is closed, once per device; the
+    // teacher closes it before the lesson (it still fits: no scroll, gate.spec.ts).
     const group = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
     await expect(group).toBeVisible()
+    const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
+    if (await ok.isVisible()) await ok.click()
     for (const tab of tabs) {
       await group.getByRole('button', { name: tab, exact: true }).click()
       const plots = page.locator('figure svg[role="img"]').filter({ visible: true })
       await expect(plots).toHaveCount(1)
-      const box = await plots.first().boundingBox()
-      expect(box!.height, `${tab}: plot height`).toBeGreaterThanOrEqual(120)
+      // The plot re-measures after the tab changes (ResizeObserver): wait for its settled height.
+      await expect
+        .poll(async () => (await plots.first().boundingBox())!.height, { message: `${tab}: plot height` })
+        .toBeGreaterThanOrEqual(250)
       // The tab names the graph: no title repeating it above the plot ("Energy" twice).
       const title = page.locator('figure figcaption > span[id]').filter({ visible: true }).first()
       expect((await title.boundingBox())!.width, `${tab}: title shown only to screen readers`).toBeLessThanOrEqual(1)
