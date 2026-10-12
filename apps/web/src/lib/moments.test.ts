@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest'
+import { activeStage, buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
+import { lookupFood } from '../data/foods.ts'
+import { HORIZON_MIN } from './time.ts'
+import { momentNameKey, runMoments, stackRows } from './moments.ts'
+
+const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 })
+
+describe('the timeline’s key moments', () => {
+  it('cola: half has left, blood sugar highest and back, mostly absorbed; no leftovers (no fibre)', () => {
+    const ids = runMoments(sim('cola:1')).map((m) => m.id)
+    expect(ids).toEqual(['event.stomachHalfEmpty', 'event.glucosePeak', 'event.glucoseBackToBase', 'event.mostlyAbsorbed'])
+  })
+
+  it('a meal with fibre marks when leftovers start leaving, with its between-person range', () => {
+    const leftovers = runMoments(sim('roti:2,dal:1')).find((m) => m.id === 'event.firstLeftovers')!
+    expect(leftovers.low).toBeLessThan(leftovers.atMin)
+    expect(leftovers.high).toBeGreaterThan(leftovers.atMin)
+  })
+
+  it('water: blood sugar never leaves its level, so no "highest" and no "back" (the graphs’ rule)', () => {
+    const ids = runMoments(sim('water:1')).map((m) => m.id)
+    expect(ids).not.toContain('event.glucosePeak')
+    expect(ids).not.toContain('event.glucoseBackToBase')
+    expect(ids).toContain('event.stomachHalfEmpty')
+  })
+
+  it('"half has left" says "the energy" unless the meal has none (council MUST 1)', () => {
+    expect(momentNameKey('event.stomachHalfEmpty', sim('cola:1'))).toBe('graph.halfEnergyLeft')
+    expect(momentNameKey('event.stomachHalfEmpty', sim('water:1'))).toBe('signals.event.stomachHalfEmpty.name')
+    expect(momentNameKey('event.glucosePeak', sim('cola:1'))).toBe('signals.event.glucosePeak.name')
+  })
+
+  it('every moment is inside the run, in order of the catalog', () => {
+    for (const meal of ['cola:1', 'cheeseburger:1,fries:1', 'roti:2,dal:1,milk:1', 'apple:1']) {
+      for (const m of runMoments(sim(meal))) {
+        expect(m.atMin, `${meal} ${m.id}`).toBeGreaterThanOrEqual(0)
+        expect(m.atMin, `${meal} ${m.id}`).toBeLessThanOrEqual(HORIZON_MIN)
+      }
+    }
+  })
+})
+
+describe('the Now line follows the food (activeStage)', () => {
+  it('cola is in the stomach at 20 min and in the small intestine at 2 h', () => {
+    const cola = sim('cola:1')
+    expect(activeStage(cola, 20)).toBe('stomach')
+    expect(activeStage(cola, 120)).toBe('smallIntestine')
+  })
+})
+
+describe('the stage’s one clock (verify-1 C2)', () => {
+  // The graphs read every series on the run's own clock (run.stepMin) and the dock, the axis and
+  // the meal clock share one 48 h bar (lib/time.ts). That is right only while every run has the
+  // same horizon as the bar: a model with another clock must change lib/time.ts first.
+  it('every run spans the dock’s 48 h bar, one value per minute', () => {
+    for (const meal of ['cola:1', 'cheeseburger:1,fries:1', '']) {
+      const run = sim(meal)
+      expect(run.horizonMin).toBe(HORIZON_MIN)
+      expect(run.stepMin).toBe(1)
+      expect(run.signals.get('blood.glucose')!.values.length).toBe(HORIZON_MIN / run.stepMin + 1)
+    }
+  })
+})
+
+describe('markers that nearly coincide get their own row', () => {
+  it('stacks only what would overlap, and reuses the bar as soon as there is room', () => {
+    expect(stackRows([10, 12, 13, 40, 41, 80], 10)).toEqual([0, 1, 2, 0, 1, 0])
+    expect(stackRows([], 10)).toEqual([])
+  })
+})

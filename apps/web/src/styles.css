@@ -218,6 +218,17 @@ body {
   min-height: 100dvh;
 }
 
+/*
+ * A phone's first visit to the stage (WP-14): the first-run medical note takes the room of the
+ * Now line and the summary sentence until "Got it", so the body, a graph and Play still fit the
+ * first screen.
+ */
+@media (width < 64rem) {
+  [data-stage]:has([data-first-run]) :is([data-summary], [data-now]) {
+    display: none;
+  }
+}
+
 :focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 2px;

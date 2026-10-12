@@ -3,6 +3,7 @@ import { simulate, type MealItem, type ProfileId, type Simulation } from '@lifep
 import { lookupFood } from '../data/foods.ts'
 import { useRunStore } from '../state/run.ts'
 import { useClock } from '../state/clock.ts'
+import { runMoments } from '../lib/moments.ts'
 
 /** Dots for the body picture. Only the current run is drawn; the kept run is a ghost line (no dots). */
 const CURRENT_PARTICLES = 56
@@ -34,10 +35,10 @@ export function useRun(which: 'current' | 'kept'): Simulation | null {
 
 /**
  * Hands the run's key moments to the meal clock, so "next / previous moment" (stepToMoment)
- * steps through this run's markers. Moments that don't happen within 48 h are skipped.
+ * steps through this run's markers: the same moments the dock's timeline marks (lib/moments.ts).
  */
 export function useMomentsOnClock(run: Simulation) {
   useEffect(() => {
-    useClock.getState().setMoments([...run.moments.values()].map((m) => m.atMin))
+    useClock.getState().setMoments(runMoments(run).map((m) => m.atMin))
   }, [run])
 }
