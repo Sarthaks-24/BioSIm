@@ -44,9 +44,33 @@ describe('plot labels', () => {
   })
 
   it('with no free spot, the one crossing the fewest lines', () => {
-    const plot = { width: 100, height: 40 }
-    const size = { w: 30, h: 10 }
-    const lines = [line(0, 5, 100, 5), line(0, 20, 100, 20), line(0, 35, 100, 35)]
-    expect(placeLabel(size, ringSpots(50, 20, size.w, size.h), plot, lines)).not.toBeNull()
+    const plot = { width: 200, height: 100 }
+    const size = { w: 40, h: 10 }
+    const spots = ringSpots(100, 50, size.w, size.h)
+    // Lines every 12 px cross every spot; a steep line through the right-hand spots crosses them twice.
+    const lines = [...Array.from({ length: 9 }, (_, i) => line(0, 4 + i * 12, 200, 4 + i * 12)), line(130, 0, 131, 100)]
+    const hits = (b: { x: number; y: number; w: number; h: number }) => lines.filter((l) => lineHits(b, l)).length
+    const box = placeLabel(size, spots, plot, lines)!
+    const fewest = Math.min(
+      ...spots
+        .map((s) => ({ ...s, ...size }))
+        .filter((b) => b.x >= 0 && b.y >= 0 && b.x + b.w <= 200 && b.y + b.h <= 100)
+        .map(hits),
+    )
+    expect(fewest).toBeGreaterThan(0)
+    expect(hits(box)).toBe(fewest)
+    // Not simply the first spot (above right), which the steep line also crosses.
+    expect(box.x + box.w).toBeLessThan(100)
+  })
+
+  it('a label wider than either side of the ring is moved just inside the plot, never dropped (300 px phone graph)', () => {
+    const plot = { width: 300, height: 120 }
+    const size = { w: 144, h: 14 }
+    const box = placeLabel(size, ringSpots(150, 70, size.w, size.h), plot, [])
+    expect(box).not.toBeNull()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.w).toBeLessThanOrEqual(300)
+    // Still above the ring, as near as it fits.
+    expect(box!.y + box!.h).toBeLessThanOrEqual(70 - 9)
   })
 })

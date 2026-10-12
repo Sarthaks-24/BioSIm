@@ -71,7 +71,9 @@ const inside = (b: Box, width: number, height: number) => b.x >= 0 && b.y >= 0 &
 /**
  * The first spot (top-left corners, nearest first) where a label of this size fits inside the
  * plot without touching a line or another label. If none is free, the spot that crosses the
- * fewest lines, so the label still sits next to what it names.
+ * fewest lines and labels, so the label still sits next to what it names. A spot that sticks out
+ * of the plot (a wide label near the middle of a phone's narrow graph) is tried last, moved just
+ * inside: a label is never dropped. Null only when there are no spots.
  */
 export function placeLabel(
   size: { w: number; h: number },
@@ -80,10 +82,18 @@ export function placeLabel(
   lines: readonly Polyline[],
   taken: readonly Box[] = [],
 ): Box | null {
+  const boxes = spots.map((s) => ({ x: s.x, y: s.y, w: size.w, h: size.h }))
+  const clamp = (b: Box): Box => ({
+    ...b,
+    x: Math.max(0, Math.min(b.x, plot.width - b.w)),
+    y: Math.max(0, Math.min(b.y, plot.height - b.h)),
+  })
+  const tries = [
+    ...boxes.filter((b) => inside(b, plot.width, plot.height)),
+    ...boxes.filter((b) => !inside(b, plot.width, plot.height)).map(clamp),
+  ]
   let best: { box: Box; hits: number } | null = null
-  for (const s of spots) {
-    const box = { x: s.x, y: s.y, w: size.w, h: size.h }
-    if (!inside(box, plot.width, plot.height)) continue
+  for (const box of tries) {
     const hits = lines.filter((l) => lineHits(box, l)).length + taken.filter((t) => boxesOverlap(t, box)).length
     if (hits === 0) return box
     if (!best || hits < best.hits) best = { box, hits }

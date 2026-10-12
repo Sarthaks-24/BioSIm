@@ -103,6 +103,20 @@ describe('gastric emptying', () => {
     },
   )
 
+  // The known limit above passes on any error (a renamed food file would hide it): this pins
+  // today's values, so the limit is known to fail for the reason it states.
+  pinned(
+    ['gut.stomach.contentG', 'gut.stomach.solidG'],
+    'today an ordinary meal (2 rotis + dal, or fries) is 90 % emptied after 4–5 h',
+    () => {
+      for (const meal of ['roti:2,dal:1', 'fries:1']) {
+        const t90 = runFoods(meal).events.stomach90EmptyMin!
+        expect(t90, meal).toBeGreaterThan(4 * 60)
+        expect(t90, meal).toBeLessThan(5 * 60)
+      }
+    },
+  )
+
   golden('event.stomachHalfEmpty', ['hunt1975'], 'emptying order: water < sugary drink < light meal < heavy fatty meal', () => {
     const order = ['water-test', 'glucose-50', 'standard-meal', 'fatty-meal'].map((id) => run(id).events.stomachHalfEmptyMin!)
     for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThan(order[i - 1]!)

@@ -11,7 +11,8 @@ interface Props {
   className?: string
 }
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex="-1"])'
 
 /** The control focus goes back to: the anchor itself, or the first control inside it (a chip's edit button). */
 function triggerOf(anchor: HTMLElement | null): HTMLElement | null {
@@ -86,7 +87,11 @@ export default function Popover({ anchor, onClose, label, children, className = 
     const onFocusOut = (e: FocusEvent) => {
       const to = e.relatedTarget as Node | null
       if (to && (panelEl?.contains(to) || anchorEl?.contains(to))) return
-      done(to === null)
+      // Not when the panel (or the control in it) is being taken away, nor when the whole window
+      // lost focus (switching apps): only focus moving elsewhere in the page.
+      queueMicrotask(() => {
+        if (panelEl?.isConnected && document.hasFocus() && !panelEl.contains(document.activeElement)) done(to === null)
+      })
     }
     const onDown = (e: PointerEvent) => {
       const target = e.target as Node

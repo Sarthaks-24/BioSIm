@@ -350,7 +350,8 @@ Strings changed after the first verification council. `home.headline` now says w
 meal has left the stomach (the model: cola about 35 min, burger with fries about 4.5 h).
 `stages.smallIntestine.what` now says 3 metres (OpenStax: about 3 m in a living person).
 `limits.energyInAtwater` (above) is rewritten in simpler words for a class 7–10 student; please check it closely.
-`nav.main` is the screen-reader name of the top menu. Rows above that changed in the same pass are
+`nav.main` is the screen-reader name of the top menu. `graph.loadFailed` and `graph.retry` show in
+a graph's ⓘ panel when its text could not be downloaded (offline). Rows above that changed in the same pass are
 back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.noTracking`,
 `units.words.kcalPerH`, `limits.glucoseSameHighest`, `about.sources`, `about.sourcesLink`,
 `about.report` (सिम्युलेटर) and `graph.foodData` (खाद्य आँकड़े).
@@ -362,6 +363,8 @@ back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.
 | `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
 | `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
 | `nav.main` | Main | मुख्य | draft |
+| `graph.loadFailed` | This didn’t load. Check the internet connection and try again. | यह लोड नहीं हो सका। इंटरनेट कनेक्शन देखें और फिर से कोशिश करें। | draft |
+| `graph.retry` | Try again | फिर से कोशिश करें | draft |
 
 ## Sign-off
 

@@ -12,6 +12,7 @@ describe('short meal names for the graphs’ legend', () => {
     expect(shortFoodName('Dal (masoor)')).toBe('Dal')
     expect(shortFoodName('दाल (मसूर)')).toBe('दाल')
     expect(shortFoodName('French fries')).toBe('French fries')
+    expect(shortFoodName('(test meal)')).toBe('(test meal)')
   })
 
   it('names two foods and stands in "…" for more', () => {

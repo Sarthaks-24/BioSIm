@@ -6,8 +6,8 @@
     "language": "भाषा: हिन्दी",
     "languageLabel": "Switch to Hindi",
     "projector": "Projector mode",
-    "skip": "Skip to content",
-    "main": "Main"
+    "main": "Main",
+    "skip": "Skip to content"
   },
   "home": {
     "headline": "Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours.",
@@ -609,6 +609,8 @@
     "howSure": "How sure we are",
     "limits": "Known limits",
     "sources": "Sources",
+    "loadFailed": "This didn’t load. Check the internet connection and try again.",
+    "retry": "Try again",
     "foodData": "Food data:",
     "stretched": "Scale stretched to fit this meal",
     "range": "{{low}}–{{high}}",
