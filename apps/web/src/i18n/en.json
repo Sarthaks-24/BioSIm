@@ -306,6 +306,7 @@
         "intro": ["LifePeek saves a few things **in your own browser only**. They are never sent to us:"],
         "items": [
           "your language (English or Hindi), whether Projector mode is on, and whether you have closed the \"not medical advice\" note;",
+          "whether you have chosen less movement on screen (reduced motion);",
           "a one-time note that the page has just reloaded after an update error (deleted when you close the tab);",
           "a copy of the app, so it works offline in class;",
           "the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you."

@@ -56,6 +56,7 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 | `three/` | WebGL scene and organ models (lazy-loaded) |
 | `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
 | `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
+| `state/clock.ts`, `state/motion.ts` | v2 (`/next`): the meal clock (`useClock`, read per frame without re-rendering; `useMealClock` runs playback) and the one reduced-motion flag (`useMotion`) |
 | `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync` |
 | `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
 | `data/` | Loads the food files at build time |
