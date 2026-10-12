@@ -56,14 +56,17 @@ export type Domain = readonly [number, number]
  * says so for the note under the graph. Never shrinks: a small rise looks small.
  */
 export function domainFor(range: Domain, arrays: readonly (Float32Array | undefined)[]): { domain: Domain; stretched: boolean } {
+  // Rounding noise (an energy rate of −0.000000000002 kcal/h) is not a value outside the range:
+  // only an overshoot of more than 0.5 % of it counts.
+  const slack = (range[1] - range[0]) * 0.005
   let lo = range[0]
   let hi = range[1]
   for (const a of arrays) {
     if (!a) continue
     for (let i = 0; i < a.length; i++) {
       const v = a[i]!
-      if (v > hi) hi = v
-      if (v < lo) lo = v
+      if (v > hi && v > range[1] + slack) hi = v
+      if (v < lo && v < range[0] - slack) lo = v
     }
   }
   if (lo === range[0] && hi === range[1]) return { domain: range, stretched: false }

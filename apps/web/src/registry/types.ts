@@ -55,7 +55,7 @@ export interface OrganismDef {
   bodyFlat: Loader<BodyComponent>
   /** Optional: a leaf or an amoeba may be 2D only. */
   body3d?: Loader<BodyComponent>
-  /** Per-organism display hints (a cow's blood sugar needs another axis). Empty for the human. */
+  /** Per-organism display hints (a cow's blood sugar needs another axis). The graphs read `displayRange`. */
   signalOverrides: Partial<Record<ActiveSignalId, { displayRange?: readonly [number, number]; limitKey?: string }>>
 }
 
