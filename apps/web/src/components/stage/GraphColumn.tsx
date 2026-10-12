@@ -122,6 +122,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
               runName={runName}
               keptName={keptName}
               profile={profile}
+              tabbed={tabbed}
               className="flex-1"
             />
           )

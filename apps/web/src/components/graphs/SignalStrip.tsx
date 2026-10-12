@@ -41,6 +41,8 @@ interface Props {
   title?: string
   /** Read by screen readers after the name: what the graph shows, in one or two sentences. */
   summary?: string
+  /** The graphs show one at a time under tabs (phone, projector, short screen): the tab names it. */
+  tabbed?: boolean
 }
 
 /**
@@ -102,6 +104,7 @@ export default function SignalStrip({
   totals,
   title,
   summary,
+  tabbed = false,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -224,26 +227,29 @@ export default function SignalStrip({
       className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}
     >
       {/*
-       * From 1024 px up: name, status and ⓘ, then the legend under them, naming both meals.
-       * Phones: the tab above names the graph and the meal bar right above names this meal (same
-       * line sample), so the header is: value, status, ⓘ; with a kept meal, the kept line's legend
-       * entry ("- - Kept: Cheeseburger + French fries 98 mg/dL") gets the next row to itself; a
-       * two-line graph: status and ⓘ, then its longer legend under them.
+       * Stacked graphs (from 1024 px up): name, then how sure we are, small and quiet beside it
+       * (it is not a line of the legend), ⓘ at the end; the legend under them, naming both meals.
+       * One graph at a time (tabs): the tab names it, so no title here (it would say "Energy"
+       * twice). Value, status and ⓘ; a two-line graph: status and ⓘ, then its legend; with a kept
+       * meal on a phone, its legend entry gets the next row to itself (the meal bar right above
+       * names this meal, with the same line sample).
        */}
       <figcaption
-        className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 lg:gap-y-0.5 lg:[grid-template-areas:'title_status_info'_'read_read_read'] ${
-          named
-            ? "gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
-            : kept
-              ? "gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note']"
-              : "[grid-template-areas:'read_status_info']"
+        className={`grid items-center gap-x-3 ${
+          !tabbed
+            ? "grid-cols-[auto_minmax(0,1fr)_auto] gap-y-0.5 [grid-template-areas:'title_status_info'_'read_read_read']"
+            : named
+              ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
+              : kept
+                ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note']"
+                : "grid-cols-[minmax(0,1fr)_auto_auto] [grid-template-areas:'read_status_info']"
         }`}
       >
-        <span id={titleId} className="text-control font-semibold text-ink [grid-area:title] max-lg:sr-only">
+        <span id={titleId} className={tabbed ? 'sr-only' : 'text-control font-semibold text-ink [grid-area:title]'}>
           {name}
         </span>
         <span className="[grid-area:status]">
-          <StatusTag status={meta.status} />
+          <StatusTag status={meta.status} quiet />
         </span>
         <span className="[grid-area:info]">{info}</span>
         {/* On a phone with a kept meal, the legend's entries are rows of the header grid (`contents`). */}
@@ -268,7 +274,7 @@ export default function SignalStrip({
               {t(`${second.series.meta.i18nKey}.short`)}
               <span ref={secondText} className="font-semibold whitespace-nowrap text-ink" />
               {totalSpan(secondTotal)}
-              <StatusTag status={second.series.meta.status} />
+              <StatusTag status={second.series.meta.status} quiet />
             </span>
           )}
           {kept && (

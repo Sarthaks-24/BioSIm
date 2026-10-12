@@ -6,9 +6,9 @@ import type { SignalStatus } from '@lifepeek/engine'
  * ■ simulated (solid), ◐ assumption (half), ▢ illustration (dashed outline).
  * The shapes are drawn, not typed, so they look the same in every font.
  */
-function StatusGlyph({ status }: { status: SignalStatus }) {
+function StatusGlyph({ status, size = 12 }: { status: SignalStatus; size?: number }) {
   return (
-    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false" className="shrink-0">
+    <svg viewBox="0 0 12 12" width={size} height={size} aria-hidden="true" focusable="false" className="shrink-0">
       {status === 'simulated' && <rect x="1" y="1" width="10" height="10" rx="1.5" fill="currentColor" />}
       {status === 'assumption' && (
         <>
@@ -33,16 +33,20 @@ function StatusGlyph({ status }: { status: SignalStatus }) {
   )
 }
 
-/** The status of a graph, a series or a layer: glyph + word from `status.<s>.label`, help as its tooltip. */
-export default function StatusTag({ status }: { status: SignalStatus }) {
+/**
+ * The status of a graph, a series or a layer: glyph + word from `status.<s>.label`, help as its
+ * tooltip. `quiet`: smaller and lighter, for a graph's header, where it sits by the title and must
+ * not read as one more line of the legend (council 2026-10-13).
+ */
+export default function StatusTag({ status, quiet = false }: { status: SignalStatus; quiet?: boolean }) {
   const { t } = useTranslation()
   return (
     <span
       data-status={status}
       title={t(`status.${status}.help`)}
-      className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold whitespace-nowrap text-ink-2"
+      className={`inline-flex shrink-0 items-center whitespace-nowrap text-ink-2 ${quiet ? 'gap-1 text-micro' : 'gap-1.5 text-caption font-semibold'}`}
     >
-      <StatusGlyph status={status} />
+      <StatusGlyph status={status} size={quiet ? 10 : 12} />
       {t(`status.${status}.label`)}
     </span>
   )

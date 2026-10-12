@@ -174,6 +174,9 @@ test('on the projector the graphs show one at a time, each plot at least 120 px 
       await expect(plots).toHaveCount(1)
       const box = await plots.first().boundingBox()
       expect(box!.height, `${tab}: plot height`).toBeGreaterThanOrEqual(120)
+      // The tab names the graph: no title repeating it above the plot ("Energy" twice).
+      const title = page.locator('figure figcaption > span[id]').filter({ visible: true }).first()
+      expect((await title.boundingBox())!.width, `${tab}: title shown only to screen readers`).toBeLessThanOrEqual(1)
     }
   }
 })
@@ -190,6 +193,22 @@ test('at 1440 × 900 the three graphs are stacked, each plot at least 90 px tall
     const plots = page.locator('figure svg[role="img"]').filter({ visible: true })
     await expect(plots).toHaveCount(3)
     for (const box of await Promise.all((await plots.all()).map((p) => p.boundingBox()))) expect(box!.height).toBeGreaterThanOrEqual(90)
+    // Each graph says once how sure we are, by its title, smaller and lighter than the legend, so
+    // it does not read as one more line of the legend (council SHOULD 10).
+    for (const figure of await page
+      .locator('figure')
+      .filter({ has: page.locator('svg[role="img"]') })
+      .all()) {
+      expect((await figure.locator('figcaption > span[id]').boundingBox())!.width).toBeGreaterThan(1)
+      const status = figure.locator('figcaption > [class*="grid-area:status"] [data-status]')
+      await expect(status).toHaveCount(1)
+      const px = (l: typeof status) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+      // Hindi captions never go below 14 px, so there it is the same size, but not bold.
+      const legend = await px(figure.locator('figcaption [class*="grid-area:read"]').first())
+      if (url.endsWith('lang=hi')) expect(await px(status)).toBeLessThanOrEqual(legend)
+      else expect(await px(status)).toBeLessThan(legend)
+      expect(await status.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('400')
+    }
   }
 })
 

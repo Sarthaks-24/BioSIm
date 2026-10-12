@@ -42,6 +42,8 @@ interface RunStripProps {
   range?: Domain
   /** A second line on the same axis (energy used at rest beside energy coming in). */
   second?: Series | null
+  /** The graphs show one at a time, under tabs that name them. */
+  tabbed?: boolean
   className?: string
 }
 
@@ -57,7 +59,7 @@ const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
  * Energy is two lines on one kcal/h axis: coming in (this meal) and used at rest (the same for
  * every meal), each with its running total; it is described, never scored (plan-graphs §3.8).
  */
-export function RunStrip({ series, run, kept, runName, keptName, profile, range, second, className }: RunStripProps) {
+export function RunStrip({ series, run, kept, runName, keptName, profile, range, second, tabbed, className }: RunStripProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   // The run's table holds only active signals.
@@ -121,6 +123,7 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
       totals={totals}
       title={title}
       summary={summary || undefined}
+      tabbed={tabbed}
       info={
         <HowWeKnow
           meta={series.meta}
