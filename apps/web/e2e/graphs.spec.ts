@@ -155,7 +155,7 @@ test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no 
 
   // Described, never scored: the summary ends with the G6 sentence.
   await expect(strip).toHaveAccessibleDescription(
-    /^In the first 6 h, about \d+ kcal from this meal entered the blood, and the resting body used about 375 kcal\. When more comes in than is used, the body stores the extra for later\.$/,
+    /^In the first 6 h, about \d+ kcal from this meal entered the body, and the resting body used about 375 kcal\. When more comes in than is used, the body stores the extra for later\.$/,
   )
 })
 
