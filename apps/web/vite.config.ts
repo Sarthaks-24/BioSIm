@@ -31,7 +31,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         // The 3D chunk is large; still cache it so the app works offline in class.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/api\//],
+        // Plain files that must reach the server, not the app shell.
+        navigateFallbackDenylist: [/^\/api\//, /^\/THIRD_PARTY_NOTICES\.txt$/],
       },
     }),
   ],

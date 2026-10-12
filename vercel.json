@@ -2,5 +2,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": "apps/web/dist",
   "installCommand": "npm ci",
-  "rewrites": [{ "source": "/((?!api/|assets/|sw.js|workbox-|manifest.webmanifest|favicon|icon-).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/((?!api/|assets/|sw.js|workbox-|manifest.webmanifest|favicon|icon-|THIRD_PARTY_NOTICES).*)", "destination": "/index.html" }]
 }

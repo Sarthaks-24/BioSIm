@@ -1,9 +1,20 @@
-# BioSim
+# LifePeek
+
+**LifePeek: peek inside living things.** · LifePeek: सजीवों के अंदर झाँकिए
+
+[![Live app](https://img.shields.io/badge/live-lifepeek.vercel.app-14213d)](https://lifepeek.vercel.app)
+[![Code: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue)](LICENSE)
+[![Content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey)](LICENSE-CONTENT.md)
+[![CI](https://github.com/Sarthaks-24/lifepeek/actions/workflows/ci.yml/badge.svg)](https://github.com/Sarthaks-24/lifepeek/actions/workflows/ci.yml)
+
+**Try it: <https://lifepeek.vercel.app>** (free, no login, works offline once loaded)
+
+*LifePeek was called BioSim until 2026.*
 
 Compare what happens to two meals inside your body. Pick a meal for A and a meal for B, then
 watch them travel through a 3D body side by side. You can see how fast each leaves the stomach,
-where the carbohydrate, protein, fat, fibre and water go, and how blood sugar typically
-responds.
+where the carbohydrate, protein, fat, fibre and water go, and how blood sugar typically responds.
+Other living things (animals, plants, cells) are planned.
 
 It is built for classrooms:
 
@@ -13,7 +24,15 @@ It is built for classrooms:
 - works offline once loaded
 - every comparison has a link you can share
 
-> This is an educational model of a typical healthy adult. It is not medical advice.
+> **Educational, not medical advice.** LifePeek is a simplified model of a typical healthy adult.
+> Its times and blood-sugar values are typical ranges and vary a lot between people. Don't use it
+> to make health, diet or medical decisions.
+
+**Privacy:** LifePeek has no accounts, no ads, no cookies and no analytics, and collects no
+personal data. See the [Privacy page](https://lifepeek.vercel.app/privacy).
+
+**Made by** [Sarthak (@Sarthaks-24)](https://github.com/Sarthaks-24). Every number is cited;
+found a mistake? Use "Report a mistake" in the app or [open an issue](https://github.com/Sarthaks-24/lifepeek/issues).
 
 ## Run it locally
 
@@ -59,3 +78,16 @@ The validator rejects numbers that don't add up.
   - `ALLOWED_ORIGINS`: the origins allowed to call the API
   - `ADMIN_TOKEN`: the token for reading error reports
   - `TRUST_PROXY=1`: only behind a proxy you control that sets `X-Forwarded-For`
+
+## Licence
+
+| What | Licence |
+|---|---|
+| Code | [Apache License 2.0](LICENSE). Keep the [NOTICE](NOTICE) file in copies. |
+| Lesson text, translations, illustrations, docs, and our own food-file structure and labels | [CC BY 4.0](LICENSE-CONTENT.md). Credit: "LifePeek by Sarthak, https://lifepeek.vercel.app, CC BY 4.0". |
+| Nutrient and GI values from USDA, the Indian Nutrient Databank, Atkinson et al. and others | **Not relicensed by us.** Cited in each food file; see [DATA-SOURCES.md](DATA-SOURCES.md). |
+| The LifePeek name and logo | Not licensed. Forks must use a different name; see [TRADEMARKS.md](TRADEMARKS.md). |
+| Bundled libraries and fonts | Their own licences; see [`/THIRD_PARTY_NOTICES.txt`](https://lifepeek.vercel.app/THIRD_PARTY_NOTICES.txt). |
+
+Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md) (commits must be signed off with `git commit -s`)
+and [GOVERNANCE.md](GOVERNANCE.md).

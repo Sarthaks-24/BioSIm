@@ -20,6 +20,11 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Third-party notices are served
+        run: |
+          test -s apps/web/dist/THIRD_PARTY_NOTICES.txt
+          grep -q "SIL OPEN FONT LICENSE" apps/web/dist/THIRD_PARTY_NOTICES.txt
+          grep -q "three" apps/web/dist/THIRD_PARTY_NOTICES.txt
       - name: Browser smoke tests
         run: |
           npx playwright install --with-deps chromium

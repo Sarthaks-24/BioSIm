@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use LifePeek, please cite it as below."
+title: "LifePeek"
+type: software
+authors:
+  - given-names: "Sarthak"
+    alias: "Sarthaks-24"
+repository-code: "https://github.com/Sarthaks-24/lifepeek"
+url: "https://lifepeek.vercel.app"
+license: Apache-2.0
