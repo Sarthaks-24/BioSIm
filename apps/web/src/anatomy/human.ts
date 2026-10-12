@@ -1,4 +1,4 @@
-import { CatmullRomCurve3, Vector3 } from 'three'
+import { Spline3, Vec3, type Writable, type XYZ } from './spline.ts'
 import type { Particle } from '@lifepeek/engine'
 
 /**
@@ -11,8 +11,8 @@ import type { Particle } from '@lifepeek/engine'
  * always travels inside the organs it is drawn in.
  */
 
-const v = (x: number, y: number, z: number) => new Vector3(x, y, z)
-const curve = (pts: Vector3[], tension = 0.5) => new CatmullRomCurve3(pts, false, 'catmullrom', tension)
+const v = (x: number, y: number, z: number): XYZ => ({ x, y, z })
+const curve = (pts: XYZ[], tension = 0.5) => new Spline3(pts, tension)
 
 /** Body silhouette as [radius, height] pairs, bottom to neck. The 3D lathe and the flat outline both use it. */
 export const TORSO_PROFILE: [number, number][] = [
@@ -146,7 +146,7 @@ export const stomachFill = (grams: number) => Math.sqrt(Math.min(1, Math.max(0, 
  * and forth in tight loops that fill the space framed by the large intestine.
  */
 export const SMALL_INTESTINE = (() => {
-  const pts: Vector3[] = [
+  const pts: XYZ[] = [
     v(-0.02, 0.44, 0.1),
     v(-0.13, 0.4, 0.06),
     v(-0.21, 0.27, 0.02),
@@ -216,13 +216,16 @@ export const SPLEEN = { center: v(0.74, 0.74, -0.16) }
 // ---------------------------------------------------------------------------------------------
 
 /** Deterministic pseudo-random offset inside a tube cross-section. */
-function jitter(seed: [number, number, number], radius: number, out: Vector3): Vector3 {
+function jitter(seed: [number, number, number], radius: number, out: Vec3): Vec3 {
   const a = seed[0] * Math.PI * 2
   const r = Math.sqrt(seed[1]) * radius
   return out.set(Math.cos(a) * r, Math.sin(a) * r * 0.9, (seed[2] - 0.5) * radius * 1.1)
 }
 
-const tmp = new Vector3()
+const tmp = new Vec3()
+
+/** out += d */
+const add = (out: Writable, d: XYZ) => out.set(out.x + d.x, out.y + d.y, out.z + d.z)
 
 /** Swallowing takes a few seconds; stretch it so it is visible on the timeline. */
 const SWALLOW_MIN = 0.6
@@ -231,11 +234,11 @@ const SWALLOW_MIN = 0.6
  * Where a particle is at time t (minutes), and how big it should be drawn (0 = hidden).
  * Writes into `out` to avoid allocating every frame.
  */
-export function particlePosition(p: Particle, t: number, out: Vector3): number {
+export function particlePosition(p: Particle, t: number, out: Writable): number {
   const [s0, s1] = p.seed
   if (t < p.stomachIn - SWALLOW_MIN) {
     jitter(p.seed, 0.06, tmp)
-    out.copy(MOUTH).add(tmp)
+    out.set(MOUTH.x + tmp.x, MOUTH.y + tmp.y, MOUTH.z + tmp.z)
     return 1
   }
   if (t < p.stomachIn) {
@@ -249,7 +252,7 @@ export function particlePosition(p: Particle, t: number, out: Vector3): number {
     const base = p.phase === 'liquid' ? 0.4 + 0.42 * s0 : 0.12 + 0.68 * s0
     const u = Math.min(0.9, Math.max(0.1, base + 0.05 * Math.sin(t * 0.08 + s1 * 6.28)))
     STOMACH.getPointAt(u, out)
-    out.add(jitter(p.seed, stomachRadius(u) * 0.6, tmp))
+    add(out, jitter(p.seed, stomachRadius(u) * 0.6, tmp))
     return 1
   }
   // Absorbed particles shrink away over a few minutes; before that they are full size.
@@ -258,13 +261,13 @@ export function particlePosition(p: Particle, t: number, out: Vector3): number {
   if (t < p.colonIn) {
     const u = (t - p.stomachOut) / (p.colonIn - p.stomachOut)
     SMALL_INTESTINE.getPointAt(Math.min(1, u), out)
-    out.add(jitter(p.seed, 0.025, tmp))
+    add(out, jitter(p.seed, 0.025, tmp))
     return fade
   }
   if (t < p.colonOut) {
     const u = (t - p.colonIn) / (p.colonOut - p.colonIn)
     LARGE_INTESTINE.getPointAt(Math.min(1, u), out)
-    out.add(jitter(p.seed, 0.045, tmp))
+    add(out, jitter(p.seed, 0.045, tmp))
     return fade
   }
   return 0

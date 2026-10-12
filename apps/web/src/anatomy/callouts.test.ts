@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Vector3 } from 'three'
+import type { XYZ } from './spline.ts'
 import { CALLOUTS, layoutCallouts, type CalloutId, type CalloutInput } from './callouts.ts'
 
 type Box = { x: number; y: number; w: number; h: number }
@@ -91,7 +91,7 @@ describe('layoutCallouts', () => {
     [830, 680],
   ])('lays out the body labels without overlaps in a %i×%i picture', (width, height) => {
     const scale = Math.min(width / 2.9, height / 5.15)
-    const project = (p: Vector3) => [width / 2 + p.x * scale, height / 2 + 0.675 * scale - p.y * scale] as const
+    const project = (p: XYZ) => [width / 2 + p.x * scale, height / 2 + 0.675 * scale - p.y * scale] as const
     const charPx = { en: 7, hi: 8.5 }
     const names: Record<CalloutId, { en: string; hi: string }> = {
       mouth: { en: 'Mouth', hi: 'मुँह' },

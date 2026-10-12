@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Vector3 } from 'three'
+import type { XYZ } from './spline.ts'
 import type { StageId } from '@lifepeek/engine'
 import { CALLOUTS, layoutCallouts, type CalloutId, type CalloutInput } from './callouts.ts'
 
@@ -43,7 +43,7 @@ export function useCalloutSpecs(stage: StageId, width: number): CalloutSpec[] {
 }
 
 /** Screen position (CSS px) of a scene point, or null if it is behind the camera. */
-export type Project = (p: Vector3) => [number, number] | null
+export type Project = (p: XYZ) => [number, number] | null
 
 export interface Callouts {
   overlay: ReactNode
