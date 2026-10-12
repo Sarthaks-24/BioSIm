@@ -131,6 +131,103 @@ Rules for the reviewer:
 | `feedback.publicWarning` | This opens a public page on GitHub. Don't type your name, school or phone number. | इससे GitHub पर एक सार्वजनिक पेज खुलता है। अपना नाम, स्कूल या फ़ोन नंबर न लिखें। | draft |
 | `feedback.openIssueDirect` | Open the report on GitHub | रिपोर्ट GitHub पर खोलें | draft |
 
+## Signals, events, limits and labels (v2 screen, WP-10)
+
+Names, short labels, one-line meanings and screen-reader summaries for the graphs and timeline
+of the new screen, plus the "How we know" texts. Not shown on screen yet (the new screen is built
+in later work packages). Notes for the reviewer:
+
+- These rows reuse Hindi that is already in the app, so they are lower risk: `signals.gut.small.contentG.short`, `signals.gut.colon.contentG.short`, `signals.gut.leftBodyG.name`, `signals.blood.glucose.name`, `signals.blood.glucose.short`, `signals.event.stomachHalfEmpty.name`, `signals.event.firstLeftovers.name`, `signals.event.firstLeftovers.desc`, `signals.event.never`, `limits.glucoseTail`.
+- `limits.energyInAtwater` is new wording: it says that "energy coming in" reads a few per cent low,
+  and why. Please check that it is clear for a class 7–10 student.
+- `systems.digestion.name` (पाचन) and `lifeProcess.nutrition` (पोषण): please confirm these are the NCERT terms.
+- `status.assumption.label` ("Best guess"): is "सबसे अच्छा अनुमान" natural, or is there a better short tag?
+- Numbers keep Latin digits; `mg/dL` stays in Latin letters, as on glucometers.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `status.simulated.label` | Calculated from studies | अध्ययनों के आधार पर गणना | draft |
+| `status.simulated.help` | Worked out by the model from published measurements. | मॉडल ने प्रकाशित मापों से इसकी गणना की है। | draft |
+| `status.assumption.label` | Best guess | सबसे अच्छा अनुमान | draft |
+| `status.assumption.help` | A formula or a reasonable estimate, not measured for this meal. | एक सूत्र या उचित अनुमान, जिसे इस भोजन के लिए मापा नहीं गया है। | draft |
+| `status.illustration.label` | Drawing only | केवल चित्र | draft |
+| `status.illustration.help` | A picture to show the idea. The speed is not calculated. | बात समझाने के लिए एक चित्र। इसकी गति की गणना नहीं की गई है। | draft |
+| `status.howWeKnow` | How we know | हमें कैसे पता है | draft |
+| `status.sameEveryMeal` | The same for every meal (resting body) | हर भोजन के लिए एक जैसा (आराम करता शरीर) | draft |
+| `signals.gut.stomach.contentG.name` | Food in the stomach | आमाशय में भोजन | draft |
+| `signals.gut.stomach.contentG.short` | In stomach | आमाशय में | draft |
+| `signals.gut.stomach.contentG.desc` | Grams of the meal still in the stomach, as eaten (food and drink). | भोजन और पेय का कितना भाग (ग्राम में) अभी आमाशय में है, उसी रूप में जैसा खाया-पिया गया था। | draft |
+| `signals.gut.stomach.contentG.summary` | The stomach holds {{start}} g at the start. Half of the meal has left by {{half}}, and it is almost empty by {{empty}}. | शुरू में आमाशय में {{start}} ग्राम भोजन है। {{half}} तक आधा भोजन निकल जाता है, और {{empty}} तक आमाशय लगभग खाली हो जाता है। | draft |
+| `signals.gut.stomach.liquidG.name` | Drink in the stomach | आमाशय में पेय | draft |
+| `signals.gut.stomach.liquidG.short` | Drink | पेय | draft |
+| `signals.gut.stomach.liquidG.desc` | Grams of the meal's drinks still in the stomach. | भोजन के साथ लिए गए पेय का कितना भाग (ग्राम में) अभी आमाशय में है। | draft |
+| `signals.gut.stomach.solidG.name` | Solid food in the stomach | आमाशय में ठोस भोजन | draft |
+| `signals.gut.stomach.solidG.short` | Solid food | ठोस भोजन | draft |
+| `signals.gut.stomach.solidG.desc` | Grams of the meal's solid food still in the stomach. | ठोस भोजन का कितना भाग (ग्राम में) अभी आमाशय में है। | draft |
+| `signals.gut.small.contentG.name` | In the small intestine | छोटी आँत में | draft |
+| `signals.gut.small.contentG.short` | Small intestine | छोटी आँत | draft |
+| `signals.gut.small.contentG.desc` | Grams from the meal now in the small intestine (carbohydrate, protein, fat, fibre and water). | भोजन का कितना भाग (ग्राम में) अभी छोटी आँत में है (कार्बोहाइड्रेट, प्रोटीन, वसा, रेशा और पानी)। | draft |
+| `signals.gut.colon.contentG.name` | In the large intestine | बड़ी आँत में | draft |
+| `signals.gut.colon.contentG.short` | Large intestine | बड़ी आँत | draft |
+| `signals.gut.colon.contentG.desc` | Grams from the meal now in the large intestine, mostly fibre and water. | भोजन का कितना भाग (ग्राम में) अभी बड़ी आँत में है, ज़्यादातर रेशा और पानी। | draft |
+| `signals.gut.absorbed.carbsG.name` | Carbohydrate absorbed | अवशोषित कार्बोहाइड्रेट | draft |
+| `signals.gut.absorbed.carbsG.short` | Carbohydrate | कार्बोहाइड्रेट | draft |
+| `signals.gut.absorbed.carbsG.desc` | Grams of the meal's carbohydrate taken into the body so far (fibre not included). | भोजन का कितना कार्बोहाइड्रेट (ग्राम में) अब तक शरीर में अवशोषित हो चुका है (रेशा इसमें शामिल नहीं)। | draft |
+| `signals.gut.absorbed.proteinG.name` | Protein absorbed | अवशोषित प्रोटीन | draft |
+| `signals.gut.absorbed.proteinG.short` | Protein | प्रोटीन | draft |
+| `signals.gut.absorbed.proteinG.desc` | Grams of the meal's protein taken into the body so far. | भोजन का कितना प्रोटीन (ग्राम में) अब तक शरीर में अवशोषित हो चुका है। | draft |
+| `signals.gut.absorbed.fatG.name` | Fat absorbed | अवशोषित वसा | draft |
+| `signals.gut.absorbed.fatG.short` | Fat | वसा | draft |
+| `signals.gut.absorbed.fatG.desc` | Grams of the meal's fat taken into the body so far. | भोजन की कितनी वसा (ग्राम में) अब तक शरीर में अवशोषित हो चुकी है। | draft |
+| `signals.gut.absorbed.waterG.name` | Water absorbed | अवशोषित पानी | draft |
+| `signals.gut.absorbed.waterG.short` | Water | पानी | draft |
+| `signals.gut.absorbed.waterG.desc` | Grams of the meal's water taken into the body so far, in the small and large intestine. | भोजन का कितना पानी (ग्राम में) अब तक छोटी और बड़ी आँत में अवशोषित हो चुका है। | draft |
+| `signals.gut.absorbed.fibreG.name` | Fibre absorbed (always 0) | अवशोषित रेशा (हमेशा 0) | draft |
+| `signals.gut.absorbed.fibreG.short` | Fibre | रेशा | draft |
+| `signals.gut.absorbed.fibreG.desc` | The body cannot digest fibre, so none of it is absorbed. | शरीर रेशे को पचा नहीं सकता, इसलिए इसका कोई भाग अवशोषित नहीं होता। | draft |
+| `signals.gut.leftBodyG.name` | Left the body | शरीर से बाहर निकला | draft |
+| `signals.gut.leftBodyG.short` | Left | बाहर निकला | draft |
+| `signals.gut.leftBodyG.desc` | Grams from the meal that have left the body so far, mostly fibre and water. | भोजन का कितना भाग (ग्राम में) अब तक शरीर से बाहर निकल चुका है, ज़्यादातर रेशा और पानी। | draft |
+| `signals.blood.glucose.name` | Blood sugar | रक्त शर्करा | draft |
+| `signals.blood.glucose.short` | Blood sugar | रक्त शर्करा | draft |
+| `signals.blood.glucose.desc` | Sugar (glucose) in the blood of a typical healthy adult, in mg/dL. Before eating it is about 90. | एक सामान्य स्वस्थ वयस्क के रक्त में शर्करा (ग्लूकोज़), mg/dL में। खाने से पहले यह लगभग 90 होती है। | draft |
+| `signals.blood.glucose.band.name` | How much people differ | लोगों में कितना अंतर होता है | draft |
+| `signals.blood.glucose.summary` | Blood sugar starts at about {{start}} mg/dL, is highest at about {{peak}} mg/dL after {{peakTime}}, and is back near the before-meal level by {{backTime}}. | रक्त शर्करा लगभग {{start}} mg/dL से शुरू होती है, {{peakTime}} बाद लगभग {{peak}} mg/dL पर सबसे अधिक होती है, और {{backTime}} तक खाने से पहले के स्तर के पास लौट आती है। | draft |
+| `signals.blood.glucose.summaryNone` | Blood sugar stays near {{start}} mg/dL: this meal has almost no sugar or starch. | रक्त शर्करा लगभग {{start}} mg/dL पर रहती है: इस भोजन में लगभग कोई शर्करा या मंड (स्टार्च) नहीं है। | draft |
+| `signals.energy.inRate.name` | Energy coming in | आने वाली ऊर्जा | draft |
+| `signals.energy.inRate.short` | Coming in | आ रही | draft |
+| `signals.energy.inRate.desc` | Food energy entering the blood each hour, from absorbed carbohydrate, protein and fat. | अवशोषित कार्बोहाइड्रेट, प्रोटीन और वसा से हर घंटे रक्त में आने वाली भोजन-ऊर्जा। | draft |
+| `signals.energy.inRate.summary` | In the first {{time}}, about {{in}} kcal from this meal entered the blood, and the resting body used about {{used}} kcal. When more comes in than is used, the body stores the extra for later. | पहले {{time}} में इस भोजन से लगभग {{in}} किलो कैलोरी रक्त में पहुँची, और आराम करते शरीर ने लगभग {{used}} किलो कैलोरी खर्च की। जब खर्च से ज़्यादा ऊर्जा आती है, तो शरीर बची हुई ऊर्जा को बाद के लिए जमा कर लेता है। | draft |
+| `signals.energy.inTotal.name` | Energy taken in so far | अब तक ली गई ऊर्जा | draft |
+| `signals.energy.inTotal.short` | Taken in | ली गई | draft |
+| `signals.energy.inTotal.desc` | Food energy from this meal that has entered the blood so far. | इस भोजन से अब तक रक्त में पहुँची कुल ऊर्जा। | draft |
+| `signals.energy.usedRate.name` | Energy used at rest | आराम में खर्च होने वाली ऊर्जा | draft |
+| `signals.energy.usedRate.short` | Used | खर्च | draft |
+| `signals.energy.usedRate.desc` | Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the adult model. | वयस्क मॉडल में, आराम की हालत में शरीर को ज़िंदा रखने (साँस, धड़कन, गर्म रहना) के लिए हर घंटे खर्च होने वाली ऊर्जा। | draft |
+| `signals.energy.usedTotal.name` | Energy used so far | अब तक खर्च हुई ऊर्जा | draft |
+| `signals.energy.usedTotal.short` | Used so far | अब तक खर्च | draft |
+| `signals.energy.usedTotal.desc` | Energy the resting body has used since the meal started. It is the same for every meal. | भोजन शुरू होने के बाद से आराम करते शरीर ने जितनी ऊर्जा खर्च की है। यह हर भोजन के लिए एक जैसी है। | draft |
+| `signals.event.stomachHalfEmpty.name` | Half has left the stomach | आधा भोजन आमाशय से निकल गया | draft |
+| `signals.event.glucosePeak.name` | Blood sugar highest | रक्त शर्करा सबसे अधिक | draft |
+| `signals.event.glucoseBackToBase.name` | Blood sugar back near the before-meal level | रक्त शर्करा खाने से पहले के स्तर के पास लौटी | draft |
+| `signals.event.mostlyAbsorbed.name` | Nutrients mostly absorbed | पोषक तत्व ज़्यादातर अवशोषित | draft |
+| `signals.event.firstLeftovers.name` | Leftovers start leaving the body | अवशेष शरीर से बाहर निकलने लगे | draft |
+| `signals.event.firstLeftovers.desc` | Depends mostly on the person, not the meal | यह भोजन पर नहीं, मुख्य रूप से व्यक्ति पर निर्भर करता है | draft |
+| `signals.event.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
+| `limits.glucoseTail` | After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner. | बड़े, वसायुक्त भोजन के बाद मॉडल रक्त शर्करा में एक छोटी, धीमी पूँछ दिखाता है; असली शरीर में यह आमतौर पर कुछ जल्दी सामान्य हो जाती है। | draft |
+| `limits.glucoseBand` | The shaded band is a best guess of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
+| `limits.energyInAtwater` | Uses the standard 4, 4 and 9 kcal per gram for carbohydrate, protein and fat, so the total can differ a little from the food label. These numbers already allow for the part of food the body does not absorb, but the model uses them only on what was absorbed, so energy coming in reads a few per cent low. Fibre's small energy is left out. | कार्बोहाइड्रेट, प्रोटीन और वसा के लिए प्रति ग्राम 4, 4 और 9 किलो कैलोरी के मानक मान लिए गए हैं, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मान पहले से ही मानकर चलते हैं कि भोजन का कुछ भाग शरीर में अवशोषित नहीं होता, फिर भी मॉडल इन्हें केवल अवशोषित भाग पर लगाता है, इसलिए आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे की थोड़ी ऊर्जा नहीं गिनी गई है। | draft |
+| `limits.energyUsedResting` | This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal. | यह आराम करते एक वयस्क (ICMR-NIN 2020 का संदर्भ वयस्क, 65 किलो) के लिए एक सूत्र है, कोई माप नहीं। यह भोजन के साथ नहीं बदलता। | draft |
+| `limits.backToBase` | "Back near the before-meal level" means within 5 mg/dL of it. | "खाने से पहले के स्तर के पास" का अर्थ है उससे 5 mg/dL के भीतर। | draft |
+| `profiles.adult-ref.tag` | Adult model | वयस्क मॉडल | draft |
+| `profiles.adult-ref.desc` | Based on the ICMR-NIN 2020 reference adult man (65 kg), at rest. Digestion times come from studies of adults. | ICMR-NIN 2020 के संदर्भ वयस्क पुरुष (65 किलो) पर आधारित, आराम की अवस्था में। पाचन के समय वयस्कों पर हुए अध्ययनों से लिए गए हैं। | draft |
+| `organisms.human.name` | Human | मनुष्य | draft |
+| `systems.digestion.name` | Digestion | पाचन | draft |
+| `lifeProcess.nutrition` | Nutrition | पोषण | draft |
+| `units.g` | {{n}} g | {{n}} ग्राम | draft |
+| `units.mgdl` | {{n}} mg/dL | {{n}} mg/dL | draft |
+| `units.kcalPerH` | {{n}} kcal/h | {{n}} किलो कैलोरी/घंटा | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___

@@ -1,0 +1,16 @@
+import type * as HumanAnatomy from '../../anatomy/human.ts'
+import type { OrganDef } from '../types.ts'
+
+/** The exports of anatomy/human.ts, so a typo in `anatomyRef` fails the typecheck. */
+type HumanAnatomyRef = keyof typeof HumanAnatomy
+
+/** Names reuse the v1 keys: the gut stages under `stages.<id>.name`, the other organs under `anatomy.<id>`. */
+export const HUMAN_ORGANS: readonly OrganDef<HumanAnatomyRef>[] = [
+  { id: 'mouth', i18nKey: 'stages.mouth.name', anatomyRef: 'MOUTH' },
+  { id: 'esophagus', i18nKey: 'stages.esophagus.name', anatomyRef: 'ESOPHAGUS' },
+  { id: 'stomach', i18nKey: 'stages.stomach.name', anatomyRef: 'STOMACH', drives: { fill: 'gut.stomach.contentG' } },
+  { id: 'smallIntestine', i18nKey: 'stages.smallIntestine.name', anatomyRef: 'SMALL_INTESTINE' },
+  { id: 'largeIntestine', i18nKey: 'stages.largeIntestine.name', anatomyRef: 'LARGE_INTESTINE' },
+  { id: 'liver', i18nKey: 'anatomy.liver', anatomyRef: 'LIVER' },
+  { id: 'pancreas', i18nKey: 'anatomy.pancreas', anatomyRef: 'PANCREAS' },
+]

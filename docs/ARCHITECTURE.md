@@ -21,7 +21,7 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    human set. The run carries its own clock (`run.horizonMin`, `run.stepMin`, `run.length`), and
    `simulate({ organism?, items, profile? }, { lookup })` is the organism-ready way in
    (`simulate(meal)` still works). `test/plumbing.test.ts` guards this.
-2. **One source for anatomy.** `apps/web/src/anatomy/anatomy.ts` defines the curves. The 3D
+2. **One source for anatomy.** `apps/web/src/anatomy/human.ts` defines the curves. The 3D
    models (`three/geometry.ts`), the flat fallback and the particle paths all read them, so food
    always travels inside the organs it is drawn in.
 3. **The URL is the saved state.** `?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=120&lang=hi`.
@@ -52,14 +52,15 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 |---|---|
 | `pages/` | One page per route: home, simulator, teach, science, error and 404 |
 | `components/` | UI pieces: meal picker, verdict line, timeline, stage panel, charts, lesson view, share, feedback |
-| `anatomy/` | The gut curves, torso outline and particle positions shared by 3D and flat views |
+| `anatomy/` | One file per organism (`human.ts`): the gut curves, torso outline and particle positions shared by 3D and flat views |
+| `registry/` | Organisms, systems and organs as data (`human/`), checked by `registry.test.ts`. A new system is one entry plus a flat and a 3D layer |
 | `three/` | WebGL scene and organ models (lazy-loaded) |
 | `flat/` | Canvas fallback, also used if WebGL fails or its context is lost |
 | `state/sim.ts` | Zustand store: meals, time, play, pace; `presentMeals`, `mealLabel` helpers |
 | `hooks/` | `useSimulation` (memoised engine run), `useClock` (one clock, steady pace along the bar), `useUrlSync` |
 | `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
 | `data/` | Loads the food files at build time |
-| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing |
+| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry) |
 
 ## Performance
 
