@@ -80,7 +80,8 @@ describe('gastric emptying', () => {
 
   golden('gut.stomach.liquidG', ['brener1983'], 'a glucose drink empties at ~2.13 kcal/min (Brener et al. 1983)', () => {
     const t90 = run('glucose-50').events.stomach90EmptyMin!
-    const expected = (0.9 * 200) / PARAMS.stomach.energyKcalPerMin
+    // 2.13 kcal/min is Brener et al.'s figure, written out here (not read from PARAMS) so a change to the parameter fails this test.
+    const expected = (0.9 * 200) / 2.13
     expect(Math.abs(t90 - expected)).toBeLessThan(15)
   })
 
