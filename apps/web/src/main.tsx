@@ -86,11 +86,6 @@ void i18nReady.then(draw, draw)
 // download (size budget).
 // A school browser may block it: the page works the same without (offline use aside).
 if (import.meta.env.PROD && 'serviceWorker' in navigator)
-  addEventListener(
-    'load',
-    () =>
-      import('./components/UpdateToast.tsx')
-        .then((m) => m.watchForUpdates())
-        .catch(() => undefined),
-    { once: true },
-  )
+  addEventListener('load', () => import('./components/UpdateToast.tsx').then((m) => m.watchForUpdates()).catch(() => undefined), {
+    once: true,
+  })
