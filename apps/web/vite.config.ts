@@ -104,6 +104,10 @@ export default defineConfig({
   build: {
     // For scripts/check-budget.mjs (route sizes). Under dist/.vite/, which the service worker does not precache.
     manifest: true,
+    // A lazy chunk's preload list named the entry chunk (index-*.js) too. The page loaded it with a
+    // <script>, not a <link>, so the preload helper added a modulepreload for it that nothing used:
+    // a WebKit console warning on every /sim load (B19). The entry is always loaded already.
+    modulePreload: { resolveDependencies: (_file, deps) => deps.filter((dep) => !/^assets\/index-[\w-]+\.js$/.test(dep)) },
     rolldownOptions: {
       output: {
         codeSplitting: {

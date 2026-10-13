@@ -50,8 +50,8 @@
       "grossKB": 0,
       "clawbackKB": 0,
       "plannedNetKB": 0,
-      "measuredNetKB": null,
-      "measuredAt": null
+      "measuredNetKB": 0.1,
+      "measuredAt": "2026-10-13"
     },
     {
       "fp": "FP-3",

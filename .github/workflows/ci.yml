@@ -138,3 +138,12 @@ jobs:
         env:
           CI: 'true'
           E2E_ENGINES: '1'
+      # A 40-minute lesson on one page, for leaks (T7, report): nightly only.
+      - name: Long lesson (report)
+        if: ${{ !cancelled() && github.event_name == 'schedule' }}
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e -w @lifepeek/web -- --project=lesson
+        env:
+          CI: 'true'
+          E2E_NIGHTLY: '1'

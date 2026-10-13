@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { onlyIn } from './helpers/gate.ts'
+import { bodySettled, onlyIn } from './helpers/gate.ts'
 
 // Projector theme v2 (WP-17: UI-5, G9, 3D-5, council 2026-10-13 #7) and the header's touch
 // targets (A11). Projects projector (1280 × 800, projector mode on) and phone (390 × 844).
@@ -27,6 +27,8 @@ for (const lang of ['en', 'hi'] as const) {
     await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
     await expect(page.locator('html')).toHaveAttribute('lang', lang)
     await page.locator('figure [data-line="run"]').first().waitFor()
+    // The organ labels are measured below: on the body that stays, not the stand-in it replaces.
+    await bodySettled(page)
 
     // The stage is the only page shown to a room: the site nav is hidden, the two buttons stay.
     await expect(page.getByRole('navigation')).toBeHidden()

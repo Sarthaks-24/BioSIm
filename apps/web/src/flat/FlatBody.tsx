@@ -52,7 +52,11 @@ const LIVER_OUTLINE: [number, number][] = [
 ]
 const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.25 }
 
-export default function FlatBody({ sim, label }: { sim: Simulation; label: string }) {
+/**
+ * `final`: this is the body the stage shows (no WebGL, or it failed), not the stand-in while the 3D
+ * body loads; once drawn it says so with `data-ready`, which the e2e tests wait for.
+ */
+export default function FlatBody({ sim, label, final = false }: { sim: Simulation; label: string; final?: boolean }) {
   const wrapper = useRef<HTMLDivElement>(null)
   const still = useRef<HTMLCanvasElement>(null)
   const moving = useRef<HTMLCanvasElement>(null)
@@ -113,6 +117,7 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
       role="img"
       aria-label={label}
       data-body="flat"
+      data-ready={final && w > 0 && h > 0 ? '' : undefined}
       data-particles={reduced ? 'still' : 'tumbling'}
       className="relative h-full w-full"
     >

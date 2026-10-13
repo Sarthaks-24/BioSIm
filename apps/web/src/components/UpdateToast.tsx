@@ -20,18 +20,38 @@ const CHECK_EVERY_MS = 60 * 60 * 1000
  *
  * Loaded after the page has loaded (main.tsx), never part of a page's first download. It
  * registers the service worker itself (vite.config.ts `injectRegister: false`).
+ *
+ * Only a real update shows the note (B16): this page was opened by an older worker (a controller
+ * at load) **and** a new one is waiting. vite-plugin-pwa also calls `onNeedRefresh` when a first
+ * install finishes while another LifePeek tab is open (`installed` with `isExternal`): nothing is
+ * new then, and the note was false. A blocked service worker (a school browser) is no error.
  */
 export function watchForUpdates() {
+  let sw: ServiceWorkerContainer
+  try {
+    sw = navigator.serviceWorker
+  } catch {
+    return // site data blocked: the getter throws (Firefox)
+  }
+  if (!sw) return
+  const hadController = !!sw.controller
+  let registration: ServiceWorkerRegistration | undefined
   const updateSW = registerSW({
     immediate: true,
-    onNeedRefresh: () => show(() => void updateSW(true)),
-    onRegisteredSW: (_url, registration) => {
-      if (!registration) return
+    onNeedRefresh: () => {
+      if (!hadController) return
+      const found = registration ? Promise.resolve(registration) : sw.getRegistration()
+      found.then((r) => r?.waiting && show(() => void updateSW(true))).catch(() => undefined)
+    },
+    onRegisteredSW: (_url, r) => {
+      if (!r) return
+      registration = r
       setInterval(() => {
         // Offline, or the server is busy: the next check will do.
-        if (navigator.onLine && document.visibilityState === 'visible') registration.update().catch(() => undefined)
+        if (navigator.onLine && document.visibilityState === 'visible') r.update().catch(() => undefined)
       }, CHECK_EVERY_MS)
     },
+    onRegisterError: () => undefined,
   })
 }
 

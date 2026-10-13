@@ -33,6 +33,10 @@ test('a waiting new version offers a reload, from the keyboard too', async ({ pa
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready
   })
+  // The note is for a page an older version opened (B16, T7): the first visit is not controlled
+  // ("prompt", no clients.claim), the next load is.
+  await page.reload()
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller)
   const note = page.getByRole('status').filter({ hasText: 'A new version of LifePeek is ready.' })
   await expect(note).toHaveCount(0)
   await page.evaluate(async () => {
