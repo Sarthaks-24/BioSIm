@@ -213,10 +213,10 @@ export default function SignalStrip({
   const readout = useCallback(
     (min: number, r: number, k: number | null) => {
       const write = (el: HTMLSpanElement | null, v: number, s: Series = series) => {
-        if (el) el.textContent = formatSignal(v, s.meta, t, lang)
+        if (el) setText(el, formatSignal(v, s.meta, t, lang))
       }
       const total = (el: HTMLSpanElement | null, s: Series | null | undefined) => {
-        if (el && s) el.textContent = t('graph.soFar', { value: formatSignal(valueAt(s, min, clock.stepMin), s.meta, t, lang) })
+        if (el && s) setText(el, t('graph.soFar', { value: formatSignal(valueAt(s, min, clock.stepMin), s.meta, t, lang) }))
       }
       write(runText.current, r)
       if (k !== null) write(keptText.current, k)
@@ -493,4 +493,15 @@ export default function SignalStrip({
       {footer}
     </figure>
   )
+}
+
+/**
+ * Writes a readout's text only when it changed, into the text node already there: the same text
+ * costs nothing, and a new one changes one node instead of replacing it (less layout per write).
+ */
+function setText(el: HTMLElement, text: string) {
+  const node = el.firstChild
+  if (node instanceof Text && !node.nextSibling) {
+    if (node.data !== text) node.data = text
+  } else el.textContent = text
 }

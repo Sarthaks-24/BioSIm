@@ -69,13 +69,25 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
   // Phones get finger-sized targets, so moments merge sooner there.
   const gap = useMinWidth('64rem') ? GAP_WIDE : GAP_PHONE
 
+  const fill = useRef<HTMLSpanElement>(null)
+  const thumb = useRef<HTMLSpanElement>(null)
+
   useEffect(() => {
     const el = track.current
     if (!el) return
+    let shownMin = -1
     const show = (min: number) => {
       // The same scale as the graphs' playheads (lib/axis.ts), so the thumb is right under them.
-      el.style.setProperty('--pos', String(posAt(min)))
-      el.setAttribute('aria-valuenow', String(Math.round(min)))
+      // Moved with transforms on their own layers (a percentage of the track's width), so a
+      // playing frame neither lays out nor repaints the page: the compositor just slides them.
+      const pos = posAt(min)
+      fill.current!.style.transform = `translateX(${((pos - 1) * 100).toFixed(3)}%)`
+      thumb.current!.style.transform = `translateX(${(pos * 100).toFixed(3)}%)`
+      // The slider's value changes once per minute, not every frame.
+      const rounded = Math.round(min)
+      if (rounded === shownMin) return
+      shownMin = rounded
+      el.setAttribute('aria-valuenow', String(rounded))
       el.setAttribute('aria-valuetext', `${formatDuration(min, t)} ${t('sim.afterEating')}`)
     }
     show(useClock.getState().simMin)
@@ -215,21 +227,22 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onKeyDown={onKeyDown}
-          // A tall invisible hit area around a thin track; --pos (0…1) is set from the clock.
-          // The focus ring goes on the thumb, not round the whole bar and its labels. Size and layout
-          // containment: moving the thumb every frame re-lays out this box only, not the stage.
-          className="group relative -my-3 h-8 cursor-pointer touch-none rounded-control [contain:size_layout] [--pos:0] focus-visible:outline-none!"
+          // A tall invisible hit area around a thin track. The focus ring goes on the thumb, not
+          // round the whole bar and its labels. Size and layout containment keeps the track's
+          // inside to itself.
+          className="group relative -my-3 h-8 cursor-pointer touch-none rounded-control [contain:size_layout] focus-visible:outline-none!"
         >
-          <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-control bg-ink/20" />
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 left-0 h-1.5 w-[calc(var(--pos)*100%)] -translate-y-1/2 rounded-control bg-ink"
-          />
-          <span
-            aria-hidden="true"
-            data-thumb=""
-            className="absolute top-1/2 left-[calc(var(--pos)*100%)] size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-shelf bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
-          />
+          <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-control bg-ink/20">
+            {/* The filled part: a full-width bar slid in from the left, clipped by the track. */}
+            <span ref={fill} className="block size-full rounded-control bg-ink will-change-transform" style={{ transform: 'translateX(-100%)' }} />
+          </span>
+          {/* A track-wide box slid right by the clock's share of the track; the thumb sits at its left edge. */}
+          <span aria-hidden="true" ref={thumb} className="pointer-events-none absolute inset-0 will-change-transform">
+            <span
+              data-thumb=""
+              className="absolute top-1/2 left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-shelf bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
+            />
+          </span>
         </div>
         <MarkerLane markers={lane('run')} lane="run" label={t('dock.moments')} onHot={setHot} />
         {kept && <MarkerLane markers={lane('kept')} lane="kept" label={t('dock.keptMoments')} onHot={setHot} />}
