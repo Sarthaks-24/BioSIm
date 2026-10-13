@@ -42,9 +42,13 @@ describe('signal table', () => {
       const sim = run(`${f.id}:1`)
       const content = sim.signals.get('gut.stomach.contentG')!.values
       expect(content).toHaveLength(sim.length)
+      // The largest miss and where, one assertion per food (an assertion per minute was 2 s, R68).
+      let worst = { miss: 0, at: 0 }
       for (let i = 0; i < sim.length; i++) {
-        expect(Math.abs(content[i]! - (sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!)), `${f.id} @${i}`).toBeLessThanOrEqual(0.1)
+        const miss = Math.abs(content[i]! - (sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!))
+        if (miss > worst.miss) worst = { miss, at: i }
       }
+      expect(worst.miss, `${f.id} @${worst.at}`).toBeLessThanOrEqual(0.1)
     }
   })
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MODEL_VERSION, buildMeal, decodeMeal, decodeShareState, encodeShareState } from '../src/index.ts'
 import { lookup } from './fixtures.ts'
+import { count } from './full.ts'
 
 describe('share links', () => {
   it('round-trips a comparison, including language', () => {
@@ -207,7 +208,9 @@ describe('share links: what changed on load (changes)', () => {
     const rand = (n: number) => ((seed = (seed * 1103515245 + 12345) % 2 ** 31), Math.floor((seed / 2 ** 31) * n))
     const pick = ([good, odd]: [string[], string[]]) => (odd.length && !rand(25) ? odd[rand(odd.length)]! : good[rand(good.length)]!)
     let changed = 0
-    for (let i = 0; i < 10000; i++) {
+    // 10 000 links with FULL=1 (nightly), 2 000 in `npm test` (R68); the seed is fixed either way.
+    const links = count(10_000, 2_000)
+    for (let i = 0; i < links; i++) {
       const q = new URLSearchParams()
       for (const [k, pool] of Object.entries(POOL)) if (rand(2)) q.set(k, pick(pool))
       for (const k of ['a', 'b']) if (rand(3)) q.set(k, Array.from({ length: rand(12) }, () => pick(PARTS)).join(','))
@@ -217,6 +220,6 @@ describe('share links: what changed on load (changes)', () => {
       const noted = !!s.changes?.length || !!s.unknownOrganism || s.modelVersion !== MODEL_VERSION
       expect(noted, `?${q} came back as ?${encodeShareState(s)} with no note`).toBe(true)
     }
-    expect(changed).toBeGreaterThan(2000)
+    expect(changed).toBeGreaterThan(links / 5)
   })
 })

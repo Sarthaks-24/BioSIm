@@ -22,6 +22,7 @@ import {
   type SimInput,
 } from '../src/index.ts'
 import { lookup } from './fixtures.ts'
+import { sample } from './full.ts'
 
 /**
  * O-0 plumbing (WP-05): the organism-ready input, the run's clock, and the `ctx.params` rule.
@@ -43,8 +44,9 @@ function paramsWith(path: string, value: number): Params {
 
 describe('simulate input', () => {
   // 15 runs × 16 full series compared: ~1.5 s alone, more on a busy machine, so a longer timeout.
+  // `npm test` compares 3 of the 5 meals (a mixed one, a fatty one, the empty one), FULL=1 all (R68).
   it('SimInput with a lookup gives exactly the same run as a built Meal', { timeout: 20_000 }, () => {
-    for (const raw of ['glucose-50:1', 'standard-meal:1,water:1', 'fatty-meal:1.5', 'water:1', '']) {
+    for (const raw of sample(['standard-meal:1,water:1', 'glucose-50:1', 'fatty-meal:1.5', 'water:1', ''], 2)) {
       const items = decodeMeal(raw)
       const fromMeal = simulate(buildMeal(items, lookup), { particles: 8 })
       const fromInput = simulate({ items }, { lookup, particles: 8 })

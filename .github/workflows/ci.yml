@@ -144,6 +144,12 @@ jobs:
         env:
           CI: 'true'
           E2E_ENGINES: '1'
+      # The engine's slow suites at their full count (R68: `npm test` runs a fixed, smaller set): nightly only.
+      - name: Engine tests, full count (nightly)
+        if: ${{ !cancelled() && github.event_name == 'schedule' }}
+        run: npm test -w @lifepeek/engine
+        env:
+          FULL: '1'
       # A 40-minute lesson on one page, for leaks (T7, report): nightly only.
       - name: Long lesson (report)
         if: ${{ !cancelled() && github.event_name == 'schedule' }}
