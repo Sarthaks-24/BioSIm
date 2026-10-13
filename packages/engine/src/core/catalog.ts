@@ -19,7 +19,7 @@
 import type { SourceId } from './sources.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
-/** On screen: simulated → "Calculated from studies", assumption → "Best guess", illustration → "Drawing only". */
+/** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
 export type SignalStatus = 'simulated' | 'assumption' | 'illustration'
 /** 'sim' = the run's own clock (humans: the "meal clock", 0–48 h). 'real' = real seconds, whatever the sim speed. */
 export type Clock = 'sim' | 'real'
@@ -314,7 +314,7 @@ export const SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
     shipsIn: 'v2.0',
     definition:
       'Plasma glucose of the typical healthy adult, absolute (fasting ≈ 90 mg/dL). The rise above fasting is a helper, not an ID.',
-    // Band edges ×0.65 / ×1.45 (PARAMS.glucose.bandLow/High) are not cited yet, so the band is a 'Best guess'.
+    // Band edges ×0.65 / ×1.45 (PARAMS.glucose.bandLow/High) are not cited yet, so the band is a 'Model estimate'.
     band: { status: 'assumption', sourceIds: [], i18nKey: k('blood.glucose.band') },
     displayRange: [60, 200],
     round: 1,

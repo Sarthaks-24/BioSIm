@@ -152,7 +152,7 @@ Rules for the reviewer:
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `feedback.privacy` | Reports are public. Please don’t include names, school, emails or health information. | रिपोर्ट सार्वजनिक होती हैं। कृपया नाम, स्कूल, ईमेल या स्वास्थ्य संबंधी जानकारी न लिखें। | draft |
-| `feedback.publicWarning` | This opens a public page on GitHub. Don't type your name, school or phone number. | इससे GitHub पर एक सार्वजनिक पेज खुलता है। अपना नाम, स्कूल या फ़ोन नंबर न लिखें। | draft |
+| `feedback.publicWarning` | This opens a public page on GitHub. Don't type your name, school, phone number, email or any health information. | इससे GitHub पर एक सार्वजनिक पेज खुलता है। अपना नाम, स्कूल या फ़ोन नंबर न लिखें। | draft |
 | `feedback.openIssueDirect` | Open the report on GitHub | रिपोर्ट GitHub पर खोलें | draft |
 
 ## Signals, events, limits and labels (v2 screen, WP-10)
@@ -165,15 +165,15 @@ in later work packages). Notes for the reviewer:
 - `limits.energyInAtwater` is new wording: it says that "energy coming in" reads a few per cent low,
   and why. Please check that it is clear for a class 7–10 student.
 - `systems.digestion.name` (पाचन) and `lifeProcess.nutrition` (पोषण): please confirm these are the NCERT terms.
-- `status.assumption.label` ("Best guess"): is "सबसे अच्छा अनुमान" natural, or is there a better short tag?
+- `status.assumption.label` ("Model estimate", was "Best guess"): is "सबसे अच्छा अनुमान" natural, or is there a better short tag?
 - Numbers keep Latin digits; `mg/dL` stays in Latin letters, as on glucometers.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `status.simulated.label` | Calculated from studies | अध्ययनों के आधार पर गणना | draft |
 | `status.simulated.help` | Worked out by the model from published measurements. | मॉडल ने प्रकाशित मापों से इसकी गणना की है। | draft |
-| `status.assumption.label` | Best guess | सबसे अच्छा अनुमान | draft |
-| `status.assumption.help` | A formula or a reasonable estimate, not measured for this meal. | एक सूत्र या उचित अनुमान, जिसे इस भोजन के लिए मापा नहीं गया है। | draft |
+| `status.assumption.label` | Model estimate | सबसे अच्छा अनुमान | draft |
+| `status.assumption.help` | Worked out by the app's maths, not measured: a formula or a reasonable estimate. | एक सूत्र या उचित अनुमान, जिसे इस भोजन के लिए मापा नहीं गया है। | draft |
 | `status.illustration.label` | Drawing only | केवल चित्र | draft |
 | `status.illustration.help` | A picture to show the idea. The speed is not calculated. | बात समझाने के लिए एक चित्र। इसकी गति की गणना नहीं की गई है। | draft |
 | `status.howWeKnow` | How we know | हमें कैसे पता है | draft |
@@ -239,7 +239,7 @@ in later work packages). Notes for the reviewer:
 | `signals.event.firstLeftovers.desc` | Depends mostly on the person, not the meal | यह भोजन पर नहीं, मुख्य रूप से व्यक्ति पर निर्भर करता है | draft |
 | `signals.event.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
 | `limits.glucoseTail` | After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner. | बड़े, वसायुक्त भोजन के बाद मॉडल रक्त शर्करा में एक छोटी, धीमी पूँछ दिखाता है; असली शरीर में यह आमतौर पर कुछ जल्दी सामान्य हो जाती है। | draft |
-| `limits.glucoseBand` | The shaded band is a best guess of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
+| `limits.glucoseBand` | The shaded band is a model estimate of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
 | `limits.energyInAtwater` | Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted. | हर ग्राम कार्बोहाइड्रेट या प्रोटीन को 4 किलो कैलोरी और हर ग्राम वसा को 9 किलो कैलोरी गिना जाता है, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मानक संख्याएँ पहले से मानकर चलती हैं कि भोजन का थोड़ा भाग शरीर के अंदर नहीं जा पाता। मॉडल भी केवल उतना ही गिनता है जितना शरीर के अंदर गया, इसलिए वह भाग दो बार छूट जाता है और आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे में मौजूद थोड़ी-सी ऊर्जा नहीं गिनी गई है। | draft |
 | `limits.energyUsedResting` | This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal. | यह आराम करते एक वयस्क (ICMR-NIN 2020 का संदर्भ वयस्क, 65 किलो) के लिए एक सूत्र है, कोई माप नहीं। यह भोजन के साथ नहीं बदलता। | draft |
 | `limits.backToBase` | "Back near the before-meal level" means within 5 mg/dL of it. | "खाने से पहले के स्तर के पास" का अर्थ है उससे 5 mg/dL के भीतर। | draft |
@@ -600,7 +600,7 @@ v1 and the keys only it used; the ones left here all ship and need the same chec
 | `feedback.openIssue` | Send it as a GitHub issue instead | इसके बजाय GitHub issue के रूप में भेजें | draft |
 | `teach.plan` | A 40-minute lesson plan | 40 मिनट की पाठ योजना | draft |
 | `teach.steps[0]` | Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more. | अनुमान: कक्षा से पूछें कि आमाशय से पहले क्या निकलेगा — कोला का एक कैन या फ़्राइज़ के साथ बर्गर, और रक्त शर्करा किससे ज़्यादा बढ़ेगी। | draft |
-| `teach.steps[1]` | Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger. | बर्गर + फ़्राइज़ को तुलना के लिए रखकर कोला खोलें (नीचे पहला तैयार पाठ) और ‘चलाएँ’ दबाएँ। धूसर टूटी रेखा रखा गया बर्गर है। | draft |
+| `teach.steps[1]` | Open cola with burger + fries kept (the first ready lesson below). It opens at 35 min; press Home to start from eating, then press Play. The dashed grey line is the kept burger. | बर्गर + फ़्राइज़ को तुलना के लिए रखकर कोला खोलें (नीचे पहला तैयार पाठ) और ‘चलाएँ’ दबाएँ। धूसर टूटी रेखा रखा गया बर्गर है। | draft |
 | `teach.steps[2]` | Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now. | एक मुख्य पल से अगले पर जाने के लिए Page Down (या प्रेज़ेंटेशन क्लिकर) दबाएँ। हर पल पर शरीर के नीचे की पंक्ति पढ़ें: भोजन अभी कहाँ है। | draft |
 | `teach.steps[3]` | Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front. | 1 घंटे पर रक्त शर्करा ‘रक्त शर्करा’ ग्राफ़ से पढ़ें: टाइमलाइन को 1 घं तक खींचें, और वह ग्राफ़ सामने लाने के लिए B दबाएँ। | draft |
 | `teach.steps[4]` | Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph. | 3 घंटे पर ऊर्जा के साथ समाप्त करें: क्या भोजन से ज़्यादा ऊर्जा आ रही है, या शरीर ज़्यादा उपयोग कर रहा है? ‘ऊर्जा’ ग्राफ़ के लिए E दबाएँ। | draft |
