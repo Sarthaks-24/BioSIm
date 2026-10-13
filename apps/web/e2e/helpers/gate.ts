@@ -599,11 +599,12 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
  * from then on the test guards the fix.
  */
 export const RED_LIST: Record<string, Mode> = {
-  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15.
+  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15. T5 (FP-3) enforces B4; B13 is Hindi, so it
+  // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
   B1: 'enforce',
   B2: 'enforce',
   B3: 'report',
-  B4: 'report',
+  B4: 'enforce',
   B5: 'report',
   B6: 'report',
   B7: 'enforce',

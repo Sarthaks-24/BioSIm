@@ -103,7 +103,7 @@ test('? lists the keys; the letter keys can be switched off (WCAG 2.1.4), and th
   await page.goto('/sim?v=3&a=cola:1')
   await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
   await page.keyboard.press('?')
-  const help = page.getByRole('dialog', { name: 'Keys and settings' })
+  const help = page.getByRole('dialog', { name: 'Settings', exact: true })
   await expect(help).toBeVisible()
   await expect(help.getByText('Next or previous key moment (a clicker’s two buttons)')).toBeVisible()
   const letters = help.getByRole('switch', { name: 'Letter keys' })
@@ -124,15 +124,15 @@ test('? lists the keys; the letter keys can be switched off (WCAG 2.1.4), and th
 
   // Saved: still off after a reload; the settings button opens the sheet to switch them back.
   await page.reload()
-  await page.getByRole('button', { name: 'Keys and settings' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
   await expect(help.getByRole('switch', { name: 'Letter keys' })).toHaveAttribute('aria-checked', 'false')
 })
 
 test('"Reduce motion" can be chosen on screen and is saved; it can follow the device again', async ({ page }) => {
   onlyIn('desktop', 'phone')
   await page.goto('/sim?v=3&a=cola:1')
-  await page.getByRole('button', { name: 'Keys and settings' }).click()
-  const help = page.getByRole('dialog', { name: 'Keys and settings' })
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  const help = page.getByRole('dialog', { name: 'Settings', exact: true })
   const motion = help.getByRole('switch', { name: 'Reduce motion' })
   await expect(motion).toHaveAttribute('aria-checked', 'false')
   await motion.click()
@@ -174,70 +174,65 @@ test('every graph has a summary for screen readers and a working table', async (
   }
 })
 
-test.describe('the timeline’s key moments (council round 2)', () => {
-  test('moments that nearly coincide are one marker naming them all; no two targets overlap; each is at least 24 px', async ({ page }) => {
+test.describe('the timeline’s key moments (council round 2, FP-3)', () => {
+  test('moments of either meal that nearly coincide share one target naming them all; no two targets overlap; each is a finger wide', async ({
+    page,
+  }) => {
     onlyIn('projector', 'phone')
-    for (const url of [COLA_KEPT_BURGER, `${COLA_KEPT_BURGER}&lang=hi`, '/sim?v=3&a=roti:2,dal:1&b=water:1']) {
+    // A touch screen gets 44 × 44 px targets; a mouse 44 × 34 (the lane is shorter, Dock's --lane).
+    const tall = test.info().project.name === 'phone' ? 44 : 34
+    for (const url of [COLA_KEPT_BURGER, `${COLA_KEPT_BURGER}&lang=hi`, '/sim?v=3&a=roti:2,dal:1&b=water:1', '/sim?v=3&a=roti:2,dal:1']) {
       await page.goto(url)
       const markers = page.locator('[data-marker]')
       await expect(markers.first()).toBeVisible()
       const boxes = await markers.evaluateAll((els) =>
         els.map((el) => {
           const r = el.getBoundingClientRect()
-          return { x: r.x, y: r.y, w: r.width, h: r.height, name: el.getAttribute('aria-label') ?? '' }
+          const ticks = [...el.querySelectorAll('[data-dot]')].map((d) => ({
+            lane: d.getAttribute('data-dot'),
+            count: d.getAttribute('data-count'),
+          }))
+          const moments = (el.getAttribute('data-moment') ?? '').split(' ')
+          const lanes = (el.getAttribute('data-marker') ?? '').split(' ')
+          return { x: r.x, y: r.y, w: r.width, h: r.height, name: el.getAttribute('aria-label') ?? '', ticks, moments, lanes }
         }),
       )
+      const kept = url.includes('&b=')
       for (const [i, a] of boxes.entries()) {
-        expect(a.w, `${url}: ${a.name} width`).toBeGreaterThanOrEqual(23.5)
-        expect(a.h, `${url}: ${a.name} height`).toBeGreaterThanOrEqual(23.5)
+        expect(a.w, `${url}: ${a.name} width`).toBeGreaterThanOrEqual(43.5)
+        expect(a.h, `${url}: ${a.name} height`).toBeGreaterThanOrEqual((kept ? 44 : tall) - 0.5)
         for (const b of boxes.slice(i + 1)) {
           const overlap = a.x < b.x + b.w - 0.5 && b.x < a.x + a.w - 0.5 && a.y < b.y + b.h - 0.5 && b.y < a.y + a.h - 0.5
           expect(overlap, `${url}: "${a.name}" overlaps "${b.name}"`).toBe(false)
         }
-      }
-      // Each marker is drawn as ONE dot (a cluster: one pill with its count), and in each row
-      // two markers' dots are at least a target apart: 44 px on a phone, 24 px from 1024 px up
-      // (council round 3: a phone showed a cluster as four dots ~10 px apart).
-      const gap = test.info().project.name === 'phone' ? 44 : 24
-      for (const lane of ['run', 'kept']) {
-        const dots = await page.locator(`[data-marker="${lane}"]`).evaluateAll((els) =>
-          els.map((el) => {
-            const dots = el.querySelectorAll('[data-dot]')
-            const r = dots[0]?.getBoundingClientRect()
-            const moments = (el.getAttribute('data-moment') ?? '').split(' ').length
-            return { n: dots.length, x: r ? r.x + r.width / 2 : NaN, count: dots[0]?.textContent ?? '', moments }
-          }),
-        )
-        for (const [i, d] of dots.entries()) {
-          expect(d.n, `${url}: ${lane} marker ${i} dots`).toBe(1)
-          expect(d.count, `${url}: ${lane} marker ${i} count`).toBe(d.moments > 1 ? String(d.moments) : '')
-          if (i > 0) expect(d.x - dots[i - 1]!.x, `${url}: ${lane} markers ${i - 1}–${i}`).toBeGreaterThanOrEqual(gap - 0.5)
-        }
+        // One tick per meal in it, never a count in words (U7): a double tick where it has several.
+        expect(a.ticks.map((t) => t.lane).sort(), `${url}: ${a.name} ticks`).toEqual([...a.lanes].sort())
+        expect(a.moments.length, `${url}: ${a.name} moments named`).toBe(a.name.split('; ').length)
       }
     }
-    // Cola's first hour (half has left, highest) is one marker that names both.
+    // Cola's first hour (half has left, highest) is one target that names both.
     await page.goto('/sim?v=3&a=cola:1&lang=en')
-    await expect(page.locator('[data-marker="run"]').first()).toHaveAttribute(
+    await expect(page.locator('[data-marker~="run"]').first()).toHaveAttribute(
       'aria-label',
       /^Half the energy has left the stomach, .+; Blood sugar highest, /,
     )
   })
 
-  test('a meal with one moment gets a full-size target, its dot in the middle (verify: 12 px button)', async ({ page }) => {
+  test('a meal with one moment gets a full-size target, its tick in the middle (verify: 12 px button)', async ({ page }) => {
     onlyIn('projector', 'phone')
     await page.goto('/sim?v=3&a=water:1')
-    const marker = page.locator('[data-marker="run"]')
+    const marker = page.locator('[data-marker]')
     await expect(marker).toHaveCount(1)
     const box = (await marker.boundingBox())!
     const dot = (await marker.locator('[data-dot]').boundingBox())!
-    expect(box.width).toBeGreaterThanOrEqual(23.5)
+    expect(box.width).toBeGreaterThanOrEqual(43.5)
     expect(Math.abs(dot.x + dot.width / 2 - (box.x + box.width / 2))).toBeLessThan(1.5)
   })
 
-  test('each meal’s markers are one Tab stop; arrows move between them, Enter jumps there', async ({ page }) => {
+  test('the moments are one Tab stop; arrows move between them, Enter jumps there', async ({ page }) => {
     onlyIn('desktop', 'projector')
     await page.goto(COLA_KEPT_BURGER)
-    const lane = page.getByRole('toolbar', { name: 'Key moments of this meal' })
+    const lane = page.getByRole('toolbar', { name: 'Key moments' })
     const markers = lane.getByRole('button')
     await expect(markers.nth(1)).toBeAttached()
     await tabTo(page, markers.first())
@@ -247,20 +242,31 @@ test.describe('the timeline’s key moments (council round 2)', () => {
     await expect(markers.first()).toHaveAttribute('tabindex', '-1')
     await page.keyboard.press('Enter')
     await expect.poll(() => now(page)).toBeGreaterThan(30)
-    // The kept meal's markers are their own stop, and also named.
-    await expect(page.getByRole('toolbar', { name: 'Key moments of the kept meal' }).getByRole('button').first()).toHaveAttribute(
-      'aria-label',
-      /^Kept: /,
-    )
+    // The kept meal's moments are in the same lane, named as the kept meal's.
+    await expect(lane.getByRole('button', { name: /(^|; )Kept: / }).first()).toBeAttached()
   })
 
-  test('pressed where moments coincide, all are named, the kept meal’s too; Page Down visits the kept meal’s moments', async ({ page }) => {
+  test('a target with several moments lists them, the kept meal’s too, and moves the clock to the one picked; Page Down visits the kept meal’s moments', async ({
+    page,
+  }) => {
     onlyIn('desktop')
     // Cola kept and cola + water now: cola's "half has left" and "highest" share a minute, in both meals.
     await page.goto('/sim?v=3&a=cola:1,water:1&b=cola:1')
-    await expect(page.locator('[data-marker="kept"]').first()).toBeAttached()
-    await page.locator('[data-marker="run"]').first().click()
-    // The pointer moves away: the names stay while the clock is where the press put it.
+    await expect(page.locator('[data-marker~="kept"]').first()).toBeAttached()
+    await page.locator('[data-marker~="run"]').first().click()
+    // The list (U7): every moment of the target, each a button, in time order (both meals' first
+    // hour here: cola's moments fall within a finger's width of each other on the bar).
+    const list = page.getByRole('dialog', { name: 'Key moments' })
+    await expect(list.getByRole('listitem').nth(3)).toBeVisible()
+    expect((await list.getByRole('listitem').allTextContents()).slice(0, 4)).toEqual([
+      expect.stringMatching(/^Half the energy has left the stomach, \d+ min$/),
+      expect.stringMatching(/^Blood sugar highest, \d+ min$/),
+      expect.stringMatching(/^Kept: Half the energy has left the stomach, \d+ min$/),
+      expect.stringMatching(/^Kept: Blood sugar highest, \d+ min$/),
+    ])
+    await page.keyboard.press('Escape')
+    await expect(list).toBeHidden()
+    // The pointer moves away: the names stay above the bar while the clock is where the press put it.
     await page.mouse.move(5, 5)
     await expect(page.locator('[data-marker-tip] > span')).toHaveText([
       /^Half the energy has left the stomach, \d+ min$/,
@@ -271,17 +277,26 @@ test.describe('the timeline’s key moments (council round 2)', () => {
     // Once the clock moves on, they go.
     await page.locator('body').press('PageDown')
     await expect(page.locator('[data-marker-tip]')).toHaveCount(0)
+    // Picking one in the list moves the clock to it and closes the list.
+    await page.locator('[data-marker~="run"]').first().click()
+    const pick = list.getByRole('button', { name: /^Blood sugar highest, \d+ min$/ })
+    const [, at] = /, (\d+) min$/.exec((await pick.textContent())!)!
+    await pick.click()
+    await expect(list).toBeHidden()
+    await expect.poll(async () => Math.abs((await now(page)) - Number(at))).toBeLessThanOrEqual(3)
     // Burger + fries kept: its "half has left" (hours after cola's) is a stop for Page Down.
     await page.goto(COLA_KEPT_BURGER)
-    const keptHalf = page.locator('[data-marker="kept"][data-moment~="event.stomachHalfEmpty"]')
+    const keptHalf = page.locator('[data-marker~="kept"][data-moment~="event.stomachHalfEmpty"]').last()
     await expect(keptHalf).toBeAttached()
     // Its time, as its name says it ("…, 4 h 35 min", rounded to 5 min).
-    const [, h, m] = /, (\d+) h(?: (\d+) min)?/.exec((await keptHalf.getAttribute('aria-label'))!)!
-    const at = Number(h) * 60 + Number(m ?? 0)
+    const [, h, m] = /Kept: Half the energy has left the stomach, (\d+) h(?: (\d+) min)?/.exec(
+      (await keptHalf.getAttribute('aria-label'))!,
+    )!
+    const keptAt = Number(h) * 60 + Number(m ?? 0)
     await page.locator('body').press('Home')
     for (let i = 0; i < 8; i++) {
       await page.locator('body').press('PageDown')
-      if (Math.abs((await now(page)) - at) <= 5) return
+      if (Math.abs((await now(page)) - keptAt) <= 5) return
     }
     throw new Error('Page Down never stopped at the kept meal’s "half has left"')
   })
@@ -391,8 +406,8 @@ test.describe('review 15 (FIX-D)', () => {
     // The device does not ask for reduced motion (project desktop): only the switch does.
     await page.goto('/sim?v=3&a=cola:1')
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'full')
-    await page.getByRole('button', { name: 'Keys and settings' }).click()
-    const help = page.getByRole('dialog', { name: 'Keys and settings' })
+    await page.getByRole('button', { name: 'Settings', exact: true }).click()
+    const help = page.getByRole('dialog', { name: 'Settings', exact: true })
     const motion = help.getByRole('switch', { name: 'Reduce motion' })
     await motion.click()
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce')

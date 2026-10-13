@@ -88,6 +88,10 @@
 //   the dock: each graph's "time squeezed" label and its placement went), the energy label's free
 //   band, one value when a range's ends match, the carbs legend dot's dark edge, the stretched note's
 //   own row on a phone: /sim 188.466 → 188.504 KB on main 19d7421 (+0.04; ledger row +0.04).
+//   T5 / FP-3 (2026-10-14): the timeline's 44 px band and moments lane, Settings in its own cell,
+//   hour labels thinned by measured width. The moments of both meals share one lane (one toolbar,
+//   no range bars, no count badges, no width query) and a target's list loads with the sheets:
+//   /sim 188.504 → 188.463 KB on main 78a6679 (−0.04; ledger row −0.04).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
