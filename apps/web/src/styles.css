@@ -252,6 +252,16 @@ body {
   [data-stage]:has([data-first-run]) :is([data-summary], [data-now]) {
     display: none;
   }
+  /*
+   * The stacked stage's rows (FP-1): meal bar, notes, the body (its words and at least a 10 rem
+   * picture), the graph and the dock. The graph's row is 26 % of the screen (qa-fixes FP-1), the
+   * same for every tab so the body never jumps; it gives way to 9 rem before the body gives way,
+   * and only then does the page scroll.
+   */
+  [data-stage] {
+    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 26vh, 15rem)) auto;
+    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 26dvh, 15rem)) auto;
+  }
   /* The Now line's kept row (name, where it is, ✕) stands in for the meal bar's kept tag (WP-18). */
   [data-stage]:not(:has([data-first-run])):has([data-now-kept]) [data-kept-tag] {
     display: none;
@@ -280,6 +290,17 @@ body {
   }
   to {
     transform: scaleX(1);
+  }
+}
+
+/*
+ * Where a one-screen page (the stage) fits the window exactly, nothing scrolling: from 1024 px wide,
+ * and on a tablet (640 px wide, 700 px tall). On a phone the stage stacks, and under 700 px tall it
+ * may scroll instead of squeezing the body (FP-1: width picks the layout, height picks scroll).
+ */
+@custom-variant fit {
+  @media (width >= 64rem), (width >= 40rem) and (height >= 43.75rem) {
+    @slot;
   }
 }
 

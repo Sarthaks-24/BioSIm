@@ -13,7 +13,7 @@ import { NowLine } from './NowLine.tsx'
 import ParticleKey from './ParticleKey.tsx'
 import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
-import { mealNames } from './mealText.ts'
+import { mealNames, shortFoodName } from './mealText.ts'
 
 /** The full stage text is downloaded when "More" is first opened (size budget). If it doesn't load, its panel says so. */
 const stageMore = lazyWithRetry(() => import('./StageMore.tsx'))
@@ -27,7 +27,7 @@ const EXAMPLES = ['cola', 'roti', 'apple'] as const
 /**
  * The body: the one big thing on the stage. The 3D body when the device can draw it (a separate
  * download, fetched only here), the flat diagram while it loads and when it can't (BodyView). It
- * follows the meal clock. With an empty meal it asks for a food instead, with a few to tap.
+ * follows the meal clock. With an empty meal the body rests, and a card under it offers a few foods.
  *
  * Under the body, the stage's words (WP-14, council verdicts #3 and #4): the Now line (where the
  * food is and what that organ does, with "More") and the summary sentence. They are rows of this
@@ -62,47 +62,22 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
   const StageMore = stageMore.Component
 
   return (
-    <section aria-labelledby="body-pane-title" className="relative flex min-h-0 flex-col">
+    <section aria-labelledby="body-pane-title" className="relative flex flex-col lg:min-h-0">
       <h2 id="body-pane-title" className="sr-only">
         {t('stage.body')}
       </h2>
       {/* The layer switch sits in the body's top corner, over empty paper, so it costs the body no height. */}
       {/* Full width so a long list scrolls instead of being cut; only the control itself takes clicks. */}
-      <div
-        className={`pointer-events-none absolute inset-x-3 top-2 z-10 lg:inset-x-4 lg:top-3 ${oneLayer && hasMeal ? 'max-lg:hidden' : ''}`}
-      >
+      <div className={`pointer-events-none absolute inset-x-3 top-2 z-10 lg:inset-x-4 lg:top-3 ${oneLayer ? 'max-lg:hidden' : ''}`}>
         <LayerBar className="pointer-events-auto w-fit" />
       </div>
       {/* The body fills whatever height the stage leaves it (absolute, so the canvas can't push the row taller). */}
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-40 flex-1 lg:min-h-0">
         <div className="absolute inset-0">
-          {hasMeal ? (
-            <BodyClockContext value={MEAL_BODY_CLOCK}>
-              <BodyView sim={run} label={t('stage.bodyLabel', { meal: mealNames(meal, i18n.language) })} />
-            </BodyClockContext>
-          ) : (
-            <div className="grid h-full place-content-center justify-items-center gap-3 p-6 text-center">
-              <p className="max-w-[28ch] text-title font-extrabold text-ink">{t('stage.empty')}</p>
-              <ul className="flex flex-wrap justify-center gap-2" aria-label={t('stage.examples')}>
-                {EXAMPLES.map((id) => {
-                  const food = lookupFood(id)
-                  if (!food) return null
-                  return (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        onClick={() => useRunStore.getState().addFood(id)}
-                        className="flex min-h-11 items-center gap-1.5 rounded-control bg-surface-sunk px-3 text-control font-semibold hover:bg-surface-sunk-hover lg:min-h-9"
-                      >
-                        <span aria-hidden="true">{food.emoji}</span>
-                        {localized(food.name, i18n.language)}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
+          {/* With no food yet the body still shows, resting (R23): the picks are a card under it. */}
+          <BodyClockContext value={MEAL_BODY_CLOCK}>
+            <BodyView sim={run} label={hasMeal ? t('stage.bodyLabel', { meal: mealNames(meal, i18n.language) }) : t('stage.bodyResting')} />
+          </BodyClockContext>
         </div>
         {/*
          * From 1024 px up, a band over the legs, out of the organs' way: what the food pieces are
@@ -141,10 +116,41 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
        * On a phone the picture is short and the large intestine's label sits by the legs, so the
        * key is a line of its own under the picture, never on a label (WP-18). It scrolls if long.
        */}
+      {!hasMeal && (
+        // The food picks (R23, FP-1 owns the empty state; E-3b-ui adds the activity ones): a card
+        // under the body's feet, over none of it, so the resting body is whole.
+        <div className="grid place-items-center px-3 pb-2 lg:pb-4">
+          <div className="grid max-w-full justify-items-center gap-2 rounded-frame border border-border bg-surface-raised px-3 py-2 text-center lg:gap-3 lg:px-6 lg:py-4">
+            <p className="text-control font-extrabold text-ink lg:text-title">{t('stage.empty')}</p>
+            {/* One row: it scrolls sideways rather than wrap (a long translation). */}
+            <ul className="flex max-w-full gap-2 overflow-x-auto [scrollbar-width:none]" aria-label={t('stage.examples')}>
+              {EXAMPLES.map((id) => {
+                const food = lookupFood(id)
+                if (!food) return null
+                return (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={() => useRunStore.getState().addFood(id)}
+                      className="flex min-h-11 items-center gap-1.5 rounded-control bg-surface-sunk px-2.5 text-control font-semibold whitespace-nowrap hover:bg-surface-sunk-hover lg:min-h-9"
+                    >
+                      <span aria-hidden="true">{food.emoji}</span>
+                      {shortFoodName(localized(food.name, i18n.language))}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </div>
+      )}
       {hasMeal && (
         // At the start the prompt takes the key's place (nothing has moved yet): the same row, so the
         // body above keeps its size, and nothing is laid over the picture or its labels.
-        <div className="grid px-3 pb-0.5 lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
+        // Under 680 px tall the key gives way to the body; the prompt stays (FP-1).
+        <div
+          className={`grid px-3 pb-0.5 lg:hidden [&>*]:col-start-1 [&>*]:row-start-1 ${atStart && !open ? '' : '[@media(height<42.5rem)]:hidden'}`}
+        >
           <ParticleKey
             run={run}
             className={`overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:none] ${atStart && !open ? 'invisible' : ''}`}
@@ -165,7 +171,12 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             panelId={panelId}
             className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
-          <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
+          {/* Under 680 px tall a phone shows it under the dock instead (Simulator, FP-1). */}
+          <SummaryLine
+            run={run}
+            kept={kept}
+            className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1 max-lg:[@media(height<42.5rem)]:hidden"
+          />
         </div>
       )}
     </section>
