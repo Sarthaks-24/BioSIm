@@ -1,22 +1,23 @@
 /**
  * Builds the signal table from what the modules wrote (A1 + M4). No physiology here, only copies
  * to Float32 under catalog IDs, plus the food sources, so MODEL_VERSION does not change. Rows come
- * in catalog order.
+ * in catalog order: the lean catalog's, then each pack's (core/catalog/rows.ts).
  */
 import type { Meal } from '../meal.ts'
 import type { SimEvents } from '../events.ts'
-import { ACTIVE_SIGNAL_IDS, EVENTS, SIGNALS, type ActiveSignalId, type EventId } from './catalog.ts'
+import { EVENTS, type EventId, type RunSignalId } from './catalog.ts'
+import { RUN_SIGNALS, RUN_SIGNAL_IDS } from './catalog/rows.ts'
 import type { SignalStore } from './module.ts'
 import type { SourceId } from './sources.ts'
 import type { EventPoint, Series } from './signal.ts'
 
-function series<Id extends ActiveSignalId>(
+function series<Id extends RunSignalId>(
   meal: Meal,
   id: Id,
   values: ArrayLike<number>,
   band?: { low: ArrayLike<number>; high: ArrayLike<number> },
 ): Series<Id> {
-  const meta = SIGNALS[id]
+  const meta = RUN_SIGNALS[id] as Series<Id>['meta']
   const foodSources: SourceId[] = meta.reactsToMeal ? meal.items.map((it) => `food:${it.food.id}` as const) : []
   return {
     meta,
@@ -27,13 +28,13 @@ function series<Id extends ActiveSignalId>(
 }
 
 /** One Series per catalog signal the modules wrote (internal `x.*` arrays are never rows). */
-export function buildSignalTable(meal: Meal, store: SignalStore): Map<ActiveSignalId, Series> {
+export function buildSignalTable(meal: Meal, store: SignalStore): Map<RunSignalId, Series> {
   const list: Series[] = []
-  for (const id of ACTIVE_SIGNAL_IDS) {
+  for (const id of RUN_SIGNAL_IDS) {
     const w = store.get(id)
     if (w) list.push(series(meal, id, w.values, w.band))
   }
-  return new Map(list.map((s) => [s.meta.id as ActiveSignalId, s]))
+  return new Map(list.map((s) => [s.meta.id as RunSignalId, s]))
 }
 
 /** One EventPoint per catalog event; atMin null when it does not happen within the run. */

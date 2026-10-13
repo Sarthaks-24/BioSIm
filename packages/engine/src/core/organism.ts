@@ -5,7 +5,7 @@
  */
 import type { MealItem } from '../meal.ts'
 import type { ActivityBout } from './activity.ts'
-import type { ActiveSignalId } from './catalog.ts'
+import type { RunSignalId } from './catalog.ts'
 import type { ModelModule } from './module.ts'
 
 /** Later: | 'plant' | 'amoeba' | 'cow' | 'fish' … (plan-organisms). */
@@ -44,5 +44,5 @@ export interface OrganismModel<P extends object = object> {
   /** What one run runs, in the frozen order (core/module.ts MODULE_ORDER). */
   modules: readonly ModelModule<P>[]
   /** = PROVIDES[id]: every signal the modules provide. */
-  provides: readonly ActiveSignalId[]
+  provides: readonly RunSignalId[]
 }

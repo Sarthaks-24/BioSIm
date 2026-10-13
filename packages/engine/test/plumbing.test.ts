@@ -14,7 +14,7 @@ import {
   makeParticles,
   simulate,
 } from '../src/run.ts'
-import { lookup } from './fixtures.ts'
+import { firstDiff, lookup } from './fixtures.ts'
 
 /**
  * O-0 plumbing (WP-05): the organism-ready input, the run's clock, and the `ctx.params` rule.
@@ -35,7 +35,7 @@ function paramsWith(path: string, value: number): Params {
 }
 
 describe('simulate input', () => {
-  // 15 runs × 16 full series compared: ~1.5 s alone, more on a busy machine, so a longer timeout.
+  // 15 runs × every series compared byte for byte (firstDiff: a deep toEqual took seconds on a busy machine, R68).
   it('RunInput with a lookup gives exactly the same run as a built Meal', { timeout: 20_000 }, () => {
     for (const raw of ['glucose-50:1', 'standard-meal:1,water:1', 'fatty-meal:1.5', 'water:1', '']) {
       const items = decodeMeal(raw)
@@ -45,7 +45,7 @@ describe('simulate input', () => {
       for (const run of [fromInput, explicit]) {
         expect(run.events).toEqual(fromMeal.events)
         expect(run.particles).toEqual(fromMeal.particles)
-        for (const [id, s] of fromMeal.signals) expect(run.signals.get(id)!.values, `${raw} ${id}`).toEqual(s.values)
+        for (const [id, s] of fromMeal.signals) expect(firstDiff(s.values, run.signals.get(id)?.values), `${raw} ${id}`).toBe(-1)
       }
     }
   })
