@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { activeStage, buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN } from './time.ts'
-import { momentNameKey, runMoments, stackRows } from './moments.ts'
+import { groupClose, hitAreas, momentNameKey, runMoments } from './moments.ts'
 
 const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 })
 
@@ -63,9 +63,24 @@ describe('the stage’s one clock (verify-1 C2)', () => {
   })
 })
 
-describe('markers that nearly coincide get their own row', () => {
-  it('stacks only what would overlap, and reuses the bar as soon as there is room', () => {
-    expect(stackRows([10, 12, 13, 40, 41, 80], 10)).toEqual([0, 1, 2, 0, 1, 0])
-    expect(stackRows([], 10)).toEqual([])
+describe('markers that nearly coincide are merged into one (council round 2)', () => {
+  it('groups a marker with the one before it when it is closer than the gap, in a chain', () => {
+    expect(groupClose([10, 12, 13, 40, 41, 80], 10)).toEqual([0, 0, 0, 1, 1, 2])
+    expect(groupClose([0, 24, 48], 24)).toEqual([0, 1, 2])
+    expect(groupClose([], 10)).toEqual([])
+  })
+
+  it('gives a lone marker, and the ends of a row, the full target width (verify: 12 px button)', () => {
+    expect(hitAreas([100], 24)).toEqual([{ before: 12, after: 12 }])
+    expect(hitAreas([0, 100], 44)).toEqual([
+      { before: 22, after: 22 },
+      { before: 22, after: 22 },
+    ])
+  })
+
+  it('splits the space between two targets closer than the size, so they never overlap', () => {
+    const [a, b] = hitAreas([0, 30], 44)
+    expect(a!.after + b!.before).toBe(30)
+    expect(a!.before).toBe(22)
   })
 })

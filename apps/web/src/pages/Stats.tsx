@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import RichText from '../components/RichText.tsx'
 import { FOODS } from '../data/foods.ts'
-import { LANGUAGES } from '../i18n/index.ts'
+import { addEnglish, LANGUAGES } from '../i18n/index.ts'
 import { REPO_URL } from '../lib/site.ts'
+import statsText from 'virtual:lifepeek-en/stats'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(statsText)
 
 /** One ISO week (Monday to Sunday, UTC) of mistake reports. */
 interface Week {

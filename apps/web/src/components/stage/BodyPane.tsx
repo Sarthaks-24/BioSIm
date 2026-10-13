@@ -10,6 +10,7 @@ import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import LayerBar from './LayerBar.tsx'
 import { NowLine } from './NowLine.tsx'
+import ParticleKey from './ParticleKey.tsx'
 import SummaryLine from './SummaryLine.tsx'
 import { mealNames } from './mealText.ts'
 
@@ -100,6 +101,8 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             </div>
           )}
         </div>
+        {/* What the food pieces are (council round 2): over the legs, out of the organs' way. */}
+        {hasMeal && <ParticleKey run={run} className="absolute bottom-1.5 left-3 max-w-[70%] lg:left-4" />}
         {open && (
           // Beside the body from 1024 px up (the lit organ stays in view); over it on a phone.
           <LoadBoundary

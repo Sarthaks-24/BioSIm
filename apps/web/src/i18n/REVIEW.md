@@ -1,4 +1,4 @@
-# Hindi strings for review
+| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
 Every Hindi string a native reviewer must check before it ships (00 gate 3.1). One row per
 string: its key in `hi.json`, the English, the Hindi, and its status (`draft` until a reviewer
@@ -13,8 +13,8 @@ Rules for the reviewer:
 - The launch date and the project email on the privacy page are placeholders in angle brackets until
   the maintainer fills them in (in `en.json`, `hi.json` and this file).
 - "डायबिटीज़" is used instead of "मधुमेह" because students hear it more. Please confirm.
-- On the privacy page, the first three items of "आपके डिवाइस पर क्या रहता है" (`privacy.sections[0].items[0]`,
-  `[1]` and `[2]`; `[1]` was added with the reduced-motion setting) and the paragraph under "गलती की रिपोर्ट करना"
+- On the privacy page, the first four items of "आपके डिवाइस पर क्या रहता है" (`privacy.sections[0].items[0]`
+  to `[3]`; `[1]` was added with the reduced-motion setting, `[2]` with the letter-key switch in WP-15) and the paragraph under "गलती की रिपोर्ट करना"
   (`privacy.sections[1].intro[0]`) are new wording; please check them closely.
 
 ## Renamed lines (old name → LifePeek, only the name changed)
@@ -60,9 +60,10 @@ Rules for the reviewer:
 | `privacy.sections[0].intro[0]` | LifePeek saves a few things **in your own browser only**. They are never sent to us: | LifePeek कुछ चीज़ें **सिर्फ़ आपके अपने ब्राउज़र में** सहेजता है। ये हमें कभी नहीं भेजी जातीं: | draft |
 | `privacy.sections[0].items[0]` | your language (English or Hindi), whether Projector mode is on, and whether you have closed the "not medical advice" note; | आपकी भाषा (अंग्रेज़ी या हिन्दी), प्रोजेक्टर मोड चालू है या नहीं, और आपने "चिकित्सकीय सलाह नहीं" वाली सूचना बंद की है या नहीं; | draft |
 | `privacy.sections[0].items[1]` | whether you have chosen less movement on screen (reduced motion); | आपने स्क्रीन पर कम हलचल चुनी है या नहीं; | draft |
-| `privacy.sections[0].items[2]` | a one-time note that the page has just reloaded after an update error (deleted when you close the tab); | अपडेट में गड़बड़ी के बाद पेज के दोबारा लोड होने का एक बार का निशान (टैब बंद करते ही मिट जाता है); | draft |
-| `privacy.sections[0].items[3]` | a copy of the app, so it works offline in class; | ऐप की एक कॉपी, ताकि कक्षा में इंटरनेट के बिना भी चले; | draft |
-| `privacy.sections[0].items[4]` | the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you. | आपने जो भोजन चुने, वे पेज के पते (लिंक) में रहते हैं। शेयर किए गए लिंक में सिर्फ़ भोजन होते हैं, आपके बारे में कुछ नहीं। | draft |
+| `privacy.sections[0].items[2]` | whether you have switched off the letter-key shortcuts; | आपने अक्षर-कुंजी वाले शॉर्टकट बंद किए हैं या नहीं; | draft |
+| `privacy.sections[0].items[3]` | a one-time note that the page has just reloaded after an update error (deleted when you close the tab); | अपडेट में गड़बड़ी के बाद पेज के दोबारा लोड होने का एक बार का निशान (टैब बंद करते ही मिट जाता है); | draft |
+| `privacy.sections[0].items[4]` | a copy of the app, so it works offline in class; | ऐप की एक कॉपी, ताकि कक्षा में इंटरनेट के बिना भी चले; | draft |
+| `privacy.sections[0].items[5]` | the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you. | आपने जो भोजन चुने, वे पेज के पते (लिंक) में रहते हैं। शेयर किए गए लिंक में सिर्फ़ भोजन होते हैं, आपके बारे में कुछ नहीं। | draft |
 | `privacy.sections[0].outro[0]` | You can delete all of this by clearing the site data for lifepeek.vercel.app in your browser settings. | अपने ब्राउज़र की सेटिंग में lifepeek.vercel.app का साइट डेटा मिटाकर आप यह सब हटा सकते हैं। | draft |
 | `privacy.sections[1].title` | Reporting a mistake | गलती की रिपोर्ट करना | draft |
 | `privacy.sections[1].intro[0]` | When you press **Report a mistake**, LifePeek opens a **GitHub issue** in a new tab with your report already filled in. **Nothing is sent to us. Your report text reaches GitHub only inside the link that opens the form, and nothing is published until you press Submit there.** You choose whether to send it. | जब आप **गलती बताएँ** दबाते हैं, तो LifePeek एक नए टैब में **GitHub issue** खोलता है जिसमें आपकी रिपोर्ट पहले से भरी होती है। **हमें कुछ नहीं भेजा जाता। आपकी रिपोर्ट का टेक्स्ट सिर्फ़ उस लिंक के अंदर GitHub तक पहुँचता है जो फ़ॉर्म खोलता है, और जब तक आप वहाँ Submit नहीं दबाते, कुछ भी प्रकाशित नहीं होता।** भेजना है या नहीं, यह आप तय करते हैं। | draft |
@@ -405,6 +406,52 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
 
+## Text alternatives, keys and settings (WP-15)
+
+Every graph now has a sentence for screen readers (the `….summary` lines above, and `summaryNone`
+for a stomach that holds only water: there is no food energy to halve) and a "Show as table" sheet
+(`table.*`): the graph's numbers at fixed times and the key moments of both meals. `keys.*` is the
+sheet that lists the keyboard keys, with two switches saved on the device: letter-key shortcuts
+(new privacy line `privacy.sections[0].items[2]`, above) and reduce motion. `stage.particles`
+names the one-line key to the food pieces drawn in the body (it reuses `nutrients.*`).
+Key names (Space, Page Down, Shift …) stay in English on purpose: they are printed on the keys.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `signals.gut.stomach.contentG.summaryNone` | The stomach holds {{start}} g at the start. Half of it has left by {{half}}. | शुरू में आमाशय में {{start}} ग्राम है। {{half}} तक इसका आधा भाग निकल जाता है। | draft |
+| `stage.particles` | Food pieces in the body | शरीर में भोजन के कण | draft |
+| `table.title` | The graphs as a table | ग्राफ़ तालिका के रूप में | draft |
+| `table.showFor` | Show as table: {{name}} | तालिका के रूप में देखें: {{name}} | draft |
+| `table.time` | After eating | खाने के बाद | draft |
+| `table.thisMeal` | This meal: {{meal}} | यह भोजन: {{meal}} | draft |
+| `table.range` | How much people differ | लोगों में कितना अंतर | draft |
+| `table.moments` | Key moments | मुख्य पल | draft |
+| `table.moment` | Moment | पल | draft |
+| `table.keptValue` | kept meal {{value}} | रखा गया भोजन {{value}} | draft |
+| `keys.button` | Keys and settings | कुंजियाँ और सेटिंग | draft |
+| `keys.title` | Keys and settings | कुंजियाँ और सेटिंग | draft |
+| `keys.settings` | Settings | सेटिंग | draft |
+| `keys.list` | Keys | कुंजियाँ | draft |
+| `keys.play` | Play or pause | चलाएँ या रोकें | draft |
+| `keys.move` | 10 minutes back or on | 10 मिनट पीछे या आगे | draft |
+| `keys.moveHour` | 1 hour back or on | 1 घंटा पीछे या आगे | draft |
+| `keys.moments` | Next or previous key moment (a clicker’s two buttons) | अगला या पिछला मुख्य पल (क्लिकर के दो बटन) | draft |
+| `keys.ends` | Start or end | शुरुआत या अंत | draft |
+| `keys.keep` | Keep this meal to compare | तुलना के लिए यह भोजन रखें | draft |
+| `keys.table` | The graphs as a table | ग्राफ़ तालिका के रूप में | draft |
+| `keys.strips` | Show the Stomach, Blood sugar or Energy graph | आमाशय, रक्त शर्करा या ऊर्जा का ग्राफ़ दिखाएँ | draft |
+| `keys.help` | This list | यह सूची | draft |
+| `keys.letters` | Letter keys | अक्षर कुंजियाँ | draft |
+| `keys.lettersHelp` | Space, K, P, T, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work. | Space, K, P, T, S, B, E और ? शॉर्टकट के रूप में। अगर ये स्क्रीन रीडर या आवाज़ से चलाने में बाधा डालें, तो इन्हें बंद करें। तीर और Page Up / Down फिर भी काम करते हैं। | draft |
+| `keys.motion` | Reduce motion | कम हलचल | draft |
+| `keys.motionHelp` | The food pieces in the body stop tumbling. The clock still moves when you press Play. | शरीर में भोजन के कण घूमना बंद कर देते हैं। चलाएँ दबाने पर घड़ी फिर भी चलती है। | draft |
+| `keys.motionDevice` | Until you choose here, this follows the device’s own setting. | जब तक आप यहाँ न चुनें, यह डिवाइस की अपनी सेटिंग के अनुसार रहता है। | draft |
+| `keys.motionReset` | Follow the device’s setting again | फिर से डिवाइस की सेटिंग अपनाएँ | draft |
+| `keys.on` | On | चालू | draft |
+| `keys.off` | Off | बंद | draft |
+| `keys.offNote` | off | बंद | draft |
+| `keys.typing` | Keys typed in a search box or a form are never taken as shortcuts. | खोज बॉक्स या फ़ॉर्म में लिखी गई कुंजियाँ कभी शॉर्टकट नहीं मानी जातीं। | draft |
+
 ## Council round 2 fixes (FIX-C)
 
 The Now line says where the meal is from the model (how much is in which organ, the kept meal, "done") and words drinks as drinks; the summary's key number; ring labels name their meal; the squeezed time axis.
@@ -443,7 +490,6 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `graph.halfLeftOf` | {{meal}}: half has left the stomach | {{meal}}: आधा भोजन आमाशय से निकल गया | draft |
 | `graph.highestOf` | {{meal}}: highest {{value}} | {{meal}}: सबसे अधिक {{value}} | draft |
 | `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
-| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
 ## Sign-off
 

@@ -318,6 +318,7 @@
         "items": [
           "your language (English or Hindi), whether Projector mode is on, and whether you have closed the \"not medical advice\" note;",
           "whether you have chosen less movement on screen (reduced motion);",
+          "whether you have switched off the letter-key shortcuts;",
           "a one-time note that the page has just reloaded after an update error (deleted when you close the tab);",
           "a copy of the app, so it works offline in class;",
           "the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you."
@@ -429,7 +430,8 @@
           "name": "Food in the stomach",
           "short": "In stomach",
           "desc": "Grams of the meal still in the stomach, as eaten (food and drink).",
-          "summary": "The stomach holds {{start}} g at the start. Half of the meal's food energy has left by {{half}}."
+          "summary": "The stomach holds {{start}} g at the start. Half of the meal's food energy has left by {{half}}.",
+          "summaryNone": "The stomach holds {{start}} g at the start. Half of it has left by {{half}}."
         },
         "liquidG": {
           "name": "Drink in the stomach",
@@ -593,7 +595,8 @@
     "mealFull": "The meal already has {{n}} foods, the most it can hold.",
     "close": "Close",
     "thisMeal": "This meal",
-    "keptMeal": "The kept meal"
+    "keptMeal": "The kept meal",
+    "particles": "Food pieces in the body"
   },
   "keep": {
     "button": "Keep to compare",
@@ -695,5 +698,40 @@
     "halfLeftOf": "{{meal}}: half has left the stomach",
     "highestOf": "{{meal}}: highest {{value}}",
     "squeezed": "time squeezed"
+  },
+  "table": {
+    "title": "The graphs as a table",
+    "showFor": "Show as table: {{name}}",
+    "time": "After eating",
+    "thisMeal": "This meal: {{meal}}",
+    "range": "How much people differ",
+    "moments": "Key moments",
+    "moment": "Moment",
+    "keptValue": "kept meal {{value}}"
+  },
+  "keys": {
+    "button": "Keys and settings",
+    "title": "Keys and settings",
+    "settings": "Settings",
+    "list": "Keys",
+    "play": "Play or pause",
+    "move": "10 minutes back or on",
+    "moveHour": "1 hour back or on",
+    "moments": "Next or previous key moment (a clicker’s two buttons)",
+    "ends": "Start or end",
+    "keep": "Keep this meal to compare",
+    "table": "The graphs as a table",
+    "strips": "Show the Stomach, Blood sugar or Energy graph",
+    "help": "This list",
+    "letters": "Letter keys",
+    "lettersHelp": "Space, K, P, T, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work.",
+    "motion": "Reduce motion",
+    "motionHelp": "The food pieces in the body stop tumbling. The clock still moves when you press Play.",
+    "motionDevice": "Until you choose here, this follows the device’s own setting.",
+    "motionReset": "Follow the device’s setting again",
+    "on": "On",
+    "off": "Off",
+    "offNote": "off",
+    "typing": "Keys typed in a search box or a form are never taken as shortcuts."
   }
 }

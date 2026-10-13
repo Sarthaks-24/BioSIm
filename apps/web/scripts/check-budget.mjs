@@ -22,9 +22,14 @@
 //   moved to one CSS block, the 3D look's colour maths into the 3D chunk, and the English text
 //   only About, Privacy, Teach and Science use is fetched with those pages (i18n loadPageText):
 //   /next 190.6 → 186.6 KB, /sim 181.1 → 177.8 KB, Home 157.3 → 154.0 KB.
-//   FIX-C (2026-10-13): the Now line from the model (how much is where, the kept meal, "done"),
-//   the louder summary, the squeezed-axis tint and the load boundaries: /next 186.6 → 189.6 KB.
-//   Little room is left: anything new on the stage that is not first paint must load on use.
+//   WP-15 (2026-10-13): the key map, the graphs' summaries, the table and settings buttons and the
+//   particle key are first paint; the table, the keys sheet and the food search load on first use
+//   (one chunk, components/stage/Sheets.tsx). The English page texts are now cut at build time
+//   (scripts/i18n-sections.mjs, replacing the list of named imports + loadPageText above): each
+//   page imports only its own section, and Stats, the report form and v1's simulator texts leave
+//   the first download too. /next 186.6 (main) → 188.6 KB with WP-15 (the named-import cut gave
+//   190.1 KB with WP-15), /sim 177.8 → 179.2 KB, Home 154.0 → 153.4 KB.
+//   FIX-C (2026-10-13): placeholder
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

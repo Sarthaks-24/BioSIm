@@ -9,6 +9,8 @@ interface Props {
   clock: ReactNode
   /** Optional speed control: beside the clock. */
   pace?: ReactNode
+  /** Optional small controls at the end of the clock's row (the settings button). */
+  tools?: ReactNode
   /** The timeline track; takes all the width that is left. */
   children: ReactNode
 }
@@ -25,7 +27,7 @@ interface Props {
  * - from 1024 px up the dock takes the stage's two columns (it must sit in a `grid-cols-subgrid`
  *   parent): Play and clock under the body, the track under the graph column, behind the same rule.
  */
-export default function Dock({ label, play, clock, pace, children }: Props) {
+export default function Dock({ label, play, clock, pace, tools, children }: Props) {
   return (
     <section
       aria-label={label}
@@ -33,9 +35,11 @@ export default function Dock({ label, play, clock, pace, children }: Props) {
     >
       <div className="contents lg:flex lg:min-h-18 lg:items-center lg:gap-4 lg:px-4">
         <div className="row-span-2">{play}</div>
-        <div className="flex shrink-0 items-center gap-3 lg:gap-4">
+        <div className="flex shrink-0 items-center gap-3 lg:flex-1 lg:gap-4">
           <div className="tabular text-clock-sm font-extrabold lg:text-clock">{clock}</div>
           {pace}
+          {/* Phones: at the end of the clock's line, which it must not make taller. */}
+          {tools && <div className="-my-2 ml-auto shrink-0 lg:my-0">{tools}</div>}
         </div>
       </div>
       <div className="col-start-2 min-w-0 lg:flex lg:h-full lg:items-center lg:border-l lg:border-rule2 lg:pr-4 lg:pl-[calc(1rem+var(--plot-gutter))]">

@@ -1,77 +1,8 @@
 import i18n, { type BackendModule } from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import {
-  nav,
-  home,
-  sim,
-  stages,
-  nutrients,
-  charts,
-  events,
-  lesson,
-  feedback,
-  disclaimer,
-  notFound,
-  units,
-  anatomy,
-  verdict,
-  error,
-  footer,
-  stats,
-  status,
-  signals,
-  limits,
-  profiles,
-  organisms,
-  systems,
-  lifeProcess,
-  stage,
-  keep,
-  now,
-  summary,
-  dock,
-  graph,
-} from './en.json'
+// en.json without the texts of the pages that bring their own (scripts/i18n-sections.mjs).
+import en from 'virtual:lifepeek-en/core'
 import { readPref, writePref } from '../lib/prefs.ts'
-
-/**
- * English for every page, bundled with the app. The text only the About, Privacy, Teach and
- * Science pages use (the longest sections) is left out here and fetched with those pages
- * (loadPageText): about 4 KB gzipped off the first download of every other page (roadmap A8).
- * Named imports, so the bundler keeps only these sections; a new section goes in this list.
- */
-const en = {
-  nav,
-  home,
-  sim,
-  stages,
-  nutrients,
-  charts,
-  events,
-  lesson,
-  feedback,
-  disclaimer,
-  notFound,
-  units,
-  anatomy,
-  verdict,
-  error,
-  footer,
-  stats,
-  status,
-  signals,
-  limits,
-  profiles,
-  organisms,
-  systems,
-  lifeProcess,
-  stage,
-  keep,
-  now,
-  summary,
-  dock,
-  graph,
-}
 
 export const LANGUAGES = ['en', 'hi'] as const
 export type Language = (typeof LANGUAGES)[number]
@@ -101,18 +32,6 @@ const locales: BackendModule = {
   },
 }
 
-let pageText: Promise<void> | undefined
-
-/**
- * Adds the About, Privacy, Teach and Science pages' English text (the whole en.json, as its own
- * file). main.tsx loads it together with those pages, so they never draw before their words.
- */
-export function loadPageText(): Promise<void> {
-  return (pageText ??= import('./en.json?raw').then((m) => {
-    i18n.addResourceBundle('en', 'translation', JSON.parse(m.default), true, false)
-  }))
-}
-
 const first = initialLanguage()
 
 /** Resolves once the first language is ready; main.tsx draws the app after it (never in a half-loaded language). */
@@ -133,6 +52,14 @@ i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
   writePref('lang', lng)
 })
+
+/**
+ * Adds a page's own English text (its `virtual:lifepeek-en/<section>`), when the page's code
+ * loads, before it draws. Hindi needs no such step: hi.json is fetched whole.
+ */
+export function addEnglish(...texts: Record<string, unknown>[]) {
+  for (const text of texts) i18n.addResourceBundle('en', 'translation', text, true, true)
+}
 
 /** Pick the user's language from a food file's { en, hi? } text. */
 export function localized(text: { en: string; hi?: string | undefined } | undefined, lang: string): string {

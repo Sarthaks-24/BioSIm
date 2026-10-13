@@ -1,11 +1,14 @@
 import { expect, test } from '@playwright/test'
-import { GATE_ROUTES, checkAxe, modeFor } from './helpers/gate.ts'
+import { GATE_ROUTES, checkAxe, modeFor, onlyIn } from './helpers/gate.ts'
 
 // axe on every page: 0 serious or critical issues is the gate. v1 pages run in report mode but
-// still fail on critical issues. Keyboard-only runs and "Show as table" come in WP-15.
+// still fail on critical issues. /next is checked in every project (desktop, projector, phone),
+// also with a kept meal and with its sheets open (WP-15). The keyboard-only run, the graphs'
+// summaries and "Show as table" are in keyboard.spec.ts.
 
 for (const route of GATE_ROUTES.axe) {
   test(`axe: ${route.url}`, async ({ page }) => {
+    if (!route.url.startsWith('/next')) onlyIn('desktop')
     const mode = modeFor(route)
     await page.goto(route.url)
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeAttached()
@@ -14,7 +17,26 @@ for (const route of GATE_ROUTES.axe) {
   })
 }
 
+test('axe on /next with a kept meal, the table and the keys sheet open: 0 serious or critical', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  for (const lang of ['en', 'hi']) {
+    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=${lang}`)
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeAttached()
+    await page.waitForLoadState('networkidle')
+    await checkAxe(page, { mode: 'enforce' })
+    await page.locator('figure').filter({ visible: true }).first().locator('button[aria-haspopup="dialog"]').click()
+    await expect(page.locator('dialog[open] table').first()).toBeVisible()
+    await checkAxe(page, { mode: 'enforce' })
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: /^(Keys and settings|कुंजियाँ और सेटिंग)$/ }).click()
+    await expect(page.locator('dialog[open] [role="switch"]').first()).toBeVisible()
+    await checkAxe(page, { mode: 'enforce' })
+    await page.keyboard.press('Escape')
+  }
+})
+
 test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives it back to its button', async ({ page }) => {
+  onlyIn('desktop', 'projector')
   await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1')
   const button = page
     .getByRole('button', { name: /^How we know: / })
@@ -43,7 +65,31 @@ test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives
   await expect(button).toBeFocused()
 })
 
+test('the stage’s small panels take focus, and Esc gives it back to their button (Adult model, servings)', async ({ page }) => {
+  onlyIn('desktop', 'phone')
+  await page.goto('/next?v=2&a=cola:1')
+  for (const [button, panel] of [
+    [
+      page
+        .getByRole('button', { name: /Adult model/ })
+        .filter({ has: page.locator('svg') })
+        .first(),
+      /^Adult model/,
+    ],
+    [page.getByRole('button', { name: /^Cola/ }).first(), /^Servings: Cola/],
+  ] as const) {
+    await button.focus()
+    await page.keyboard.press('Enter')
+    const dialog = page.getByRole('dialog', { name: panel })
+    await expect(dialog).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await expect(button).toBeFocused()
+  }
+})
+
 test('the header names its menu and the language button by the words it shows (WCAG 2.5.3)', async ({ page }) => {
+  onlyIn('desktop')
   await page.goto('/')
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
   const language = page.getByRole('button', { name: /^भाषा: हिन्दी/ })
@@ -89,6 +135,7 @@ test.describe('a "How we know" panel whose code does not load', () => {
   test.use({ serviceWorkers: 'block' })
 
   test('says so in the panel (not an error page), and "Try again" loads it', async ({ page }) => {
+    onlyIn('desktop')
     // Past main.tsx's one reload after a failed file (the stale-tab fix): this is the case it can't fix.
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     // Offline until "Try again" (pointing at the button already asks for the file once).

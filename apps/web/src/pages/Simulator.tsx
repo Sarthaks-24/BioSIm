@@ -5,7 +5,7 @@ import { useSim, mealLabel, shareQuery, MEAL_KEYS, type MealKey, type Sims } fro
 import { useClock } from '../hooks/useClock.ts'
 import { useUrlSync } from '../hooks/useUrlSync.ts'
 import { useSimulation } from '../hooks/useSimulation.ts'
-import { localized } from '../i18n/index.ts'
+import { addEnglish, localized } from '../i18n/index.ts'
 import MealPicker from '../components/MealPicker.tsx'
 import BodyView from '../components/BodyView.tsx'
 import Timeline from '../components/Timeline.tsx'
@@ -19,6 +19,13 @@ import { FirstRunNote } from '../components/MedicalNote.tsx'
 import Verdict from '../components/Verdict.tsx'
 import { GlucoseChart, StomachChart, WhereChart } from '../components/charts/SimCharts.tsx'
 import { MEAL_COLOR } from '../lib/colors.ts'
+import verdictText from 'virtual:lifepeek-en/verdict'
+import chartsText from 'virtual:lifepeek-en/charts'
+import eventsText from 'virtual:lifepeek-en/events'
+import lessonText from 'virtual:lifepeek-en/lesson'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(verdictText, chartsText, eventsText, lessonText)
 
 type View = 'body' | 'lesson'
 

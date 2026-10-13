@@ -101,3 +101,20 @@ export const FlagIcon = () => (
     <path d="M5 4h9.5l-2 3.5 2 3.5H5" />
   </Icon>
 )
+
+/** Show as table: a grid of rows under a header line. */
+export const TableIcon = () => (
+  <Icon width="18" height="18" strokeWidth="1.75">
+    <rect x="3" y="4" width="14" height="12" rx="1.5" />
+    <path d="M3 8.25h14M3 12.25h14M8 8.25V16" />
+  </Icon>
+)
+
+/** Settings (keys, motion): two sliders. */
+export const SettingsIcon = () => (
+  <Icon>
+    <path d="M3.5 6.5h2m4 0h7M3.5 13.5h7m4 0h2" />
+    <circle cx="7.5" cy="6.5" r="2" />
+    <circle cx="12.5" cy="13.5" r="2" />
+  </Icon>
+)

@@ -1,6 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import RichText from '../components/RichText.tsx'
 import { MAKER } from '../lib/credits.ts'
+import { addEnglish } from '../i18n/index.ts'
+import privacyText from 'virtual:lifepeek-en/privacy'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(privacyText)
 
 /** One heading of the privacy text, as paragraphs before a list, the list, and paragraphs after it. */
 interface Section {

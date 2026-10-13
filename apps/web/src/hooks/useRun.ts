@@ -34,11 +34,13 @@ export function useRun(which: 'current' | 'kept'): Simulation | null {
 }
 
 /**
- * Hands the run's key moments to the meal clock, so "next / previous moment" (stepToMoment)
- * steps through this run's markers: the same moments the dock's timeline marks (lib/moments.ts).
+ * Hands the key moments to the meal clock, so "next / previous moment" (PageDown / PageUp, a
+ * clicker) steps through every marker on the dock's timeline (lib/moments.ts): this meal's and
+ * the kept meal's, in time order, each time once.
  */
-export function useMomentsOnClock(run: Simulation) {
+export function useMomentsOnClock(run: Simulation, kept: Simulation | null = null) {
   useEffect(() => {
-    useClock.getState().setMoments(runMoments(run).map((m) => m.atMin))
-  }, [run])
+    const times = [run, kept].flatMap((sim) => (sim && sim.meal.items.length > 0 ? runMoments(sim).map((m) => m.atMin) : []))
+    useClock.getState().setMoments(times)
+  }, [run, kept])
 }
