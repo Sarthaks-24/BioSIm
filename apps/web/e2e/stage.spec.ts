@@ -69,9 +69,15 @@ test('organ labels never overlap and stay inside the body picture', async ({ pag
       for (let i = 0; i < times; i++) await slider.press(key)
       // The four food-path labels always find a place (liver and pancreas only where there is room);
       // a picture under 200 px tall labels only the active organ (FP-1), none while it is the mouth.
-      const short = (await body.boundingBox())!.height < 200
-      await expect.poll(() => visibleLabels(page).then((l) => l.length), { timeout: 15_000 }).toBeGreaterThanOrEqual(short ? 0 : 4)
-      if (short) expect((await visibleLabels(page)).length).toBeLessThanOrEqual(1)
+      await expect
+        .poll(
+          async () => {
+            const [height, labels] = [(await body.boundingBox())?.height ?? 0, (await visibleLabels(page)).length]
+            return height < 200 ? labels <= 1 : labels >= 4
+          },
+          { timeout: 15_000, message: 'four labels, or at most the active one on a picture under 200 px' },
+        )
+        .toBe(true)
       const labels = await visibleLabels(page)
       const frame = (await body.boundingBox())!
       for (const l of labels) {

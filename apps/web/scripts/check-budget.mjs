@@ -78,7 +78,7 @@
 //   measured "+n" fold, the resting body in the empty state. "⋯" took Typical adult, Copy link and
 //   Report off the bar: its panel (components/stage/MealActions.tsx) loads on first use, and gets
 //   Keep and Report as elements so it shares no module with the stage (a shared one is split into
-//   a chunk of its own). /sim 188.057 → 188.347 KB on main with T9a (+0.29; ledger row +0.3).
+//   a chunk of its own). /sim 188.172 → 188.466 KB on main with T9a and T7 (+0.29; ledger row +0.3).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
