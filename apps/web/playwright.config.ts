@@ -36,6 +36,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'loading.spec.ts',
       'links.spec.ts',
       'overlays.spec.ts',
+      'web-basics.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },

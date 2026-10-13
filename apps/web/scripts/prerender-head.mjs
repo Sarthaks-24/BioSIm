@@ -143,15 +143,46 @@ export const robots = (site) => `User-agent: *\nAllow: /\nSitemap: ${site}/sitem
 /** The file a page's HTML is written to, under dist ("/" → index.html, "/teach" → teach/index.html). */
 export const htmlFile = (route) => (route === '/' ? 'index.html' : `${route.slice(1)}/index.html`)
 
+/**
+ * `vite preview` answers like Vercel (vercel.json): the redirect, each page's built HTML, and a
+ * 404 status with 404.html for a path that is no page and no file. Without this the preview gave
+ * every path index.html, so the e2e tests saw neither the page heads nor the 404.
+ */
+function previewLikeVercel(server) {
+  const dir = path.resolve(server.config.root, server.config.build.outDir)
+  const vercel = JSON.parse(fs.readFileSync(path.resolve(server.config.root, '..', '..', 'vercel.json'), 'utf8'))
+  const isFile = (rel) => fs.existsSync(path.join(dir, rel)) && fs.statSync(path.join(dir, rel)).isFile()
+  const send = (res, status, file) => {
+    res.statusCode = status
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.end(fs.readFileSync(path.join(dir, file)))
+  }
+  server.middlewares.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    const url = new URL(req.url ?? '/', 'http://preview')
+    const p = decodeURIComponent(url.pathname)
+    const redirect = (vercel.redirects ?? []).find((r) => r.source === p)
+    if (redirect) {
+      res.statusCode = redirect.statusCode ?? 308
+      res.setHeader('Location', redirect.destination + url.search)
+      return res.end()
+    }
+    const rewrite = (vercel.rewrites ?? []).find((r) => r.source === p)
+    if (rewrite) return send(res, 200, rewrite.destination.slice(1))
+    if (p === '/' || p.startsWith('/api/') || isFile(p.slice(1))) return next()
+    return send(res, 404, '404.html')
+  })
+}
+
 /** The Vite plugin. `site`: the production address (scripts/site-url.mjs). */
 export default function prerenderHead({ site }) {
   let hindi = false
   return {
     name: 'lifepeek-prerender-head',
-    apply: 'build',
     configResolved(config) {
       hindi = config.env.VITE_HINDI === '1'
     },
+    configurePreviewServer: previewLikeVercel,
     writeBundle(options) {
       const dir = options.dir
       const template = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')

@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:dead": "node apps/web/scripts/dead-code.mjs",
-    "check": "npm run validate && npm run format:check && npm run lint:dead && npm run typecheck && npm run test && npm run build",
+    "check": "npm run validate && npm run format:check && npm run lint:dead && npm run typecheck && npm run test && npm run build && npm run links -w @lifepeek/web",
     "release-gate": "node apps/web/scripts/release-gate.mjs"
   },
   "devDependencies": {
