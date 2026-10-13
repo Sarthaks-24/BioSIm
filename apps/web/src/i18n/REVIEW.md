@@ -393,7 +393,7 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `summary.single` | Half of the food energy in {{meal}} has left the stomach after {{time}}. | {{meal}} की आधी ऊर्जा {{time}} बाद आमाशय से निकल चुकी है। | draft |
 | `summary.singleWater` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
 | `summary.similar` | {{a}} and {{b}} leave the stomach at about the same speed. | {{a}} और {{b}} लगभग एक ही गति से आमाशय से निकलते हैं। | draft |
-| `summary.faster` | {{fast}} leaves the stomach about {{x}}× faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} गुना तेज़ी से आमाशय से निकलता है। | draft |
+| `summary.faster` | {{fast}} leaves the stomach about {{x}} faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} तेज़ी से आमाशय से निकलता है। | draft |
 | `summary.reasonDrink` | {{fast}} is only a drink: drinks start leaving straight away, while solid food is ground first. | {{fast}} केवल एक पेय है: पेय तुरंत निकलने लगते हैं, जबकि ठोस भोजन पहले पीसा जाता है। | draft |
 | `summary.reasonCalories` | {{slow}} has more food energy ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach lets only a little through each minute. | {{slow}} में अधिक ऊर्जा है ({{kcalSlow}} बनाम {{kcalFast}} किलो कैलोरी), और आमाशय हर मिनट थोड़ा-सा ही आगे जाने देता है। | draft |
 | `summary.thisMeal` | this meal | यह भोजन | draft |
@@ -404,6 +404,46 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
 | `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
+
+## Council round 2 fixes (FIX-C)
+
+The Now line says where the meal is from the model (how much is in which organ, the kept meal, "done") and words drinks as drinks; the summary's key number; ring labels name their meal; the squeezed time axis.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `now.amount.all` | almost all | लगभग सारा | draft |
+| `now.amount.most` | most | ज़्यादातर | draft |
+| `now.amount.half` | about half | लगभग आधा | draft |
+| `now.amount.some` | some | कुछ | draft |
+| `now.amount.little` | a little | थोड़ा-सा | draft |
+| `now.here` | {{amount}} is here | {{amount}} भाग यहाँ है | draft |
+| `now.also.stomach` | {{amount}} still in the stomach | {{amount}} भाग अभी आमाशय में | draft |
+| `now.also.smallIntestine` | {{amount}} already in the small intestine | {{amount}} भाग छोटी आँत में | draft |
+| `now.also.largeIntestine` | {{amount}} already in the large intestine | {{amount}} भाग बड़ी आँत में | draft |
+| `now.also.body` | {{amount}} already absorbed | {{amount}} भाग अवशोषित हो चुका | draft |
+| `now.doneName` | Done | पूरा हुआ | draft |
+| `now.done` | the gut is finished with this meal: {{amount}} was absorbed, the rest left as waste | पाचन पूरा: {{amount}} भाग अवशोषित हुआ, बाकी मल बनकर बाहर निकल गया | draft |
+| `now.doneAll` | the gut is finished with this meal: {{amount}} was absorbed | पाचन पूरा: {{amount}} भाग अवशोषित हुआ | draft |
+| `now.drink.mouth` | the drink is swallowed in a few gulps | पेय कुछ घूँटों में निगला जाता है | draft |
+| `now.drink.esophagus` | muscle waves push each gulp down to the stomach | पेशियों की लहरें हर घूँट को नीचे आमाशय तक धकेलती हैं | draft |
+| `now.drink.stomach` | the stomach lets the drink through a little at a time | आमाशय पेय को थोड़ा-थोड़ा करके आगे जाने देता है | draft |
+| `now.kept` | {{meal}} (kept): | {{meal}} (रखा गया): | draft |
+| `now.in.mouth` | being eaten | खाया जा रहा है | draft |
+| `now.in.mouthDrink` | being drunk | पिया जा रहा है | draft |
+| `now.in.esophagus` | on its way down to the stomach | आमाशय की ओर जा रहा है | draft |
+| `now.in.stomach` | {{amount}} in the stomach | {{amount}} भाग आमाशय में | draft |
+| `now.in.smallIntestine` | {{amount}} in the small intestine | {{amount}} भाग छोटी आँत में | draft |
+| `now.in.largeIntestine` | {{amount}} in the large intestine | {{amount}} भाग बड़ी आँत में | draft |
+| `now.in.done` | the gut is finished with it | पाचन पूरा हो चुका | draft |
+| `summary.times` | {{n}}× | {{n}} गुना | draft |
+| `summary.fasterMore` | {{fast}} leaves the stomach more than {{x}} faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में {{x}} से भी अधिक तेज़ी से आमाशय से निकलता है। | draft |
+| `summary.singleMore` | Half of the food energy in {{meal}} takes more than {{time}} to leave the stomach. | {{meal}} की आधी ऊर्जा को आमाशय से निकलने में {{time}} से अधिक समय लगता है। | draft |
+| `summary.singleWaterMore` | Half of {{meal}} takes more than {{time}} to leave the stomach. | {{meal}} के आधे भाग को आमाशय से निकलने में {{time}} से अधिक समय लगता है। | draft |
+| `graph.halfEnergyLeftOf` | {{meal}}: half the energy has left the stomach | {{meal}}: आधी ऊर्जा आमाशय से निकल गई | draft |
+| `graph.halfLeftOf` | {{meal}}: half has left the stomach | {{meal}}: आधा भोजन आमाशय से निकल गया | draft |
+| `graph.highestOf` | {{meal}}: highest {{value}} | {{meal}}: सबसे अधिक {{value}} | draft |
+| `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
+| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
 ## Sign-off
 

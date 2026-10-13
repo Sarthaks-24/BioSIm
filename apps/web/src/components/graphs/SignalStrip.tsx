@@ -4,11 +4,11 @@ import { valueAt, type ChartableSeries, type Series } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS } from '../../lib/time.ts'
 import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks, type Domain } from '../../lib/axis.ts'
-import { formatNumber, formatSignal } from '../../lib/formatSignal.ts'
+import { formatNumber, formatSignal, unitLabel } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import { LineSwatch } from '../stage/KeptTag.tsx'
 import Playhead from './Playhead.tsx'
-import { lineEndSpots, placeLabel, polyline, ringSpots, type Box } from './labels.ts'
+import { freeSpot, lineEndSpots, placeLabel, polyline, ringSpots, type Box } from './labels.ts'
 import { STRIP_ROWS } from './layout.ts'
 
 interface Props {
@@ -155,7 +155,16 @@ export default function SignalStrip({
   // Measured after layout and placed before paint; hidden until placed, and when nothing fits.
   const markerLabel = useRef<HTMLSpanElement>(null)
   const secondLabel = useRef<HTMLSpanElement>(null)
-  const [placed, setPlaced] = useState<{ marker: Box | null; second: Box | null }>({ marker: null, second: null })
+  // Words along the plot's top edge (the unit by the y axis, "time squeezed" by the knee): placed
+  // after the labels above, along the top from their corner, only where they touch nothing.
+  const unitText = useRef<HTMLSpanElement>(null)
+  const squeezeText = useRef<HTMLSpanElement>(null)
+  const [placed, setPlaced] = useState<Record<'marker' | 'second' | 'unit' | 'squeeze', Box | null>>({
+    marker: null,
+    second: null,
+    unit: null,
+    squeeze: null,
+  })
   const markerWords = marker?.label
   const secondWords = second?.label
   // A web font arriving late (Devanagari) changes the labels' size: place them again.
@@ -168,6 +177,8 @@ export default function SignalStrip({
   useLayoutEffect(() => {
     const plotSize = { width, height }
     const sizeOf = (el: HTMLElement | null) => (el && el.offsetWidth > 0 ? { w: el.offsetWidth, h: el.offsetHeight } : null)
+    // The ring's label and the second line's name first (they say what a line is); then the unit
+    // and "time squeezed" go along the top edge where they touch nothing, or are left out.
     let secondBox: Box | null = null
     const s = sizeOf(secondLabel.current)
     if (paths && s && paths.secondEndY != null) {
@@ -178,8 +189,20 @@ export default function SignalStrip({
     if (paths?.marker && m) {
       markerBox = placeLabel(m, ringSpots(paths.marker.x, paths.marker.y, m.w, m.h), plotSize, paths.points, secondBox ? [secondBox] : [])
     }
-    setPlaced((p) => (sameBox(p.marker, markerBox) && sameBox(p.second, secondBox) ? p : { marker: markerBox, second: secondBox }))
-  }, [paths, width, height, rem, markerWords, secondWords, fonts])
+    const taken = [markerBox, secondBox].filter((b) => !!b)
+    const alongTop = (el: HTMLElement | null, fromX: number) => {
+      const size = sizeOf(el)
+      if (!paths || !size) return null
+      const spots = [0, 1, 2, 3, 4, 6, 8].flatMap((k) => [2, 2 + size.h + 2].map((y) => ({ x: fromX + 4 + k * 12, y })))
+      const box = freeSpot(size, spots, plotSize, paths.points, taken)
+      if (box) taken.push(box)
+      return box
+    }
+    const unitBox = alongTop(unitText.current, 0)
+    const squeezeBox = alongTop(squeezeText.current, xAt(KNEE_MIN, width))
+    const next = { marker: markerBox, second: secondBox, unit: unitBox, squeeze: squeezeBox }
+    setPlaced((p) => ((Object.keys(next) as (keyof typeof next)[]).every((k) => sameBox(p[k], next[k])) ? p : next))
+  }, [paths, width, height, rem, markerWords, secondWords, fonts, tabbed, lang])
 
   // Readout text: the value of this run, the kept run and the second line, and running totals if any.
   const runText = useRef<HTMLSpanElement>(null)
@@ -331,6 +354,19 @@ export default function SignalStrip({
               height={height}
               className="absolute inset-0 overflow-visible"
             >
+              {/*
+               * After 6 h the time axis is squeezed (42 h in the last 40 % of the width), so a fall
+               * that takes hours there looks like a cliff (council round 2, C2): the squeezed part is
+               * tinted, the same Sunk2 as the dock's track, and the x axis is broken at the knee.
+               */}
+              <rect
+                data-squeezed=""
+                x={xAt(KNEE_MIN, width)}
+                y="0"
+                width={width - xAt(KNEE_MIN, width)}
+                height={height}
+                className="fill-sunk2"
+              />
               <g className="stroke-grid" strokeWidth="1" shapeRendering="crispEdges">
                 {ticks.slice(0, -1).map((v, i) => (
                   <line
@@ -356,6 +392,11 @@ export default function SignalStrip({
                 strokeDasharray="0 4"
                 strokeLinecap="round"
               />
+              {/* The break in the x axis: two short slashes across it, with a gap of paper between. */}
+              <g data-axis-break="" transform={`translate(${xAt(KNEE_MIN, width)} ${height + 1})`}>
+                <rect x="-3.5" y="-3" width="7" height="6" className="fill-shelf" />
+                <path d="M-6.5 4 L-1.5 -4 M1.5 4 L6.5 -4" className="fill-none stroke-ink-2" strokeWidth="1.5" strokeLinecap="round" />
+              </g>
               {paths.band && <path data-line="band" d={paths.band} className="fill-run [fill-opacity:var(--strip-band-opacity)]" />}
               {paths.kept && (
                 <path
@@ -387,7 +428,9 @@ export default function SignalStrip({
               ref={markerLabel}
               aria-hidden="true"
               data-plot-label="marker"
-              className="pointer-events-none absolute w-max max-w-[max(9rem,45%)] text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
+              // Above the playhead (z-10), on a backing of graph paper: the moving line passes behind
+              // the words, never through them (council round 2, C5).
+              className="pointer-events-none absolute z-10 w-max max-w-[max(9rem,45%)] rounded-[3px] bg-shelf/85 px-0.5 text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
               style={labelStyle(placed.marker)}
             >
               {marker.label}
@@ -400,10 +443,34 @@ export default function SignalStrip({
               ref={secondLabel}
               aria-hidden="true"
               data-plot-label="second"
-              className="pointer-events-none absolute w-max max-w-[38%] text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
+              className="pointer-events-none absolute z-10 w-max max-w-[38%] rounded-[3px] bg-shelf/85 px-0.5 text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
               style={labelStyle(placed.second)}
             >
               {second.label}
+            </span>
+          )}
+          {paths && tabbed && (
+            // Under tabs the graph has no title, so its unit is written at the top of the y axis
+            // ("600 what?", council round 2, C6). Stacked graphs name it in the title and readouts.
+            <span
+              ref={unitText}
+              aria-hidden="true"
+              data-plot-label="unit"
+              className="pointer-events-none absolute z-10 rounded-[3px] bg-shelf/85 px-0.5 text-caption leading-tight text-ink-2"
+              style={labelStyle(placed.unit)}
+            >
+              {unitLabel(meta, t)}
+            </span>
+          )}
+          {paths && (
+            <span
+              ref={squeezeText}
+              aria-hidden="true"
+              data-plot-label="squeezed"
+              className="pointer-events-none absolute z-10 rounded-[3px] bg-sunk2/85 px-0.5 text-caption leading-tight whitespace-nowrap text-ink-2 max-sm:hidden"
+              style={labelStyle(placed.squeeze)}
+            >
+              {t('graph.squeezed')}
             </span>
           )}
           <Playhead

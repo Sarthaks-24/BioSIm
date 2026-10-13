@@ -74,6 +74,9 @@
   --text-clock-sm--line-height: 1.15;
   --text-title: 1.25rem;
   --text-title--line-height: 1.3;
+  /* The stage's answer (the summary sentence): a step above body text, below a title. */
+  --text-lead: 1.1875rem;
+  --text-lead--line-height: 1.3;
   --text-control: 0.9375rem;
   --text-control--line-height: 1.35;
   --text-caption: 0.8125rem;
@@ -145,6 +148,17 @@ html[data-contrast='high'] {
 html[data-contrast='high']:lang(hi) {
   font-size: 119.5%;
 }
+/*
+ * Only the stage is fitted to the 1280×800 box. Every other page (v1 /sim until WP-20, Home, About)
+ * scrolls, so it keeps the projector size it had before WP-17 (118.75 %, Hindi 125 %) and is not
+ * shrunk by the stage's fit (review 14-17, MED 5).
+ */
+html[data-contrast='high']:not(:has([data-stage])) {
+  font-size: 118.75%;
+}
+html[data-contrast='high']:lang(hi):not(:has([data-stage])) {
+  font-size: 125%;
+}
 
 /* v2 projector tokens: white surfaces, darker rule and grid, so the zones survive a washed-out
    projector. Graph line colours stay the same as on a phone; only their weight changes. */
@@ -214,6 +228,7 @@ html:lang(hi) {
   --text-clock--line-height: 1.35;
   --text-clock-sm--line-height: 1.35;
   --text-title--line-height: 1.55;
+  --text-lead--line-height: 1.55;
   --text-control--line-height: 1.6;
   --text-caption: 0.875rem;
   --text-caption--line-height: 1.6;

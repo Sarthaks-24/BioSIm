@@ -92,6 +92,34 @@ for (const lang of ['en', 'hi'] as const) {
   })
 }
 
+// The opening frame of a lesson (council round 2, C4): at 0 min the compare sentence (it does not
+// depend on the clock) and the Now line are already on screen, louder than the reason, with the
+// key number in its line's colour.
+for (const lang of ['en', 'hi'] as const) {
+  test(`projector at 0 min (${lang}): the summary and the Now line are there from the start`, async ({ page }) => {
+    onlyIn('projector')
+    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0&lang=${lang}`)
+    await page.locator('figure [data-line="run"]').first().waitFor()
+    const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
+    if (await ok.isVisible()) await ok.click()
+    for (const selector of ['[data-summary="compare"]', '[data-now]', '[data-now-kept]']) {
+      const el = page.locator(selector)
+      await expect(el, selector).toBeInViewport({ ratio: 1 })
+    }
+    await expect(page.locator('[data-now]')).toHaveAttribute('data-now', 'mouth')
+    const headline = page.locator('[data-summary-headline]')
+    const reason = page.locator('[data-summary] > span:last-child > span')
+    const size = (l: typeof headline) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+    expect(await size(headline)).toBeGreaterThanOrEqual(1.2 * (await size(reason)))
+    expect(await headline.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600')
+    const key = page.locator('[data-summary-key="run"]')
+    await expect(key).toHaveText(lang === 'en' ? /^\d+×$/ : /^\d+ गुना$/)
+    expect(await key.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(33, 86, 201)')
+    const m = await page.evaluate(() => [document.documentElement.scrollHeight, innerHeight])
+    expect(m[0]).toBeLessThanOrEqual(m[1]!)
+  })
+}
+
 test('the stage keeps its site nav when projector mode is off', async ({ page }) => {
   onlyIn('projector')
   await page.goto('/next')

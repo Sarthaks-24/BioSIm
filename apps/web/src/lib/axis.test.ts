@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
+import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN, KNEE_MIN, timeToPos } from './time.ts'
 import { MAX_POINTS, domainFor, minAt, posAt, samplesOf, xAt, yAt, yTicks } from './axis.ts'
 
@@ -60,5 +62,37 @@ describe('fixed y range', () => {
     expect(yTicks([0, 1000], 0)).toEqual([1000, 500, 0])
     expect(yAt(200, [60, 200], 100)).toBe(0)
     expect(yAt(60, [60, 200], 100)).toBe(100)
+  })
+})
+
+/**
+ * The 6 h "cliff" (council round 2, C2): after a big meal every graph seemed to drop straight down
+ * at the knee. The cause is the model plus the axis, not a bug: the stomach lets food out at a
+ * steady rate until it is empty (here at about 9 h), so blood sugar and energy coming in stay
+ * level and then fall within about an hour, and after 6 h the axis squeezes 42 h into 40 % of
+ * the width. The graphs tint that part and break the axis there; "How we know" says why.
+ */
+describe('the 6 h "cliff" is steady emptying, squeezed', () => {
+  const run = simulate(buildMeal(decodeMeal('cheeseburger:1,fries:1'), lookupFood), { particles: 0 })
+  const stomach = run.signals.get('gut.stomach.contentG')!.values
+  const glucose = run.signals.get('blood.glucose')!.values
+  const emptyAt = stomach.findIndex((v, i) => i > 60 && v < 0.5)
+
+  it('the stomach empties at the same rate before and after 6 h, and is empty at about 9 h', () => {
+    const rate = (a: number, b: number) => (stomach[a]! - stomach[b]!) / (b - a)
+    expect(rate(300, 360)).toBeCloseTo(rate(360, 420), 1)
+    expect(stomach[KNEE_MIN]!).toBeGreaterThan(60)
+    expect(emptyAt).toBeGreaterThan(8 * 60)
+    expect(emptyAt).toBeLessThan(10 * 60)
+  })
+
+  it('blood sugar is level until then and falls back within about an hour', () => {
+    expect(Math.abs(glucose[KNEE_MIN]! - glucose[4 * 60]!)).toBeLessThan(1.5)
+    expect(glucose[emptyAt + 75]! - glucose[0]!).toBeLessThan(2)
+  })
+
+  it('on the squeezed axis the last hours of emptying take a few per cent of the width', () => {
+    expect(posAt(emptyAt) - posAt(KNEE_MIN)).toBeLessThan(0.04)
+    expect(posAt(KNEE_MIN)).toBeCloseTo(0.6)
   })
 })

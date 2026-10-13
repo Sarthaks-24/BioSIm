@@ -550,7 +550,8 @@
     "energyInAtwater": "Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted.",
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
-    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people."
+    "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people.",
+    "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still."
   },
   "profiles": {
     "adult-ref": {
@@ -613,6 +614,38 @@
       "stomach": "acid and churning turn food into chyme",
       "smallIntestine": "nutrients are absorbed into the body",
       "largeIntestine": "water is taken back from the leftovers"
+    },
+    "amount": {
+      "all": "almost all",
+      "most": "most",
+      "half": "about half",
+      "some": "some",
+      "little": "a little"
+    },
+    "here": "{{amount}} is here",
+    "also": {
+      "stomach": "{{amount}} still in the stomach",
+      "smallIntestine": "{{amount}} already in the small intestine",
+      "largeIntestine": "{{amount}} already in the large intestine",
+      "body": "{{amount}} already absorbed"
+    },
+    "doneName": "Done",
+    "done": "the gut is finished with this meal: {{amount}} was absorbed, the rest left as waste",
+    "doneAll": "the gut is finished with this meal: {{amount}} was absorbed",
+    "drink": {
+      "mouth": "the drink is swallowed in a few gulps",
+      "esophagus": "muscle waves push each gulp down to the stomach",
+      "stomach": "the stomach lets the drink through a little at a time"
+    },
+    "kept": "{{meal}} (kept):",
+    "in": {
+      "mouth": "being eaten",
+      "mouthDrink": "being drunk",
+      "esophagus": "on its way down to the stomach",
+      "stomach": "{{amount}} in the stomach",
+      "smallIntestine": "{{amount}} in the small intestine",
+      "largeIntestine": "{{amount}} in the large intestine",
+      "done": "the gut is finished with it"
     }
   },
   "summary": {
@@ -620,11 +653,15 @@
     "single": "Half of the food energy in {{meal}} has left the stomach after {{time}}.",
     "singleWater": "Half of {{meal}} has left the stomach after {{time}}.",
     "similar": "{{a}} and {{b}} leave the stomach at about the same speed.",
-    "faster": "{{fast}} leaves the stomach about {{x}}× faster than {{slow}}.",
+    "faster": "{{fast}} leaves the stomach about {{x}} faster than {{slow}}.",
     "reasonDrink": "{{fast}} is only a drink: drinks start leaving straight away, while solid food is ground first.",
     "reasonCalories": "{{slow}} has more food energy ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach lets only a little through each minute.",
     "thisMeal": "this meal",
-    "keptMeal": "the kept meal"
+    "keptMeal": "the kept meal",
+    "times": "{{n}}×",
+    "fasterMore": "{{fast}} leaves the stomach more than {{x}} faster than {{slow}}.",
+    "singleMore": "Half of the food energy in {{meal}} takes more than {{time}} to leave the stomach.",
+    "singleWaterMore": "Half of {{meal}} takes more than {{time}} to leave the stomach."
   },
   "dock": {
     "squeezed": "{{from}} → {{to}} squeezed",
@@ -653,6 +690,10 @@
     "halfEnergyLeft": "Half the energy has left the stomach",
     "halfTitle": "The ring: half has left the stomach",
     "halfNote": "The ring marks when half of the meal's food energy has left the stomach (for water: half its weight). Drinks leave first, so the grams on this graph can fall to half before the ring.",
-    "soFar": "({{value}} so far)"
+    "soFar": "({{value}} so far)",
+    "halfEnergyLeftOf": "{{meal}}: half the energy has left the stomach",
+    "halfLeftOf": "{{meal}}: half has left the stomach",
+    "highestOf": "{{meal}}: highest {{value}}",
+    "squeezed": "time squeezed"
   }
 }

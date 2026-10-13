@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PARAMS, SERVING_STEPS, type MealItem } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { useRunStore } from '../../state/run.ts'
+import { LoadBoundary, LoadFailedPanel, lazyWithRetry } from '../LoadBoundary.tsx'
 import { FlagIcon, FoodChip, IconButton, LinkIcon, PersonTag } from '../kit/index.ts'
 import AddFoodSheet from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
@@ -13,7 +14,7 @@ import Popover from './Popover.tsx'
 import { mealKcalRounded } from './mealText.ts'
 
 /** The report form is downloaded on the first click: it is not part of the first paint (size budget). */
-const FeedbackDialog = lazy(() => import('../FeedbackDialog.tsx'))
+const feedbackDialog = lazyWithRetry(() => import('../FeedbackDialog.tsx'))
 
 /**
  * The meal bar (UI-13 + UI-3 + UI-10): the meal as flat chips, "+ Add food", its kcal, whose body
@@ -252,6 +253,7 @@ function CopyLink({ compact }: { compact: boolean }) {
 function ReportMistake({ compact }: { compact: boolean }) {
   const { t } = useTranslation()
   const [loaded, setLoaded] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const button = (onClick: () => void) => (
     <IconButton
       icon={<FlagIcon />}
@@ -271,9 +273,16 @@ function ReportMistake({ compact }: { compact: boolean }) {
   return (
     <span className="in-data-[contrast=high]:hidden">
       {loaded ? (
-        <Suspense fallback={button(() => {})}>
-          <FeedbackDialog context={() => window.location.search.replace(/^\?/, '')} openOnMount trigger={button} />
-        </Suspense>
+        // If the form doesn't load, the button stays and says so under it, with "Try again".
+        <LoadBoundary
+          key={attempt}
+          onFail={feedbackDialog.reset}
+          fallback={<LoadFailedPanel trigger={button} onRetry={() => setAttempt((a) => a + 1)} />}
+        >
+          <Suspense fallback={button(() => {})}>
+            <feedbackDialog.Component context={() => window.location.search.replace(/^\?/, '')} openOnMount trigger={button} />
+          </Suspense>
+        </LoadBoundary>
       ) : (
         button(() => setLoaded(true))
       )}

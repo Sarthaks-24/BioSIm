@@ -286,12 +286,30 @@ export function mealLocation(sim: Simulation, i: number): MealLocation {
   }
 }
 
+/**
+ * Below this share of the meal still in the stomach and intestines, the gut has finished with it
+ * (the rest is rounding dust or a last gram of leftovers): the UI's "done" state starts here.
+ */
+export const GUT_DONE_SHARE = 0.01
+
+/** True once (nearly) all of the meal has been taken into the body or has left it. */
+export function gutIsDone(loc: MealLocation): boolean {
+  const inGut = loc.stomach + loc.smallIntestine + loc.largeIntestine
+  return loc.total > 0 && inGut < GUT_DONE_SHARE * loc.total && loc.absorbed + loc.leftBody > inGut
+}
+
 /** Where most of the meal is at time t — drives the "what's happening now" panel. */
 export function activeStage(sim: Simulation, tMin: number): StageId {
   if (sim.meal.items.length === 0) return 'mouth'
   if (tMin < sim.meal.eatingMin) return 'mouth'
   if (tMin < sim.stomachArrivalMin) return 'esophagus'
   const loc = mealLocation(sim, indexAt(sim, tMin))
+  // Once the gut has (all but) finished with the meal, the three are zeros and rounding dust: keep
+  // the last organ that held it (the large intestine if any leftovers left the body), never fall
+  // back to the stomach (review 14-17, HIGH 1: a cheeseburger "in the stomach" from 30 h on).
+  if (gutIsDone(loc)) {
+    return sim.excretedG[sim.length - 1]! > 0 || loc.largeIntestine > 0 ? 'largeIntestine' : 'smallIntestine'
+  }
   if (loc.stomach >= loc.smallIntestine && loc.stomach >= loc.largeIntestine) return 'stomach'
   if (loc.smallIntestine >= loc.largeIntestine) return 'smallIntestine'
   return 'largeIntestine'

@@ -1,15 +1,27 @@
-import { useCallback, type RefObject } from 'react'
+import { useCallback, useMemo, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { STAGES, activeStage, type Simulation, type StageId } from '@lifepeek/engine'
+import type { TFunction } from 'i18next'
+import { activeStage, type Simulation, type StageId } from '@lifepeek/engine'
 import { ORGAN_TONE } from '../../anatomy/tones.ts'
+import { isDrinkOnly } from '../../lib/summary.ts'
+import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } from '../../lib/nowWhere.ts'
 import { useClock } from '../../state/clock.ts'
+import { useRunStore } from '../../state/run.ts'
+import { LineSwatch } from './KeptTag.tsx'
+import { shortMealNames } from './mealText.ts'
 
 /**
- * Where most of the meal is now (activeStage, the same helper the body uses to light its organ).
+ * The organ the body lights (activeStage), for the full stage text ("More").
  * Re-renders only when the stage changes, not every frame.
  */
 export function useNowStage(run: Simulation): StageId {
   return useClock(useCallback((s) => activeStage(run, s.simMin), [run]))
+}
+
+/** Where the meal is now, in words (lib/nowWhere.ts). Re-renders only when the words change. */
+function useNowWhere(run: Simulation | null): NowWhere | null {
+  const key = useClock(useCallback((s) => (run ? nowKey(nowWhere(run, s.simMin)) : ''), [run]))
+  return useMemo(() => (key ? parseNowKey(key) : null), [key])
 }
 
 /** The organ's colour on the body, as a small dot inside the pill (the mouth is not drawn lit). */
@@ -40,20 +52,51 @@ function Chevron({ open, className = '' }: { open: boolean; className?: string }
   )
 }
 
-interface LineProps {
-  stage: StageId
+const amount = (a: Amount, t: TFunction) => t(`now.amount.${a}`)
+
+/**
+ * The words after the pill: "about half is here · some already in the small intestine".
+ * Before the stomach, what is happening (a drink is drunk, not chewed); after the gut, "done".
+ */
+function whereText(w: NowWhere, drink: boolean, t: TFunction): string {
+  if (w.kind === 'before') return drink ? t(`now.drink.${w.stage}`) : t(`now.stages.${w.stage}`)
+  if (w.kind === 'done') return t(w.restLeft ? 'now.done' : 'now.doneAll', { amount: amount(w.body, t) })
+  const here = t('now.here', { amount: amount(w.here, t) })
+  return w.also ? `${here} · ${t(`now.also.${w.also.place}`, { amount: amount(w.also.amount, t) })}` : here
+}
+
+/** The kept meal's place, short: "most in the stomach", "being drunk", "the gut is finished with it". */
+function keptText(w: NowWhere, drink: boolean, t: TFunction): string {
+  if (w.kind !== 'gut') return w.stage === 'mouth' ? t(drink ? 'now.in.mouthDrink' : 'now.in.mouth') : t(`now.in.${w.stage}`)
+  return t(`now.in.${w.stage}`, { amount: amount(w.here, t) })
+}
+
+/**
+ * What the organ does (v1's step-by-step, one line), for a drink where it differs. None before the
+ * stomach (the first row already says what happens) and none once done.
+ */
+const jobText = (stage: NowWhere['stage'], drink: boolean, t: TFunction) =>
+  stage === 'mouth' || stage === 'esophagus' || stage === 'done'
+    ? ''
+    : drink && stage === 'stomach'
+      ? t('now.drink.stomach')
+      : t(`now.stages.${stage}`)
+
+interface PillProps {
+  w: NowWhere
   open: boolean
   /** Absent for the invisible copies that only hold the room (no buttons there). */
   onToggle?: () => void
   pillRef?: RefObject<HTMLButtonElement | null>
   panelId?: string
+  drink: boolean
 }
 
-/** One stage's line: the organ pill, what it does, and (from 1024 px up) "More ›". */
-function Line({ stage, open, onToggle, pillRef, panelId }: LineProps) {
+/** One version of the first row: the organ pill, where the meal is, and (from 1024 px up) "More ›". */
+function WhereRow({ w, open, onToggle, pillRef, panelId, drink }: PillProps) {
   const { t } = useTranslation()
-  const tone = toneOf(stage)
-  const name = t(`stages.${stage}.short`)
+  const tone = w.kind === 'done' ? null : toneOf(w.stage)
+  const name = w.kind === 'done' ? t('now.doneName') : t(`stages.${w.stage}.short`)
   const live = !!onToggle
   const Pill = live ? 'button' : 'span'
   const More = live ? 'button' : 'span'
@@ -74,7 +117,7 @@ function Line({ stage, open, onToggle, pillRef, panelId }: LineProps) {
         {/* On a phone the pill is the only way in, so it shows that it opens. */}
         <Chevron open={open} className="lg:hidden" />
       </Pill>
-      <span>{t(`now.stages.${stage}`)}</span>{' '}
+      <span className="font-semibold">{whereText(w, drink, t)}</span>{' '}
       {/* The mouse's second way in, from 1024 px up; keyboards and screen readers use the pill (one stop). */}
       <More
         {...control}
@@ -89,17 +132,21 @@ function Line({ stage, open, onToggle, pillRef, panelId }: LineProps) {
 }
 
 /**
- * The Now line (WP-14, council verdict #4): the main teaching text of the stage. It says where
- * the food is and what that organ does, "Stomach  acid and churning turn food into chyme  More ›",
- * and follows the meal clock. The organ is the same dark pill the body lights it with, and it is
- * the button that opens the full stage text ("More"). These are v1's step-by-step texts
- * (`stages.*`), with one short line per stage written for this place (`now.stages.*`).
+ * The Now line (WP-14, council verdict #4; round 2 C1): the main teaching text of the stage. It
+ * says where the meal is, from the model's own numbers, and follows the meal clock:
+ *   [● Stomach ›] about half is here · some already in the small intestine   More ›
+ *   acid and churning turn food into chyme                                (from 1024 px up)
+ *   - - Cheeseburger + French fries (kept): most in the stomach           (with a kept meal)
+ * The organ is the same dark pill the body lights it with, and it is the button that opens the
+ * full stage text ("More"). A drink is drunk, not chewed, and is not turned into chyme. Once the
+ * gut has finished with the meal the pill says "Done" (review 14-17: never "Stomach" at 30 h).
  *
- * Every stage's line is laid out in the same grid cell, all but the current one invisible, so the
- * line is always as tall as its longest stage: the body above never jumps while playing.
+ * Every row keeps the height of its longest version (invisible copies in the same grid cell), so
+ * the body above never jumps while playing.
  */
 export function NowLine({
   run,
+  kept,
   open,
   onToggle,
   moreRef,
@@ -107,6 +154,7 @@ export function NowLine({
   className = '',
 }: {
   run: Simulation
+  kept: Simulation | null
   open: boolean
   onToggle: () => void
   /** The pill: "More" opens from it, and focus returns to it when the text closes. */
@@ -114,17 +162,55 @@ export function NowLine({
   panelId: string
   className?: string
 }) {
-  const stage = useNowStage(run)
+  const { t, i18n } = useTranslation()
+  const w = useNowWhere(run)!
+  const keptWhere = useNowWhere(kept)
+  const keptItems = useRunStore((s) => s.kept?.items)
+  const drink = isDrinkOnly(run.meal)
+  const keptDrink = !!kept && isDrinkOnly(kept.meal)
+  const job = jobText(w.stage, drink, t)
+  // Everything this run's line will say (a few dozen versions), laid out invisibly in the same
+  // grid cell as the live row: the row is always as tall as its longest version, so the body
+  // above never jumps while playing, and no taller than this meal needs.
+  const versions = useMemo(() => nowKeysOf(run).map(parseNowKey), [run])
+  const jobs = useMemo(() => [...new Set(versions.map((v) => v.stage))], [versions])
+  const cell = 'col-start-1 row-start-1'
   return (
-    <div data-now={stage} className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>
-      {STAGES.filter((s) => s !== stage).map((s) => (
-        <p key={s} aria-hidden="true" className="invisible col-start-1 row-start-1">
-          <Line stage={s} open={false} />
+    <div data-now={w.stage} className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>
+      <div className="grid">
+        {versions.map((v, i) => (
+          <p key={i} aria-hidden="true" className={`invisible ${cell}`}>
+            <WhereRow w={v} open={false} drink={drink} />
+          </p>
+        ))}
+        <p className={cell}>
+          <WhereRow w={w} open={open} onToggle={onToggle} pillRef={moreRef} panelId={panelId} drink={drink} />
         </p>
-      ))}
-      <p className="col-start-1 row-start-1">
-        <Line stage={stage} open={open} onToggle={onToggle} pillRef={moreRef} panelId={panelId} />
-      </p>
+      </div>
+      {/* What the organ does: a quieter second row where there is room (not on a phone or the projector). */}
+      <div className="grid text-ink-2 max-lg:hidden in-data-[contrast=high]:hidden">
+        {jobs.map((s) => (
+          <p key={s} aria-hidden="true" className={`invisible ${cell}`}>
+            {jobText(s, drink, t)}
+          </p>
+        ))}
+        <p data-now-job="" className={cell}>
+          {job}
+        </p>
+      </div>
+      {keptWhere && keptItems && (
+        // The kept meal at the same minute (council round 2: the body no longer said where it was).
+        <p data-now-kept={keptWhere.stage} className="mt-0.5 flex items-baseline gap-2 text-caption text-ink-2 lg:text-control">
+          <span className="relative -top-[0.2em] shrink-0">
+            <LineSwatch kept />
+          </span>
+          <span>
+            {/* On a phone the meal bar right above names the kept meal, by the same dashed sample. */}
+            <span className="max-lg:sr-only">{t('now.kept', { meal: shortMealNames(keptItems, i18n.language) })} </span>
+            <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
+          </span>
+        </p>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { lineEndSpots, lineHits, placeLabel, ringSpots } from './labels.ts'
+import { freeSpot, lineEndSpots, lineHits, placeLabel, ringSpots } from './labels.ts'
 
 const line = (...pts: number[]) => Float32Array.from(pts)
 
@@ -72,5 +72,17 @@ describe('plot labels', () => {
     expect(box!.x + box!.w).toBeLessThanOrEqual(300)
     // Still above the ring, as near as it fits.
     expect(box!.y + box!.h).toBeLessThanOrEqual(70 - 9)
+  })
+
+  it('words that may be left out (the unit, "time squeezed") take a free spot or none, never a line', () => {
+    const plot = { width: 100, height: 50 }
+    const size = { w: 20, h: 10 }
+    const spots = [
+      { x: 4, y: 2 },
+      { x: 40, y: 2 },
+    ]
+    expect(freeSpot(size, spots, plot, [line(0, 5, 30, 5)])).toEqual({ x: 40, y: 2, w: 20, h: 10 })
+    expect(freeSpot(size, spots, plot, [line(0, 5, 100, 5)])).toBeNull()
+    expect(freeSpot(size, spots, plot, [], [{ x: 0, y: 0, w: 100, h: 20 }])).toBeNull()
   })
 })

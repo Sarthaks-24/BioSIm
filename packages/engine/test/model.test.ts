@@ -390,6 +390,19 @@ describe('stages and particles', () => {
     expect(activeStage(sim, 30 * 60)).toBe('largeIntestine')
   })
 
+  it('never goes back once the meal has moved on, also after the gut is empty (review 14-17)', () => {
+    for (const id of ['fatty-meal', 'standard-meal']) {
+      const sim = run(id)
+      let furthest = 0
+      for (let t = 0; t <= sim.horizonMin; t++) {
+        const at = STAGES.indexOf(activeStage(sim, t))
+        expect(at, `${id} at ${t} min`).toBeGreaterThanOrEqual(furthest)
+        furthest = at
+      }
+      expect(activeStage(sim, sim.horizonMin), id).toBe('largeIntestine')
+    }
+  })
+
   it('stage windows start in order', () => {
     const sim = run('standard-meal')
     const starts = STAGES.map((s) => stageWindow(sim, s)?.start ?? Infinity)

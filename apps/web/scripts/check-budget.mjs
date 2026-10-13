@@ -22,6 +22,9 @@
 //   moved to one CSS block, the 3D look's colour maths into the 3D chunk, and the English text
 //   only About, Privacy, Teach and Science use is fetched with those pages (i18n loadPageText):
 //   /next 190.6 → 186.6 KB, /sim 181.1 → 177.8 KB, Home 157.3 → 154.0 KB.
+//   FIX-C (2026-10-13): the Now line from the model (how much is where, the kept meal, "done"),
+//   the louder summary, the squeezed-axis tint and the load boundaries: /next 186.6 → 189.6 KB.
+//   Little room is left: anything new on the stage that is not first paint must load on use.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

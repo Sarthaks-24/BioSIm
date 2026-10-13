@@ -130,3 +130,34 @@ describe('summary: one meal (new)', () => {
     expect(summaryData(sim(''), sim('cola:1'))).toEqual({ kind: 'empty' })
   })
 })
+
+describe('summary: the key number and "more than" (council round 2 C4; review 14-17 LOW 6)', () => {
+  /** The run as if half of it never left the stomach within the 48 h. */
+  const neverHalf = (s: ReturnType<typeof sim>) => {
+    const moments = new Map(s.moments)
+    moments.delete('event.stomachHalfEmpty')
+    return { ...s, moments }
+  }
+
+  it('the key number is in the headline and belongs to the faster meal’s line', () => {
+    const s = compareSummary(sim('cheeseburger:1,fries:1'), sim('cola:1'), t, 'en')!
+    expect(s.key).toMatchObject({ line: 'kept' })
+    expect(s.headline).toContain(s.key!.text)
+    expect(s.key!.text).toMatch(/^\d+×$/)
+    const one = singleSummary(sim('cola:1'), t, 'en')!
+    expect(one.key).toMatchObject({ line: 'run' })
+    expect(one.headline).toContain(one.key!.text)
+  })
+
+  it('half never left within 48 h: the sentence says "more than", never "after 48 h"', () => {
+    expect(singleSummary(neverHalf(sim('cola:1')), t, 'en')!.headline).toBe(
+      'Half of the food energy in Cola takes more than 48 h to leave the stomach.',
+    )
+    const s = compareSummary(sim('cola:1'), neverHalf(sim('cheeseburger:1,fries:1')), t, 'en')!
+    expect(s.headline).toMatch(/^Cola leaves the stomach more than \d+× faster than Cheeseburger \+ French fries\.$/)
+    // Neither half-empties: no comparison is claimed.
+    expect(compareSummary(neverHalf(sim('cola:1')), neverHalf(sim('apple:1')), t, 'en')!.headline).toMatch(
+      /^Half of the food energy in Cola takes more than/,
+    )
+  })
+})

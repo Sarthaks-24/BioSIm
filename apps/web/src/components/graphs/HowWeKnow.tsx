@@ -1,31 +1,15 @@
-import { Component, lazy, Suspense, useRef, useState, type ReactNode } from 'react'
+import { Suspense, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { InfoIcon } from '../kit/index.ts'
+import { LoadBoundary, LoadFailed, lazyWithRetry } from '../LoadBoundary.tsx'
 import Popover from '../stage/Popover.tsx'
 import type { PanelProps } from './HowWeKnowPanel.tsx'
 
 const loadPanel = () => import('./HowWeKnowPanel.tsx')
 /** Fetch the panel early (pointing at or focusing a button); offline that may fail, and that is fine. */
 const prefetch = () => void loadPanel().catch(() => {})
-let HowWeKnowPanel = lazy(loadPanel)
-
-/**
- * If the panel's code doesn't load (offline before it was saved, or a tab left open over a new
- * release), say so in the panel's place instead of the error taking the whole screen. React.lazy
- * keeps a failure for good, so a fresh one is made: the next try loads the file again.
- */
-class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false }
-  static getDerivedStateFromError() {
-    return { failed: true }
-  }
-  componentDidCatch() {
-    HowWeKnowPanel = lazy(loadPanel)
-  }
-  render() {
-    return this.state.failed ? this.props.fallback : this.props.children
-  }
-}
+/** If it doesn't load, the panel's place says so, with "Try again" (LoadBoundary). */
+const panelCode = lazyWithRetry(loadPanel)
 
 /**
  * The ⓘ "How we know" button of one graph (G3). Its panel (HowWeKnowPanel) and the source list
@@ -41,6 +25,7 @@ export default function HowWeKnow({ title, ...panel }: PanelProps & { title?: st
   const name = title ?? t(`${panel.meta.i18nKey}.name`)
   const label = t('graph.howFor', { name })
   const close = () => setOpen(false)
+  const Panel = panelCode.Component
 
   return (
     <>
@@ -59,27 +44,19 @@ export default function HowWeKnow({ title, ...panel }: PanelProps & { title?: st
         <InfoIcon />
       </button>
       {open && (
-        <PanelBoundary
+        <LoadBoundary
           key={attempt}
+          onFail={panelCode.reset}
           fallback={
             <Popover anchor={button} onClose={close} label={label} className="w-[20rem]">
-              <p className="text-caption text-ink-2" role="alert">
-                {t('graph.loadFailed')}
-              </p>
-              <button
-                type="button"
-                onClick={() => setAttempt((a) => a + 1)}
-                className="mt-2 min-h-11 rounded-control bg-sunk2 px-3 text-control font-semibold text-ink hover:bg-sunk2-hover lg:min-h-9"
-              >
-                {t('graph.retry')}
-              </button>
+              <LoadFailed onRetry={() => setAttempt((a) => a + 1)} />
             </Popover>
           }
         >
           <Suspense fallback={null}>
-            <HowWeKnowPanel {...panel} anchor={button} label={label} onClose={close} />
+            <Panel {...panel} anchor={button} label={label} onClose={close} />
           </Suspense>
-        </PanelBoundary>
+        </LoadBoundary>
       )}
     </>
   )

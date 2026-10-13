@@ -56,3 +56,9 @@ export function unitInWords(unit: Unit, t: TFunction): string {
 export function formatBand(low: number, high: number, meta: Pick<SignalMeta, 'round' | 'unit'>, t: TFunction, lang: string): string {
   return t('graph.range', { low: formatNumber(low, meta, lang), high: formatSignal(high, meta, t, lang) })
 }
+
+/** The unit alone, as the readouts write it ("g", "mg/dL", "किलो कैलोरी/घंटा"): a graph's y-axis unit. */
+export function unitLabel(meta: Pick<SignalMeta, 'unit'>, t: TFunction): string {
+  const key = UNIT_KEY[meta.unit]
+  return key ? t(`units.${key}`, { n: '' }).trim() : meta.unit
+}

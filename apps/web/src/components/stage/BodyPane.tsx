@@ -1,7 +1,8 @@
-import { lazy, Suspense, useId, useRef, useState } from 'react'
+import { Suspense, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_ORGANISM, type Simulation } from '@lifepeek/engine'
 import BodyView from '../BodyView.tsx'
+import { LoadBoundary, LoadFailed, lazyWithRetry } from '../LoadBoundary.tsx'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { BodyClockContext, MEAL_BODY_CLOCK } from '../../hooks/useBodyClock.ts'
@@ -12,8 +13,11 @@ import { NowLine } from './NowLine.tsx'
 import SummaryLine from './SummaryLine.tsx'
 import { mealNames } from './mealText.ts'
 
-/** The full stage text is downloaded when "More" is first opened (size budget). */
-const StageMore = lazy(() => import('./StageMore.tsx'))
+/** The full stage text is downloaded when "More" is first opened (size budget). If it doesn't load, its panel says so. */
+const stageMore = lazyWithRetry(() => import('./StageMore.tsx'))
+
+/** Where "More" sits: beside the body from 1024 px up, over it on a phone. */
+const MORE_BOX = 'absolute inset-0 lg:inset-y-auto lg:top-14 lg:bottom-3 lg:left-4 lg:w-[min(25rem,46%)] lg:rounded-frame'
 
 /** Foods offered when the meal is empty: a drink, an Indian staple, a fruit. */
 const EXAMPLES = ['cola', 'roti', 'apple'] as const
@@ -36,6 +40,14 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
   const hasMeal = meal.length > 0
   const oneLayer = ORGANISMS[DEFAULT_ORGANISM].systems.length === 1
   const [more, setMore] = useState(false)
+  // Clearing the meal closes "More": it must not open again (and take the focus) with the next food.
+  const [hadMeal, setHadMeal] = useState(hasMeal)
+  if (hadMeal !== hasMeal) {
+    setHadMeal(hasMeal)
+    if (!hasMeal) setMore(false)
+  }
+  // Bumped by "Try again" when the stage text didn't load: a new boundary asks for it again.
+  const [attempt, setAttempt] = useState(0)
   const moreButton = useRef<HTMLButtonElement>(null)
   const panelId = useId()
   const closeMore = () => {
@@ -43,6 +55,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
     moreButton.current?.focus()
   }
   const open = more && hasMeal
+  const StageMore = stageMore.Component
 
   return (
     <section aria-labelledby="body-pane-title" className="relative flex min-h-0 flex-col">
@@ -89,14 +102,19 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
         </div>
         {open && (
           // Beside the body from 1024 px up (the lit organ stays in view); over it on a phone.
-          <Suspense fallback={null}>
-            <StageMore
-              run={run}
-              id={panelId}
-              onClose={closeMore}
-              className="absolute inset-0 lg:inset-y-auto lg:top-14 lg:bottom-3 lg:left-4 lg:w-[min(25rem,46%)] lg:rounded-frame"
-            />
-          </Suspense>
+          <LoadBoundary
+            key={attempt}
+            onFail={stageMore.reset}
+            fallback={
+              <section id={panelId} aria-label={t('now.more')} className={`${MORE_BOX} z-20 border border-rule2 bg-shelf p-4`}>
+                <LoadFailed onRetry={() => setAttempt((a) => a + 1)} />
+              </section>
+            }
+          >
+            <Suspense fallback={null}>
+              <StageMore run={run} id={panelId} onClose={closeMore} className={MORE_BOX} />
+            </Suspense>
+          </LoadBoundary>
         )}
       </div>
       {hasMeal && (
@@ -106,6 +124,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
         <div className="max-lg:contents lg:flex lg:flex-col lg:gap-1.5 lg:border-t lg:border-rule2 lg:px-4 lg:py-2.5">
           <NowLine
             run={run}
+            kept={kept}
             open={open}
             onToggle={() => (open ? closeMore() : setMore(true))}
             moreRef={moreButton}
