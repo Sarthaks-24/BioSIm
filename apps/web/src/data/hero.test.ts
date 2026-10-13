@@ -4,7 +4,7 @@ import { computeHero } from './hero.ts'
 import hero from './hero.json'
 
 describe('the picture on Home', () => {
-  it('hero.json is what the model gives today (else run: npx tsx apps/web/scripts/build-hero.ts)', () => {
+  it('hero.json is what the model gives today (else run: npm run hero -w @lifepeek/web)', () => {
     expect(hero).toEqual(computeHero(lookupFood))
   })
 

@@ -1,6 +1,6 @@
 // Writes src/data/hero.json, the picture on Home (src/data/hero.ts). Run by hand after a model or
 // food change that moves the cola or burger + fries curves (hero.test.ts says when):
-//   npx tsx apps/web/scripts/build-hero.ts
+//   npm run hero -w @lifepeek/web
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

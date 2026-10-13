@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { LESSONS, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
@@ -13,15 +14,25 @@ import teachText from 'virtual:lifepeek-en/teach'
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(teachText)
 
+/** A click that opens the link elsewhere (a new tab or window): this tab stays as it is. */
+const opensElsewhere = (e: MouseEvent) => e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey
+
 /**
- * A ready lesson opens projector-friendly (council round 2): projector mode on (on a laptop), the lesson's graph
- * in front, paused at its first key moment (the link's `t`). A copied or shared link is a plain
- * link: it opens the same meals and time in whatever mode the reader uses.
+ * A ready lesson opens projector-friendly (council round 2): projector mode on (on a laptop), the
+ * lesson's graph in front, paused at its first key moment (the link's `t`). A copied or shared
+ * link, or one opened in a new tab, is a plain link: the same meals and time, in whatever mode
+ * the reader uses.
  */
-function openLesson(l: Lesson) {
-  // Not on a phone or tablet: the stage has no projector button below 1024 px to switch it off.
+function openLesson(e: MouseEvent, l: Lesson) {
+  if (opensElsewhere(e)) return
+  // Only where the stage has a projector size (from 1024 px up).
   if (window.matchMedia('(min-width: 64rem)').matches) setProjector(true)
   useStripTab.getState().show(l.strip)
+}
+
+/** A question starts on the first graph: a lesson's graph left in front would point at the answer. */
+function openTask(e: MouseEvent) {
+  if (!opensElsewhere(e)) useStripTab.setState({ tab: null })
 }
 
 /** A right-pointing chevron, drawn like the kit's icons. */
@@ -69,7 +80,7 @@ export default function Teach() {
       <ul className="divide-y divide-rule border-y border-rule">
         {LESSONS.map((l) => (
           <li key={l.key}>
-            <Link to={presetHref(l)} onClick={() => openLesson(l)} className={ROW}>
+            <Link to={presetHref(l)} onClick={(e) => openLesson(e, l)} className={ROW}>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
                 <span className="block text-ink-2">
@@ -87,7 +98,7 @@ export default function Teach() {
       <ol className="divide-y divide-rule border-y border-rule">
         {TASKS.map((q, i) => (
           <li key={q.key}>
-            <Link to={presetHref(q)} className={ROW}>
+            <Link to={presetHref(q)} onClick={openTask} className={ROW}>
               <span aria-hidden="true" className="tabular w-5 shrink-0 self-start text-lg font-extrabold text-ink-2">
                 {i + 1}
               </span>

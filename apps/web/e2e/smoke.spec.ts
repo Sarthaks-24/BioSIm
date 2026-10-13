@@ -21,7 +21,7 @@ test('home page leads to the simulator: cola, ready to play', async ({ page }) =
   await expect(page).toHaveURL(/\/sim\?v=2&a=cola/)
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
   // The first-screen prompt points at Play, and goes once the meal moves.
-  const prompt = page.locator('[data-play-prompt]')
+  const prompt = page.locator('[data-play-prompt]').filter({ visible: true })
   await expect(prompt).toHaveText('Press Play to watch Cola go through the body')
   await page.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(prompt).toHaveCount(0)

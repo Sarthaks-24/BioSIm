@@ -75,3 +75,16 @@ describe('vercel.json rewrites', () => {
     }
   })
 })
+
+describe('the service worker agrees with the rewrites', () => {
+  it('Workbox sends the same plain files to the network, never the app shell (vite.config.ts)', () => {
+    const vite = fs.readFileSync(path.join(root, 'apps', 'web', 'vite.config.ts'), 'utf8')
+    const start = vite.indexOf('navigateFallbackDenylist')
+    const deny = vite.slice(start, vite.indexOf('],', start))
+    const [{ source }] = vercel.rewrites
+    for (const name of ['api', 'THIRD_PARTY_NOTICES', 'robots', 'sitemap', 'stats', 'og-image', 'screenshots']) {
+      expect(deny, `${name} in navigateFallbackDenylist`).toContain(name)
+      expect(source, `${name} in the vercel.json rewrite`).toContain(name)
+    }
+  })
+})

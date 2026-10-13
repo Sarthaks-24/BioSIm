@@ -42,6 +42,9 @@ export function useLinkSync() {
     // This writes the latest state, so a pending debounced write has nothing left to do.
     if (timer.current) clearTimeout(timer.current)
     timer.current = null
+    // The reader has already left for another page (a menu link right after the stage opened):
+    // a late write must not bring them back.
+    if (window.location.pathname !== pathRef.current) return
     const { simMin, playing } = useClock.getState()
     // An emptied meal still gets written (as just "?v=…"), so a reload doesn't bring it back.
     const query = linkQuery(useRunStore.getState(), playing ? 0 : simMin, i18n.language)

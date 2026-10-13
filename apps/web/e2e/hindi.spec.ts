@@ -126,6 +126,7 @@ async function expectNoOverlaps(page: Page, mode: 'enforce' | 'report') {
     const labels = [
       ...boxes('[data-callout]', (el) => `organ label "${el.textContent?.trim()}"`),
       ...words('[data-particle-key] li', 'the food key'),
+      ...words('[data-play-prompt]', 'the Play prompt'),
       ...words('[data-now] > div:first-child > p:not([aria-hidden])', 'the Now line'),
       ...words('[data-now-job]', 'the Now line’s second row'),
       ...words('[data-now-kept] > span:nth-child(2)', 'the Now line’s kept row'),

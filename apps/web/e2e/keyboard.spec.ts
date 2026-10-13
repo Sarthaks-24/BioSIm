@@ -276,7 +276,8 @@ test('after keeping, the meal bar’s buttons keep their words (council SHOULD 1
 
 test('the food pieces in the body have a key, only for what the meal has', async ({ page }) => {
   onlyIn('desktop', 'phone')
-  await page.goto('/sim?v=2&a=cola:1')
+  // After the start: at 0 min a phone shows the Play prompt in the key's place (WP-19).
+  await page.goto('/sim?v=2&a=cola:1&t=40')
   const key = page.getByRole('list', { name: 'Food pieces in the body' })
   await expect(key).toBeVisible()
   await expect(key.getByRole('listitem')).toHaveText(['Carbohydrate', 'Water'])

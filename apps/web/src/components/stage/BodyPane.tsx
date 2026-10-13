@@ -11,7 +11,7 @@ import { useRunStore } from '../../state/run.ts'
 import LayerBar from './LayerBar.tsx'
 import { NowLine } from './NowLine.tsx'
 import ParticleKey from './ParticleKey.tsx'
-import PlayPrompt from './PlayPrompt.tsx'
+import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
 import { mealNames } from './mealText.ts'
 
@@ -58,6 +58,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
     moreButton.current?.focus()
   }
   const open = more && hasMeal
+  const atStart = useAtStart()
   const StageMore = stageMore.Component
 
   return (
@@ -103,13 +104,22 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             </div>
           )}
         </div>
-        {/* What to do first (council round 2), while the clock stands at the start: over the legs on a
-            phone, in the empty corner beside them from 1024 px up. Never while "More" covers the body. */}
-        {hasMeal && !open && (
-          <PlayPrompt meal={meal} className="absolute inset-x-0 bottom-1 mx-auto max-w-[calc(100%-1.5rem)] lg:right-4 lg:bottom-2 lg:left-auto lg:mx-0 lg:max-w-[min(28rem,60%)]" />
+        {/*
+         * From 1024 px up, a band over the legs, out of the organs' way: what the food pieces are
+         * (council round 2). While the clock stands at the start nothing has moved yet, so what to do
+         * first takes its place, as on a phone. Not while "More" covers the body.
+         */}
+        {hasMeal && (
+          <div className="pointer-events-none absolute inset-x-4 bottom-1.5 grid items-end justify-items-start max-lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
+            <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />
+            {!open && (
+              <PlayPrompt
+                meal={meal}
+                className="-ml-1.5 max-w-full rounded-[1.125rem] bg-shelf/90 px-3 py-1 text-control leading-6 shadow-[0_1px_3px_rgb(20_33_61/0.18)]"
+              />
+            )}
+          </div>
         )}
-        {/* What the food pieces are (council round 2): over the legs, out of the organs' way. */}
-        {hasMeal && <ParticleKey run={run} className="pointer-events-none absolute bottom-1.5 left-4 max-w-[70%] flex-wrap max-lg:hidden" />}
         {open && (
           // Beside the body from 1024 px up (the lit organ stays in view); over it on a phone.
           <LoadBoundary
@@ -131,7 +141,17 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
        * On a phone the picture is short and the large intestine's label sits by the legs, so the
        * key is a line of its own under the picture, never on a label (WP-18). It scrolls if long.
        */}
-      {hasMeal && <ParticleKey run={run} className="overflow-x-auto overscroll-x-contain px-3 pb-0.5 whitespace-nowrap [scrollbar-width:none] lg:hidden" />}
+      {hasMeal && (
+        // At the start the prompt takes the key's place (nothing has moved yet): the same row, so the
+        // body above keeps its size, and nothing is laid over the picture or its labels.
+        <div className="grid px-3 pb-0.5 lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
+          <ParticleKey
+            run={run}
+            className={`overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:none] ${atStart && !open ? 'invisible' : ''}`}
+          />
+          {!open && <PlayPrompt meal={meal} className="text-caption leading-6" />}
+        </div>
+      )}
       {hasMeal && (
         // From 1024 px up one band under the body. On a phone the band dissolves (`contents`): the
         // Now line is the pane's first row, above the body, and the summary its last.

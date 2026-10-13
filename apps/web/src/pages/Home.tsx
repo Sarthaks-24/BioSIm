@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { PRESETS, presetHref } from '../lib/presets.ts'
 import { KEPT, RUN } from '../lib/colors.ts'
 import { lookupFood } from '../data/foods.ts'
-import { HERO_END_MIN, HERO_STEP_MIN } from '../data/hero.ts'
+import { HERO_END_MIN, HERO_STEP_MIN } from '../data/heroShape.ts'
 import hero from '../data/hero.json'
 import { mealNames, shortMealNames } from '../components/stage/mealText.ts'
 

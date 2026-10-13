@@ -95,12 +95,23 @@ export default function Layout() {
   // lessons can switch it on too, so the button reads it from the page, not from its own state.
   const projector = useProjector()
   const menu = useMenu()
-  // The site nav: hidden on the projector stage; on phones a drop-down under the header while the
-  // menu is open; from 640 px up a row of links.
-  const navBox =
-    fit && projector
-      ? 'hidden'
-      : `gap-1 sm:flex ${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:border-b max-sm:border-rule max-sm:bg-paper max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'hidden'}`
+  // The site menu: on phones a drop-down under the header while it is open (the links, then the
+  // projector switch); from 640 px up the links are a row and the switch sits on the right. On the
+  // projector stage the links are hidden from 1024 px up (UI-5), where the stage has its projector
+  // size; below that they stay, so a phone or tablet left in projector mode can always leave it.
+  const menuBox = `${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:gap-1 max-sm:border-b max-sm:border-rule max-sm:bg-paper max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'max-sm:hidden'} sm:contents ${fit && projector ? 'lg:hidden' : ''}`
+  // The projector switch in the header: from 640 px up; on the stage only from 1024 px up while it is
+  // off (it has no projector size below that), but always while it is on, so it can be turned off.
+  const projectorButton = (inMenu: boolean) => (
+    <button
+      type="button"
+      aria-pressed={projector}
+      onClick={() => setProjector(!projector)}
+      className={`${target} w-fit rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${inMenu ? 'sm:hidden' : fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}
+    >
+      {t('nav.projector')}
+    </button>
+  )
 
   // A one-screen page has its own projector size (styles.css). Set before the paint of the first
   // render that matches it, while its code may still be loading, so the size never jumps.
@@ -191,17 +202,20 @@ export default function Layout() {
              * On a phone the links fold into a menu (council round 2): a row of its own cost the
              * stage's body about 50 px of the first screen. Opened, they drop down under the header.
              */}
-            <nav id={menu.id} aria-label={t('nav.main')} className={navBox}>
-              <NavLink to="/sim" className={nav}>
-                {t('nav.simulator')}
-              </NavLink>
-              <NavLink to="/teach" className={nav}>
-                {t('nav.teach')}
-              </NavLink>
-              <NavLink to="/science" className={nav}>
-                {t('nav.science')}
-              </NavLink>
-            </nav>
+            <div id={menu.id} className={menuBox}>
+              <nav aria-label={t('nav.main')} className="flex gap-1 max-sm:flex-col">
+                <NavLink to="/sim" className={nav}>
+                  {t('nav.simulator')}
+                </NavLink>
+                <NavLink to="/teach" className={nav}>
+                  {t('nav.teach')}
+                </NavLink>
+                <NavLink to="/science" className={nav}>
+                  {t('nav.science')}
+                </NavLink>
+              </nav>
+              {projectorButton(true)}
+            </div>
             <div className="ml-auto flex items-center gap-2">
               <button
                 ref={menu.button}
@@ -209,21 +223,13 @@ export default function Layout() {
                 aria-expanded={menu.open}
                 aria-controls={menu.id}
                 onClick={() => menu.setOpen(!menu.open)}
-                className={`${target} order-last w-11 justify-center rounded-full border border-rule hover:bg-sunk sm:hidden ${fit && projector ? 'hidden' : ''}`}
+                className={`${target} order-last w-11 justify-center rounded-full border border-rule hover:bg-sunk sm:hidden`}
               >
                 <MenuIcon open={menu.open} />
                 <span className="sr-only">{t('nav.menu')}</span>
               </button>
-              {/* No projector button on phones (plan-ui-ux §3.5): it would cost the header a row. The stage
-                  shows it from 1024 px up, where its one-screen layout has a projector size. */}
-              <button
-                type="button"
-                aria-pressed={projector}
-                onClick={() => setProjector(!projector)}
-                className={`${target} rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${fit ? 'max-lg:hidden' : 'max-sm:hidden'}`}
-              >
-                {t('nav.projector')}
-              </button>
+              {/* On phones the switch is in the menu (plan-ui-ux §3.5: here it would cost the header a row). */}
+              {projectorButton(false)}
               {/* The name starts with the words on the button (WCAG 2.5.3), read in their own language;
                   what the button does follows, for screen readers only, in the page's language. */}
               <button

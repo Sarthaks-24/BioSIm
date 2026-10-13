@@ -153,6 +153,26 @@ for (const url of ['/sim', '/sim?lang=hi', '/']) {
   })
 }
 
+test('a phone or tablet left in projector mode can always switch it off', async ({ page }) => {
+  onlyIn('phone')
+  await page.addInitScript(() => localStorage.setItem('lifepeek:projector', '1'))
+  await page.goto('/sim')
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
+  // A phone: the switch is in the menu.
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Projector mode', pressed: true }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'normal')
+  // A tablet (or a laptop zoomed in): the switch is in the header while it is on.
+  await page.evaluate(() => localStorage.setItem('lifepeek:projector', '1'))
+  await page.setViewportSize({ width: 800, height: 1000 })
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
+  await page.getByRole('button', { name: 'Projector mode', pressed: true }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'normal')
+  // Off, the stage shows it only where it has a projector size (from 1024 px up).
+  await expect(page.getByRole('button', { name: 'Projector mode' })).toBeHidden()
+})
+
 // FIX-C review, item 6: the stage's projector size comes from html[data-fit], set by the Layout
 // as soon as /sim is matched, not from :has([data-stage]) once the stage has drawn.
 test.describe('while the stage loads', () => {
