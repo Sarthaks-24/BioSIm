@@ -1,4 +1,4 @@
-import { simulate } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { bodyStateAt } from '../anatomy/bodyState.ts'
 import { VIEW, frame, paintStill, paintStomach } from './FlatBody.tsx'
 
