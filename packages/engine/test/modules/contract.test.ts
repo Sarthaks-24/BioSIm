@@ -79,16 +79,18 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
 
   it('get of an ID not in needs throws, even when it was written', () => {
     const peek = mod({ run: (ctx) => void ctx.get('gut.leftBodyG') })
-    expect(() => runModules([gut, peek], setup)).toThrow(/gas: get\("gut\.leftBodyG"\) is not in its needs/)
+    expect(() => runModules([gut, peek], setup)).toThrow('gas: get gut.leftBodyG: not in needs')
   })
 
   it('get of a need nobody wrote yet throws', () => {
     const early = mod({ needs: ['gut.leftBodyG'], run: (ctx) => void ctx.get('gut.leftBodyG') })
-    expect(() => runModules([early, gut], setup)).toThrow(/before any module wrote it/)
+    expect(() => runModules([early, gut], setup)).toThrow(/gas: get gut.leftBodyG: not written yet/)
   })
 
   it('put of an undeclared ID, a second put, a wrong length or a missing put throws', () => {
-    expect(() => runModules([mod({ run: (ctx) => ctx.put('blood.glucose', fill()) })], setup)).toThrow(/not in its provides or internal/)
+    expect(() => runModules([mod({ run: (ctx) => ctx.put('blood.glucose', fill()) })], setup)).toThrow(
+      /gas: put blood.glucose: not in provides or internal/,
+    )
     const twice = mod({
       internal: ['x.test.a'],
       run: (ctx) => {
@@ -96,18 +98,18 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
         ctx.put('x.test.a', fill())
       },
     })
-    expect(() => runModules([twice], setup)).toThrow(/put\("x\.test\.a"\) twice/)
+    expect(() => runModules([twice], setup)).toThrow('gas: put x.test.a: twice')
     expect(() => runModules([mod({ internal: ['x.test.a'], run: (ctx) => ctx.put('x.test.a', new Float64Array(3)) })], setup)).toThrow(
-      /has 3 values/,
+      /3 values, not /,
     )
-    expect(() => runModules([mod({ internal: ['x.test.a'] })], setup)).toThrow(/did not put "x\.test\.a"/)
+    expect(() => runModules([mod({ internal: ['x.test.a'] })], setup)).toThrow('gas: no put x.test.a')
   })
 
   it('a band goes with exactly the signals whose catalog row has one', () => {
     const noBand = mod({ provides: ['blood.glucose'], run: (ctx) => ctx.put('blood.glucose', fill()) })
-    expect(() => runModules([noBand], setup)).toThrow(/needs its band/)
+    expect(() => runModules([noBand], setup)).toThrow(/put blood.glucose: band does not match/)
     const extra = mod({ provides: ['gut.leftBodyG'], run: (ctx) => ctx.put('gut.leftBodyG', fill(), { low: fill(), high: fill() }) })
-    expect(() => runModules([extra], setup)).toThrow(/has a band the catalog does not/)
+    expect(() => runModules([extra], setup)).toThrow(/put gut.leftBodyG: band does not match/)
   })
 })
 

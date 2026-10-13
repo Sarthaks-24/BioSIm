@@ -11,7 +11,7 @@
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
-import { SIGNALS, type ActiveSignalId } from './catalog.ts'
+import { SIGNALS, type ActiveSignalId, type SignalMeta } from './catalog.ts'
 import type { ProfileDef } from './profile.ts'
 
 /** The frozen run order (architecture §0, model D4). Modules that do not exist yet keep their slot. */
@@ -95,31 +95,32 @@ export function moduleGraphErrors<P>(modules: readonly ModelModule<P>[]): string
   return errors
 }
 
-/** Runs the modules in list order and returns what they wrote. Throws on any contract breach. */
+/**
+ * Runs the modules in list order and returns what they wrote. Throws on any contract breach: a
+ * get outside the module's needs or before it was written, a put outside its provides/internal,
+ * twice, of the wrong length or with a band the catalog row does not have (or without its band),
+ * and a declared ID the module never put. (Messages are short: this code ships in the web app.)
+ */
 export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetup<P>): SignalStore {
   const store = new Map<ModuleSignalId, Written>()
+  const metas: Partial<Record<ModuleSignalId, SignalMeta>> = SIGNALS
   for (const m of modules) {
-    const needs = new Set<ModuleSignalId>(m.needs)
-    const writes = new Set<ModuleSignalId>([...m.provides, ...(m.internal ?? [])])
-    const ctx: SimContext<P> = {
+    const writes: readonly ModuleSignalId[] = [...m.provides, ...(m.internal ?? [])]
+    const fail = (why: string): never => {
+      throw new Error(`${m.id}: ${why}`)
+    }
+    m.run({
       ...setup,
-      get(id) {
-        if (!needs.has(id)) throw new Error(`${m.id}: get("${id}") is not in its needs`)
-        const w = store.get(id)
-        if (!w) throw new Error(`${m.id}: get("${id}") before any module wrote it`)
-        return w.values
-      },
+      get: (id) => (m.needs.includes(id) ? (store.get(id) ?? fail(`get ${id}: not written yet`)) : fail(`get ${id}: not in needs`)).values,
       put(id, values, band) {
-        if (!writes.has(id)) throw new Error(`${m.id}: put("${id}") is not in its provides or internal`)
-        if (store.has(id)) throw new Error(`${m.id}: put("${id}") twice`)
-        if (values.length !== setup.n) throw new Error(`${m.id}: put("${id}") has ${values.length} values, not ${setup.n}`)
-        const meta = id.startsWith('x.') ? undefined : SIGNALS[id as ActiveSignalId]
-        if (!band !== !meta?.band) throw new Error(`${m.id}: put("${id}") ${band ? 'has a band the catalog does not' : 'needs its band'}`)
+        if (!writes.includes(id)) fail(`put ${id}: not in provides or internal`)
+        if (store.has(id)) fail(`put ${id}: twice`)
+        if (values.length !== setup.n) fail(`put ${id}: ${values.length} values, not ${setup.n}`)
+        if (!band !== !metas[id]?.band) fail(`put ${id}: band does not match the catalog`)
         store.set(id, band ? { values, band } : { values })
       },
-    }
-    m.run(ctx)
-    for (const id of writes) if (!store.has(id)) throw new Error(`${m.id}: did not put "${id}"`)
+    })
+    for (const id of writes) if (!store.has(id)) fail(`no put ${id}`)
   }
   return store
 }
