@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildMeal, decodeMeal, gutModule, simulate, type ModuleSignalId } from '../../src/index.ts'
+import { buildMeal, decodeMeal, type ModuleSignalId } from '../../src/index.ts'
+import { gutModule, simulate } from '../../src/run.ts'
 import { lookup } from '../fixtures.ts'
 import { paramsWith, runAlone } from './ctx.ts'
 

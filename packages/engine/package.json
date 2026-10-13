@@ -7,7 +7,8 @@
   "sideEffects": false,
   "description": "Pure TypeScript digestion model: food schema, gastric emptying, gut transit, glucose band.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./run": "./src/run.ts"
   },
   "scripts": {
     "test": "vitest run",

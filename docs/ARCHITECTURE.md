@@ -16,16 +16,23 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    a test there should catch it. The model is a fixed, ordered list of modules
    (`src/modules/`: `gut` → `energy` → `bloodSugar`, in the frozen order of
    `core/module.ts`), each run once over the whole 48 h array. A module declares what it reads
-   (`needs`) and writes (`provides`, internal `x.*` arrays); `ctx.get`/`ctx.put` throw on
-   anything else, and `PROVIDES` is derived from the modules (`test/modules/`). The maths stays in
+   (`needs`) and writes (`provides`, internal `x.*` arrays, `moments`, `rhythms`); `ctx.put`
+   throws on anything else, `ctx.get` too in development and tests (a production build drops
+   that check), and `PROVIDES` is derived from the modules (`test/modules/`). The maths stays in
    `stomach.ts` (emptying), `transit.ts` (intestines and absorption), `glucose.ts` and
    `energy/energyBalance.ts`; `simulate.ts` runs the modules, then `events.ts` (key moments) and
-   `particles.ts`. Shared helpers (`stomachFraction`, `mealLocation`, `activeStage`) live there
-   too, so every graph computes the same thing the same way. Modules take their numbers as an
-   argument (`params`, from the run's context); only `simulate.ts` hands them `PARAMS`, the
-   human set. The run carries its own clock (`run.horizonMin`, `run.stepMin`, `run.length`), and
-   `simulate({ organism?, items, profile? }, { lookup })` is the organism-ready way in
+   `particles.ts`, and returns a `RunResult` (`result.ts`): the signal table plus the meal,
+   events and particles. Modules and helpers take their numbers as an argument (`params`, from
+   the run's context, never a default); only `simulate.ts` hands them `PARAMS`, the human set.
+   The run carries its own clock (`run.horizonMin`, `run.stepMin`, `run.length`), and
+   `simulate({ organism?, items, profile? }, { lookup })` (a `RunInput`) is the way in
    (`simulate(meal)` still works). `test/plumbing.test.ts` guards this.
+   **Two entries (E-2).** `@lifepeek/engine` is what the screen needs without running: types,
+   the link codec, the lean catalog, `valueAt` and the view helpers (`view.ts`: `indexAt`,
+   `stomachFraction`, `mealLocation`, `gutIsDone`, `activeStage`, which read the signal table,
+   so every graph computes the same thing the same way). `@lifepeek/engine/run` (`run.ts`) is
+   the engine itself: the web loads it with a plain `import()` when `/sim` mounts
+   (`hooks/useRun.ts`), and `check-budget.mjs` fails if it ever lands in `/sim`'s first download.
 2. **One source for anatomy.** `apps/web/src/anatomy/human.ts` defines the curves. The 3D
    models (`three/geometry.ts`), the flat fallback and the particle paths all read them, so food
    always travels inside the organs it is drawn in.
@@ -40,7 +47,8 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
    `in` (inside view); `bo` is reserved. `apps/web/src/lib/v1-links.fixture.ts` lists every v1
    link, and `lib/links.test.ts` checks that each still opens the same meals.
 4. **Signal IDs are a contract.** Every number the app draws, prints, reads aloud or puts in a
-   link has one ID in `packages/engine/src/core/catalog.ts` (the glossary, frozen 2026-10-12),
+   link has one ID in `packages/engine/src/core/catalog.ts` (the glossary, frozen 2026-10-12;
+   reserved rows and each row's definition and retired names are in `core/catalog-docs.ts`),
    such as `blood.glucose` or `gut.stomach.contentG`. Share links, i18n keys (`signals.<id>.*`),
    golden tests and teachers' worksheets depend on them, so an ID is never renamed or deleted;
    new ones are only added, in the catalog first. IDs are organism-neutral (no `human.` prefix).

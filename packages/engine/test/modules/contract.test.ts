@@ -2,21 +2,9 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import {
-  ACTIVE_SIGNAL_IDS,
-  HUMAN_MODEL,
-  HUMAN_MODULES,
-  MODULE_ORDER,
-  PARAMS,
-  PROFILES,
-  PROVIDES,
-  buildMeal,
-  decodeMeal,
-  moduleGraphErrors,
-  runModules,
-  simulate,
-  type ModelModule,
-} from '../../src/index.ts'
+import { ACTIVE_SIGNAL_IDS, PARAMS, PROFILES, buildMeal, decodeMeal, type ModelModule } from '../../src/index.ts'
+import { HUMAN_MODEL, HUMAN_MODULES, PROVIDES, runModules, simulate } from '../../src/run.ts'
+import { MODULE_ORDER, SYSTEM_IDS, moduleGraphErrors } from '../../src/core/module.ts'
 import { lookup } from '../fixtures.ts'
 import { N } from './ctx.ts'
 
@@ -73,7 +61,14 @@ describe('one module per ID', () => {
 })
 
 describe('ctx.get / ctx.put keep a module to what it declared', () => {
-  const mod = (over: Partial<ModelModule>): ModelModule => ({ id: 'gas', needs: [], provides: [], run: () => {}, ...over })
+  const mod = (over: Partial<ModelModule>): ModelModule => ({
+    id: 'gas',
+    system: 'breathing',
+    needs: [],
+    provides: [],
+    run: () => {},
+    ...over,
+  })
   const gut = HUMAN_MODULES[0]!
   const fill = () => new Float64Array(N)
 
@@ -111,9 +106,70 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
     const extra = mod({ provides: ['gut.leftBodyG'], run: (ctx) => ctx.put('gut.leftBodyG', fill(), { low: fill(), high: fill() }) })
     expect(() => runModules([extra], setup)).toThrow(/put gut.leftBodyG: band does not match/)
   })
+
+  it('what get returns is read only (compile time)', () => {
+    const write = mod({
+      needs: ['gut.leftBodyG'],
+      run: (ctx) => {
+        // @ts-expect-error ctx.get gives another module's array to read, never to change.
+        ctx.get('gut.leftBodyG')[0] = 1
+      },
+    })
+    expect(write.needs).toHaveLength(1)
+  })
+
+  it('putMoment and putRhythm: declared IDs only, each once, and every declared one put', () => {
+    const peak = mod({ moments: ['event.glucosePeak'], run: (ctx) => ctx.putMoment('event.glucosePeak', 42) })
+    expect(runModules([peak], setup).moments.get('event.glucosePeak')).toMatchObject({ atMin: 42, meta: { id: 'event.glucosePeak' } })
+    const ranged = mod({
+      moments: ['event.firstLeftovers'],
+      run: (ctx) => ctx.putMoment('event.firstLeftovers', 600, { low: 500, high: 900 }),
+    })
+    expect(runModules([ranged], setup).moments.get('event.firstLeftovers')).toMatchObject({ atMin: 600, low: 500, high: 900 })
+    expect(() => runModules([mod({ run: (ctx) => ctx.putMoment('event.glucosePeak', 1) })], setup)).toThrow(
+      'gas: putMoment event.glucosePeak: not declared',
+    )
+    const twice = mod({
+      moments: ['event.glucosePeak'],
+      run: (ctx) => {
+        ctx.putMoment('event.glucosePeak', 1)
+        ctx.putMoment('event.glucosePeak', 2)
+      },
+    })
+    expect(() => runModules([twice], setup)).toThrow('gas: putMoment event.glucosePeak: twice')
+    expect(() => runModules([mod({ moments: ['event.glucosePeak'] })], setup)).toThrow('gas: no putMoment event.glucosePeak')
+
+    const beat = mod({ rhythms: ['energy.usedRate'], run: (ctx) => ctx.putRhythm('energy.usedRate', { restingPerMin: 66 }) })
+    expect(runModules([beat], setup).rhythms.get('energy.usedRate')).toMatchObject({ restingPerMin: 66, meta: { id: 'energy.usedRate' } })
+    expect(() => runModules([mod({ run: (ctx) => ctx.putRhythm('energy.usedRate', { restingPerMin: 1 }) })], setup)).toThrow(
+      'gas: putRhythm energy.usedRate: not declared',
+    )
+    expect(() => runModules([mod({ rhythms: ['energy.usedRate'] })], setup)).toThrow('gas: no putRhythm energy.usedRate')
+    // Two modules may not put the same moment or rhythm (one writer per ID).
+    expect(
+      moduleGraphErrors([
+        { ...peak, id: 'gas' },
+        { ...peak, id: 'lymph' },
+      ]),
+    ).toContain('event.glucosePeak: written by gas and lymph')
+  })
+
+  it('a run of today’s modules has no rhythms, and its moments are the five from events.ts', () => {
+    const sim = simulate(meal, { particles: 0 })
+    expect(sim.rhythms.size).toBe(0)
+    expect(HUMAN_MODULES.flatMap((m) => [...(m.moments ?? []), ...(m.rhythms ?? [])])).toEqual([])
+    expect(sim.moments.size).toBe(5)
+  })
+
+  it('every module names the system that shows it', () => {
+    for (const m of HUMAN_MODULES) expect(SYSTEM_IDS, m.id).toContain(m.system)
+    expect(HUMAN_MODULES.map((m) => m.system)).toEqual(['digestion', 'digestion', 'digestion'])
+  })
 })
 
 describe('no global PARAMS', () => {
+  // The scan over every engine file (not only modules/), which also catches `params = PARAMS`
+  // defaults, is in test/plumbing.test.ts (R58).
   const modulesDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../src/modules')
 
   it('no module file names PARAMS: modules read ctx.params only', () => {

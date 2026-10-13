@@ -19,7 +19,7 @@ export const DEFAULT_PROFILE: { readonly [O in OrganismId]: ProfileId } = { huma
 /** Which profiles each organism offers. A link's `who` is valid only if it is listed for its organism. */
 export const ORGANISM_PROFILES: { readonly [O in OrganismId]: readonly ProfileId[] } = { human: ['adult-ref'] }
 
-/** What one human run needs. The foods are looked up by id (`simulate(input, { lookup })`). */
+/** What one human run needs (result.ts RunInput). The foods are looked up by id (`simulate(input, { lookup })`). */
 export interface HumanInput {
   /** Absent ⇒ human, forever. */
   organism?: 'human'
@@ -27,9 +27,6 @@ export interface HumanInput {
   /** Absent ⇒ DEFAULT_PROFILE.human. Sets energy.usedRate (core/profile.ts). */
   profile?: ProfileId
 }
-/** Later: | { organism: 'plant'; conditions: {...}; profile: 'leaf-ref' }. */
-export type SimInput = HumanInput
-
 /**
  * One organism's model: its version, clock, parameter set and modules. `simulate()` puts `params` into
  * its context and passes it to every module; modules never read a global parameter object.

@@ -10,12 +10,12 @@ import {
   parseFood,
   indexAt,
   mealLocation,
-  simulate,
   stomachFraction,
   STAGES,
   findFirst,
-  type Simulation,
+  type RunResult,
 } from '../src/index.ts'
+import { simulate } from '../src/run.ts'
 import { lookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 
@@ -47,9 +47,9 @@ const runFoods = (meal: string) =>
     buildMeal(decodeMeal(meal), (id) => foods.find((f) => f.id === id)),
     { particles: 0 },
   )
-const leftPct = (sim: Simulation, minutesAfterEating: number) =>
+const leftPct = (sim: RunResult, minutesAfterEating: number) =>
   stomachFraction(sim, indexAt(sim, minutesAfterEating + sim.meal.eatingMin)) * 100
-const rise = (sim: Simulation, t: number) => sim.glucose.typical[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl
+const rise = (sim: RunResult, t: number) => sim.signals.get('blood.glucose')!.values[indexAt(sim, t)]! - PARAMS.glucose.fastingMgDl
 
 describe('gastric emptying', () => {
   golden(
@@ -156,7 +156,7 @@ describe('blood glucose', () => {
     ['brouns2005', 'atkinson2008'],
     'reproduces the GI definition: white bread (GI 75) gives ~75 % of the glucose 2-h area (Brouns et al. 2005)',
     () => {
-      const iauc = (sim: Simulation) => {
+      const iauc = (sim: RunResult) => {
         let a = 0
         for (let t = 0; t <= 120; t++) a += Math.max(0, rise(sim, t))
         return a
@@ -242,7 +242,7 @@ describe('blood glucose', () => {
     'more of the same food: the same highest point, raised for longer (capped release; known limit limits.glucoseSameHighest)',
     () => {
       const of = (servings: number) => simulate(buildMeal([{ foodId: 'glucose-50', servings }], lookup))
-      const above = (sim: Simulation) => sim.glucose.typical.filter((g) => g > PARAMS.glucose.fastingMgDl + 5).length
+      const above = (sim: RunResult) => sim.signals.get('blood.glucose')!.values.filter((g) => g > PARAMS.glucose.fastingMgDl + 5).length
       const one = of(1)
       for (const n of [2, 4]) {
         const more = of(n)
@@ -255,8 +255,8 @@ describe('blood glucose', () => {
   pinned('blood.glucose', 'the band always brackets the typical curve', () => {
     const sim = run('glucose-50')
     for (let i = 0; i < sim.length; i += 37) {
-      expect(sim.glucose.low[i]!).toBeLessThanOrEqual(sim.glucose.typical[i]! + 1e-9)
-      expect(sim.glucose.high[i]!).toBeGreaterThanOrEqual(sim.glucose.typical[i]! - 1e-9)
+      expect(sim.signals.get('blood.glucose')!.low![i]!).toBeLessThanOrEqual(sim.signals.get('blood.glucose')!.values[i]! + 1e-9)
+      expect(sim.signals.get('blood.glucose')!.high![i]!).toBeGreaterThanOrEqual(sim.signals.get('blood.glucose')!.values[i]! - 1e-9)
     }
   })
 })
@@ -268,7 +268,7 @@ describe('one consistent story', () => {
     () => {
       const sim = run('glucose-50')
       expect(sim.events.absorptionMostlyDoneMin!).toBeLessThanOrEqual(150)
-      const atPeak = sim.absorbedG.carbs[indexAt(sim, sim.events.glucosePeak!.timeMin)]!
+      const atPeak = sim.signals.get('gut.absorbed.carbsG')!.values[indexAt(sim, sim.events.glucosePeak!.timeMin)]!
       expect(atPeak / sim.meal.total.carbsG).toBeGreaterThan(0.2)
     },
   )
@@ -303,9 +303,9 @@ describe('one consistent story', () => {
     () => {
       const sim = run('fatty-meal')
       const end = sim.length - 1
-      expect(sim.absorbedG.fiber[end]).toBe(0)
-      expect(sim.absorbedG.carbs[end]! / sim.meal.total.carbsG).toBeGreaterThan(0.9)
-      expect(sim.excretedG[end]!).toBeGreaterThan(sim.meal.total.fiberG * 0.9)
+      expect(sim.signals.get('gut.absorbed.fibreG')!.values[end]).toBe(0)
+      expect(sim.signals.get('gut.absorbed.carbsG')!.values[end]! / sim.meal.total.carbsG).toBeGreaterThan(0.9)
+      expect(sim.signals.get('gut.leftBodyG')!.values[end]!).toBeGreaterThan(sim.meal.total.fiberG * 0.9)
     },
   )
 

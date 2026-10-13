@@ -5,7 +5,8 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { buildMeal, decodeMeal, indexAt, parseFood, simulate, stomachFraction, type Simulation } from '../src/index.ts'
+import { buildMeal, decodeMeal, indexAt, parseFood, stomachFraction, type RunResult } from '../src/index.ts'
+import { simulate } from '../src/run.ts'
 import { lookup as fixtureLookup } from '../test/fixtures.ts'
 
 const dir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../content/foods')
@@ -13,10 +14,10 @@ const foods = readdirSync(dir).map((f) => parseFood(JSON.parse(readFileSync(join
 const lookup = (id: string) => fixtureLookup(id) ?? foods.find((f) => f.id === id)
 const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 
-const pct = (sim: Simulation, t: number) => (stomachFraction(sim, indexAt(sim, t + sim.meal.eatingMin)) * 100).toFixed(0)
-const iauc = (sim: Simulation) => {
+const pct = (sim: RunResult, t: number) => (stomachFraction(sim, indexAt(sim, t + sim.meal.eatingMin)) * 100).toFixed(0)
+const iauc = (sim: RunResult) => {
   let a = 0
-  for (let t = 0; t <= 120; t++) a += Math.max(0, sim.glucose.typical[t]! - 90)
+  for (let t = 0; t <= 120; t++) a += Math.max(0, sim.signals.get('blood.glucose')!.values[t]! - 90)
   return a
 }
 

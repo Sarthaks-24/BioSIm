@@ -2,7 +2,8 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { buildMeal, decodeMeal, parseFood, simulate } from '../src/index.ts'
+import { buildMeal, decodeMeal, parseFood } from '../src/index.ts'
+import { simulate } from '../src/run.ts'
 
 /** The claims the app makes on its home page and lesson plan must hold for the real food data. */
 
@@ -18,7 +19,12 @@ describe('real foods', () => {
     for (const f of foods) {
       const sim = run(`${f.id}:1`)
       expect(sim.meal.items).toHaveLength(1)
-      for (const arr of [sim.stomachSolidG, sim.stomachLiquidG, sim.glucose.typical, sim.colonG]) {
+      for (const arr of [
+        sim.signals.get('gut.stomach.solidG')!.values,
+        sim.signals.get('gut.stomach.liquidG')!.values,
+        sim.signals.get('blood.glucose')!.values,
+        sim.signals.get('gut.colon.contentG')!.values,
+      ]) {
         expect(arr.every(Number.isFinite)).toBe(true)
       }
     }
@@ -43,7 +49,7 @@ describe('real foods', () => {
   it('cola ×1 and ×4 both read "Highest: 121": capped release, so 4 cans stay up longer, not higher (council MUST 2)', () => {
     const one = run('cola:1')
     const four = run('cola:4')
-    const highest = (sim: ReturnType<typeof run>) => Math.round(Math.max(...sim.glucose.typical))
+    const highest = (sim: ReturnType<typeof run>) => Math.round(Math.max(...sim.signals.get('blood.glucose')!.values))
     expect(highest(one)).toBe(121)
     expect(highest(four)).toBe(121)
     expect(four.events.glucosePeak!.timeMin).toBe(one.events.glucosePeak!.timeMin)

@@ -2,25 +2,18 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_ORGANISM, MODEL_VERSION, PARAMS, buildMeal, decodeMeal, emptyingCurves, type Params, type RunInput } from '../src/index.ts'
 import {
-  DEFAULT_ORGANISM,
   HUMAN_MODEL,
-  MODEL_VERSION,
   ORGANISM_MODELS,
-  PARAMS,
   PROVIDES,
   bluntingFactor,
-  buildMeal,
   computeEvents,
-  decodeMeal,
-  emptyingCurves,
   energySignals,
   glucoseCurve,
   makeParticles,
   simulate,
-  type Params,
-  type SimInput,
-} from '../src/index.ts'
+} from '../src/run.ts'
 import { lookup } from './fixtures.ts'
 
 /**
@@ -43,7 +36,7 @@ function paramsWith(path: string, value: number): Params {
 
 describe('simulate input', () => {
   // 15 runs × 16 full series compared: ~1.5 s alone, more on a busy machine, so a longer timeout.
-  it('SimInput with a lookup gives exactly the same run as a built Meal', { timeout: 20_000 }, () => {
+  it('RunInput with a lookup gives exactly the same run as a built Meal', { timeout: 20_000 }, () => {
     for (const raw of ['glucose-50:1', 'standard-meal:1,water:1', 'fatty-meal:1.5', 'water:1', '']) {
       const items = decodeMeal(raw)
       const fromMeal = simulate(buildMeal(items, lookup), { particles: 8 })
@@ -58,18 +51,18 @@ describe('simulate input', () => {
   })
 
   it('an unknown organism throws (the UI never passes one)', () => {
-    const frog = { organism: 'frog', items: [] } as unknown as SimInput
+    const frog = { organism: 'frog', items: [] } as unknown as RunInput
     expect(() => simulate(frog, { lookup })).toThrow(/unknown organism "frog"/)
   })
 
   it('an unknown profile throws (share.ts drops an unknown `who` before it gets here)', () => {
-    const teen = { items: [], profile: 'teen-ref' } as unknown as SimInput
+    const teen = { items: [], profile: 'teen-ref' } as unknown as RunInput
     expect(() => simulate(teen, { lookup })).toThrow(/unknown profile "teen-ref"/)
     expect(simulate({ items: [] }, { lookup }).profile).toBe('adult-ref')
   })
 
-  it('a SimInput without a lookup throws instead of guessing', () => {
-    const bad = simulate as unknown as (input: SimInput, opts?: object) => unknown
+  it('a RunInput without a lookup throws instead of guessing', () => {
+    const bad = simulate as unknown as (input: RunInput, opts?: object) => unknown
     expect(() => bad({ items: [{ foodId: 'water', servings: 1 }] })).toThrow(/lookup/)
   })
 })
@@ -94,14 +87,9 @@ describe('the run carries its clock', () => {
 describe('ctx.params: modules read the params they are given', () => {
   const meal = buildMeal(decodeMeal('standard-meal:1,glucose-50:1'), lookup)
 
-  it('defaults are PARAMS (so existing callers are unchanged)', () => {
-    expect(emptyingCurves(meal)).toEqual(emptyingCurves(meal, PARAMS))
-    expect(bluntingFactor(meal)).toBe(bluntingFactor(meal, PARAMS))
-  })
-
   it('stomach.ts', () => {
     const slow = emptyingCurves(meal, paramsWith('stomach.energyKcalPerMin', PARAMS.stomach.energyKcalPerMin / 2))
-    expect(slow.liquid.linearMin).toBeCloseTo(emptyingCurves(meal).liquid.linearMin * 2, 9)
+    expect(slow.liquid.linearMin).toBeCloseTo(emptyingCurves(meal, PARAMS).liquid.linearMin * 2, 9)
   })
 
   it('glucose.ts', () => {
@@ -123,14 +111,14 @@ describe('ctx.params: modules read the params they are given', () => {
       step: 1,
       n,
     }
-    expect(computeEvents(meal, input).halfLeftoversInColon).toBeNull()
+    expect(computeEvents(meal, input, PARAMS).halfLeftoversInColon).toBeNull()
     expect(computeEvents(meal, input, paramsWith('residueThresholdG', 0.1)).halfLeftoversInColon).not.toBeNull()
   })
 
   it('particles.ts', () => {
-    const curves = emptyingCurves(meal)
+    const curves = emptyingCurves(meal, PARAMS)
     const later = makeParticles(meal, curves, 5, 12, paramsWith('smallIntestine.typicalMin', PARAMS.smallIntestine.typicalMin + 60))
-    makeParticles(meal, curves, 5, 12).forEach((p, i) => expect(later[i]!.colonIn - p.colonIn).toBeCloseTo(60, 9))
+    makeParticles(meal, curves, 5, 12, PARAMS).forEach((p, i) => expect(later[i]!.colonIn - p.colonIn).toBeCloseTo(60, 9))
   })
 
   it('energy/energyBalance.ts', () => {
@@ -143,12 +131,16 @@ describe('ctx.params: modules read the params they are given', () => {
       water: new Float64Array(n),
     }
     const person = { restingKcalPerDay: 2400 }
-    expect([...energySignals(absorbedG, person, 1).inTotal]).toEqual([0, 13, 17])
+    expect([...energySignals(absorbedG, person, 1, PARAMS).inTotal]).toEqual([0, 13, 17])
     expect([...energySignals(absorbedG, person, 1, paramsWith('energy.atwaterKcalPerG.fat', 0)).inTotal]).toEqual([0, 4, 8])
-    expect([...energySignals(absorbedG, person, 1).usedRate]).toEqual([100, 100, 100])
+    expect([...energySignals(absorbedG, person, 1, PARAMS).usedRate]).toEqual([100, 100, 100])
   })
 
-  it('only params.ts, simulate.ts, meal.ts and share.ts read PARAMS.* (comments and strings aside)', () => {
+  // R58: helpers take params from their caller, never a `params = PARAMS` default, so a run with
+  // other params (a test, a later organism) can never mix in the global set. Any mention of PARAMS
+  // in code counts, not only `PARAMS.x`. meal.ts (eating time, size cap) and share.ts (the link's
+  // `t`) build the run's input on the main thread, before any run.
+  it('only params.ts, simulate.ts, meal.ts and share.ts name PARAMS in code (comments and strings aside)', () => {
     const files = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(join(dir, e.name)) : [join(dir, e.name)]))
     const readers = files(srcDir)
@@ -157,7 +149,7 @@ describe('ctx.params: modules read the params they are given', () => {
         readFileSync(f, 'utf8')
           .split('\n')
           .map((line) => line.replace(/\s\/\/.*$/, '').trim())
-          .some((line) => !/^(\*|\/\/|\/\*|['"`])/.test(line) && /\bPARAMS\./.test(line)),
+          .some((line) => !/^(\*|\/\/|\/\*|['"`])/.test(line) && /\bPARAMS\b/.test(line)),
       )
       .map((f) => relative(srcDir, f).replaceAll('\\', '/'))
       .sort()

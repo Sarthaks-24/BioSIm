@@ -3,12 +3,12 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
+  ACTIVE_SIGNAL_IDS,
   EVENT_IDS,
   PARAMS,
   PROFILES,
   buildMeal,
   decodeMeal,
-  energySignals,
   findFirst,
   indexAt,
   mealLocation,
@@ -16,14 +16,15 @@ import {
   parseFood,
   riseAboveFasting,
   shareOfMealInStomach,
-  simulate,
   stomachFraction,
   valueAt,
   windowOf,
+  type RunResult,
 } from '../src/index.ts'
+import { HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
 
 /**
- * The signal table (core/table.ts) is a COPY of today's arrays under catalog IDs: no new
+ * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
  * physiology. These tests check the copy, the series helpers (core/signal.ts) and the derived
  * views (core/derive.ts). The physiology itself is checked in model.test.ts.
  */
@@ -34,6 +35,15 @@ const foods = readdirSync(dir)
   .map((f) => parseFood(JSON.parse(readFileSync(join(dir, f), 'utf8'))))
 const lookup = (id: string) => foods.find((f) => f.id === id)
 const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
+/** The run's modules again, for the arrays they wrote (Float64, before the table's copy). */
+const modulesOf = (sim: RunResult) =>
+  runModules(HUMAN_MODULES, {
+    input: { meal: sim.meal },
+    params: PARAMS,
+    profile: PROFILES[sim.profile],
+    n: sim.length,
+    stepMin: sim.stepMin,
+  })
 
 describe('signal table', () => {
   it('gut.stomach.contentG = liquid + solid grams within 0.1 g at every minute, for every food', () => {
@@ -43,40 +53,39 @@ describe('signal table', () => {
       const content = sim.signals.get('gut.stomach.contentG')!.values
       expect(content).toHaveLength(sim.length)
       for (let i = 0; i < sim.length; i++) {
-        expect(Math.abs(content[i]! - (sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!)), `${f.id} @${i}`).toBeLessThanOrEqual(0.1)
+        expect(
+          Math.abs(content[i]! - (sim.signals.get('gut.stomach.liquidG')!.values[i]! + sim.signals.get('gut.stomach.solidG')!.values[i]!)),
+          `${f.id} @${i}`,
+        ).toBeLessThanOrEqual(0.1)
       }
     }
   })
 
-  it('every other series is a Float32 copy of the engine array it names', () => {
+  it('every series is a Float32 copy of the array its module wrote, and its band of the band', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
-    const pairs: [string, Float64Array][] = [
-      ['gut.stomach.liquidG', sim.stomachLiquidG],
-      ['gut.stomach.solidG', sim.stomachSolidG],
-      ['gut.small.contentG', sim.smallIntestineG],
-      ['gut.colon.contentG', sim.colonG],
-      ['gut.absorbed.carbsG', sim.absorbedG.carbs],
-      ['gut.absorbed.proteinG', sim.absorbedG.protein],
-      ['gut.absorbed.fatG', sim.absorbedG.fat],
-      ['gut.absorbed.waterG', sim.absorbedG.water],
-      ['gut.absorbed.fibreG', sim.absorbedG.fiber],
-      ['gut.leftBodyG', sim.excretedG],
-      ['blood.glucose', sim.glucose.typical],
-    ]
-    for (const [id, arr] of pairs) {
-      const s = sim.signals.get(id as never)!
+    const out = modulesOf(sim)
+    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS])
+    for (const [id, s] of sim.signals) {
+      const w = out.signals.get(id)!
       expect(s.meta.id).toBe(id)
-      expect(s.values).toEqual(Float32Array.from(arr))
+      expect(s.values).toEqual(Float32Array.from(w.values))
+      expect(s.low).toEqual(w.band && Float32Array.from(w.band.low))
+      expect(s.high).toEqual(w.band && Float32Array.from(w.band.high))
     }
-    const g = sim.signals.get('blood.glucose')!
-    expect(g.low).toEqual(Float32Array.from(sim.glucose.low))
-    expect(g.high).toEqual(Float32Array.from(sim.glucose.high))
+    expect(sim.signals.get('blood.glucose')!.low).toBeDefined()
     expect(sim.signals.get('gut.small.contentG')!.low).toBeUndefined()
   })
 
   it('the energy series are Float32 copies of energySignals() for the run’s profile', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
-    const e = energySignals(sim.absorbedG, PROFILES[sim.profile], sim.stepMin)
+    const out = modulesOf(sim)
+    const absorbed = (id: 'gut.absorbed.carbsG' | 'gut.absorbed.proteinG' | 'gut.absorbed.fatG') => out.signals.get(id)!.values
+    const e = energySignals(
+      { carbs: absorbed('gut.absorbed.carbsG'), protein: absorbed('gut.absorbed.proteinG'), fat: absorbed('gut.absorbed.fatG') },
+      PROFILES[sim.profile],
+      sim.stepMin,
+      PARAMS,
+    )
     for (const k of ['inRate', 'inTotal', 'usedRate', 'usedTotal'] as const) {
       const s = sim.signals.get(`energy.${k}`)!
       expect(s.meta.id).toBe(`energy.${k}`)
@@ -123,8 +132,9 @@ describe('moments', () => {
     const sim = run('white-rice:1')
     const at = sim.events.glucoseBackToBaseMin!
     const limit = PARAMS.glucose.fastingMgDl + PARAMS.glucose.backToBaseMgDl
-    expect(sim.glucose.typical[indexAt(sim, at)]!).toBeLessThanOrEqual(limit)
-    for (let t = sim.events.glucosePeak!.timeMin; t < at; t++) expect(sim.glucose.typical[indexAt(sim, t)]!).toBeGreaterThan(limit)
+    expect(sim.signals.get('blood.glucose')!.values[indexAt(sim, at)]!).toBeLessThanOrEqual(limit)
+    for (let t = sim.events.glucosePeak!.timeMin; t < at; t++)
+      expect(sim.signals.get('blood.glucose')!.values[indexAt(sim, t)]!).toBeGreaterThan(limit)
   })
 })
 

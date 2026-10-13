@@ -4,6 +4,8 @@
  * Full references and a glossary: docs/MODEL.md
  */
 
+import type { OrganismId } from './core/organism.ts'
+
 /** Bumped whenever outputs change for the same input. Stored in share links as `v=`. */
 export const MODEL_VERSION = 2
 
@@ -172,3 +174,10 @@ type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K
  * numbers. PARAMS stays the human set.
  */
 export type Params = Widen<typeof PARAMS>
+
+/**
+ * Each organism's parameter set, for the screen's display thresholds (the graphs' "back near the
+ * before-meal level"), read without loading the engine (E-2: HUMAN_MODEL, which also holds the
+ * modules, is in the lazy `@lifepeek/engine/run` entry). The run uses the same object.
+ */
+export const ORGANISM_PARAMS: { readonly [O in OrganismId]: Params } = { human: PARAMS }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { PARAMS, bloodSugarModule, buildMeal, decodeMeal } from '../../src/index.ts'
+import { PARAMS, buildMeal, decodeMeal } from '../../src/index.ts'
+import { bloodSugarModule } from '../../src/run.ts'
 import { lookup } from '../fixtures.ts'
 import { N, paramsWith, runAlone } from './ctx.ts'
 

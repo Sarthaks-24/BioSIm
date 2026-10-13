@@ -8,6 +8,7 @@ import type { ModelModule } from '../core/module.ts'
 
 export const energyModule: ModelModule = {
   id: 'energy',
+  system: 'digestion',
   needs: ['gut.absorbed.carbsG', 'gut.absorbed.proteinG', 'gut.absorbed.fatG'],
   provides: ['energy.inRate', 'energy.inTotal', 'energy.usedRate', 'energy.usedTotal'],
   run(ctx) {

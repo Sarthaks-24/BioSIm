@@ -11,6 +11,7 @@ import { CARBS_OUT } from './gut.ts'
 
 export const bloodSugarModule: ModelModule = {
   id: 'bloodSugar',
+  system: 'digestion',
   needs: [CARBS_OUT.liquid, CARBS_OUT.solid],
   provides: ['blood.glucose'],
   run(ctx) {

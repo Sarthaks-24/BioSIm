@@ -11,9 +11,9 @@ import {
   decodeMeal,
   parseFood,
   schofieldMale18to30KcalPerDay,
-  simulate,
-  type Simulation,
+  type RunResult,
 } from '../src/index.ts'
+import { simulate } from '../src/run.ts'
 import { golden, pinned } from './golden.ts'
 
 /**
@@ -28,7 +28,7 @@ const foods = readdirSync(dir)
   .filter((f) => f.endsWith('.json'))
   .map((f) => parseFood(JSON.parse(readFileSync(join(dir, f), 'utf8'))))
 const lookup = (id: string) => foods.find((f) => f.id === id)
-const cache = new Map<string, Simulation>()
+const cache = new Map<string, RunResult>()
 const run = (meal: string) => {
   if (!cache.has(meal)) cache.set(meal, simulate(buildMeal(decodeMeal(meal), lookup), { particles: 0 }))
   return cache.get(meal)!
@@ -39,7 +39,7 @@ const worst = (n: number, diff: (i: number) => number) => {
   for (let i = 0; i < n; i++) max = Math.max(max, Math.abs(diff(i)))
   return max
 }
-const values = (sim: Simulation, id: Parameters<Simulation['signals']['get']>[0]) => sim.signals.get(id)!.values
+const values = (sim: RunResult, id: Parameters<RunResult['signals']['get']>[0]) => sim.signals.get(id)!.values
 
 /** Every food alone, a mixed meal, and an empty meal. */
 const meals = [...foods.map((f) => `${f.id}:1`), 'cheeseburger:1,fries:1,cola:1', 'roti:2,dal:1', '']
@@ -104,7 +104,11 @@ describe('energy in', () => {
     () => {
       for (const meal of meals) {
         const sim = run(meal)
-        const a = sim.absorbedG
+        const a = {
+          carbs: values(sim, 'gut.absorbed.carbsG'),
+          protein: values(sim, 'gut.absorbed.proteinG'),
+          fat: values(sim, 'gut.absorbed.fatG'),
+        }
         const total = values(sim, 'energy.inTotal')
         const rate = values(sim, 'energy.inRate')
         expect(total, meal).toHaveLength(sim.length)

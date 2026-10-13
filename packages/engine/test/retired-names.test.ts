@@ -2,10 +2,10 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { EVENTS, SIGNALS } from '../src/index.ts'
+import { EVENT_DOCS, SIGNAL_DOCS } from '../src/core/catalog-docs.ts'
 
 /**
- * Old plan names never come back. Every `retired` name in src/core/catalog.ts is banned as a
+ * Old plan names never come back. Every `retired` name in src/core/catalog-docs.ts is banned as a
  * quoted string ('x', "x" or `x`) in the .ts/.tsx source of apps/ and packages/.
  * i18n JSON is not scanned (v1's `events.*` keys left it in WP-20).
  */
@@ -14,7 +14,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.vite', 'test-results', 'playwright-report'])
 
 /** Always skipped: the catalog lists the retired names, and this file names the exemptions. */
-const ALWAYS_EXEMPT = ['packages/engine/src/core/catalog.ts', 'packages/engine/test/retired-names.test.ts']
+const ALWAYS_EXEMPT = ['packages/engine/src/core/catalog-docs.ts', 'packages/engine/test/retired-names.test.ts']
 
 /**
  * The v1 files that used v1 keys such as 'events.peak' and 'events.half' were skipped here until
@@ -22,7 +22,7 @@ const ALWAYS_EXEMPT = ['packages/engine/src/core/catalog.ts', 'packages/engine/t
  */
 const V1_EXEMPT: readonly string[] = []
 
-const RETIRED = [...Object.values(SIGNALS), ...Object.values(EVENTS)].flatMap((row) => row.retired)
+const RETIRED = [...Object.values(SIGNAL_DOCS), ...Object.values(EVENT_DOCS)].flatMap((row) => row.retired)
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const RETIRED_RE = new RegExp(`(['"\`])(${RETIRED.map(escape).join('|')})\\1`, 'g')
 
@@ -65,6 +65,6 @@ describe('retired names', () => {
   })
 
   it('the scanner catches a quoted retired name (self-check on the catalog)', () => {
-    expect(findRetired(join(ROOT, 'packages/engine/src/core/catalog.ts')).length).toBeGreaterThan(0)
+    expect(findRetired(join(ROOT, 'packages/engine/src/core/catalog-docs.ts')).length).toBeGreaterThan(0)
   })
 })

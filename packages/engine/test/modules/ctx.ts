@@ -1,7 +1,6 @@
 import {
   PARAMS,
   PROFILES,
-  runModules,
   type ModelModule,
   type ModuleSignalId,
   type Params,
@@ -9,6 +8,7 @@ import {
   type Meal,
   type Written,
 } from '../../src/index.ts'
+import { runModules } from '../../src/run.ts'
 
 /** The human run length (48 h at 1-min steps). */
 export const N = Math.floor(PARAMS.horizonMin / PARAMS.stepMin) + 1
@@ -26,6 +26,7 @@ export function runAlone(
   const ids = Object.keys(upstream) as ModuleSignalId[]
   const source: ModelModule = {
     id: 'activity',
+    system: 'digestion',
     needs: [],
     provides: ids.filter((id) => !id.startsWith('x.')) as ModelModule['provides'][number][],
     internal: ids.filter((id) => id.startsWith('x.')) as `x.${string}`[],
@@ -33,7 +34,7 @@ export function runAlone(
       for (const id of ids) ctx.put(id, upstream[id]!.values, upstream[id]!.band)
     },
   }
-  return runModules([source, module], { input: { meal }, params, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin })
+  return runModules([source, module], { input: { meal }, params, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }).signals
 }
 
 /** A deep copy of PARAMS with one number changed. */

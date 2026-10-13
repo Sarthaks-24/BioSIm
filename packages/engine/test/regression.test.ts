@@ -2,7 +2,8 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { MODEL_VERSION, buildMeal, decodeMeal, parseFood, simulate, type ActiveSignalId, type EventId } from '../src/index.ts'
+import { MODEL_VERSION, buildMeal, decodeMeal, parseFood, type ActiveSignalId, type EventId } from '../src/index.ts'
+import { simulate } from '../src/run.ts'
 
 /**
  * Regression pin (plan-model M3 rule: snapshots live apart from the physiology tests). These are

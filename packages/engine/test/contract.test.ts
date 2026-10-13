@@ -1,7 +1,9 @@
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { EVENT_IDS, HUMAN_PROVIDES, PARAMS, PARAM_SOURCES, buildMeal, goldenCoverage, simulate, type GoldenCall } from '../src/index.ts'
+import { EVENT_IDS, PARAMS, PARAM_SOURCES, buildMeal } from '../src/index.ts'
+import { HUMAN_PROVIDES, simulate } from '../src/run.ts'
+import { goldenCoverage, type GoldenCall } from '../src/core/coverage.ts'
 import { parseGoldenCalls, scanGoldenCalls } from './golden-scan.ts'
 import { lookup } from './fixtures.ts'
 

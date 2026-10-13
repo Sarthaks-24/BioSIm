@@ -1,5 +1,5 @@
 import type { Meal } from './meal.ts'
-import { PARAMS, type Params } from './params.ts'
+import type { Params } from './params.ts'
 
 /**
  * Blood glucose from carbohydrate entering the blood.
@@ -18,14 +18,14 @@ export interface GlucoseCurve {
 }
 
 /** Fat and protein blunt the rise; protein about twice as much as fat (Moghaddam et al. 2006). */
-export function bluntingFactor(meal: Meal, params: Params = PARAMS): number {
+export function bluntingFactor(meal: Meal, params: Params): number {
   const g = params.glucose
   const c = meal.total
   if (c.carbsG <= 0) return 1
   return Math.max(g.bluntingFloor, 1 / (1 + (g.bluntingK * (2 * c.proteinG + c.fatG)) / c.carbsG))
 }
 
-export function glucoseCurve(glycemicAbsorbedPerMin: Float64Array, stepMin: number, params: Params = PARAMS): GlucoseCurve {
+export function glucoseCurve(glycemicAbsorbedPerMin: Float64Array, stepMin: number, params: Params): GlucoseCurve {
   const g = params.glucose
   const n = glycemicAbsorbedPerMin.length
   const typical = new Float64Array(n)

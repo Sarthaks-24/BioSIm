@@ -8,10 +8,9 @@
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
-import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind } from '../nutrients.ts'
+import { ABSORBED_ID, GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind } from '../nutrients.ts'
 import { emptyingCurves, retention } from '../stomach.ts'
 import { runSegment } from '../transit.ts'
-import type { ActiveSignalId } from '../core/catalog.ts'
 import type { ModelModule } from '../core/module.ts'
 
 /** Grams of carbohydrate leaving the stomach per minute, liquid and solid phase. */
@@ -19,20 +18,12 @@ export const CARBS_OUT = { liquid: 'x.gut.liquidCarbsOutG', solid: 'x.gut.solidC
 /** Running total of fibre (leftovers) that has reached the colon, g. */
 export const LEFTOVERS_IN_COLON = 'x.gut.leftoversInColonG'
 
-/** Signal ID of each nutrient's absorbed grams (engine spelling `fiber`, ID spelling `fibre`). */
-export const ABSORBED_ID: { readonly [K in NutrientKind]: ActiveSignalId } = {
-  carbs: 'gut.absorbed.carbsG',
-  protein: 'gut.absorbed.proteinG',
-  fat: 'gut.absorbed.fatG',
-  fiber: 'gut.absorbed.fibreG',
-  water: 'gut.absorbed.waterG',
-}
-
 /** Minute the meal starts arriving in the stomach (end of eating + swallow). */
 export const stomachArrivalMin = (meal: Meal, params: Params): number => meal.eatingMin + params.esophagus.transitMin
 
 export const gutModule: ModelModule = {
   id: 'gut',
+  system: 'digestion',
   needs: [],
   provides: [
     'gut.stomach.contentG',

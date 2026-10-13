@@ -1,0 +1,304 @@
+/**
+ * The catalog's documentation half (E-2): the reserved rows, and every row's `definition` and
+ * `retired` names. Tests and docs read it; the app never imports it, so the first download
+ * carries only the lean catalog (catalog.ts). Same rules as catalog.ts: never rename or delete an
+ * ID, only add. test/catalog.test.ts checks that the two files cover the same IDs.
+ */
+import { SIGNALS, type EventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+
+/** What a row means and which old names it replaces. */
+export interface CatalogDocs {
+  /** One precise English sentence: what quantity, measured how. Shown to reviewers, used in docs. */
+  definition: string
+  /** Old plan names this ID replaces. Never use them in code (retired-names.test.ts). */
+  retired: readonly string[]
+}
+
+const k = (id: string) => `signals.${id}`
+
+/** Reserved names (do NOT emit yet). sourceIds are filled when the bundle ships. */
+export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<Id> } = {
+  'gut.stomach.outflowRate': {
+    id: 'gut.stomach.outflowRate',
+    unit: 'kcal/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('gut.stomach.outflowRate'),
+    reactsToMeal: true,
+    shipsIn: 'lookInside',
+  },
+  'gut.absorbRate.carbs': {
+    id: 'gut.absorbRate.carbs',
+    unit: 'g/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('gut.absorbRate.carbs'),
+    reactsToMeal: true,
+    shipsIn: 'lookInside',
+  },
+  'gut.absorbRate.protein': {
+    id: 'gut.absorbRate.protein',
+    unit: 'g/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('gut.absorbRate.protein'),
+    reactsToMeal: true,
+    shipsIn: 'lookInside',
+  },
+  'gut.absorbRate.fat': {
+    id: 'gut.absorbRate.fat',
+    unit: 'g/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('gut.absorbRate.fat'),
+    reactsToMeal: true,
+    shipsIn: 'lookInside',
+  },
+  'gut.absorbRate.water': {
+    id: 'gut.absorbRate.water',
+    unit: 'g/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('gut.absorbRate.water'),
+    reactsToMeal: true,
+    shipsIn: 'lookInside',
+  },
+  'blood.insulin': {
+    id: 'blood.insulin',
+    unit: 'xFasting',
+    status: 'assumption',
+    clock: 'sim',
+    kind: 'level',
+    sourceIds: [],
+    i18nKey: k('blood.insulin'),
+    reactsToMeal: true,
+    shipsIn: 'bloodSugar',
+  },
+  'liver.glucoseOutput': {
+    id: 'liver.glucoseOutput',
+    unit: 'g/min',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('liver.glucoseOutput'),
+    reactsToMeal: true,
+    shipsIn: 'bloodSugar',
+  },
+  'liver.glycogenG': {
+    id: 'liver.glycogenG',
+    unit: 'g',
+    status: 'simulated',
+    clock: 'sim',
+    kind: 'level',
+    sourceIds: [],
+    i18nKey: k('liver.glycogenG'),
+    reactsToMeal: true,
+    shipsIn: 'bloodSugar',
+  },
+  'brain.glucoseUse': {
+    id: 'brain.glucoseUse',
+    unit: 'g/h',
+    status: 'assumption',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('brain.glucoseUse'),
+    reactsToMeal: false,
+    shipsIn: 'bloodSugar',
+  },
+  'heart.rate': {
+    id: 'heart.rate',
+    unit: 'beats/min',
+    status: 'illustration',
+    clock: 'real',
+    kind: 'rhythm',
+    sourceIds: [],
+    i18nKey: k('heart.rate'),
+    reactsToMeal: false,
+    shipsIn: 'alwaysRunning',
+  },
+  'lungs.breathRate': {
+    id: 'lungs.breathRate',
+    unit: 'breaths/min',
+    status: 'illustration',
+    clock: 'real',
+    kind: 'rhythm',
+    sourceIds: [],
+    i18nKey: k('lungs.breathRate'),
+    reactsToMeal: false,
+    shipsIn: 'alwaysRunning',
+  },
+  'kidney.filtrationRate': {
+    id: 'kidney.filtrationRate',
+    unit: 'mL/min',
+    status: 'illustration',
+    clock: 'real',
+    kind: 'rate',
+    sourceIds: [],
+    i18nKey: k('kidney.filtrationRate'),
+    reactsToMeal: false,
+    shipsIn: 'alwaysRunning',
+  },
+}
+
+/** Definition and retired names of every signal row (active and reserved). */
+export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
+  'gut.stomach.contentG': {
+    definition: 'Grams of the meal still in the stomach, counted as food and drink as eaten (liquid + solid).',
+    retired: ['stomach.share', 'gut.stomach.fill', 'gut.stomach.contents', 'stomach.contentsG'],
+  },
+  'gut.stomach.liquidG': {
+    definition: 'Grams of the drinks in the meal still in the stomach.',
+    retired: ['stomach.liquidG'],
+  },
+  'gut.stomach.solidG': {
+    definition: 'Grams of the solid foods in the meal still in the stomach.',
+    retired: ['stomach.solidG'],
+  },
+  'gut.small.contentG': {
+    definition: 'Grams of tracked nutrients (carbohydrate, protein, fat, fibre, water) from the meal in the small intestine.',
+    retired: ['gut.smallIntestineG', 'si.contentsG', 'gut.si.contentG'],
+  },
+  'gut.colon.contentG': {
+    definition: 'Grams of tracked nutrients from the meal in the large intestine (colon).',
+    retired: ['gut.colonG', 'colon.contentsG'],
+  },
+  'gut.absorbed.carbsG': {
+    definition: 'Running total of digestible carbohydrate (not fibre) from the meal absorbed into the body.',
+    retired: ['absorbed.carbs'],
+  },
+  'gut.absorbed.proteinG': {
+    definition: 'Running total of protein from the meal absorbed into the body.',
+    retired: ['absorbed.protein'],
+  },
+  'gut.absorbed.fatG': {
+    definition: 'Running total of fat from the meal absorbed into the body (blood and lymph).',
+    retired: ['absorbed.fat'],
+  },
+  'gut.absorbed.waterG': {
+    definition: 'Running total of water from the meal absorbed in the small and large intestine.',
+    retired: ['absorbed.water', 'water.absorbed.total'],
+  },
+  'gut.absorbed.fibreG': {
+    definition: 'Running total of fibre absorbed. Always 0 in this model: the body cannot digest fibre.',
+    retired: ['absorbed.fibre', 'absorbed.fiber'],
+  },
+  'gut.leftBodyG': {
+    definition: 'Running total of tracked nutrients from the meal that have left the body (mostly fibre and water).',
+    retired: ['body.leftG', 'gut.excretedG', 'gut.location.leftBody'],
+  },
+  'blood.glucose': {
+    definition:
+      'Plasma glucose of the typical healthy adult, absolute (fasting ≈ 90 mg/dL). The rise above fasting is a helper, not an ID.',
+    retired: ['glucose.plasma', 'blood.glucoseRise', 'blood.glucose.riseAboveFasting'],
+  },
+  'energy.inRate': {
+    definition:
+      'Food energy entering the body per hour: 4·carbohydrate + 4·protein + 9·fat (kcal/g, Atwater) of the grams absorbed in that hour. Fibre left out.',
+    retired: ['energy.in.rate'], // note: earlier plans used kcal/min under this same ID; the unit is kcal/h, frozen
+  },
+  'energy.inTotal': {
+    definition: 'Running total of energy.inRate: kcal from this meal that have entered the body so far.',
+    retired: ['energy.inCum', 'energy.in.total', 'energy.inKcal'],
+  },
+  'energy.usedRate': {
+    definition:
+      "Resting energy use of the run's profile per hour: Schofield BMR (FAO/WHO/UNU 2004) with the ICMR-NIN 2020 Indian adjustment, ÷ 24. Does not depend on the meal.",
+    retired: ['energy.used.rate'],
+  },
+  'energy.usedTotal': {
+    definition: 'Running total of energy.usedRate since the meal started.',
+    retired: ['energy.usedCum', 'energy.used.total', 'energy.usedKcal'],
+  },
+  'gut.stomach.outflowRate': {
+    definition: 'Food energy leaving the stomach through the pylorus per minute.',
+    retired: ['outflow'],
+  },
+  'gut.absorbRate.carbs': {
+    definition: 'Grams of carbohydrate absorbed per minute.',
+    retired: ['gut.si.absorbRate.carbs', 'gut.carbAbsorbRate', 'liver.portalCarbInflow'],
+  },
+  'gut.absorbRate.protein': {
+    definition: 'Grams of protein absorbed per minute.',
+    retired: ['gut.si.absorbRate.protein'],
+  },
+  'gut.absorbRate.fat': {
+    definition: 'Grams of fat absorbed per minute.',
+    retired: ['gut.si.absorbRate.fat'],
+  },
+  'gut.absorbRate.water': {
+    definition: 'Grams of water absorbed per minute (small + large intestine).',
+    retired: ['gut.si.absorbRate.water'],
+  },
+  'blood.insulin': {
+    definition: "Plasma insulin as a multiple of the fasting level. NOT today's lagged 'insulin action' term in glucose.ts.",
+    retired: ['insulin.relative', 'insulin.action', 'pancreas.insulinAction', 'pancreas.insulinSecretion'],
+  },
+  'liver.glucoseOutput': {
+    definition: 'Net glucose the liver releases into the blood per minute (+ release, − taking up and storing).',
+    retired: [],
+  },
+  'liver.glycogenG': {
+    definition: 'Grams of glycogen stored in the liver.',
+    retired: ['glycogen.liver'],
+  },
+  'brain.glucoseUse': {
+    definition: 'Glucose the brain uses per hour (cited constant; does not react to the meal).',
+    retired: ['brain.glucoseUseGPerH'],
+  },
+  'heart.rate': {
+    definition: 'Resting heart rate of the profile, shown as a real-time beat. Never graphed.',
+    retired: ['heart.rateBpm', 'vitals.heartRate', 'rhythm.heart'],
+  },
+  'lungs.breathRate': {
+    definition: 'Resting breathing rate of the profile, shown as a real-time breath. Never graphed.',
+    retired: ['lungs.breathsPerMin', 'vitals.breathRate', 'rhythm.breath'],
+  },
+  'kidney.filtrationRate': {
+    definition: 'Plasma filtered by both kidneys per minute (GFR), shown as a caption. Never graphed.',
+    retired: ['kidney.gfr', 'kidney.filtrationMlMin'],
+  },
+}
+
+/** Definition and retired names of every event row. */
+export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
+  'event.stomachHalfEmpty': {
+    // By energy on purpose: adding water to a meal never makes it look faster (a drink with
+    // calories can, a little: its energy leaves first). So on a grams strip the half-way point in
+    // grams can come before this marker (the drink's grams leave first).
+    definition: "First minute when half of the meal's food energy (for energy-free drinks: half its weight) has left the stomach.",
+    retired: ['events.stomachHalfEmpty', 'events.half'],
+  },
+  'event.glucosePeak': {
+    definition: 'Minute when typical blood glucose is highest. Absent if the rise is under 1 mg/dL.',
+    retired: ['events.glucosePeak', 'events.peak'],
+  },
+  'event.glucoseBackToBase': {
+    definition:
+      'First minute after the peak when typical blood glucose is within PARAMS.glucose.backToBaseMgDl (5) of fasting. The threshold is a display choice, not physiology.',
+    retired: ['events.backToBaseline'],
+  },
+  'event.mostlyAbsorbed': {
+    definition: '90 % of the carbohydrate, protein and fat that will be absorbed is in the body. Absent if the meal has < 0.5 g of them.',
+    retired: ['events.mostlyAbsorbed', 'events.absorbed'],
+  },
+  'event.firstLeftovers': {
+    definition:
+      'Leftovers (fibre the body cannot digest) start leaving the body. Typical value plus a low–high range that depends mostly on the person. Absent if < 1 g fibre.',
+    retired: ['events.firstExit', 'events.exit'],
+  },
+}
+
+/** Every signal row, active and reserved (tests and docs). */
+export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = { ...SIGNALS, ...RESERVED_SIGNALS }

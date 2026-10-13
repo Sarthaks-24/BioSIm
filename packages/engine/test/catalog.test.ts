@@ -6,7 +6,6 @@ import {
   ACTIVE_SIGNAL_IDS,
   EVENTS,
   EVENT_IDS,
-  HUMAN_PROVIDES,
   PARAMS,
   PARAM_SOURCES,
   RESERVED_SIGNAL_IDS,
@@ -18,13 +17,16 @@ import {
   type EventMeta,
   type SignalMeta,
 } from '../src/index.ts'
+import { HUMAN_PROVIDES } from '../src/run.ts'
+import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/core/catalog-docs.ts'
 
 /**
- * The frozen glossary (src/core/catalog.ts) is a public contract: share links, i18n keys and
- * golden tests use these IDs. These checks keep its shape honest. They do not test the model.
+ * The frozen glossary (src/core/catalog.ts, with its documentation half catalog-docs.ts) is a
+ * public contract: share links, i18n keys and golden tests use these IDs. These checks keep its
+ * shape honest. They do not test the model.
  */
 
-const signals: SignalMeta[] = Object.values(SIGNALS)
+const signals: SignalMeta[] = Object.values(ALL_SIGNALS)
 const events: EventMeta[] = Object.values(EVENTS)
 const allIds = [...ACTIVE_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
 const allRows: (SignalMeta | EventMeta)[] = [...signals, ...events]
@@ -85,10 +87,18 @@ describe('catalog IDs', () => {
     expect(new Set(allIds).size).toBe(allIds.length)
   })
 
-  it('match the keys of SIGNALS and EVENTS exactly', () => {
-    expect(Object.keys(SIGNALS).sort()).toEqual([...ACTIVE_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort())
+  it('match the keys of SIGNALS, RESERVED_SIGNALS, EVENTS and their docs exactly', () => {
+    expect(Object.keys(SIGNALS).sort()).toEqual([...ACTIVE_SIGNAL_IDS].sort())
+    expect(Object.keys(RESERVED_SIGNALS).sort()).toEqual([...RESERVED_SIGNAL_IDS].sort())
     expect(Object.keys(EVENTS).sort()).toEqual([...EVENT_IDS].sort())
-    for (const [key, row] of [...Object.entries(SIGNALS), ...Object.entries(EVENTS)]) expect(row.id).toBe(key)
+    expect(Object.keys(SIGNAL_DOCS).sort()).toEqual([...ACTIVE_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort())
+    expect(Object.keys(EVENT_DOCS).sort()).toEqual([...EVENT_IDS].sort())
+    for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(EVENTS)]) expect(row.id).toBe(key)
+  })
+
+  it('every row has a one-sentence definition (catalog-docs.ts)', () => {
+    for (const [id, d] of [...Object.entries(SIGNAL_DOCS), ...Object.entries(EVENT_DOCS)])
+      expect(d.definition.length, id).toBeGreaterThan(20)
   })
 
   it('no ID is a prefix of another, and no segment clashes with an i18n sub-key (nested JSON)', () => {
@@ -104,7 +114,7 @@ describe('catalog IDs', () => {
   })
 
   it('no retired name equals or prefixes a live ID, and each retired name is listed once', () => {
-    const retired = allRows.flatMap((r) => r.retired)
+    const retired = [...Object.values(SIGNAL_DOCS), ...Object.values(EVENT_DOCS)].flatMap((d) => d.retired)
     expect(new Set(retired).size).toBe(retired.length)
     for (const name of retired) {
       expect(allIds, name).not.toContain(name)
@@ -125,7 +135,7 @@ describe('catalog rows', () => {
 
   it("every active row ships in 'v2.0' and every reserved row does not", () => {
     for (const id of ACTIVE_SIGNAL_IDS) expect(SIGNALS[id].shipsIn, id).toBe('v2.0')
-    for (const id of RESERVED_SIGNAL_IDS) expect(SIGNALS[id].shipsIn, id).not.toBe('v2.0')
+    for (const id of RESERVED_SIGNAL_IDS) expect(RESERVED_SIGNALS[id].shipsIn, id).not.toBe('v2.0')
     for (const e of events) expect(e.shipsIn, e.id).toBe('v2.0')
   })
 
