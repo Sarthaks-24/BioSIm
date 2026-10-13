@@ -599,10 +599,10 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
  * from then on the test guards the fix.
  */
 export const RED_LIST: Record<string, Mode> = {
-  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15.
+  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15; T3 (FP-2) the short, wide one and the projector: B3, B12.
   B1: 'enforce',
   B2: 'enforce',
-  B3: 'report',
+  B3: 'enforce',
   B4: 'report',
   B5: 'report',
   B6: 'report',
@@ -611,7 +611,7 @@ export const RED_LIST: Record<string, Mode> = {
   B9: 'report',
   B10: 'report',
   B11: 'report',
-  B12: 'report',
+  B12: 'enforce',
   B13: 'report',
   B15: 'enforce',
   B18: 'enforce',

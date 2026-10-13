@@ -47,7 +47,7 @@ export default function BodyPane({
   run: Simulation
   kept: Simulation | null
   summary: boolean
-  /** Where the summary goes instead of under the body: the projector's box under the graph (FP-2). */
+  /** Where the summary goes instead of under the body: a 4:3 projector's box under the graph (FP-2). */
   summaryTo?: HTMLElement | null
 }) {
   const { t, i18n } = useTranslation()
@@ -184,9 +184,13 @@ export default function BodyPane({
             className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
           {/* Not on a phone under 680 px tall: the stage shows it past the first screen (Simulator, FP-1).
-              On the projector it goes under the graph (FP-2), so the body keeps its column's height. */}
-          {summary && summaryTo && createPortal(<SummaryLine run={run} kept={kept} className="border-t border-border px-4 py-2" />, summaryTo)}
-          {summary && !summaryTo && <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />}
+              On a 4:3 projector it goes under the graph (FP-2), so the body keeps its column's height. */}
+          {summary &&
+            summaryTo &&
+            createPortal(<SummaryLine run={run} kept={kept} className="border-t border-border px-4 py-2" />, summaryTo)}
+          {summary && !summaryTo && (
+            <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
+          )}
         </div>
       )}
     </section>

@@ -82,10 +82,11 @@ function useMenu() {
 /** Route `handle` flags the Layout reads. */
 export interface RouteHandle {
   /**
-   * The page is one screen (the stage at /sim): from 1024 px up, and on a tablet (640 px wide and
-   * 700 px tall: the `fit` variant, styles.css), the header, page and footer share the window
-   * exactly, so nothing scrolls. On phones the page fills at least the first screen and the footer
-   * sits just below it; a phone under 700 px tall may scroll, so the body keeps its size (FP-1).
+   * The page is one screen (the stage at /sim): from 1024 px up, on a tablet (640 px wide and
+   * 700 px tall) and in a short, wide window (500 px tall or less: FP-2; the `fit` variant,
+   * styles.css), the header, page and footer share the window exactly, so nothing scrolls. On
+   * phones the page fills at least the first screen and the footer sits just below it; a phone
+   * under 700 px tall may scroll, so the body keeps its size (FP-1).
    */
   fit?: boolean
 }
@@ -97,10 +98,12 @@ export default function Layout() {
   // lessons can switch it on too, so the button reads it from the page, not from its own state.
   const projector = useProjector()
   const menu = useMenu()
-  // The site menu: on phones a drop-down under the header while it is open (the links, then the
-  // projector switch); from 640 px up the links are a row and the switch sits on the right. On the
-  // projector stage the links are hidden from 1024 px up (UI-5), where the stage has its projector
-  // size; below that they stay, so a phone or tablet left in projector mode can always leave it.
+  // The site menu: on phones and in a short, wide window (FP-2) a drop-down under the header while
+  // it is open (the links, then on a phone the projector switch); elsewhere from 640 px up
+  // (`unfold`) the links are a row (the box is `contents`, so its drop-down look does not apply)
+  // and the switch sits on the right. On the projector stage the links are hidden from 1024 px up
+  // (UI-5), where the stage has its projector size; below that they stay, so a phone or tablet left
+  // in projector mode can always leave it.
   const menuBox = `${menu.open ? 'absolute inset-x-0 top-full flex flex-col gap-1 border-b border-border bg-surface-page px-3 py-2 shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'hidden'} unfold:contents ${fit && projector ? 'lg:hidden!' : ''}`
   // The projector switch in the header: from 640 px up; on the stage only from 1024 px up while it is
   // off (it has no projector size below that), but always while it is on, so it can be turned off.
@@ -110,7 +113,7 @@ export default function Layout() {
       type="button"
       aria-pressed={projector}
       onClick={() => setProjector(!projector)}
-      className={`${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'bg-ink text-white' : 'hover:bg-surface-sunk'} ${inMenu ? 'unfold:hidden' : `w-fit border ${projector ? 'border-ink' : 'border-border'} ${fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}`}
+      className={`${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'bg-ink text-white' : 'hover:bg-surface-sunk'} ${inMenu ? 'sm:hidden' : `w-fit border ${projector ? 'border-ink' : 'border-border'} ${fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}`}
     >
       {t('nav.projector')}
     </button>

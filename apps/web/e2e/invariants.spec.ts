@@ -40,10 +40,17 @@ export const INVARIANTS: Record<string, Mode> = {
 const PROJECTS = Object.keys(INVARIANTS)
 /**
  * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project. T2
- * (FP-1) enforces them on phone-small and tablet-portrait; the project's other checks (overlaps,
- * overlays, Back, console, links) belong to other FPs and follow INVARIANTS until those land.
+ * (FP-1) enforces them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
+ * projector-sizes; the project's other checks (overlaps, overlays, Back, console, links) belong
+ * to other FPs and follow INVARIANTS until those land.
  */
-const BODY_VISIBLE: Record<string, Mode> = { ...INVARIANTS, 'phone-small': 'enforce', 'tablet-portrait': 'enforce' }
+const BODY_VISIBLE: Record<string, Mode> = {
+  ...INVARIANTS,
+  'phone-small': 'enforce',
+  'tablet-portrait': 'enforce',
+  landscape: 'enforce',
+  'projector-sizes': 'enforce',
+}
 
 /**
  * T7 (FP-7) enforces storage-blocked for what it fixed: the stage loads, plays, switches language and
