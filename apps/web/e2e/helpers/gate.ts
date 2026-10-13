@@ -621,18 +621,18 @@ export const RED_LIST: Record<string, Mode> = {
   // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
   // T3 (FP-2) enforces the short, wide stage and the projector: B3, B12.
   // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22. T9b (FP-8) enforces Home: B8, and B9
-  // in English + the pseudo-locale (its Hindi half reports, R47).
+  // in English + the pseudo-locale (its Hindi half reports, R47). T4 (FP-5) enforces the overlays: B5, B10.
   // T10 (FP-9) enforces B25 (and `npm run lint:dead` finds any dead export, component or store action, in npm run check and CI).
   B1: 'enforce',
   B2: 'enforce',
   B3: 'enforce',
   B4: 'enforce',
-  B5: 'report',
+  B5: 'enforce',
   B6: 'enforce',
   B7: 'enforce',
   B8: 'enforce',
   B9: 'enforce',
-  B10: 'report',
+  B10: 'enforce',
   B11: 'enforce',
   B12: 'enforce',
   B13: 'report',

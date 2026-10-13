@@ -24,12 +24,12 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 | B2 | meal bar: 3 rows of controls, 153 px tall, at 320/360/375 | FP-1 | T2 |
 | B3 | body 0 px at 640×360, 844×390, 640×400 (200 % zoom) | FP-2 | T3 (enforced; + body visible and no scroll on `landscape`, 4 sizes × 5 states, EN + pseudo-locale) |
 | B4 | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360 | FP-3 | T5 (enforced; + 3 × 10 tap grid and no overlaps on every Chromium project) |
-| B5 | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close | FP-5 | T4 |
+| B5 | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close | FP-5 | T4 (enforced; + e2e/overlays.spec.ts on every project: in the window, below the header, Close, Esc + Back) |
 | B6 | Back with the Add food sheet open goes to `about:blank` | FP-6 | T8 |
 | B7 | Hindi header 82 px tall at 360 and 320 (limit 56) | FP-1 | T2 |
 | B8 | Home chart: all 10 labels under 12 px at 360 (smallest 8 px) | FP-8 | T9b |
 | B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b (Hindi reports, R47; EN + pseudo-locale enforced) |
-| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (T6 done) |
+| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (enforced; + every "⋯" action closes it, overlays.spec.ts), T6 done |
 | B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
 | B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 (enforced, EN and HI; + body visible and no scroll on `projector-sizes`, 3 sizes × 5 states, EN + pseudo-locale) |
 | B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 (Hindi reports, R47; EN + pseudo-locale enforced in invariants.spec.ts) |

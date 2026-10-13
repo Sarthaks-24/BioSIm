@@ -48,7 +48,7 @@ export default function HowWeKnow({ title, ...panel }: PanelProps & { title?: st
           key={attempt}
           onFail={panelCode.reset}
           fallback={
-            <Popover anchor={button} onClose={close} label={label} className="w-[20rem]">
+            <Popover anchor={button} onClose={close} label={label} width="w-[20rem]">
               <LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />
             </Popover>
           }

@@ -138,7 +138,8 @@ test.describe('the Now line', () => {
     await page.goto('/sim?v=2&a=cola:1&t=20')
     const pill = page.getByRole('button', { name: 'Stomach: more about this stage' })
     await pill.click()
-    const more = page.getByRole('region', { name: 'Stomach' })
+    // A column beside the body from 1024 px up, a sheet on a phone (FP-5).
+    const more = page.getByRole('region', { name: 'Stomach' }).or(page.getByRole('dialog', { name: 'Stomach' }))
     await expect(more).toBeVisible()
     await expect(more).toContainText('Hydrochloric acid')
     await expect(more.getByText('Absorbed here')).toBeVisible()

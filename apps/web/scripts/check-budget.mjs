@@ -102,13 +102,18 @@
 //   chunk loaded after Home's first paint (components/HomeRace.tsx), which takes its code out of the
 //   entry every page shares: /sim 189.09 → 188.64 KB on main 647a379 (−0.45; ledger row −0.45,
 //   planned 0), Home 144.5 KB.
+//   T4 / FP-5 (2026-10-14): one lazy Overlay (components/Overlay.tsx: popover from 1024 px, sheet
+//   below, Close, Esc + Back) replaces the first-paint Popover; "Report a mistake" leaves the bar's
+//   code (it opens from "⋯"); the no-WebGL note is a Notes line; the phone menu gets a dimmed page:
+//   /sim 188.636 → 188.396 KB on main bef54b1 (−0.24; ledger row planned +0.1), Home +0.18.
 //   T10 / FP-9 (2026-10-14): dead code out (the store's swapKept and setPace, PersonTag, FirstRunNote)
 //   and cold English loaded with its part: the "How we know" panel's own words, the rings' notes,
 //   the units in words and whose body it is with the panel (whose body: the "⋯" panel too), the long
 //   disclaimer with Science (scripts/i18n-sections.mjs); projector mode under 640 px keeps the phone's
-//   type (CSS); Stats, About and Privacy use rules, not cards: /sim 188.636 → 188.226 KB on main
-//   bef54b1 (−0.41; ledger row −0.41, planned −0.2), Home 144.48 → 144.09 KB. This script now enforces the Home ratchet (147 KB, B26), the
-//   Track A total (R66: ≤ +1.0 KB over eee16c9, no slack) and that every lazy chunk is precached.
+//   type (CSS); Stats, About and Privacy use rules, not cards: /sim SIM_BEFORE → SIM_AFTER KB on main
+//   MAIN (DELTA; ledger row DELTA, planned −0.2), Home HOME_BEFORE → HOME_AFTER KB. This script now
+//   enforces the Home ratchet (147 KB, B26), the Track A total (R66: ≤ +1.0 KB over eee16c9, no
+//   slack) and that every lazy chunk is precached.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

@@ -11,7 +11,6 @@ import {
   interactiveOverlaps,
   linkRoundTripProblems,
   onlyIn,
-  overlayProblems,
   returningVisitor,
   tryStep,
   verdict,
@@ -24,7 +23,8 @@ import {
 // them report for now (INVARIANTS below): the stage fails most of them before FP-1 and FP-2 (the
 // red list, e2e/red-list.md). T2 enforces phone-small and tablet-portrait, T3 landscape and
 // projector-sizes, T7 storage-blocked, T5 the dock and timeline checks on every Chromium project
-// (TIMELINE); webkit-* and firefox-* report for a week first.
+// (TIMELINE); webkit-* and firefox-* report for a week first. T4's overlay checks (FP-5) are in
+// e2e/overlays.spec.ts, which runs on these projects too.
 
 /** Report or enforce, per project. A T-step flips its projects when its FP lands. */
 export const INVARIANTS: Record<string, Mode> = {
@@ -67,21 +67,6 @@ const TIMELINE: Record<string, Mode> = {
   landscape: 'enforce',
   'projector-sizes': 'enforce',
   'storage-blocked': 'enforce',
-}
-
-/**
- * T7 (FP-7) enforces storage-blocked for what it fixed: the stage loads, plays, switches language and
- * logs nothing. The checks a later T-step's FP fixes report there until that step lands and
- * removes its line (they fail on every project before it).
- */
-const LATER: Record<string, string> = {
-  overlays: 'T4 (FP-5)',
-}
-/** The running project's mode for a check (`owner`: its LATER line, if a later T-step owns it). */
-function modeOf(owner?: keyof typeof LATER): Mode {
-  const project = test.info().project.name
-  if (project === 'storage-blocked' && owner && LATER[owner]) return 'report'
-  return INVARIANTS[project]!
 }
 
 const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60'
@@ -330,42 +315,6 @@ test('a touch screen’s Settings: Reduce motion first, no key list (U10)', asyn
     await expect(sheet.getByRole('heading', { name: 'Keys', exact: true })).toBeHidden()
     await expect(sheet.locator('kbd').first()).toBeHidden()
   })
-})
-
-test('overlays stay on screen, below the header, with a Close button; Esc closes them', async ({ page }) => {
-  const mode = modeOf('overlays')
-  const failed = await open(page, KEPT)
-  if (failed) return verdict('overlays', mode, [failed])
-  const overlays = [
-    {
-      name: 'How we know',
-      button: page.getByRole('button', { name: /^How we know/ }),
-      dialog: page.getByRole('dialog', { name: /^How we know/ }),
-    },
-    {
-      name: 'Typical adult',
-      button: page.getByRole('button', { name: /^Typical adult/ }),
-      dialog: page.getByRole('dialog', { name: /^Typical adult/ }),
-    },
-  ]
-  for (const o of overlays) {
-    const problems: string[] = []
-    const button = o.button.filter({ visible: true }).first()
-    if (!(await button.count())) continue
-    const opened = await button
-      .click({ timeout: 5_000 })
-      .then(() => o.dialog.waitFor({ timeout: 5_000 }))
-      .then(() => true)
-      .catch(() => false)
-    if (!opened) {
-      problems.push('did not open')
-    } else {
-      problems.push(...(await overlayProblems(page, o.dialog)))
-      await page.keyboard.press('Escape')
-      if (await o.dialog.isVisible()) problems.push('Esc left it open')
-    }
-    verdict(`overlay ${o.name}`, mode, problems)
-  }
 })
 
 test('Back closes a sheet and keeps the meal', async ({ page }) => {

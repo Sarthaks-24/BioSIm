@@ -1,9 +1,9 @@
-import { Component, lazy, useState, type ComponentType, type CSSProperties, type LazyExoticComponent, type ReactNode } from 'react'
+import { Component, lazy, type ComponentType, type CSSProperties, type LazyExoticComponent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CloseIcon } from './kit/index.ts'
 
 /**
- * Code that loads on first use ("How we know", "More", the report form) can fail to arrive:
+ * Code that loads on first use ("How we know", "More", the report form, the stage's panels) can fail to arrive:
  * offline before it was saved, or a tab left open over a new release (main.tsx reloads once for
  * that; a second failure lands here). A failed part must say so in its own place, never take the
  * whole stage down to the error page (review 14-17, HIGH 2).
@@ -149,32 +149,5 @@ export function LoadFailedBox({
         <CloseIcon />
       </button>
     </div>
-  )
-}
-
-/**
- * For a part opened by a button (the report form): the button stays, with the failure in a small
- * panel under it until "Try again" (or the button, which hides it). Not a popover: nothing else on
- * the page (a scroll, the 3D body arriving) may close it before it is read.
- */
-export function LoadFailedPanel({
-  trigger,
-  onRetry,
-  attempt,
-}: {
-  trigger: (toggle: () => void) => ReactNode
-  onRetry: () => void
-  attempt: number
-}) {
-  const [open, setOpen] = useState(true)
-  return (
-    <span className="relative inline-flex">
-      {trigger(() => setOpen((o) => !o))}
-      {open && (
-        <span className="absolute top-full right-0 z-40 mt-1.5 block w-[20rem] max-w-[calc(100vw-1rem)] rounded-control border border-border bg-surface-raised p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)]">
-          <LoadFailed onRetry={onRetry} attempt={attempt} />
-        </span>
-      )}
-    </span>
   )
 }
