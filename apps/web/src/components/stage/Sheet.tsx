@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useBackCloses } from '../../lib/backCloses.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { CloseIcon } from '../kit/index.ts'
 
@@ -7,7 +8,7 @@ import { CloseIcon } from '../kit/index.ts'
  * The frame of the stage's sheets (the graphs as a table, keys and settings): a native modal
  * <dialog>, so focus stays inside, the page behind is inert for screen readers, and Esc closes
  * it. A bottom sheet on a phone (thumbs reach it), a centred panel from 1024 px up. Closing (Esc,
- * ✕, a press outside) puts focus back where it was (state/sheet.ts).
+ * ✕, a press outside, Back: lib/backCloses.ts) puts focus back where it was (state/sheet.ts).
  */
 export default function Sheet({ title, children, wide = false }: { title: string; children: ReactNode; wide?: boolean }) {
   const { t } = useTranslation()
@@ -18,6 +19,7 @@ export default function Sheet({ title, children, wide = false }: { title: string
     const d = dialog.current
     if (d && !d.open) d.showModal()
   }, [])
+  useBackCloses(() => dialog.current?.close())
   return (
     <dialog
       ref={dialog}

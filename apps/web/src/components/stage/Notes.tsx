@@ -1,38 +1,42 @@
-import { useState } from 'react'
+import { Suspense, useState, type ComponentProps } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { MODEL_VERSION, PARAMS, type Simulation } from '@lifepeek/engine'
+import { MODEL_VERSION, type Simulation } from '@lifepeek/engine'
+import { lookupFood } from '../../data/foods.ts'
+import { localized } from '../../i18n/index.ts'
 import { readPref, writePref } from '../../lib/prefs.ts'
 import { useRunStore } from '../../state/run.ts'
 import { MEDICAL_HREF } from '../MedicalNote.tsx'
+import { LoadBoundary, lazyWithRetry } from '../LoadBoundary.tsx'
 import { InfoIcon } from '../kit/index.ts'
+import type LinkNotes from './LinkNotes.tsx'
+
+/** The notes about an opened link (and a meal too big, which only a link makes) load only when one shows (size budget). */
+const linkNotes = lazyWithRetry<ComponentProps<typeof LinkNotes>>(() => import('./LinkNotes.tsx'))
 
 /**
  * Short notes under the meal bar, only when they apply: the first-visit medical note (until
- * "Got it"), a Hindi link while Hindi is paused (R47), a link from an older or newer version, foods
- * a link named that no longer exist, and a meal over the size the model is good for. The texts are v1's; the newer-version one is new.
+ * "Got it"), the notes about an opened link (LinkNotes: Hindi later, an older or newer version,
+ * foods that no longer exist, what changed on load, a meal over the size the model is good for).
  * The "too big" alert for a food being added sits where it is added (food sheet, servings).
  */
 export default function Notes({ run, kept }: { run: Simulation; kept: Simulation | null }) {
-  const { t } = useTranslation()
-  const linkVersion = useRunStore((s) => s.linkModelVersion)
-  const unknownOrganism = useRunStore((s) => s.unknownOrganism)
-  const dropped = useRunStore((s) => s.droppedFoods)
-  const hindiLater = useRunStore((s) => s.hindiLater)
+  const { t, i18n } = useTranslation()
+  // Whether LinkNotes has anything to say (lib/linkNotes.ts).
+  const linked = useRunStore(
+    (s) =>
+      s.hindiLater ||
+      s.unknownOrganism !== null ||
+      (s.linkModelVersion ?? MODEL_VERSION) !== MODEL_VERSION ||
+      s.droppedFoods > 0 ||
+      s.changes.length > 0,
+  )
   const [firstRun, setFirstRun] = useState(() => readPref('medicalNoteSeen') !== '1')
 
-  const newer = unknownOrganism !== null || (linkVersion !== null && linkVersion > MODEL_VERSION)
-  const notes = [
-    hindiLater && t('sim.hindiLater'),
-    newer && t('sim.newerLink'),
-    // A link can't be from both a newer and an older version: the newer note wins.
-    !newer && linkVersion !== null && linkVersion < MODEL_VERSION && t('sim.oldLink'),
-    dropped > 0 && t('sim.unknownFoods', { count: dropped }),
-    run.meal.overCap && t('sim.overCap', { meal: t('stage.thisMeal'), kcal: PARAMS.maxMealKcal }),
-    kept?.meal.overCap && t('sim.overCap', { meal: t('stage.keptMeal'), kcal: PARAMS.maxMealKcal }),
-  ].filter((n): n is string => typeof n === 'string')
+  const over = [run.meal.overCap, !!kept?.meal.overCap]
+  const link = linked || over.includes(true)
 
-  if (!firstRun && notes.length === 0) return null
+  if (!firstRun && !link) return null
   return (
     <div className="border-b border-border bg-surface-raised px-3 py-1.5 lg:px-4">
       <ul className="flex flex-col gap-1">
@@ -68,14 +72,14 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
             </button>
           </li>
         )}
-        {notes.map((n) => (
-          <li key={n} role="note" className="flex items-start gap-2 text-control">
-            <span className="mt-px text-ink-muted">
-              <InfoIcon />
-            </span>
-            {n}
-          </li>
-        ))}
+        {link && (
+          // If its file does not arrive, the notes are left out: the stage works without them.
+          <LoadBoundary fallback={null} onFail={linkNotes.reset}>
+            <Suspense fallback={null}>
+              <linkNotes.Component store={useRunStore} food={(id) => localized(lookupFood(id)?.name, i18n.language) || id} over={over} />
+            </Suspense>
+          </LoadBoundary>
+        )}
       </ul>
     </div>
   )

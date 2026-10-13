@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { PARAMS } from '@lifepeek/engine'
 import { FOODS } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
+import { useBackCloses } from '../../lib/backCloses.ts'
 import { useRunStore } from '../../state/run.ts'
 import { CheckIcon, CloseIcon, IconButton, SearchIcon } from '../kit/index.ts'
 
 /**
  * The food search of "+ Add food" (UI-13): one list of every food with a search box on top. On a
  * phone it is a bottom sheet (thumbs reach it); from 1024 px up it opens under the button. A
- * native modal <dialog>: focus stays inside, Esc closes it, focus goes back to the button.
+ * native modal <dialog>: focus stays inside, Esc (or Back, lib/backCloses.ts) closes it, focus goes back to the button.
  * Choosing a food adds it and closes; if the meal would go over the cap, the sheet stays open and
  * says why. Downloaded the first time "+ Add food" is pressed (AddFoodSheet, size budget).
  */
@@ -33,6 +34,7 @@ export default function FoodSearch({ anchor, onClose }: { anchor: { top: number;
   }, [query])
   const inMeal = (foodId: string) => meal.some((i) => i.foodId === foodId)
   const close = () => dialog.current?.close()
+  useBackCloses(close)
 
   useEffect(() => {
     const d = dialog.current

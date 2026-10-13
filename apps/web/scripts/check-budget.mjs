@@ -87,6 +87,11 @@
 //   hour labels thinned by measured width. The moments of both meals share one lane (one toolbar,
 //   no range bars, no count badges, no width query) and a target's list loads with the sheets:
 //   /sim 188.504 → 188.463 KB on main 78a6679 (−0.04; ledger row −0.04).
+//   T8 / FP-6 (2026-10-14): Back closes sheets (their history code loads with the sheets), the
+//   one-click Copy link on the bar from 1024 px (R60), `lang` only when chosen, and the codec's
+//   `changes[]` (in the entry chunk, shared with Home: +0.2 of it). The link notes, "Update now" and
+//   their text load only when a link has a note; the old link notes and the too-big-meal note moved
+//   there too (−0.15): /sim 188.447 → 188.729 KB on main edcebce (+0.28; ledger row +0.28, planned +0.1).
 //   T3 / FP-2 (2026-10-14): the short, wide stage (a CSS block: two columns, a 40 px header with the
 //   links in its menu, a one-line footer), the summary under the graph on a small projector window
 //   (a portal), the kept tag on one line, room over the head: /sim 188.447 → 188.797 KB on main

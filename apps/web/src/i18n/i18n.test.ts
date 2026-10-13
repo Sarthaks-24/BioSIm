@@ -51,7 +51,7 @@ describe('translations', () => {
   // While Hindi is paused (R47) a new key may be English only (i18next falls back to English), so
   // Hindi's keys are a subset of English's, never more. Still to translate when Hindi comes back:
   // the English keys missing from hi.json, listed by `node apps/web/scripts/hi-new-keys.mjs` (the
-  // English-only texts, sim.hindiLater, stats.englishOnly and ENGLISH_ONLY's, show only without Hindi).
+  // English-only texts, link.hindiLater, stats.englishOnly and ENGLISH_ONLY's, show only without Hindi).
   it('every Hindi key exists in English', () => {
     expect([...fh.keys()].filter((k) => !fe.has(k))).toEqual([])
   })
