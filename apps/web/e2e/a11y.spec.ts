@@ -132,6 +132,20 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('dialog', { name: 'Report a mistake' }).getByText('This opens a public page on GitHub.')).toBeVisible()
   })
+
+  // FIX-C review, item 5: a bug in a part is not "check the connection" (Try again could never work).
+  test('a part whose code fails when it runs goes to the error page, not "this didn’t load"', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    await page.route(/\/Sheets-[\w-]+\.js$/, (route) =>
+      route.fulfill({ contentType: 'text/javascript', body: 'throw new Error("a bug in the sheet")' }),
+    )
+    await page.goto('/next?v=2&a=cola:1')
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await page.locator('body').press('t')
+    await expect(page.getByRole('heading', { level: 1, name: 'Something didn’t load' })).toBeVisible()
+    await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toHaveCount(0)
+  })
 })
 
 test.describe('a "How we know" panel whose code does not load', () => {

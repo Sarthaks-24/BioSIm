@@ -141,3 +141,30 @@ for (const url of ['/next', '/next?lang=hi', '/']) {
     for (const [name, h] of heights) expect(h, `${name}`).toBeGreaterThanOrEqual(44)
   })
 }
+
+// FIX-C review, item 6: the stage's projector size comes from html[data-fit], set by the Layout
+// as soon as /next is matched, not from :has([data-stage]) once the stage has drawn.
+test.describe('while the stage loads', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('the projector size of the stage holds while its code loads (no :has(), no jump)', async ({ page }) => {
+    onlyIn('projector')
+    let release!: () => void
+    const held = new Promise<void>((r) => (release = r))
+    await page.route(/\/Stage-[\w-]+\.js$/, async (route) => {
+      await held
+      await route.continue()
+    })
+    await page.goto('/next?v=2&a=cola:1', { waitUntil: 'commit' })
+    await expect(page.locator('html')).toHaveAttribute('data-fit', '')
+    await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
+    expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')
+    release()
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')
+    // Other pages keep their own projector size.
+    await page.getByRole('link', { name: 'About' }).first().click()
+    await expect(page.locator('html')).not.toHaveAttribute('data-fit')
+    expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('19px')
+  })
+})

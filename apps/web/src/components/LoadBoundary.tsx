@@ -27,35 +27,67 @@ export function lazyWithRetry<P>(load: () => Promise<{ default: ComponentType<P>
   }
 }
 
-/** Shows `fallback` in place of its children if they throw (a file that did not load), and calls `onFail`. */
-export class LoadBoundary extends Component<{ fallback: ReactNode; onFail: () => void; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false }
-  static getDerivedStateFromError() {
-    return { failed: true }
+/**
+ * True for an error that means "the file did not arrive" (FIX-C review, item 5). Each browser
+ * words it its own way: Chromium "Failed to fetch dynamically imported module", Firefox "error
+ * loading dynamically imported module", Safari "Importing a module script failed"; Vite's own
+ * "Unable to preload CSS"; a bundler's ChunkLoadError.
+ */
+export function isLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return (
+    error.name === 'ChunkLoadError' ||
+    /dynamically imported module|Importing a module script failed|Unable to preload|Loading (CSS )?chunk/i.test(error.message)
+  )
+}
+
+/**
+ * Shows `fallback` in place of its children if their file did not load, and calls `onFail`. Any
+ * other error is a bug in the part itself: "check the connection" would be wrong and "Try again"
+ * could never work, so it goes on to the route's error page (FIX-C review, item 5).
+ */
+export class LoadBoundary extends Component<
+  { fallback: ReactNode; onFail: () => void; children: ReactNode },
+  { error: { thrown: unknown } | null }
+> {
+  state = { error: null as { thrown: unknown } | null }
+  static getDerivedStateFromError(thrown: unknown) {
+    return { error: { thrown } }
   }
-  componentDidCatch() {
-    this.props.onFail()
+  componentDidCatch(thrown: unknown) {
+    if (isLoadError(thrown)) this.props.onFail()
   }
   render() {
-    return this.state.failed ? this.props.fallback : this.props.children
+    const { error } = this.state
+    if (!error) return this.props.children
+    if (!isLoadError(error.thrown)) throw error.thrown
+    return this.props.fallback
   }
 }
 
-/** "This didn't load. Check the internet connection and try again." and "Try again". */
-export function LoadFailed({ onRetry }: { onRetry: () => void }) {
+/**
+ * "This didn't load. Check the internet connection and try again." and "Try again". Once a try
+ * again has failed too (`attempt` ≥ 1), also "Reload": some browsers remember a failed file for
+ * the rest of the page's life, and only a reload asks for it again.
+ */
+export function LoadFailed({ onRetry, attempt = 0 }: { onRetry: () => void; attempt?: number }) {
   const { t } = useTranslation()
+  const button = 'mt-2 min-h-11 rounded-control bg-sunk2 px-3 text-control font-semibold text-ink hover:bg-sunk2-hover lg:min-h-9'
   return (
     <>
       <p className="text-caption text-ink-2" role="alert">
         {t('graph.loadFailed')}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-2 min-h-11 rounded-control bg-sunk2 px-3 text-control font-semibold text-ink hover:bg-sunk2-hover lg:min-h-9"
-      >
-        {t('graph.retry')}
-      </button>
+      <span className="flex flex-wrap gap-2">
+        <button type="button" onClick={onRetry} className={button}>
+          {t('graph.retry')}
+        </button>
+        {attempt > 0 && (
+          <button type="button" onClick={() => window.location.reload()} className={button}>
+            {t('error.reload')}
+          </button>
+        )}
+      </span>
     </>
   )
 }
@@ -65,14 +97,22 @@ export function LoadFailed({ onRetry }: { onRetry: () => void }) {
  * panel under it until "Try again" (or the button, which hides it). Not a popover: nothing else on
  * the page (a scroll, the 3D body arriving) may close it before it is read.
  */
-export function LoadFailedPanel({ trigger, onRetry }: { trigger: (toggle: () => void) => ReactNode; onRetry: () => void }) {
+export function LoadFailedPanel({
+  trigger,
+  onRetry,
+  attempt,
+}: {
+  trigger: (toggle: () => void) => ReactNode
+  onRetry: () => void
+  attempt: number
+}) {
   const [open, setOpen] = useState(true)
   return (
     <span className="relative inline-flex">
       {trigger(() => setOpen((o) => !o))}
       {open && (
         <span className="absolute top-full right-0 z-40 mt-1.5 block w-[20rem] max-w-[calc(100vw-1rem)] rounded-control border border-rule2 bg-shelf p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)]">
-          <LoadFailed onRetry={onRetry} />
+          <LoadFailed onRetry={onRetry} attempt={attempt} />
         </span>
       )}
     </span>

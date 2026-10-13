@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { NavLink, Outlet, ScrollRestoration, Link, useMatches } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
@@ -43,6 +43,12 @@ export default function Layout() {
     document.documentElement.dataset.contrast = projector ? 'high' : 'normal'
     writePref('projector', projector ? '1' : '0')
   }, [projector])
+
+  // A one-screen page has its own projector size (styles.css). Set before the paint of the first
+  // render that matches it, while its code may still be loading, so the size never jumps.
+  useLayoutEffect(() => {
+    document.documentElement.toggleAttribute('data-fit', fit)
+  }, [fit])
 
   useCanonical()
 
