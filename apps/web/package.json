@@ -13,7 +13,10 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
-    "hero": "tsx scripts/build-hero.ts"
+    "hero": "tsx scripts/build-hero.ts",
+    "lint:placeholders": "node scripts/lint-placeholders.mjs",
+    "red-list": "node scripts/red-list.mjs",
+    "cpu-ratio": "node scripts/cpu-ratio.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",

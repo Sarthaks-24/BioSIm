@@ -1,0 +1,117 @@
+{
+  "about": "Track A (v2.1) size ledger, plan qa-fixes §0 and §1 (V8 frozen table). /sim first download, KB gzip (1 KB = 1000 bytes, as check-budget prints). Each FP's T-step fills `measuredNet` (its merged /sim minus the /sim before it) and `measuredAt` when it merges. An FP over its planned net goes lazy before merging. check-budget prints this table and the Track A total so far.",
+  "base": { "commit": "eee16c9", "simKB": 188.2 },
+  "netLimitKB": 0.5,
+  "rows": [
+    {
+      "fp": "FP-10",
+      "step": "T1",
+      "what": "tokens + PageShell",
+      "grossKB": -0.1,
+      "clawbackKB": 0,
+      "plannedNetKB": -0.1,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-1",
+      "step": "T2",
+      "what": "phone stage + plan strip",
+      "grossKB": 0.5,
+      "clawbackKB": -0.2,
+      "plannedNetKB": 0.3,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-2",
+      "step": "T3",
+      "what": "short-wide + projector",
+      "grossKB": 0.1,
+      "clawbackKB": 0,
+      "plannedNetKB": 0.1,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-8a",
+      "step": "T9a",
+      "what": "strings (Teach step 2, one warning, email)",
+      "grossKB": 0,
+      "clawbackKB": 0,
+      "plannedNetKB": 0,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-7",
+      "step": "T7",
+      "what": "clock, engines, robustness",
+      "grossKB": 0,
+      "clawbackKB": 0,
+      "plannedNetKB": 0,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-3",
+      "step": "T5",
+      "what": "timeline + dock",
+      "grossKB": 0.4,
+      "clawbackKB": -0.3,
+      "plannedNetKB": 0.1,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-4",
+      "step": "T6",
+      "what": "graph visuals",
+      "grossKB": 0,
+      "clawbackKB": 0,
+      "plannedNetKB": 0,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-6",
+      "step": "T8",
+      "what": "Back, share, links",
+      "grossKB": 0.4,
+      "clawbackKB": -0.3,
+      "plannedNetKB": 0.1,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-9",
+      "step": "T10",
+      "what": "hygiene (dead code, ratchets)",
+      "grossKB": -0.1,
+      "clawbackKB": -0.1,
+      "plannedNetKB": -0.2,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-5",
+      "step": "T4",
+      "what": "overlays",
+      "grossKB": 0.3,
+      "clawbackKB": -0.2,
+      "plannedNetKB": 0.1,
+      "measuredNetKB": null,
+      "measuredAt": null
+    },
+    {
+      "fp": "FP-8b",
+      "step": "T9b",
+      "what": "Home (B8, B9, hero); /sim unchanged",
+      "grossKB": 0,
+      "clawbackKB": 0,
+      "plannedNetKB": 0,
+      "measuredNetKB": null,
+      "measuredAt": null
+    }
+  ]
+}

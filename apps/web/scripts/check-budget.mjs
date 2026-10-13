@@ -155,6 +155,41 @@ for (const r of rows) {
   const result = r.over ? (r.failed ? 'OVER (fails)' : 'over (report only)') : 'ok'
   console.log(`${pad(r.name, 18)}${pad(kb(r.bytes), 12)}${pad(kb(r.max), 12)}${pad(r.mode, 9)}${result}`)
 }
+
+// Track A ledger (T0; plan qa-fixes §0): one row per FP, planned gross, claw-back and net, and the
+// net its T-step measured. Report only: the Track A total must stay ≤ +0.5 KB over eee16c9's /sim.
+{
+  const ledger = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'budget-ledger.json'), 'utf8'))
+  const sim = rows.find((r) => r.name.startsWith('/sim'))
+  const sign = (n) => (n == null ? '–' : `${n > 0 ? '+' : ''}${n.toFixed(1)}`)
+  console.log(`\nTrack A ledger (/sim KB gz, base ${ledger.base.simKB} at ${ledger.base.commit}, net limit +${ledger.netLimitKB})`)
+  console.log(`${pad('FP', 7)}${pad('Step', 6)}${pad('Gross', 7)}${pad('Claw', 7)}${pad('Net', 7)}${pad('Measured', 10)}What`)
+  for (const r of ledger.rows) {
+    console.log(
+      `${pad(r.fp, 7)}${pad(r.step, 6)}${pad(sign(r.grossKB), 7)}${pad(sign(r.clawbackKB), 7)}${pad(sign(r.plannedNetKB), 7)}${pad(sign(r.measuredNetKB), 10)}${r.what}`,
+    )
+  }
+  const planned = ledger.rows.reduce((s, r) => s + r.plannedNetKB, 0)
+  const measured = ledger.rows.filter((r) => r.measuredNetKB != null).reduce((s, r) => s + r.measuredNetKB, 0)
+  const now = sim.bytes / KB - ledger.base.simKB
+  const over = now > ledger.netLimitKB + 0.05
+  console.log(
+    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${kb(sim.bytes)} = ${sign(now)} KB over the base: ${over ? 'over (report only)' : 'ok'}`,
+  )
+}
+
+// Every lazy chunk is precached (plan qa-fixes §3.2), so a part loaded on first use works offline.
+// Report only until T10 (FP-9) enforces it.
+{
+  const precached = new Set(precacheFiles())
+  const lazy = new Set()
+  for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
+  const missing = [...lazy].filter((f) => !precached.has(f))
+  console.log(
+    `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (report only; missing: ${missing.join(', ')})` : ' ok'}`,
+  )
+}
+
 if (rows.some((r) => r.failed)) {
   console.error('\nAn enforced size budget is over. See apps/web/scripts/check-budget.mjs.')
   process.exit(1)
