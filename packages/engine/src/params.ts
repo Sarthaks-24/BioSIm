@@ -7,7 +7,16 @@
 import type { OrganismId } from './core/organism.ts'
 
 /** Bumped whenever outputs change for the same input. Stored in share links as `v=`. */
-export const MODEL_VERSION = 2
+export const MODEL_VERSION = 3
+
+/**
+ * Whether MODEL_VERSION is final (MODEL D12). Version 3 is built over several steps (E-3a water and
+ * absorbed fractions, E-3b activity, S-1…S-4) and is sealed only after all of them: until then its
+ * numbers may still move, so no production deploy may carry it. apps/web/scripts/model-seal.mjs
+ * fails a production build (and the release gate) while this is false. After the seal, any change
+ * to an existing output is a new version.
+ */
+export const MODEL_SEALED = false
 
 export const PARAMS = {
   eating: {
@@ -54,12 +63,18 @@ export const PARAMS = {
    */
   maxMealKcal: 1500,
 
-  /** Fraction of each nutrient absorbed by the end of the small intestine (OpenStax §23.7). */
+  /**
+   * Fraction of each nutrient absorbed by the end of the small intestine (model version 3).
+   * OpenStax A&P 2e §23.7: "About 90 percent of this water is absorbed in the small intestine";
+   * protein "95 to 98 percent" (the low end is used); "About 95 percent of lipids"; carbohydrate
+   * "all normally digested", so the mixed-diet coefficient 97 % of USDA Agriculture Handbook No. 74
+   * (Merrill & Watt 1955, p. 9) is used. Indigestible fibre is not absorbed.
+   */
   absorbedInSmallIntestine: {
-    carbs: 0.95,
-    protein: 0.9,
+    carbs: 0.97,
+    protein: 0.95,
     fat: 0.95,
-    water: 0.8,
+    water: 0.9,
     fiber: 0,
   },
   /**

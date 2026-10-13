@@ -146,6 +146,34 @@ export const SOURCES = {
     usedFor: 'after a meal glucose returns to preprandial in 2–3 h (context for the back-to-base marker)',
     citation: 'American Diabetes Association. Postprandial blood glucose. Diabetes Care 2001;24:775–778.',
   },
+  // ── New in model version 3 (E-3a) ──
+  /**
+   * Checked 2026-10-14 (E-3a, scanned USDA copy): p. 9, the mixed-diet ("Total food") coefficients
+   * of apparent digestibility, protein 92, fat 95, carbohydrate 97 %; Table 7 column C the same.
+   * Whole-gut figures (faecal losses), so used only where OpenStax §23.7 gives no number (carbohydrate).
+   */
+  merrill1955: {
+    kind: 'report',
+    check: 'checked',
+    usedFor: 'carbohydrate 97 % absorbed (mixed-diet coefficient, p. 9)',
+    url: 'https://ars.usda.gov/ARSUSERFILES/80400535/DATA/CLASSICS/USDA%20HANDBOOK%2074.PDF',
+    citation:
+      'Merrill AL, Watt BK. Energy value of foods: basis and derivation. Agriculture Handbook No. 74. US Department of Agriculture, Washington DC, 1955.',
+  },
+  /**
+   * Checked 2026-10-14 (E-3a): ch. 4, Table 1 "Sample blood glucose responses to the ingestion of 50g
+   * carbohydrate": three standard tests in one subject peak at 30 min, +2.7–3.9 mmol/L, and are within
+   * 0.6 mmol/L of fasting at 120 min. The page does not say whether that standard was glucose or white
+   * bread ("Either white bread or glucose can be used as the standard food"), so it supports the shape only.
+   */
+  fao1998: {
+    kind: 'report',
+    check: 'checked',
+    usedFor: 'shape of the 50 g glucose response (peak ~30 min, near fasting by 2 h)',
+    url: 'https://www.fao.org/4/w8079e/w8079e0a.htm',
+    citation:
+      'FAO/WHO. Carbohydrates in human nutrition. Report of a Joint FAO/WHO Expert Consultation. FAO Food and Nutrition Paper 66. Rome, 1998.',
+  },
   // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
@@ -196,13 +224,14 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   // Emptying data come from meals up to about this size; above it the model is not meant to be used.
   maxMealKcal: { sources: ['hunt1975'], basis: 'assumption' },
 
-  // OpenStax §23.7: fat ~95 % absorbed in the small intestine; indigestible fibre is not absorbed.
-  'absorbedInSmallIntestine.fat': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  // Model version 3 (E-3a), OpenStax §23.7 in the small intestine: water "About 90 percent", protein
+  // "95 to 98 percent" (low end), lipids "About 95 percent"; indigestible fibre is not absorbed.
+  // Carbohydrate: OpenStax says "all" without a number, so USDA Handbook 74's mixed-diet 97 % (p. 9).
+  'absorbedInSmallIntestine.fat': { sources: ['openstax-ap2e-23', 'merrill1955'], basis: 'measured' },
   'absorbedInSmallIntestine.fiber': { sources: ['openstax-ap2e-23'], basis: 'measured' },
-  // OpenStax §23.7 gives carbs "all", protein 95–98 %, water ~90 %: the model's 0.95 / 0.9 / 0.8 are rounder choices.
-  'absorbedInSmallIntestine.carbs': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
-  'absorbedInSmallIntestine.protein': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
-  'absorbedInSmallIntestine.water': { sources: ['openstax-ap2e-23'], basis: 'assumption' },
+  'absorbedInSmallIntestine.carbs': { sources: ['merrill1955', 'openstax-ap2e-23'], basis: 'measured' },
+  'absorbedInSmallIntestine.protein': { sources: ['openstax-ap2e-23'], basis: 'measured' },
+  'absorbedInSmallIntestine.water': { sources: ['openstax-ap2e-23'], basis: 'measured' },
   // Carbs: calibrated together with the glucose curve. The others are modelling assumptions.
   'absorptionTauMin.carbs': { sources: ['freckmann2007'], basis: 'calibrated' },
   'absorptionTauMin.protein': { sources: [], basis: 'assumption' },

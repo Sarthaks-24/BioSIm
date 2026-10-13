@@ -137,8 +137,8 @@ describe('gastric emptying', () => {
 describe('blood glucose', () => {
   golden(
     ['blood.glucose', 'event.glucosePeak'],
-    ['freckmann2007', 'bergman1979'],
-    '50 g glucose drink: peak +30–60 mg/dL at 30–60 min, near baseline by 2 h (standard OGTT shape)',
+    ['fao1998', 'freckmann2007', 'bergman1979'],
+    '50 g glucose drink: peak +30–60 mg/dL at 30–60 min, near baseline by 2 h (standard OGTT shape, FAO/WHO 1998 ch. 4 Table 1)',
     () => {
       const sim = run('glucose-50')
       const peak = sim.events.glucosePeak!
@@ -293,6 +293,22 @@ describe('one consistent story', () => {
         const sum = loc.stomach + loc.smallIntestine + loc.largeIntestine + loc.absorbed + loc.leftBody
         expect(sum).toBeCloseTo(loc.total, 0)
       }
+    },
+  )
+
+  golden(
+    ['gut.absorbed.carbsG', 'gut.absorbed.proteinG', 'gut.absorbed.fatG', 'gut.absorbed.waterG'],
+    ['openstax-ap2e-23', 'merrill1955'],
+    'by 48 h about 97 % of carbohydrate, 95 % of protein and fat and over 90 % of water are absorbed (OpenStax §23.7; USDA Handbook 74 p. 9)',
+    () => {
+      const sim = run('fatty-meal')
+      const t = sim.meal.total
+      const end = (id: 'gut.absorbed.carbsG' | 'gut.absorbed.proteinG' | 'gut.absorbed.fatG' | 'gut.absorbed.waterG') =>
+        sim.signals.get(id)!.values[sim.length - 1]!
+      expect(end('gut.absorbed.carbsG') / t.carbsG).toBeCloseTo(0.97, 2)
+      expect(end('gut.absorbed.proteinG') / t.proteinG).toBeCloseTo(0.95, 2)
+      expect(end('gut.absorbed.fatG') / t.fatG).toBeCloseTo(0.95, 2)
+      expect(end('gut.absorbed.waterG') / t.waterG).toBeGreaterThan(0.9)
     },
   )
 
