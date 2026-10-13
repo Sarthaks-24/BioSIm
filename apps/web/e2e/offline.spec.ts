@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { GATE_ROUTES, SIM_BODY, gateSteps, modeFor, onlyIn } from './helpers/gate.ts'
 
 // Works offline in class: after one visit the service worker holds the whole app, so the page
@@ -70,4 +70,59 @@ test('a waiting new version offers a reload, from the keyboard too', async ({ pa
   await page.keyboard.press('Escape')
   await expect(note).toHaveCount(0)
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+})
+
+// A link made by a newer LifePeek (FP-6, architecture §2; in production before any v=3 link):
+// offline it says so, and that the walk or run is not shown until the app updates; online, once
+// the new version's service worker is waiting, "Update now" lets it take over and reopens the
+// link whole (the address stays as the link came). English only (Hindi is report-only, R47).
+// On v3 (MODEL_VERSION 3) a newer link is v=4.
+const NEWER = '/sim?v=4&a=cola:1&act=walk.120.20&t=30'
+
+/** Opens the stage once, waits for the service worker, and reloads so that it controls the page. */
+async function controlled(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim')
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+  await page.reload()
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller)
+}
+
+test('a link from a newer LifePeek, offline: a plain note, and the link stays as it came', async ({ page, context }) => {
+  await controlled(page)
+  await context.setOffline(true)
+  try {
+    await page.goto(NEWER)
+    const note = page.locator('[data-stage] [role="note"]')
+    await expect(note.filter({ hasText: 'Made with a newer LifePeek. Connect once to update' })).toHaveCount(1)
+    await expect(note.filter({ hasText: 'Update now' })).toHaveCount(0)
+    // The meal shows; the walk is named once (by that note), not twice.
+    await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+    await expect(note).toHaveCount(1)
+    await page.waitForTimeout(500)
+    expect(page.url()).toContain(NEWER)
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
+test('a link from a newer LifePeek, online: "Update now" loads the new version and reopens the link', async ({ page }) => {
+  await controlled(page)
+  await page.goto(NEWER)
+  const note = page.locator('[data-stage] [role="note"]').filter({ hasText: 'made with a newer version of LifePeek' })
+  await expect(note).toBeVisible()
+  // No new version yet: no button.
+  await page.waitForTimeout(1000)
+  await expect(note.getByRole('button', { name: 'Update now' })).toHaveCount(0)
+  // A new version arrives (the same worker under another address, as in the test above).
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/sw.js?next=1')
+  })
+  const update = note.getByRole('button', { name: 'Update now' })
+  await expect(update).toBeVisible({ timeout: 30_000 })
+  await Promise.all([page.waitForEvent('load', { timeout: 30_000 }), update.click()])
+  await page.waitForFunction(() => navigator.serviceWorker.controller?.scriptURL.includes('next=1'), null, { timeout: 30_000 })
+  expect(page.url(), 'the reload opens the link as it came').toContain(NEWER)
 })

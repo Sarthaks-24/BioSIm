@@ -3,6 +3,7 @@ import type { Sheet } from '../../state/sheet.ts'
 import type { Slot } from './GraphColumn.tsx'
 import StripTable from '../graphs/StripTable.tsx'
 import KeysHelp from './KeysHelp.tsx'
+import MomentList from './MomentList.tsx'
 import { addEnglish } from '../../i18n/index.ts'
 import keysText from 'virtual:lifepeek-en/keys'
 import tableText from 'virtual:lifepeek-en/table'
@@ -13,10 +14,11 @@ addEnglish(keysText, tableText)
 export { default as FoodSearch } from './FoodSearch.tsx'
 
 /**
- * The stage's sheets in one file, downloaded together the first time one is opened: the table and
- * the keys (pages/Simulator.tsx), and the food search (AddFoodSheet). One small chunk of things that are not
- * part of the first paint (size budget); as separate chunks, the bundler would split the code they
- * share with the stage into many small files that every visitor downloads.
+ * The stage's sheets in one file, downloaded together the first time one is opened: the table,
+ * the settings and a timeline target's key moments (pages/Simulator.tsx), and the food search
+ * (AddFoodSheet). One small chunk of things that are not part of the first paint (size budget); as
+ * separate chunks, the bundler would split the code they share with the stage into many small
+ * files that every visitor downloads.
  */
 export default function Sheets({
   sheet,
@@ -29,5 +31,6 @@ export default function Sheets({
   kept: RunResult | null
   slots: readonly Slot[]
 }) {
-  return sheet.kind === 'table' ? <StripTable run={run} kept={kept} slots={slots} slot={sheet.slot} /> : <KeysHelp />
+  if (sheet.kind === 'table') return <StripTable run={run} kept={kept} slots={slots} slot={sheet.slot} />
+  return sheet.kind === 'moments' ? <MomentList moments={sheet.moments} /> : <KeysHelp />
 }

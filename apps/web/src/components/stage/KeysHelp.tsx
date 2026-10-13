@@ -18,7 +18,8 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
 ]
 
 /**
- * Keys and settings (G8 + UI-6, UI-7): the stage's keys, and two switches saved on this device.
+ * Settings (G8 + UI-6, UI-7; named so, FP-3 U10): two switches saved on this device, then the
+ * stage's keys, which a touch screen (coarse pointer) does not list.
  * - Letter keys (WCAG 2.1.4): one-character shortcuts can get in the way of a screen reader or
  *   voice control, so they can be switched off (`lifepeek:keysOff`). Arrows, Page Up / Down, Home
  *   and End keep working: a clicker needs them.
@@ -54,7 +55,8 @@ export default function KeysHelp() {
         )}
         <Switch on={!keysOff} onChange={(on) => useKeys.getState().setOff(!on)} label={t('keys.letters')} help={t('keys.lettersHelp')} />
       </section>
-      <section aria-labelledby="keys-list" className="mt-4 border-t border-border pt-3">
+      {/* No key list on a touch screen (U10): it has no keys, and Reduce motion comes first there. */}
+      <section aria-labelledby="keys-list" className="mt-4 border-t border-border pt-3 pointer-coarse:hidden">
         <h3 id="keys-list" className="font-semibold">
           {t('keys.list')}
         </h3>

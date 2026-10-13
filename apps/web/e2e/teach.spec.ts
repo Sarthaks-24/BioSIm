@@ -138,7 +138,7 @@ test('a ready lesson opens with nothing over its graph: marker names show only w
     /^Blood sugar stays raised about \d+ h( \d+ min)? longer after 4 servings of cola than after 1 serving of cola\.$/,
   )
   // Pointing at a marker names it; moving away hides the names again.
-  const marker = page.locator('[data-marker="run"]').first()
+  const marker = page.locator('[data-marker~="run"]').first()
   await marker.hover()
   await expect(tip).toBeVisible()
   await page.mouse.move(5, 5)

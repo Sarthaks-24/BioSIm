@@ -19,7 +19,7 @@ export function pickLanguage(saved: string | null, browser: string | undefined, 
 
 /**
  * The language a link asks for, if this build has it (null: leave the language as it is). While
- * Hindi is paused a `?lang=hi` link gets null: it opens in English, with a note (sim.hindiLater).
+ * Hindi is paused a `?lang=hi` link gets null: it opens in English, with a note (link.hindiLater).
  */
 export function linkLanguage(lang: string | null | undefined, hindi = HINDI): Language | null {
   return lang === 'en' || (lang === 'hi' && hindi) ? lang : null

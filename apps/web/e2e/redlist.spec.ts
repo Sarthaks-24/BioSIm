@@ -178,7 +178,14 @@ test.describe('Android 360×640', () => {
         await page.setViewportSize({ width: w, height: h })
         await page.goto('/sim')
         await stageReady(page)
+        // FP-6: in "⋯" at every width (from 1024 px up on the bar too).
+        await openMealActions(page)
         const share = page.getByRole('button', { name: /^(Copy link|Share)/ }).filter({ visible: true })
+        // The panel loads on first use.
+        await share
+          .first()
+          .waitFor({ timeout: 5_000 })
+          .catch(() => {})
         if (!(await share.count())) problems.push(`${w}×${h}: no Copy link or Share button`)
       }
     })
@@ -198,9 +205,9 @@ test.describe('phone 390×844', () => {
         for (const url of ['/sim', '/sim?lang=hi']) {
           await page.goto(url)
           await stageReady(page)
+          // The button is "Settings" since T5 (FP-3); nothing may lie on it, the slider or a moment's target.
           for (const o of await interactiveOverlaps(page))
-            if (/Keys and settings|कुंजियाँ|सेटिंग/.test(o) && /slider|Timeline|समयरेखा|"\d/.test(o))
-              problems.push(`${w}×${h} ${url}: ${o}`)
+            if (/Settings|Keys and settings|सेटिंग|slider|Timeline|समयरेखा|"\d/.test(o)) problems.push(`${w}×${h} ${url}: ${o}`)
         }
       }
     })

@@ -579,8 +579,9 @@ export function watchConsole(page: Page, allow: RegExp[] = CONSOLE_ALLOW) {
 export async function linkRoundTripProblems(page: Page, path: string): Promise<string[]> {
   await page.goto(path)
   await page.locator('[data-stage]').waitFor()
-  // Link-sync writes the meal at once; the time is debounced.
+  // Link-sync writes the meal at once; the time is debounced. The notes about a link load on use (FP-6).
   await page.waitForTimeout(800)
+  await page.waitForLoadState('networkidle')
   const asked = new URL(path, 'http://x').searchParams
   const got = new URL(page.url()).searchParams
   const problems: string[] = []
@@ -599,26 +600,28 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
  * from then on the test guards the fix.
  */
 export const RED_LIST: Record<string, Mode> = {
-  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15.
+  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15. T5 (FP-3) enforces B4; B13 is Hindi, so it
+  // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
+  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22.
   B1: 'enforce',
   B2: 'enforce',
   B3: 'report',
-  B4: 'report',
+  B4: 'enforce',
   B5: 'report',
-  B6: 'report',
+  B6: 'enforce',
   B7: 'enforce',
   B8: 'report',
   B9: 'report',
   B10: 'report',
-  B11: 'report',
+  B11: 'enforce',
   B12: 'report',
   B13: 'report',
   B15: 'enforce',
   B18: 'enforce',
   B19: 'enforce',
   B20: 'report',
-  B21: 'report',
-  B22: 'report',
+  B21: 'enforce',
+  B22: 'enforce',
   B23: 'enforce',
   B24: 'enforce',
   B25: 'report',

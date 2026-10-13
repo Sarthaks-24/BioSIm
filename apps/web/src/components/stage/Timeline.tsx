@@ -1,76 +1,72 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RunResult } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
+import { useSheet } from '../../state/sheet.ts'
 import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
 import { groupClose, hitAreas, momentNameKey, runMoments, type Moment } from '../../lib/moments.ts'
 
 /**
- * The dock's timeline (WP-11 slider, WP-14 key moments). It uses the same squeezed scale as v1:
- * the first 6 hours get 60 % of the bar, and the part after the dotted line says "6 h → 48 h
+ * The dock's timeline (WP-11 slider, WP-14 key moments, FP-3). It uses the same squeezed scale as
+ * v1: the first 6 hours get 60 % of the bar, and the part after the dotted line says "6 h → 48 h
  * squeezed" (council verdict #6).
  *
- * "When things happen" is shown once, here (03 WP-14): this meal's key moments are filled blue
- * dots ON the bar, the kept meal's are hollow grey rings just BELOW it, like the two runs' dots on
- * the graphs' playheads. Shape and place tell them apart, never the grey alone. Each marker is a
- * button that pauses and moves the clock there; "leftovers start leaving" also shows its low–high
- * range. Moments that nearly coincide (cola's first hour) are one marker that names them all
- * (council round 2, WP-15), drawn as one pill with their count, so a cluster never looks like a
- * row of separate targets (council round 3). A marker's names show above the bar while the pointer
- * or the keyboard focus is on it, and after it is pressed, until the clock moves on. Never when a
- * link, a lesson or Page Down moves the clock to a moment: the names would sit over the graph's
- * last line and "6 h → 48 h squeezed" on the projector (council round 3, FIX-G).
+ * Two rows (FP-3, B4, U7). The slider is a 44 px band of its own: a tap anywhere in it moves the
+ * clock, and no other control lies on it (the clock's words and "squeezed" sit in its top, and let
+ * taps through). Under it, the key moments' lane: each moment is a tick hanging under the track,
+ * this meal's filled blue; the kept meal's in a row of their own below the hours, labelled "Kept:".
+ * Shape and place tell them apart, never the grey alone. Moments of either meal closer than a
+ * finger (44 px) share one target, as tall as the lane, so no two targets overlap (council round
+ * 2); a target with several moments draws a double tick, not a count (U7: the "2", "4" badges were
+ * cryptic). Pressing a target pauses and moves the clock to its first moment; a target with
+ * several opens their list (a sheet that loads on first use) to pick one. A target's names show
+ * above the bar while the pointer or the keyboard focus is on it, and after it is pressed, until
+ * the clock moves on. Never when a link, a lesson or Page Down moves the clock to a moment: the
+ * names would sit over the graph's last line on the projector (council round 3, FIX-G).
  *
  * The thumb, the filled part and the slider's value are moved straight from the meal clock
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing here.
  * Keys on the slider: ← → 10 min (Shift: 1 h), Home / End, PageDown / PageUp next / previous key
- * moment. Each meal's markers are one Tab stop; ← → move between them.
+ * moment. The moments are one Tab stop; ← → move between them.
  */
 
+/** A target's width (px): a finger's. Moments closer than this share one (WCAG 2.5.5). */
+const GAP = 44
+/** Hour labels never come closer than this (px) to the one beside them (B13). */
+const TICK_GAP = 8
 /**
- * Hour labels that need a wide enough track (the rest always show: 0, 2, 4, 6 and 48 h). The
- * vertical lines on the graphs stay at every hour either way.
+ * Which hour labels stay when they don't all fit, first to last: 0 h, 48 h, 6 h (the knee), 2 h,
+ * 4 h, 24 h, then 1 h, 3 h, 12 h, 36 h. Indexes into TIMELINE_TICKS; measured, so projector mode,
+ * Hindi and the pseudo-locale drop labels as soon as they would crowd. The graphs' vertical hour
+ * lines stay either way.
  */
-const TICK_FITS: Record<number, string> = {
-  60: '@max-[24rem]:hidden',
-  180: '@max-[24rem]:hidden',
-  720: '@max-[40rem]:hidden',
-  1440: '@max-[22rem]:hidden',
-  2160: '@max-[40rem]:hidden',
-}
-
-/**
- * Moments closer than this (px) along the bar are one marker (council round 2): 24 px from
- * 1024 px up, 44 px on a phone, a finger's width. Each marker is a target that wide (WCAG 2.5.8).
- */
-const GAP_WIDE = 24
-const GAP_PHONE = 44
+const TICK_ORDER = [0, 9, 5, 2, 4, 7, 1, 3, 6, 8]
 /** A paused clock this close (minutes) to where a marker press moved it is still "at" it: the names stay shown. */
 const AT_MOMENT_MIN = 0.5
 
-/** One marker on the bar: one moment, or a few that nearly coincide, of one meal. */
+/** One key moment of one meal ('run' = this meal, 'kept'), with its words: "name, time". */
+type Mark = Moment & { lane: 'run' | 'kept'; line: string }
+
+/** One target on the lane: one moment, or a few of either meal that nearly coincide. */
 interface Marker {
-  /** 'run' = this meal (filled dots, on the bar), 'kept' = the kept meal (hollow rings, below it). */
-  lane: 'run' | 'kept'
   key: string
-  /** Its moments in time order; the marker sits at the first, and a press jumps there. */
-  moments: Moment[]
+  /** Its moments in time order; the target sits at the first, and a press jumps there. */
+  moments: Mark[]
   atMin: number
-  /** Its hit area, px left and right of the first dot. */
+  /** Its hit area, px left and right of the first moment. */
   before: number
   after: number
-  /** One line per moment, "name, time": the button's name and the label above the bar. */
+  /** One line per moment: the button's name and the label above the bar. */
   lines: string[]
 }
 
 export default function Timeline({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
+  const lane = useRef<HTMLDivElement>(null)
   const kneeLabel = useRef<HTMLSpanElement>(null)
   const width = useTrackWidth(track)
-  // Phones get finger-sized targets, so moments merge sooner there.
-  const gap = useMinWidth('64rem') ? GAP_WIDE : GAP_PHONE
 
   const fill = useRef<HTMLSpanElement>(null)
   const thumb = useRef<HTMLSpanElement>(null)
@@ -97,37 +93,62 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
     return useClock.subscribe((s) => s.simMin, show)
   }, [t])
 
+  // The hour labels that fit (B13): each label in TICK_ORDER shows unless it would come within
+  // TICK_GAP px of one already shown. Measured again when the track, the language or the fonts change.
+  useLayoutEffect(() => {
+    const labels = lane.current!.querySelectorAll<HTMLElement>('[data-tick]')
+    const fit = () => {
+      const shown: number[][] = []
+      for (const i of TICK_ORDER) {
+        const el = labels[i]!
+        const min = TIMELINE_TICKS[i]!
+        const w = el.offsetWidth
+        const x = timeToPos(min) * width
+        const left = min ? (min === HORIZON_MIN ? x - w : x - w / 2) : 0
+        const free = shown.every(([l, r]) => left >= r! + TICK_GAP || left + w <= l! - TICK_GAP)
+        el.style.visibility = free ? '' : 'hidden'
+        if (free) shown.push([left, left + w])
+      }
+    }
+    fit()
+    document.fonts.ready.then(fit)
+  }, [width, t])
+
   const markers = useMemo(() => {
-    const of = (sim: RunResult | null, lane: Marker['lane']): Marker[] => {
-      if (!sim || sim.meal.items.length === 0) return []
-      const line = (m: Moment) => {
+    const marks: Mark[] = []
+    for (const [sim, lane] of [
+      [run, 'run'],
+      [kept, 'kept'],
+    ] as const) {
+      if (!sim || sim.meal.items.length === 0) continue
+      for (const m of runMoments(sim)) {
         const name = t(momentNameKey(m.id, sim))
         const time =
           m.low != null && m.high != null
             ? t('dock.usually', { time: formatDuration(m.atMin, t), low: formatDuration(m.low, t), high: formatDuration(m.high, t) })
             : formatDuration(m.atMin, t)
-        return t(lane === 'run' ? 'dock.marker' : 'dock.keptMarker', { name, time })
+        marks.push({ ...m, lane, line: t(lane === 'run' ? 'dock.marker' : 'dock.keptMarker', { name, time }) })
       }
-      const groups = group(
-        runMoments(sim).sort((p, q) => p.atMin - q.atMin),
-        width,
-        gap,
-      )
-      const hits = hitAreas(
-        groups.map((g) => posAt(g[0]!.atMin) * width),
-        gap,
-      )
-      return groups.map((moments, i) => ({
-        lane,
-        key: `${lane}:${moments[0]!.id}`,
-        moments,
-        atMin: moments[0]!.atMin,
-        lines: moments.map(line),
-        ...hits[i]!,
-      }))
     }
-    return [...of(run, 'run'), ...of(kept, 'kept')]
-  }, [run, kept, t, width, gap])
+    // In time order; at the same minute this meal's come first (the sort is stable).
+    marks.sort((p, q) => p.atMin - q.atMin)
+    const groups: Mark[][] = []
+    groupClose(
+      marks.map((m) => posAt(m.atMin) * width),
+      GAP,
+    ).forEach((g, i) => (groups[g] ??= []).push(marks[i]!))
+    const hits = hitAreas(
+      groups.map((g) => posAt(g[0]!.atMin) * width),
+      GAP,
+    )
+    return groups.map((moments, i): Marker => ({
+      key: `${moments[0]!.lane}:${moments[0]!.id}`,
+      moments,
+      atMin: moments[0]!.atMin,
+      lines: moments.map((m) => m.line),
+      ...hits[i]!,
+    }))
+  }, [run, kept, t, width])
 
   // Which names show: the marker under the pointer or the keyboard focus; else, after a marker was
   // pressed (a tap on a phone has no hover), every moment the paused clock is at, of both meals
@@ -141,20 +162,15 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       s.playing || pressed === null || Math.abs(s.simMin - pressed) >= AT_MOMENT_MIN
         ? ''
         : markers
-            .flatMap((m) => m.moments.filter((x) => Math.abs(x.atMin - s.simMin) < AT_MOMENT_MIN).map((x) => `${m.key}|${x.id}`))
-            .join(' '),
+            .flatMap((m) => m.moments)
+            .filter((x) => Math.abs(x.atMin - s.simMin) < AT_MOMENT_MIN)
+            .map((x) => x.line)
+            .join('\n'),
     [markers, pressed],
   )
   const here = useClock(atMoment)
-  const tip = useMemo(() => {
-    const hotMarker = markers.find((m) => m.key === hot)
-    if (hotMarker) return { key: hotMarker.key, atMin: hotMarker.atMin, lines: hotMarker.lines }
-    if (!here) return null
-    const at = new Set(here.split(' '))
-    const lines = markers.flatMap((m) => m.lines.filter((_, i) => at.has(`${m.key}|${m.moments[i]!.id}`)))
-    const first = markers.find((m) => m.moments.some((x) => at.has(`${m.key}|${x.id}`)))!
-    return { key: here, atMin: first.atMin, lines }
-  }, [markers, hot, here])
+  const hotMarker = markers.find((m) => m.key === hot)
+  const tip = hotMarker ?? (here ? { key: here, atMin: pressed!, lines: here.split('\n') } : null)
 
   const timeAt = (clientX: number) => {
     const r = track.current!.getBoundingClientRect()
@@ -189,39 +205,32 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
   }
 
   const knee = `${KNEE_FRACTION * 100}%`
-  const lane = (which: Marker['lane']) => markers.filter((m) => m.lane === which)
   const kneeLeft = useKneeSide(kneeLabel, width)
   return (
-    // The top padding holds "6 h → 48 h squeezed" (from 640 px up); the bottom one the hour ticks,
-    // and with a kept meal its hollow markers first. The ticks' room is their own text size plus
-    // the thumb's overhang, so no tick ("0 h", "0 घं") ever sits under the thumb, in any language
-    // or on the projector (WP-18). A size container: which hour labels fit depends on the track's
-    // own width in rem, so projector mode and Hindi drop labels sooner.
-    <div
-      className={`@container relative pt-2 select-none sm:pt-5 ${kept ? 'pb-[calc(1.375rem_+_var(--text-caption))]' : 'pb-[calc(0.75rem_+_var(--text-caption))]'}`}
-    >
+    <div className="relative select-none">
       {/*
-       * "6 h → 48 h squeezed", over the squeezed part of the bar, starting just right of the dotted
-       * line. When it is longer than that part (Hindi, the projector) it ends just left of the line
-       * instead, so it never runs across the line or off the bar (WP-18).
+       * "6 h → 48 h squeezed", in the band's top over the squeezed part of the bar, starting just
+       * right of the dotted line. When it is longer than that part (Hindi, the projector) it ends
+       * just left of the line instead, so it never runs across the line or off the bar (WP-18).
        */}
       <span
         ref={kneeLabel}
         aria-hidden="true"
         data-knee=""
-        className="absolute top-0 text-caption whitespace-nowrap text-ink-muted max-sm:hidden"
+        className="pointer-events-none absolute top-0.5 text-caption leading-none whitespace-nowrap text-ink-muted max-sm:hidden"
         style={kneeLeft ? { right: `calc(${(1 - KNEE_FRACTION) * 100}% + 0.375rem)` } : { left: `calc(${knee} + 0.375rem)` }}
       >
         {t('dock.squeezed', { from: formatDuration(KNEE_MIN, t), to: formatDuration(HORIZON_MIN, t) })}
       </span>
+      {/* The dotted line, through the track only: the clock's words above it (phones) stay clear. */}
       <span
         aria-hidden="true"
         data-knee-line=""
-        className="absolute top-1 bottom-4 border-l-2 border-dotted border-ink-muted/60"
+        className="pointer-events-none absolute top-[24px] h-[20px] border-l-2 border-dotted border-ink-muted/60"
         style={{ left: knee }}
       />
-      {/* The bar's row: the slider, with the moments laid over it (they are its siblings: a slider's children are not read out). */}
-      <div className="relative" style={{ '--track-w': `${width}px` } as CSSProperties}>
+      {/* The band: the slider, 44 px tall, its track in the lower part. */}
+      <div className="relative h-[44px]">
         <div
           ref={track}
           role="slider"
@@ -233,12 +242,14 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onKeyDown={onKeyDown}
-          // A tall invisible hit area around a thin track. The focus ring goes on the thumb, not
-          // round the whole bar and its labels. Size and layout containment keeps the track's
-          // inside to itself.
-          className="group relative -my-3 h-8 cursor-pointer touch-none rounded-control [contain:size_layout] focus-visible:outline-none!"
+          // The whole band is the hit area. The focus ring goes on the thumb, not round the band.
+          // Size and layout containment keeps the track's inside to itself.
+          className="group absolute inset-0 cursor-pointer touch-none rounded-control [contain:size_layout] focus-visible:outline-none!"
         >
-          <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-control bg-ink/20">
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-[34px] h-1.5 -translate-y-1/2 overflow-hidden rounded-control bg-ink/20"
+          >
             {/* The filled part: a full-width bar slid in from the left, clipped by the track. */}
             <span
               ref={fill}
@@ -250,27 +261,34 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
           <span aria-hidden="true" ref={thumb} className="pointer-events-none absolute inset-0 will-change-transform">
             <span
               data-thumb=""
-              className="absolute top-1/2 left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface-raised bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
+              className="absolute top-[34px] left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface-raised bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
             />
           </span>
         </div>
-        <MarkerLane markers={lane('run')} lane="run" label={t('dock.moments')} onHot={setHot} onPress={setPressed} />
-        {kept && <MarkerLane markers={lane('kept')} lane="kept" label={t('dock.keptMoments')} onHot={setHot} onPress={setPressed} />}
         {tip && <MarkerTip key={tip.key} atMin={tip.atMin} lines={tip.lines} width={width} />}
       </div>
-      {TIMELINE_TICKS.map((m) => (
-        <span
-          key={m}
-          aria-hidden="true"
-          data-tick=""
-          className={`tabular absolute bottom-0 text-caption leading-none whitespace-nowrap text-ink-muted ${
-            m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
-          } ${TICK_FITS[m] ?? ''}`}
-          style={{ left: `${timeToPos(m) * 100}%` }}
-        >
-          {t('units.hShort', { n: m / 60 })}
-        </span>
-      ))}
+      {/* The lane: hour labels, then the moments' targets over them (siblings of the slider: a slider's children are not read out). */}
+      <div ref={lane} className={`relative ${kept ? 'h-[calc(var(--lane)+var(--text-caption))]' : 'h-(--lane)'}`}>
+        {TIMELINE_TICKS.map((m) => (
+          <span
+            key={m}
+            aria-hidden="true"
+            data-tick=""
+            className={`tabular absolute top-[calc(var(--lane)-2px)] -translate-y-full text-caption leading-none whitespace-nowrap text-ink-muted ${
+              m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
+            }`}
+            style={{ left: `${timeToPos(m) * 100}%` }}
+          >
+            {t('units.hShort', { n: m / 60 })}
+          </span>
+        ))}
+        {kept && (
+          <span aria-hidden="true" className="absolute top-(--lane) right-full mr-1.5 text-caption leading-none text-ink-muted">
+            {t('now.keptShort')}
+          </span>
+        )}
+        <MarkerLane markers={markers} width={width} label={t('dock.moments')} onHot={setHot} onPress={setPressed} />
+      </div>
       <p id="scrubber-keys" className="sr-only">
         {t('stage.keysHint')}
       </p>
@@ -313,50 +331,24 @@ function useKneeSide(ref: React.RefObject<HTMLSpanElement | null>, width: number
   return left
 }
 
-/** One meal's moments (sorted by time) as markers: moments closer than `gap` px along the bar share one. */
-function group(moments: Moment[], width: number, gap: number): Moment[][] {
-  const groups: Moment[][] = []
-  groupClose(
-    moments.map((m) => posAt(m.atMin) * width),
-    gap,
-  ).forEach((g, i) => (groups[g] ??= []).push(moments[i]!))
-  return groups
-}
-
-/** True while the window is at least `min` wide (a CSS length); re-renders only when that changes. */
-function useMinWidth(min: string) {
-  const query = `(min-width: ${min})`
-  const [match, setMatch] = useState(() => window.matchMedia(query).matches)
-  useEffect(() => {
-    const mq = window.matchMedia(query)
-    const update = () => setMatch(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [query])
-  return match
-}
-
 /**
- * One meal's markers along the bar, as a toolbar: one Tab stop; ← → (and Home / End) move
- * between its markers, Enter or Space jumps the clock to one. The stage's key map leaves those
- * keys to it (lib/keys.ts).
+ * The key moments' targets along the lane, as a toolbar: one Tab stop; ← → (and Home / End) move
+ * between them, Enter or Space presses one. The stage's key map leaves those keys to it (lib/keys.ts).
  */
 function MarkerLane({
   markers,
-  lane,
+  width,
   label,
   onHot,
   onPress,
 }: {
   markers: Marker[]
-  lane: Marker['lane']
+  width: number
   label: string
   onHot: (key: string | null) => void
   /** A marker was pressed and moved the clock to `atMin`. */
   onPress: (atMin: number) => void
 }) {
-  const kept = lane === 'kept'
   const box = useRef<HTMLDivElement>(null)
   const [focus, setFocus] = useState(0)
   const at = Math.max(0, Math.min(focus, markers.length - 1))
@@ -373,74 +365,57 @@ function MarkerLane({
     box.current?.querySelectorAll<HTMLButtonElement>('button')[i]?.focus()
   }
   return (
-    <div
-      ref={box}
-      role="toolbar"
-      aria-label={label}
-      onKeyDown={onKeyDown}
-      // This meal's dots on the bar's centre line, the kept meal's 1 rem (16 px) below it. Their
-      // 24 px tall targets reach 16 px above and 8 px below this meal's line, and 8 px above and 16
-      // px below the kept one's, so the two rows meet but never overlap, and the dock stays as
-      // short as before (a phone's first screen has no height to spare).
-      className={`pointer-events-none absolute inset-x-0 h-0 ${kept ? 'top-[calc(50%+1rem)]' : 'top-1/2'}`}
-    >
+    <div ref={box} role="toolbar" aria-label={label} onKeyDown={onKeyDown} className="absolute inset-0">
       {markers.map((m, i) => (
-        <div key={m.key} className="absolute top-0" style={{ left: `${posAt(m.atMin) * 100}%` }}>
-          {m.moments.map((x) =>
-            x.low != null && x.high != null ? (
-              // The between-person range: a light bar from low to high, centred on the dot's line.
+        <button
+          key={m.key}
+          type="button"
+          tabIndex={i === at ? 0 : -1}
+          aria-label={m.lines.join('; ')}
+          aria-haspopup={m.moments.length > 1 ? 'dialog' : undefined}
+          data-marker={[...new Set(m.moments.map((x) => x.lane))].join(' ')}
+          data-moment={m.moments.map((x) => x.id).join(' ')}
+          onClick={() => {
+            const clock = useClock.getState()
+            clock.pause()
+            clock.setSimMin(m.atMin)
+            onPress(m.atMin)
+            // Several moments: their list, to pick one (U7).
+            if (m.moments.length > 1) useSheet.getState().open({ kind: 'moments', moments: m.moments.map((x) => [x.line, x.atMin]) })
+          }}
+          onPointerEnter={() => onHot(m.key)}
+          onPointerLeave={() => onHot(null)}
+          onFocus={(e) => {
+            setFocus(i)
+            // Keyboard focus only: a click focuses the button too, and the press shows the names anyway.
+            if (e.currentTarget.matches(':focus-visible')) onHot(m.key)
+          }}
+          onBlur={() => onHot(null)}
+          className="absolute inset-y-0 cursor-pointer rounded-control focus-visible:outline-offset-0"
+          style={{ left: posAt(m.atMin) * width - m.before, width: m.before + m.after }}
+        >
+          {/*
+           * Each meal's ticks: this meal's hang under the track, the kept meal's sit in its row.
+           * One tick per meal, at its first moment; a double tick where it has several here.
+           */}
+          {(['run', 'kept'] as const).map((lane) => {
+            const own = m.moments.filter((x) => x.lane === lane)
+            return own.length ? (
               <span
-                key={x.id}
+                key={lane}
                 aria-hidden="true"
-                data-range=""
-                className={`absolute top-0 h-2 -translate-y-1/2 rounded-full ${kept ? 'border border-kept/70 bg-surface-raised' : 'bg-run/30'}`}
-                style={{
-                  left: `calc(${posAt(x.low) - posAt(m.atMin)} * var(--track-w))`,
-                  width: `calc(${posAt(x.high) - posAt(x.low)} * var(--track-w))`,
-                }}
+                data-dot={lane}
+                data-count={own.length > 1 ? own.length : undefined}
+                className={`pointer-events-none absolute -translate-x-1/2 ${lane === 'run' ? '-top-[7px] h-3' : 'top-[calc(var(--lane)+2px)] h-2.5'} ${
+                  own.length > 1
+                    ? `w-[9px] border-x-[3px] ${lane === 'run' ? 'border-run' : 'border-kept'}`
+                    : `w-[3px] ${lane === 'run' ? 'bg-run' : 'bg-kept'}`
+                }`}
+                style={{ left: m.before + (posAt(own[0]!.atMin) - posAt(m.atMin)) * width }}
               />
-            ) : null,
-          )}
-          <button
-            type="button"
-            tabIndex={i === at ? 0 : -1}
-            aria-label={m.lines.join('; ')}
-            data-marker={lane}
-            data-moment={m.moments.map((x) => x.id).join(' ')}
-            onClick={() => {
-              const clock = useClock.getState()
-              clock.pause()
-              clock.setSimMin(m.atMin)
-              onPress(m.atMin)
-            }}
-            onPointerEnter={() => onHot(m.key)}
-            onPointerLeave={() => onHot(null)}
-            onFocus={(e) => {
-              setFocus(i)
-              // Keyboard focus only: a click focuses the button too, and the press shows the names anyway.
-              if (e.currentTarget.matches(':focus-visible')) onHot(m.key)
-            }}
-            onBlur={() => onHot(null)}
-            className={`pointer-events-auto absolute top-0 h-6 cursor-pointer rounded-full focus-visible:outline-offset-0 ${kept ? '-translate-y-1/3' : '-translate-y-2/3'}`}
-            style={{ left: -m.before, width: m.before + m.after }}
-          >
-            {/*
-             * One dot, centred on its time. Moments that share a marker are one pill with their
-             * count ("3"): a row of dots read as that many separate targets (council round 3).
-             */}
-            <span
-              aria-hidden="true"
-              data-dot=""
-              data-count={m.moments.length > 1 ? m.moments.length : undefined}
-              className={`tabular pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 leading-none font-bold ${
-                kept ? 'top-1/3 border-kept bg-surface-raised text-kept' : 'top-2/3 border-surface-raised bg-run text-white'
-              } ${m.moments.length > 1 ? 'h-4 min-w-4 px-0.5 text-[0.625rem]' : kept ? 'size-2.5' : 'size-3.5'}`}
-              style={{ left: m.before }}
-            >
-              {m.moments.length > 1 ? m.moments.length : null}
-            </span>
-          </button>
-        </div>
+            ) : null
+          })}
+        </button>
       ))}
     </div>
   )
@@ -464,7 +439,7 @@ function MarkerTip({ atMin, lines, width }: { atMin: number; lines: string[]; wi
       ref={ref}
       aria-hidden="true"
       data-marker-tip=""
-      className="pointer-events-none absolute bottom-[calc(50%+0.875rem)] z-10 flex w-max max-w-full flex-col rounded-control bg-ink px-2 py-0.5 text-caption font-semibold text-white shadow-[0_1px_3px_rgb(20_33_61/0.35)]"
+      className="pointer-events-none absolute bottom-[24px] z-10 flex w-max max-w-full flex-col rounded-control bg-ink px-2 py-0.5 text-caption font-semibold text-white shadow-[0_1px_3px_rgb(20_33_61/0.35)]"
       style={left === null ? { left: 0, visibility: 'hidden' } : { left }}
     >
       {lines.map((l) => (

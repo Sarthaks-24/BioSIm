@@ -9,6 +9,7 @@ import {
   encodeShareState,
   mealKcal,
   type ActivityBout,
+  type LinkChange,
   type MealItem,
   type ProfileId,
   type ShareLang,
@@ -53,6 +54,8 @@ export interface RunState {
   unknownOrganism: string | null
   /** Foods in the opened link that no longer exist (dropped, and counted for a notice). */
   droppedFoods: number
+  /** The rest of what the opened link asked for that is shown differently or left out (B21; components/stage/LinkNotes.tsx). */
+  changes: LinkChange[]
   /** Set when the user tried to make the meal bigger than the cap allows. */
   capBlocked: boolean
   /** The opened link asked for Hindi, which this build doesn't have (R47): it opened in English, with a note. */
@@ -83,6 +86,13 @@ export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.meal
 
 const fitsCap = (items: MealItem[]) => mealKcal(items, lookupFood) <= PARAMS.maxMealKcal
 const isLayer = (id: string | undefined): id is SystemId => ORGANISMS[DEFAULT_ORGANISM].systems.some((s) => s.id === id)
+/**
+ * The layer a link with no `layer` opens: Heart & blood when it carries activity (R39), once that
+ * system exists here; otherwise the organism's default. linkQuery writes `layer` only when it differs.
+ */
+const HEART_LAYER: string = 'circulation'
+export const defaultLayerFor = (activity: readonly ActivityBout[]): SystemId =>
+  activity.length && isLayer(HEART_LAYER) ? HEART_LAYER : DEFAULT_LAYER
 /** A kept run with no food and no activity is no kept run. */
 const keptOf = (items: MealItem[], profile: ProfileId, activity: ActivityBout[] = []): KeptRun | null =>
   items.length || activity.length ? { items, profile, activity } : null
@@ -97,6 +107,7 @@ export const INITIAL_RUN = {
   linkModelVersion: null as number | null,
   unknownOrganism: null as string | null,
   droppedFoods: 0,
+  changes: [] as LinkChange[],
   capBlocked: false,
   hindiLater: false,
 } satisfies Partial<RunState>
@@ -153,16 +164,23 @@ export const useRunStore = create<RunState>((set, get) => ({
     const keptItems = known(s.b)
     // One `who` per link: the kept run is about the same person.
     const profile = s.who ?? DEFAULT_RUN_PROFILE
+    const activity = s.act ?? []
+    const layer = isLayer(s.layer) ? s.layer : defaultLayerFor(activity)
+    // A view this version doesn't have is a change too (the codec checks only its shape).
+    let changes = [...(s.changes ?? []), ...(s.layer && s.layer !== layer ? [{ param: 'layer', asked: s.layer }] : [])]
+    // The e2e build's `lang=pseudo` (i18n/pseudo.ts) is no change. Not in a real build.
+    if (import.meta.env.VITE_PSEUDO === '1') changes = changes.filter((c) => c.asked !== 'pseudo')
     set({
       meal,
-      // The link's activity (`act`, `bact`) is read by the codec step of E-3b-eng; until then a link opens resting.
-      activity: [],
-      kept: keptOf(keptItems, profile),
+      // The bouts the codec could not show are in `changes` (R21).
+      activity,
+      kept: keptOf(keptItems, profile, s.bact ?? []),
       profile,
-      layer: isLayer(s.layer) ? s.layer : DEFAULT_LAYER,
+      layer,
       linkModelVersion: params.has('v') ? s.modelVersion : null,
       unknownOrganism: s.unknownOrganism ?? null,
       droppedFoods: s.a.length + s.b.length - meal.length - keptItems.length,
+      changes,
       capBlocked: false,
     })
     // A link opens paused at its time (never auto-plays).
@@ -181,16 +199,18 @@ export const useRunStore = create<RunState>((set, get) => ({
 
 /**
  * The query string that reopens exactly this run: v, a (meal), b (kept), t, then `who` and
- * `layer` only when they are not the default, then lang. A one-profile kept run can't carry its
+ * `layer` only when they are not the default, then lang, then `act` / `bact` when there are bouts. A one-profile kept run can't carry its
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
-export function linkQuery(run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer'>, simMin: number, lang?: string): string {
+export function linkQuery(run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'>, simMin: number, lang?: string): string {
   return encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
-    ...(run.layer !== DEFAULT_LAYER ? { layer: run.layer } : {}),
+    ...(run.layer !== defaultLayerFor(run.activity) ? { layer: run.layer } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
+    act: run.activity,
+    bact: run.kept?.activity ?? [],
   }).toString()
 }

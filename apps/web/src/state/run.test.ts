@@ -139,6 +139,22 @@ describe('keep, unkeep, swap', () => {
     expect(run().kept?.items).toEqual(one('cola'))
   })
 
+  it('a link’s act and bact open as the meal’s and the kept run’s plans, and are written back as they came', () => {
+    const q = `v=${MODEL_VERSION}&a=cola%3A1&b=milk%3A1&act=walk.30.20%2Crun.240.10&bact=walkBrisk.0.60`
+    run().loadLink(q)
+    expect(run().activity).toEqual([
+      { kind: 'walk', startMin: 30, durMin: 20 },
+      { kind: 'run', startMin: 240, durMin: 10 },
+    ])
+    expect(run().kept?.activity).toEqual([{ kind: 'walkBrisk', startMin: 0, durMin: 60 }])
+    // No Heart & blood row yet, so an `act` link with no `layer` opens the default and writes none (R39).
+    expect(run().layer).toBe(DEFAULT_LAYER)
+    expect(written()).toBe(q)
+    // A kept run of activity alone is still a kept run.
+    run().loadLink(`v=${MODEL_VERSION}&bact=run.0.30`)
+    expect(run().kept).toEqual({ items: [], profile: DEFAULT_RUN_PROFILE, activity: [{ kind: 'run', startMin: 0, durMin: 30 }] })
+  })
+
   it('an empty meal is not kept', () => {
     run().keep()
     expect(run().kept).toBeNull()

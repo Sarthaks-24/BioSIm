@@ -294,7 +294,6 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `sim.newerLink` | This link was made with a newer version of LifePeek, so this version may show it differently. | यह लिंक LifePeek के नए संस्करण से बना था, इसलिए यह संस्करण इसे कुछ अलग दिखा सकता है। | draft |
 | `stage.meal` | Meal | भोजन | draft |
 | `stage.body` | The body | शरीर | draft |
 | `stage.bodyLabel` | The body, digesting {{meal}} | शरीर, {{meal}} को पचाते हुए | draft |
@@ -421,8 +420,7 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `summary.thisMeal` | this meal | यह भोजन | draft |
 | `summary.keptMeal` | the kept meal | रखा गया भोजन | draft |
 | `dock.squeezed` | {{from}} → {{to}} squeezed | {{from}} → {{to}} सिकोड़ा गया | draft |
-| `dock.moments` | Key moments of this meal | इस भोजन के मुख्य पल | draft |
-| `dock.keptMoments` | Key moments of the kept meal | रखे गए भोजन के मुख्य पल | draft |
+| `dock.moments` | Key moments | मुख्य पल | draft |
 | `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
 | `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया भोजन: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
@@ -449,8 +447,8 @@ Key names (Space, Page Down, Shift …) stay in English on purpose: they are pri
 | `table.moments` | Key moments | मुख्य पल | draft |
 | `table.moment` | Moment | पल | draft |
 | `table.keptValue` | kept meal {{value}} | रखा गया भोजन {{value}} | draft |
-| `keys.button` | Keys and settings | कुंजियाँ और सेटिंग | draft |
-| `keys.title` | Keys and settings | कुंजियाँ और सेटिंग | draft |
+| `keys.button` | Settings | सेटिंग | draft |
+| `keys.title` | Settings | सेटिंग | draft |
 | `keys.settings` | Settings | सेटिंग | draft |
 | `keys.list` | Keys | कुंजियाँ | draft |
 | `keys.play` | Play or pause | चलाएँ या रोकें | draft |
@@ -547,12 +545,8 @@ v1 and the keys only it used; the ones left here all ship and need the same chec
 | `sim.shareCopied` | Link copied | लिंक कॉपी हो गया | draft |
 | `sim.reportError` | Report a mistake | गलती बताएँ | draft |
 | `sim.noWebgl` | Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same. | आपका डिवाइस यहाँ 3D नहीं दिखा सकता, इसलिए आप सपाट चित्र देख रहे हैं। बाकी सब कुछ पहले जैसा ही काम करता है। | draft |
-| `sim.oldLink` | This link was made with an older version of the model, so some numbers may differ from when it was shared. | यह लिंक मॉडल के पुराने संस्करण से बना था, इसलिए कुछ संख्याएँ साझा करते समय की संख्याओं से अलग हो सकती हैं। | draft |
 | `sim.afterEating` | after eating | खाने के बाद | draft |
-| `sim.shareManual` | Copy this link | यह लिंक कॉपी करें | draft |
 | `sim.capReached` | That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big. | इससे भोजन {{kcal}} किलो कैलोरी से बड़ा हो जाएगा। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है। | draft |
-| `sim.unknownFoods` | Some foods in this link no longer exist and were left out ({{count}}). | इस लिंक के कुछ खाद्य पदार्थ अब मौजूद नहीं हैं, इसलिए उन्हें छोड़ दिया गया ({{count}})। | draft |
-| `sim.overCap` | {{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough. | {{meal}} {{kcal}} किलो कैलोरी से बड़ा है। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है, इसलिए इसके समय को केवल अनुमान मानें। | draft |
 | `stages.mouth.name` | Mouth | मुख | draft |
 | `stages.mouth.what` | Teeth cut and grind food while the tongue mixes it with saliva into a soft ball called a bolus. | दाँत भोजन को काटते और पीसते हैं, जबकि जीभ उसे लार के साथ मिलाकर एक नरम गोला बनाती है जिसे बोलस कहते हैं। | draft |
 | `stages.mouth.chemistry` | Salivary amylase starts breaking starch into smaller sugars. Lingual lipase begins on fat, but very little happens yet. | लार में मौजूद एंजाइम लार एमाइलेज मंड (स्टार्च) को छोटी शर्कराओं में तोड़ना शुरू करता है। लिंगुअल लाइपेज वसा पर काम शुरू करता है, पर अभी बहुत कम पाचन होता है। | draft |
@@ -729,6 +723,13 @@ summary, so those sentences are worded to fit feminine (इडली, दाल,
 | `sameFood.reasonSamePeak` | Both reach about the same highest point ({{peak}} mg/dL): the stomach lets only a little sugar through each minute, so more food keeps blood sugar up for longer, not higher. | दोनों बार सबसे ऊँचा स्तर लगभग बराबर ({{peak}} mg/dL) रहता है: आमाशय हर मिनट थोड़ी-सी शर्करा ही आगे जाने देता है, इसलिए ज़्यादा भोजन से रक्त शर्करा ज़्यादा ऊपर नहीं जाती, बल्कि ज़्यादा देर तक बढ़ी रहती है। | draft |
 | `sameFood.oblique.amount_one` | {{count}} serving of {{food}} | {{food}} के {{count}} हिस्से | draft |
 | `sameFood.oblique.amount_other` | {{count}} servings of {{food}} | {{food}} के {{count}} हिस्सों | draft |
+| `link.newer` | This link was made with a newer version of LifePeek, so this version may show it differently. | यह लिंक LifePeek के नए संस्करण से बना था, इसलिए यह संस्करण इसे कुछ अलग दिखा सकता है। | draft |
+| `link.old` | This link was made with an older version of the model, so some numbers may differ from when it was shared. | यह लिंक मॉडल के पुराने संस्करण से बना था, इसलिए कुछ संख्याएँ साझा करते समय की संख्याओं से अलग हो सकती हैं। | draft |
+| `link.unknownFoods` | Some foods in this link no longer exist and were left out ({{count}}). | इस लिंक के कुछ खाद्य पदार्थ अब मौजूद नहीं हैं, इसलिए उन्हें छोड़ दिया गया ({{count}})। | draft |
+| `link.newerOffline` | Made with a newer LifePeek. Connect once to update; until then the walk or run is not shown. | यह LifePeek के नए संस्करण से बना है। अपडेट करने के लिए एक बार इंटरनेट से जुड़ें; तब तक चलना या दौड़ना नहीं दिखाया जाएगा। | draft |
+| `link.update` | Update now | अभी अपडेट करें | draft |
+| `link.overCap` | {{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough. | {{meal}} {{kcal}} किलो कैलोरी से बड़ा है। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है, इसलिए इसके समय को केवल अनुमान मानें। | draft |
+| `link.shareManual` | Copy this link | यह लिंक कॉपी करें | draft |
 | `units.gPerMin` | {{n}} g/min | {{n}} ग्राम/मिनट | draft |
 | `units.words.gPerMin` | grams each minute | हर मिनट में ग्राम | draft |
 

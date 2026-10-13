@@ -154,7 +154,10 @@ describe('share links: activity (act, bact; E-3b-eng, architecture §2)', () => 
       { kind: 'walk', startMin: 0, durMin: 5 },
     ])
     expect(changes.length).toBeLessThanOrEqual(17)
-    expect(decode('act=%00%FF,,,.&bact=walk..')).toEqual(decode(''))
+    const junk = decode('act=%00%FF,,,.&bact=walk..')
+    expect(junk).not.toHaveProperty('act')
+    expect(junk).not.toHaveProperty('bact')
+    expect(junk.changes?.map((c) => c.param)).toEqual(['act', 'act', 'bact'])
   })
 
   it('an unknown organism’s bouts are not read', () => {
@@ -172,5 +175,143 @@ describe('share links: activity (act, bact; E-3b-eng, architecture §2)', () => 
       expect(s).not.toHaveProperty('bact')
       expect(encodeShareState(s).has('act')).toBe(false)
     }
+  })
+})
+
+// B21 (FP-6): a link that this version changes on load says so. `changes` names each part.
+describe('share links: what changed on load (changes)', () => {
+  const decode = (q: string) => decodeShareState(new URLSearchParams(q))
+
+  it('a link this version shows as written has no changes', () => {
+    for (const q of [
+      'v=2&a=cola:1',
+      'v=2&a=roti:2,dal:1,milk:1&b=cheeseburger:1,fries:1&t=90',
+      'a=cola:1,cola:2',
+      'v=1&a=cola:0.25&lang=hi',
+      '',
+    ])
+      expect(decode(q)).not.toHaveProperty('changes')
+  })
+
+  it('names servings it changed, foods past the sixth and parts it could not read', () => {
+    expect(decode('a=cola:999').changes).toEqual([{ param: 'a', asked: 'cola:999', shown: '5' }])
+    expect(decode('b=milk:0.3').changes).toEqual([{ param: 'b', asked: 'milk:0.3', shown: '0.25' }])
+    expect(decode('a=water:1,milk:1,roti:1,dal:1,apple:1,banana:1,cola:1,fries:1').changes).toEqual([
+      { param: 'a', asked: 'cola:1' },
+      { param: 'a', asked: 'fries:1' },
+    ])
+    expect(decode('a=<script>,cola:1,').changes).toEqual([{ param: 'a', asked: '<script>' }])
+  })
+
+  it('names a time past the end, and parameters it could not read', () => {
+    expect(decode('t=99999').changes).toEqual([{ param: 't', asked: '99999' }])
+    expect(decode('v=xyz&t=-5&lang=fr&who=teen-ref&layer=<b>').changes?.map((c) => c.param)).toEqual(['v', 't', 'lang', 'who', 'layer'])
+  })
+
+  it('reads activity bouts it can show, and names each one it drops (R21)', () => {
+    expect(decode('v=3&a=cola:1&act=walk.120.20')).not.toHaveProperty('changes')
+    expect(decode('v=3&a=cola:1&act=walk.120.20').act).toEqual([{ kind: 'walk', startMin: 120, durMin: 20 }])
+    expect(decode('v=3&act=football.0.30,walk.120.20&bact=run.0.200').changes).toEqual([
+      { param: 'act', asked: 'football.0.30' },
+      { param: 'bact', asked: 'run.0.200' },
+    ])
+  })
+
+  it('a huge link is read only so far, and the rest is one change', () => {
+    const s = decode('a=' + Array.from({ length: 5000 }, () => 'x').join(','))
+    expect(s.changes).toHaveLength(13)
+    expect(s.changes!.every((c) => c.asked.length <= 40)).toBe(true)
+  })
+
+  /**
+   * Fuzz (qa-fixes FP-6): canon(encode(decode(x))) ≠ canon(x) ⇒ at least one note. A note is a
+   * change, an unknown organism, or a link from another model version (the stage's notes).
+   * canon() is how a link reads: the parameters this version knows, numbers as numbers, a food
+   * listed twice summed, `t` in whole minutes, `o=human` and empty values as absent.
+   */
+  it('fuzz: every link that comes back different has a note', () => {
+    const ITEM = /^([a-z0-9-]{1,40}):(\d+(?:\.\d+)?)$/
+    const meal = (raw: string | null) => {
+      const sum = new Map<string, number>()
+      const bad: string[] = []
+      for (const part of (raw ?? '').split(',')) {
+        const m = ITEM.exec(part.trim())
+        if (m) sum.set(m[1]!, (sum.get(m[1]!) ?? 0) + Number(m[2]))
+        else if (part.trim()) bad.push(part)
+      }
+      return [...[...sum].map(([f, n]) => `${f}:${n}`), ...bad].join(',')
+    }
+    const canon = (q: URLSearchParams) => {
+      const out: string[] = []
+      const v = q.get('v')
+      out.push(`v=${v || MODEL_VERSION}`)
+      const o = q.get('o')
+      if (o && o !== 'human') out.push(`o=${o}`)
+      for (const k of ['a', 'b']) if (meal(q.get(k))) out.push(`${k}=${meal(q.get(k))}`)
+      const t = q.get('t')
+      const tn = Number(t)
+      if (t && tn !== 0) out.push(`t=${Number.isFinite(tn) ? Math.round(tn) : t}`)
+      for (const k of ['who', 'layer', 'in', 'lang', 'act', 'bact']) if (q.get(k)) out.push(`${k}=${q.get(k)}`)
+      return out.join('&')
+    }
+    // [values a link this version shows as written, odd ones]. Most links get at most one odd part,
+    // so a change that goes unsaid is not hidden by another change's note.
+    const POOL: Record<string, [string[], string[]]> = {
+      v: [
+        ['', '1', '2'],
+        ['3', '0', '-1', '1.5', 'abc'],
+      ],
+      o: [
+        ['', 'human'],
+        ['frog', 'x'.repeat(50)],
+      ],
+      t: [
+        ['', '0', '60', '90.4', '2880', '1e3'],
+        ['-5', 'abc', '2881', '99999', 'Infinity'],
+      ],
+      who: [
+        ['', 'adult-ref'],
+        ['teen-ref', '<x>'],
+      ],
+      layer: [
+        ['', 'digestion', 'circulation'],
+        ['<x>', 'v'.repeat(41)],
+      ],
+      in: [['', 'villus'], ['<x>']],
+      lang: [
+        ['', 'en', 'hi'],
+        ['fr', 'pseudo'],
+      ],
+      act: [
+        ['', 'walk.120.20', 'walk.30.20,run.240.10', 'walkBrisk.0.5,walk.5.120'],
+        ['football.0.30', 'walk.0.4', 'walk.2881.20', 'walk.0.20,run.10.10', 'jog.1.10', 'walk.30', '<x>'],
+      ],
+      bact: [
+        ['', 'run.0.30'],
+        ['cricket.0.30', 'run.0.121'],
+      ],
+      bo: [['', 'frog'], []],
+      utm_source: [['', 'whatsapp'], []],
+    }
+    const PARTS: [string[], string[]] = [
+      ['cola:1', 'fries:0.5', 'cola:2', 'water:1.25', 'apple:5', '', '  cola:1 ', 'a-b:01', 'roti:2', 'dal:1', 'milk:1', 'idli:1'],
+      ['roti:999', 'dal:0', 'milk:0.3', 'banana:5.01', 'COLA:1', '<x>', 'idli:abc', 'egg:1.10', 'x'.repeat(41) + ':1'],
+    ]
+    let seed = 42
+    // The high bits of the LCG: its low bits repeat with a short period.
+    const rand = (n: number) => ((seed = (seed * 1103515245 + 12345) % 2 ** 31), Math.floor((seed / 2 ** 31) * n))
+    const pick = ([good, odd]: [string[], string[]]) => (odd.length && !rand(25) ? odd[rand(odd.length)]! : good[rand(good.length)]!)
+    let changed = 0
+    for (let i = 0; i < 10000; i++) {
+      const q = new URLSearchParams()
+      for (const [k, pool] of Object.entries(POOL)) if (rand(2)) q.set(k, pick(pool))
+      for (const k of ['a', 'b']) if (rand(3)) q.set(k, Array.from({ length: rand(12) }, () => pick(PARTS)).join(','))
+      const s = decodeShareState(q)
+      if (canon(encodeShareState(s)) === canon(q)) continue
+      changed++
+      const noted = !!s.changes?.length || !!s.unknownOrganism || s.modelVersion !== MODEL_VERSION
+      expect(noted, `?${q} came back as ?${encodeShareState(s)} with no note`).toBe(true)
+    }
+    expect(changed).toBeGreaterThan(2000)
   })
 })
