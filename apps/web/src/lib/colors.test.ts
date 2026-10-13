@@ -47,13 +47,13 @@ function declarations(selector: string): Record<string, string> {
 
 /** The CSS name of each THEME key. */
 const CSS_NAME: Record<keyof (typeof THEME)['normal'], string> = {
-  paper2: 'paper2',
-  shelf: 'shelf',
-  sunk2: 'sunk2',
-  rule2: 'rule2',
+  paper2: 'surface-page',
+  shelf: 'surface-raised',
+  sunk2: 'surface-sunk',
+  rule2: 'border',
   grid: 'grid',
   ink: 'ink',
-  ink2: 'ink-2',
+  ink2: 'ink-muted',
 }
 
 const THEMES = Object.keys(THEME) as ThemeName[]

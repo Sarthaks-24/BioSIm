@@ -13,12 +13,35 @@
 @theme {
   --font-sans: 'Atkinson Hyperlegible Next', 'Noto Sans Devanagari', system-ui, sans-serif;
 
-  --color-paper: #eef3f1;
-  --color-panel: #f8fbfa;
-  --color-sunk: #e1e9e6;
-  --color-rule: #c3d0cc;
+  /*
+   * Surfaces, rules and text: one semantic set for every page (FP-10). Structure comes from space
+   * and rules, not cards: Surface-page is the page and the stage, Surface-raised only the dock,
+   * the graph column and dialogs, Surface-sunk hover/track/selected, Border the only dividers,
+   * Grid the graph paper inside graphs. Text is Ink or Ink-muted.
+   * Projector values are in the html[data-contrast='high'] block below; colors.ts mirrors both.
+   */
+  --color-surface-page: #eef3f1;
+  --color-surface-raised: #f8fbfa;
+  --color-surface-sunk: #e1e9e6;
+  /* Pressed/hover on a sunk surface: a step toward ink, so it follows the projector theme too. */
+  --color-surface-sunk-hover: color-mix(in oklab, var(--color-surface-sunk) 90%, var(--color-ink));
+  --color-border: #c3d0cc;
+  --color-grid: #dce6e2;
   --color-ink: #14213d;
-  --color-ink-2: #46536e;
+  --color-ink-muted: #46536e;
+
+  /* The old names (v1 paper/panel/sunk/rule, v2 paper2/shelf/sunk2/rule2, ink-2), aliases of the
+     set above until every use has moved to it. v1's sunk and rule keep their own projector values. */
+  --color-paper: var(--color-surface-page);
+  --color-panel: var(--color-surface-raised);
+  --color-sunk: var(--color-surface-sunk);
+  --color-rule: var(--color-border);
+  --color-ink-2: var(--color-ink-muted);
+  --color-paper2: var(--color-surface-page);
+  --color-shelf: var(--color-surface-raised);
+  --color-sunk2: var(--color-surface-sunk);
+  --color-sunk2-hover: var(--color-surface-sunk-hover);
+  --color-rule2: var(--color-border);
 
   /* Nutrients: outside the pink/peach tissue range so particles stay visible inside organs. */
   --color-carbs: #f2b705;
@@ -32,22 +55,6 @@
   --color-stomach: #c8405f;
   --color-small-intestine: #f0a868;
   --color-large-intestine: #7870a8;
-
-  /*
-   * v2 "textbook plate" tokens (plan-ui-ux §3.2). New names beside the first palette's (paper,
-   * panel, sunk, rule), which the other pages still use; the "2" goes once they move to these.
-   * Structure comes from space and three rules, not cards: Paper is the page and stage, Shelf
-   * only the dock and graph column, Sunk2 hover/track/selected, Rule2 the only dividers, Grid the
-   * graph paper inside graphs. Text is always ink or ink-2 (every page's).
-   * Projector values are in the html[data-contrast='high'] block below; colors.ts mirrors both.
-   */
-  --color-paper2: #eef3f1;
-  --color-shelf: #f8fbfa;
-  --color-sunk2: #e1e9e6;
-  --color-rule2: #c3d0cc;
-  --color-grid: #dce6e2;
-  /* Pressed/hover on a Sunk2 surface: a step toward ink, so it follows the projector theme too. */
-  --color-sunk2-hover: color-mix(in oklab, var(--color-sunk2) 90%, var(--color-ink));
 
   /*
    * Graph lines. This run is solid blue; the kept run is neutral grey, always dashed (6 4) and
@@ -127,11 +134,6 @@ html:lang(hi) {
  * (Layout). Hindi keeps its own step up (106.25 % of the projector size).
  */
 html[data-contrast='high'] {
-  --color-ink: #000000;
-  --color-ink-2: #1d2433;
-  --color-rule: #6b7a90;
-  --color-paper: #ffffff;
-  --color-panel: #ffffff;
   font-size: 112.5%;
   --text-caption: 1rem;
   --text-micro: 0.875rem;
@@ -157,14 +159,19 @@ html[data-contrast='high']:lang(hi):not([data-fit]) {
   font-size: 125%;
 }
 
-/* v2 projector tokens: white surfaces, darker rule and grid, so the zones survive a washed-out
-   projector. Graph line colours stay the same as on a phone; only their weight changes. */
+/* Projector tokens: black ink, white surfaces, darker rule and grid, so the zones survive a
+   washed-out projector. Graph line colours stay the same as on a phone; only their weight changes. */
 html[data-contrast='high'] {
-  --color-paper2: #ffffff;
-  --color-shelf: #ffffff;
-  --color-sunk2: #e6e6e6;
-  --color-rule2: #4f5d6b;
+  --color-ink: #000000;
+  --color-ink-muted: #1d2433;
+  --color-surface-page: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunk: #e6e6e6;
+  --color-border: #4f5d6b;
   --color-grid: #b8c2cc;
+  /* v1's own projector values, until their uses move to the set above. */
+  --color-sunk: #e1e9e6;
+  --color-rule: #6b7a90;
 }
 
 /*
