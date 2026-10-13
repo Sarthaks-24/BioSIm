@@ -1,4 +1,5 @@
 import { Suspense, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_ORGANISM, type RunResult } from '@lifepeek/engine'
 import BodyView from '../BodyView.tsx'
@@ -37,7 +38,18 @@ const EXAMPLES = ['cola', 'roti', 'apple'] as const
  * to, and the summary a row under it. It used to lie over the top of the body and hid the stomach
  * there, most of all in Hindi (WP-18); as rows, nothing covers the picture.
  */
-export default function BodyPane({ run, kept, summary }: { run: RunResult; kept: RunResult | null; summary: boolean }) {
+export default function BodyPane({
+  run,
+  kept,
+  summary,
+  summaryTo,
+}: {
+  run: RunResult
+  kept: RunResult | null
+  summary: boolean
+  /** Where the summary goes instead of under the body: a small projector window's box under the graph (FP-2). */
+  summaryTo?: HTMLElement | null
+}) {
   const { t, i18n } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const hasMeal = meal.length > 0
@@ -171,8 +183,14 @@ export default function BodyPane({ run, kept, summary }: { run: RunResult; kept:
             panelId={panelId}
             className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
-          {/* Not on a phone under 680 px tall: the stage shows it past the first screen (Simulator, FP-1). */}
-          {summary && <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />}
+          {/* Not on a phone under 680 px tall: the stage shows it past the first screen (Simulator, FP-1).
+              On a small projector window it goes under the graph (FP-2), so the body keeps its column's height. */}
+          {summary &&
+            summaryTo &&
+            createPortal(<SummaryLine run={run} kept={kept} className="border-t border-border px-4 py-2" />, summaryTo)}
+          {summary && !summaryTo && (
+            <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
+          )}
         </div>
       )}
     </section>

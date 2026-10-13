@@ -97,6 +97,10 @@
 //   `changes[]` (in the entry chunk, shared with Home: +0.2 of it). The link notes, "Update now" and
 //   their text load only when a link has a note; the old link notes and the too-big-meal note moved
 //   there too (−0.15): /sim 188.447 → 188.729 KB on main edcebce (+0.28; ledger row +0.28, planned +0.1).
+//   T3 / FP-2 (2026-10-14): the short, wide stage (a CSS block: two columns, a 40 px header with the
+//   links in its menu, a one-line footer), the summary under the graph on a small projector window
+//   (a portal), the kept tag on one line, room over the head: /sim 188.447 → 188.797 KB on main
+//   edcebce, measured on one machine (+0.35; ledger row planned +0.1).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
