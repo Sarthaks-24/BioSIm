@@ -31,6 +31,7 @@ export const PAGE_SECTIONS = {
   science: [],
   stats: ['footer'],
   feedback: [],
+  update: [],
   verdict: [],
   charts: [],
   events: [],

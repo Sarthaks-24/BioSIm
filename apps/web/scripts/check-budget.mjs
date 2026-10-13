@@ -53,6 +53,10 @@
 //   data/hero.json instead of running the model, and fetches that file after its first paint, so
 //   no page's first download carries it: /sim 190.03 → 189.5 KB, Home 154.0 → 145.5 KB. The e2e
 //   build (pseudo-locale) now goes to dist-e2e, and this script refuses a dist that has it.
+//   FIX-G (2026-10-13): the same-food summary (blood sugar raised longer, meals named by amount), the
+//   marker pills, the share text and the lazy "new version" note (components/UpdateToast.tsx) took /sim
+//   to 190.3 KB. Tailwind no longer scans v1's unrouted files (styles.css @source not; WP-20 deletes
+//   them), which took 0.85 KB of their CSS off every page: /sim 189.5 KB, Home 145.5 → 144.9 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

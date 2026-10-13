@@ -14,6 +14,9 @@ export default defineConfig({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
       registerType: 'prompt',
+      // Registered by components/UpdateToast.tsx after the page has loaded, which also offers the
+      // reload when a new version is waiting (council round 3): no extra script in index.html.
+      injectRegister: false,
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'LifePeek — Digestion Simulator',

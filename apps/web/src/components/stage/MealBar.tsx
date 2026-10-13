@@ -64,10 +64,7 @@ export default function MealBar() {
         {kept && (
           // On a phone the Now line names the kept meal, with its ✕, right under the meal bar: this
           // row gives way to it while it shows (styles.css), so the body keeps the height (WP-18).
-          <div
-            data-kept-tag=""
-            className="flex min-w-0 max-lg:order-last max-lg:basis-full lg:ml-auto lg:max-w-max lg:flex-[1_1_14rem]"
-          >
+          <div data-kept-tag="" className="flex min-w-0 max-lg:order-last max-lg:basis-full lg:ml-auto lg:max-w-max lg:flex-[1_1_14rem]">
             <KeptTag />
           </div>
         )}
@@ -202,7 +199,8 @@ function PersonInfo({ profile }: { profile: Parameters<typeof PersonTag>[0]['pro
 
 /**
  * Copy the address: the link sync keeps it equal to this exact run. If copying is blocked (some
- * school browsers), the link is shown to copy by hand.
+ * school browsers), the link is shown to copy by hand. On a touch screen with a share sheet it
+ * opens the sheet instead, as v1's share button did.
  */
 function CopyLink() {
   const { t } = useTranslation()
@@ -219,6 +217,14 @@ function CopyLink() {
   )
 
   const copy = () => {
+    // A touch screen with a share sheet (a tablet) shares the link with the summary sentence, in
+    // the language on screen, so the message says what the link shows (council round 3). Read
+    // from the sentence itself (SummaryLine): it is the stage's answer, already worded.
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      const text = document.querySelector('[data-summary-headline]')?.textContent ?? undefined
+      navigator.share({ title: 'LifePeek', text, url: window.location.href }).catch(() => undefined)
+      return
+    }
     const done = navigator.clipboard?.writeText(window.location.href)
     if (!done) return setStatus('manual')
     done.then(
