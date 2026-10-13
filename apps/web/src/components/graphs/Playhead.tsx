@@ -73,14 +73,17 @@ export default function Playhead({ width, height, domain, run, kept, second = nu
       // A 2 px ink line centred on x (hence the -1 px); its dots hang off it.
       className="pointer-events-none absolute inset-y-0 -left-px w-0.5 bg-ink will-change-transform"
     >
-      {kept && <span ref={keptDot} className="absolute top-0 left-1/2 size-2.5 rounded-full border-2 border-kept bg-shelf" />}
-      {second && <span ref={secondDot} className="absolute top-0 left-1/2 size-3 rounded-full border-2 border-shelf bg-energy-used" />}
-      <span ref={runDot} className="absolute top-0 left-1/2 size-3 rounded-full border-2 border-shelf bg-run" />
+      {kept && <span ref={keptDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-2.5 rounded-full border-2 border-kept bg-shelf" />}
+      {second && <span ref={secondDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-shelf bg-energy-used" />}
+      <span ref={runDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-shelf bg-run" />
     </div>
   )
 }
 
-/** Centres a dot on y, with transform only (nothing is measured, so no layout is forced). */
+/**
+ * Moves a dot to y, with transform only (nothing is measured, so no layout is forced). The class
+ * centres it (`translate`); each dot is its own layer, so moving it repaints nothing.
+ */
 function place(dot: RefObject<HTMLSpanElement | null>, y: number) {
-  if (dot.current) dot.current.style.transform = `translate(-50%, calc(${y.toFixed(1)}px - 50%))`
+  if (dot.current) dot.current.style.transform = `translateY(${y.toFixed(1)}px)`
 }
