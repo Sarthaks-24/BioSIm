@@ -137,7 +137,7 @@ test.describe('/next stage', () => {
     await expect(page.getByRole('img', { name: NEXT_BODY, exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Keep to compare' }).click()
     // The meal bar's tag comes first; the graphs label their dashed line the same way.
-    await expect(page.getByText('Kept: Cola', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Kept: Cola', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await expect.poll(() => params(page).get('b')).toBe('cola:1')
     // The same meal can't be kept twice.
     await expect(page.getByRole('button', { name: 'Keep to compare' })).toBeDisabled()
@@ -149,9 +149,9 @@ test.describe('/next stage', () => {
 
   test('a link with a kept run opens with its tag', async ({ page }) => {
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1')
-    await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi')
-    await expect(page.getByText(/^रखा गया: .+ \+ .+$/).first()).toBeVisible()
+    await expect(page.getByText(/^रखा गया: .+ \+ .+$/).filter({ visible: true }).first()).toBeVisible()
   })
 
   test('adding a food updates the link', async ({ page }) => {

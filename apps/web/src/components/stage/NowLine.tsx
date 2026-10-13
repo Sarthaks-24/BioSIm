@@ -212,11 +212,17 @@ export function NowLine({
           <span className="grid">
             {keptVersions.map((v) => (
               <span key={v} aria-hidden="true" className={`invisible ${cell}`}>
-                {keptName} <span className="font-semibold">{v}</span>
+                <span className="max-lg:hidden">{keptName}</span>
+                <span className="lg:hidden">{t('now.keptShort')}</span> <span className="font-semibold">{v}</span>
               </span>
             ))}
             <span className={cell}>
-              {keptName} <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
+              {/* On a phone just "Kept:": the summary above and the graph's legend below name it (WP-18). */}
+              <span className="max-lg:sr-only">{keptName}</span>
+              <span aria-hidden="true" className="lg:hidden">
+                {t('now.keptShort')}
+              </span>{' '}
+              <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
             </span>
           </span>
           {/* On a phone this row stands in for the meal bar's kept tag (styles.css), so it has its ✕. */}

@@ -693,6 +693,12 @@ WP-20; until then they ship and need the same check.
 | `error.title` | Something didn’t load | कुछ लोड नहीं हुआ | draft |
 | `error.reload` | Reload | दोबारा लोड करें | draft |
 
+## Hindi hardening (WP-18)
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `now.keptShort` | Kept: | रखा गया: | draft |
+
 ## Sign-off
 
 Reviewed by ___ on ___

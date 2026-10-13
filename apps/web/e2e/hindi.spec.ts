@@ -181,9 +181,9 @@ async function expectFirstScreen(page: Page, firstVisit: boolean, play: string) 
     if ((await page.locator('[data-now-kept]').count()) > 0) targets['kept row'] = page.locator('[data-now-kept]')
   }
   await expectInFirstScreen(page, targets)
-  // The body is still a picture, not a strip. 80 px is the floor for the fullest case (Hindi or
+  // The body is still a picture, not a strip. 90 px is the floor for the fullest case (Hindi or
   // the pseudo-locale, a kept meal: three meal-bar rows' worth of words above a 15 rem graph); the
   // site nav's own row (WP-19 makes it a menu) is the next 50 px to win back.
   const body = (await targets.body!.first().boundingBox())!
-  verdict('body at least 80 px tall', 'enforce', body.height >= 80 ? [] : [`body is ${Math.round(body.height)} px tall`])
+  verdict('body at least 90 px tall', 'enforce', body.height >= 90 ? [] : [`body is ${Math.round(body.height)} px tall`])
 }

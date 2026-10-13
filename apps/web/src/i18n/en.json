@@ -641,6 +641,7 @@
       "stomach": "the stomach lets the drink through a little at a time"
     },
     "kept": "{{meal}} (kept):",
+    "keptShort": "Kept:",
     "in": {
       "mouth": "being eaten",
       "mouthDrink": "being drunk",
