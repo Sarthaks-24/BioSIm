@@ -100,7 +100,7 @@ export default function Layout() {
   // projector switch); from 640 px up the links are a row and the switch sits on the right. On the
   // projector stage the links are hidden from 1024 px up (UI-5), where the stage has its projector
   // size; below that they stay, so a phone or tablet left in projector mode can always leave it.
-  const menuBox = `${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:gap-1 max-sm:border-b max-sm:border-rule max-sm:bg-surface-page max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'max-sm:hidden'} sm:contents ${fit && projector ? 'lg:hidden' : ''}`
+  const menuBox = `${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:gap-1 max-sm:border-b max-sm:border-border max-sm:bg-surface-page max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'max-sm:hidden'} sm:contents ${fit && projector ? 'lg:hidden' : ''}`
   // The projector switch in the header: from 640 px up; on the stage only from 1024 px up while it is
   // off (it has no projector size below that), but always while it is on, so it can be turned off.
   // In the phone menu it is drawn like the link rows above it (FP-10): no outline, filled while on.
@@ -109,7 +109,7 @@ export default function Layout() {
       type="button"
       aria-pressed={projector}
       onClick={() => setProjector(!projector)}
-      className={`${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'bg-ink text-white' : 'hover:bg-sunk'} ${inMenu ? 'sm:hidden' : `w-fit border ${projector ? 'border-ink' : 'border-rule'} ${fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}`}
+      className={`${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'bg-ink text-white' : 'hover:bg-surface-sunk'} ${inMenu ? 'sm:hidden' : `w-fit border ${projector ? 'border-ink' : 'border-border'} ${fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}`}
     >
       {t('nav.projector')}
     </button>
@@ -127,13 +127,13 @@ export default function Layout() {
   // Header controls are 44 px tall on phones and tablets, 36 px from 1024 px up (kit sizes, A11).
   const target = 'inline-flex min-h-11 items-center lg:min-h-9'
   const nav = ({ isActive }: { isActive: boolean }) =>
-    `${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${isActive ? 'bg-ink text-white' : 'hover:bg-sunk'}`
+    `${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${isActive ? 'bg-ink text-white' : 'hover:bg-surface-sunk'}`
   // On the projector the stage keeps the footer to one line (council 2026-10-13 #7): the medical
   // note, who made it, About, Privacy and the model version. The rest is one click away on About.
   const extra = fit ? 'in-data-[contrast=high]:hidden' : ''
 
   const footer = (
-    <footer className={`no-print border-t border-rule ${fit ? 'lg:border-border lg:bg-surface-page' : ''}`}>
+    <footer className={`no-print border-t border-border ${fit ? 'lg:border-border lg:bg-surface-page' : ''}`}>
       <div
         className={
           fit
@@ -189,7 +189,7 @@ export default function Layout() {
         <a href="#main" className="sr-only z-50 rounded bg-ink px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
           {t('nav.skip')}
         </a>
-        <header className="no-print relative z-30 border-b border-rule bg-surface-page/90 backdrop-blur">
+        <header className="no-print relative z-30 border-b border-border bg-surface-page/90 backdrop-blur">
           {/* Full width on every page, as on the stage (edges line up with its meal bar), so the logo
               never moves between pages (FP-10); content pages centre their own column (PageShell).
               On a phone the stage's two rows of 44 px controls get almost no padding: the body needs the room. */}
@@ -224,7 +224,7 @@ export default function Layout() {
                 aria-expanded={menu.open}
                 aria-controls={menu.id}
                 onClick={() => menu.setOpen(!menu.open)}
-                className={`${target} order-last w-11 justify-center rounded-full border border-rule hover:bg-sunk sm:hidden`}
+                className={`${target} order-last w-11 justify-center rounded-full border border-border hover:bg-surface-sunk sm:hidden`}
               >
                 <MenuIcon open={menu.open} />
                 <span className="sr-only">{t('nav.menu')}</span>
@@ -235,7 +235,7 @@ export default function Layout() {
                   without it leaves the button's code out (i18n/index.ts says why). */}
               {import.meta.env.VITE_HINDI === '1' && (
                 <LanguageButton
-                  className={`${target} rounded-full border border-rule px-3 text-sm font-semibold whitespace-nowrap hover:bg-sunk`}
+                  className={`${target} rounded-full border border-border px-3 text-sm font-semibold whitespace-nowrap hover:bg-surface-sunk`}
                 />
               )}
             </div>

@@ -54,7 +54,7 @@ export default function About() {
         <h2 id="medical" className={h2}>
           {t('about.medicalTitle')}
         </h2>
-        <p className="rounded-xl border border-rule bg-surface-raised px-4 py-3">{t('about.medical')}</p>
+        <p className="rounded-xl border border-border bg-surface-raised px-4 py-3">{t('about.medical')}</p>
       </section>
 
       <section className="max-w-[68ch]">

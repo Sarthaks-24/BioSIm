@@ -55,7 +55,7 @@ const Chevron = () => (
   </svg>
 )
 
-const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-sunk focus-visible:bg-sunk sm:px-3 sm:-mx-3 sm:rounded-lg'
+const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-surface-sunk focus-visible:bg-surface-sunk sm:px-3 sm:-mx-3 sm:rounded-lg'
 
 export default function Teach() {
   const { t, i18n } = useTranslation()
@@ -78,7 +78,7 @@ export default function Teach() {
 
       <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.lessonsTitle')}</h2>
       <p className="mb-3 text-ink-muted">{t('teach.lessonsLead')}</p>
-      <ul className="divide-y divide-rule border-y border-rule">
+      <ul className="divide-y divide-border border-y border-border">
         {LESSONS.map((l) => (
           <li key={l.key}>
             <Link to={presetHref(l)} onClick={(e) => openLesson(e, l)} className={ROW}>
@@ -102,7 +102,7 @@ export default function Teach() {
 
       <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.questionsTitle')}</h2>
       <p className="mb-3 text-ink-muted">{t('teach.questionsLead')}</p>
-      <ol className="divide-y divide-rule border-y border-rule">
+      <ol className="divide-y divide-border border-y border-border">
         {TASKS.map((q, i) => (
           <li key={q.key}>
             <Link to={presetHref(q)} onClick={openTask} className={ROW}>
@@ -116,7 +116,7 @@ export default function Teach() {
         ))}
       </ol>
       {/* Closed, so a student looking at the page doesn't read them first. */}
-      <details className="mt-3 rounded-lg bg-sunk px-4 py-2">
+      <details className="mt-3 rounded-lg bg-surface-sunk px-4 py-2">
         <summary className="cursor-pointer py-1 font-semibold">{t('teach.answersTitle')}</summary>
         <ol className="mt-1 mb-2 list-decimal space-y-1 pl-6 text-ink-muted">
           {list('teach.answers').map((s) => (
@@ -132,7 +132,7 @@ export default function Teach() {
         ))}
       </ul>
 
-      <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-rule pt-10 sm:flex-row sm:items-center">
+      <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-border pt-10 sm:flex-row sm:items-center">
         <figure className="shrink-0">
           <img src={qrCode} alt={t('teach.qrAlt')} width={240} height={240} className="size-60 rounded-lg bg-white" />
           {/* The address it opens (questions 1 to 3 start there), to type if a camera can't read the code. */}

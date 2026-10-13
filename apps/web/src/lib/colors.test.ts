@@ -135,6 +135,18 @@ describe.each(THEMES)('%s theme', (name) => {
   })
 })
 
+describe('the projector border (FP-10)', () => {
+  // One rule colour for every page on the projector: the stage's #4f5d6b, not v1's lighter #6b7a90
+  // (4.4:1 on white, 2.4:1 against the grid). Rules are what separate the zones on a washed-out
+  // projector, so they must read on every surface and stay darker than the graph paper.
+  const p = THEME.projector
+  it.each(Object.entries({ 'surface-page': p.surfacePage, 'surface-raised': p.surfaceRaised, 'surface-sunk': p.surfaceSunk }))(
+    `is at least ${LINE_MIN}:1 on %s`,
+    (_, hex) => expect(contrast(p.border, hex)).toBeGreaterThanOrEqual(LINE_MIN),
+  )
+  it(`is at least ${LINE_MIN}:1 against the grid`, () => expect(contrast(p.border, p.grid)).toBeGreaterThanOrEqual(LINE_MIN))
+})
+
 describe('graph line colours', () => {
   it.each(Object.entries(LINE_GROUPS))(
     `lines in the %s group stay apart for colour-blind readers (ΔE ≥ ${CVD_MIN}) and everyone else (ΔE ≥ ${NORMAL_MIN})`,
@@ -233,7 +245,8 @@ describe('body colours', () => {
         const edge = contrast(PARTICLE_EDGE, tone(organ))
         if (cvd < CVD_MIN && edge < LINE_MIN) failing.push(`${kind} in ${organ}: CVD ${fmt(cvd)}, edge ${fmt(edge)}:1`)
       }
-    for (const name of THEMES) expect(contrast(PARTICLE_EDGE, THEME[name].surfacePage), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
+    for (const name of THEMES)
+      expect(contrast(PARTICLE_EDGE, THEME[name].surfacePage), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
     expect(failing).toEqual([])
   })
 

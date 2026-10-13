@@ -30,19 +30,6 @@
   --color-ink: #14213d;
   --color-ink-muted: #46536e;
 
-  /* The old names (v1 paper/panel/sunk/rule, v2 paper2/shelf/sunk2/rule2, ink-2), aliases of the
-     set above until every use has moved to it. v1's sunk and rule keep their own projector values. */
-  --color-paper: var(--color-surface-page);
-  --color-panel: var(--color-surface-raised);
-  --color-sunk: var(--color-surface-sunk);
-  --color-rule: var(--color-border);
-  --color-ink-2: var(--color-ink-muted);
-  --color-paper2: var(--color-surface-page);
-  --color-shelf: var(--color-surface-raised);
-  --color-sunk2: var(--color-surface-sunk);
-  --color-sunk2-hover: var(--color-surface-sunk-hover);
-  --color-rule2: var(--color-border);
-
   /* Nutrients: outside the pink/peach tissue range so particles stay visible inside organs. */
   --color-carbs: #f2b705;
   --color-protein: #6a3fd6;
@@ -105,7 +92,9 @@
   --strip-kept-dash: 6 4;
   --strip-band-opacity: 0.14;
   /* A raised-surface halo round labels drawn over the lines, so they stay readable where they cross. */
-  --strip-halo: 0 0 2px var(--color-surface-raised), 0 0 2px var(--color-surface-raised), 0 0 4px var(--color-surface-raised), 0 0 4px var(--color-surface-raised);
+  --strip-halo:
+    0 0 2px var(--color-surface-raised), 0 0 2px var(--color-surface-raised), 0 0 4px var(--color-surface-raised),
+    0 0 4px var(--color-surface-raised);
 }
 @media (width >= 64rem) {
   :root {
@@ -172,11 +161,9 @@ html[data-contrast='high'] {
   --color-surface-page: #ffffff;
   --color-surface-raised: #ffffff;
   --color-surface-sunk: #e6e6e6;
+  /* The stage's rule on every page (FP-10): 6.8:1 on white, 3.7:1 against the grid. */
   --color-border: #4f5d6b;
   --color-grid: #b8c2cc;
-  /* v1's own projector values, until their uses move to the set above. */
-  --color-sunk: #e1e9e6;
-  --color-rule: #6b7a90;
 }
 
 /*

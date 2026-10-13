@@ -42,7 +42,7 @@ function EmptyingRace() {
       <svg viewBox="-40 0 660 300" className="h-auto w-full" role="img" aria-label={t('home.previewCaption')}>
         {[0, 50, 100].map((p) => (
           <g key={p}>
-            <line x1={0} x2={600} y1={y(p / 100)} y2={y(p / 100)} stroke="var(--color-rule)" />
+            <line x1={0} x2={600} y1={y(p / 100)} y2={y(p / 100)} stroke="var(--color-border)" />
             <text x={-8} y={y(p / 100)} textAnchor="end" dominantBaseline="middle" className="fill-ink-muted text-[13px]">
               {p}%
             </text>
@@ -99,7 +99,7 @@ export default function Home() {
         <EmptyingRace />
       </section>
 
-      <section aria-labelledby="how" className="border-t border-rule py-12">
+      <section aria-labelledby="how" className="border-t border-border py-12">
         <h2 id="how" className="mb-8 text-h2 font-extrabold">
           {t('home.how.title')}
         </h2>
@@ -113,14 +113,17 @@ export default function Home() {
         </dl>
       </section>
 
-      <section aria-labelledby="examples" className="border-t border-rule py-12">
+      <section aria-labelledby="examples" className="border-t border-border py-12">
         <h2 id="examples" className="mb-6 text-h2 font-extrabold">
           {t('home.examples')}
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PRESETS.map((p) => (
             <li key={p.key}>
-              <Link to={presetHref(p)} className="flex h-full flex-col gap-2 rounded-xl border border-rule bg-surface-raised p-4 hover:border-ink">
+              <Link
+                to={presetHref(p)}
+                className="flex h-full flex-col gap-2 rounded-xl border border-border bg-surface-raised p-4 hover:border-ink"
+              >
                 <span className="text-3xl" aria-hidden="true">
                   {[...p.meal, ...p.kept].map((i) => lookupFood(i.foodId)?.emoji).join('')}
                 </span>

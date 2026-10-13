@@ -24,7 +24,7 @@ export default function Science() {
   useEffect(() => {
     if (target) document.getElementById(target)?.scrollIntoView({ block: 'center' })
   }, [target])
-  const marked = (id: string) => (id === target ? 'bg-sunk' : '')
+  const marked = (id: string) => (id === target ? 'bg-surface-sunk' : '')
 
   return (
     <PageShell width="table">
@@ -64,7 +64,7 @@ export default function Science() {
           </thead>
           <tbody>
             {FOODS.map((f) => (
-              <tr key={f.id} id={`food:${f.id}`} className={`border-b border-rule align-top ${marked(`food:${f.id}`)}`}>
+              <tr key={f.id} id={`food:${f.id}`} className={`border-b border-border align-top ${marked(`food:${f.id}`)}`}>
                 <th scope="row" className="py-3 pr-3 text-left">
                   <span aria-hidden="true">{f.emoji} </span>
                   {localized(f.name, lang)}

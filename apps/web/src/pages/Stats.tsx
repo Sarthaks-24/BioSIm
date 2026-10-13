@@ -88,7 +88,7 @@ function Columns({ values }: { values: number[] }) {
       aria-hidden="true"
       className="mt-3 block h-auto max-w-full"
     >
-      <line x1={0} x2={width} y1={H + 0.5} y2={H + 0.5} stroke="var(--color-rule)" strokeWidth={1} />
+      <line x1={0} x2={width} y1={H + 0.5} y2={H + 0.5} stroke="var(--color-border)" strokeWidth={1} />
       {values.map((v, i) => {
         if (!v) return null
         const h = Math.max(3, (v / max) * H)
@@ -114,7 +114,7 @@ interface TileProps {
 /** One headline number: what it counts, the number, and what it covers. */
 function Tile({ label, value, note, wide, children }: TileProps) {
   return (
-    <div className={`rounded-xl border border-rule bg-surface-raised px-4 py-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
+    <div className={`rounded-xl border border-border bg-surface-raised px-4 py-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
       <dt className="text-sm font-semibold text-ink-muted">{label}</dt>
       <dd className="mt-1 text-4xl font-extrabold tracking-tight">{value}</dd>
       {note && <dd className="mt-1 text-sm text-ink-muted">{note}</dd>}
@@ -137,7 +137,7 @@ export default function Stats() {
 
   const h2 = 'mt-10 mb-3 text-h2 font-extrabold'
   const link = 'underline underline-offset-2 hover:text-ink'
-  const message = 'rounded-xl border border-dashed border-rule px-4 py-3'
+  const message = 'rounded-xl border border-dashed border-border px-4 py-3'
   const stats = state.status === 'ready' ? state.stats : null
   const weeks = stats?.weeks.length ?? 12
   // Facts about this build. The last release is only known from the weekly file.
@@ -157,7 +157,7 @@ export default function Stats() {
       <h1 className="text-display font-extrabold tracking-tight">{t('stats.title')}</h1>
       <p className="mt-4 max-w-[68ch] text-lg text-ink-muted">{t('stats.lead')}</p>
 
-      <p className="mt-6 max-w-[68ch] rounded-xl border border-rule bg-surface-raised px-4 py-3 text-lg">
+      <p className="mt-6 max-w-[68ch] rounded-xl border border-border bg-surface-raised px-4 py-3 text-lg">
         <RichText text={t('stats.noTracking')} />
       </p>
 
@@ -176,7 +176,7 @@ export default function Stats() {
               <button
                 type="button"
                 onClick={() => setAttempt((n) => n + 1)}
-                className="rounded-full border border-rule px-3 py-1.5 text-sm font-semibold hover:bg-sunk"
+                className="rounded-full border border-border px-3 py-1.5 text-sm font-semibold hover:bg-surface-sunk"
               >
                 {t('stats.retry')}
               </button>
@@ -219,7 +219,7 @@ export default function Stats() {
                 </thead>
                 <tbody>
                   {stats.weeks.map((w, i) => (
-                    <tr key={w.start} className="border-b border-rule">
+                    <tr key={w.start} className="border-b border-border">
                       <th scope="row" className="py-1.5 pr-3 text-left font-normal">
                         {day(w.start)}
                         {i === stats.weeks.length - 1 && <span className="text-ink-muted"> ({t('stats.thisWeek')})</span>}
@@ -246,9 +246,9 @@ export default function Stats() {
         <h2 id="stats-version" className={h2}>
           {t('stats.factsTitle')}
         </h2>
-        <dl className="border-t border-rule">
+        <dl className="border-t border-border">
           {facts.map(([label, value]) => (
-            <div key={label} className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
+            <div key={label} className="flex items-baseline justify-between gap-4 border-b border-border py-2">
               <dt className="text-ink-muted">{label}</dt>
               <dd className="text-right font-semibold">{value}</dd>
             </div>

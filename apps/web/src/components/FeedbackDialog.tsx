@@ -59,7 +59,7 @@ export default function FeedbackDialog({
     }
   }
 
-  const field = 'mt-1 w-full rounded-lg border border-rule bg-white px-3 py-2'
+  const field = 'mt-1 w-full rounded-lg border border-border bg-white px-3 py-2'
   const warning = <p className="text-xs font-semibold text-ink">{t('feedback.publicWarning')}</p>
 
   const open = () => {
@@ -110,7 +110,11 @@ export default function FeedbackDialog({
             )}
           </div>
           <div className="flex flex-wrap justify-end gap-2">
-            <button type="button" onClick={() => ref.current?.close()} className="rounded-full px-4 py-2 font-semibold hover:bg-sunk">
+            <button
+              type="button"
+              onClick={() => ref.current?.close()}
+              className="rounded-full px-4 py-2 font-semibold hover:bg-surface-sunk"
+            >
               {t('feedback.close')}
             </button>
             <button

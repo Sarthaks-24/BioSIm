@@ -35,7 +35,7 @@ export function FirstRunNote() {
   return (
     <section
       aria-labelledby="first-run-title"
-      className="mb-4 flex flex-col gap-3 rounded-xl border border-rule bg-surface-raised px-4 py-3 sm:flex-row sm:items-start"
+      className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 sm:flex-row sm:items-start"
     >
       <div className="min-w-0 flex-1 text-sm leading-relaxed">
         <h2 id="first-run-title" className="font-semibold text-ink">

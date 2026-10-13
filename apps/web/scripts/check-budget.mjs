@@ -67,6 +67,9 @@
 //   links. Vite's lazy-import helper, which had ridden in the i18n chunk with the hi.json import,
 //   is kept there by a chunk group (vite.config.ts) rather than becoming a file of its own:
 //   /sim stays 188.2 KB, Home 144.9 → 144.8 KB.
+//   T1 / FP-10 (2026-10-13): one token set (longer semantic class names: surface-raised for shelf,
+//   ink-muted for ink-2) and PageShell, which the not-found page in the entry chunk uses:
+//   /sim 188.232 → 188.311 KB (+0.08, ledger row +0.1 against a planned −0.1), Home 144.8 → 144.9 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

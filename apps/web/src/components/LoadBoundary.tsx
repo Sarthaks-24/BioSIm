@@ -87,7 +87,8 @@ export class LoadBoundary extends Component<
  */
 export function LoadFailed({ onRetry, attempt = 0, focus = false }: { onRetry: () => void; attempt?: number; focus?: boolean }) {
   const { t } = useTranslation()
-  const button = 'mt-2 min-h-11 rounded-control bg-surface-sunk px-3 text-control font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9'
+  const button =
+    'mt-2 min-h-11 rounded-control bg-surface-sunk px-3 text-control font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9'
   return (
     <>
       <p className="text-caption text-ink-muted" role="alert">
