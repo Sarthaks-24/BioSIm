@@ -1,4 +1,5 @@
-import { simulate, stomachFraction, type FoodLookup, type MealItem } from '@lifepeek/engine'
+import { stomachFraction, type FoodLookup, type MealItem } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { HERO_END_MIN, HERO_STEP_MIN, type Hero, type HeroLine } from './heroShape.ts'
 

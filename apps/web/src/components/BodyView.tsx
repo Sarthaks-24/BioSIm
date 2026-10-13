@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import FlatBody from '../flat/FlatBody.tsx'
 import { hasWebGL } from '../lib/webgl.ts'
 
@@ -12,7 +12,7 @@ const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
  *
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
  */
-export default function BodyView({ sim, label }: { sim: Simulation; label: string }) {
+export default function BodyView({ sim, label }: { sim: RunResult; label: string }) {
   const [lost, setLost] = useState(false)
   const flat = <FlatBody sim={sim} label={label} />
   const fallback = (

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { activeStage, buildMeal, decodeMeal, gutIsDone, mealLocationAt, simulate } from '@lifepeek/engine'
+import { activeStage, buildMeal, decodeMeal, gutIsDone, leftBodyAtEnd, mealLocationAt } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { amountOf, nowKey, nowWhere, parseNowKey } from './nowWhere.ts'
 
@@ -71,7 +72,7 @@ describe('where the meal is now', () => {
   const meals = [...FOODS.map((f) => `${f.id}:1`), 'cheeseburger:1,fries:1', 'water:3', 'roti:2,dal:1,milk:1', 'cola:1,apple:1']
   it.each(meals)('%s: "done" only once the waste has left, and "the rest left as waste" only with leftovers', (meal) => {
     const run = sim(meal)
-    const out = run.excretedG[run.length - 1]!
+    const out = leftBodyAtEnd(run)
     let first: number | null = null
     for (let t = 0; t <= run.horizonMin; t += run.stepMin) {
       if (nowWhere(run, t).stage === 'done') {
@@ -97,7 +98,7 @@ describe('where the meal is now', () => {
     expect(nowWhere(run, end)).toEqual({ kind: 'done', stage: 'done', body: 'all', restLeft: false })
     // Some of the waste is still in the colon at 48 h: the words claim only what was absorbed.
     const loc = mealLocationAt(run, end)
-    expect(loc.largeIntestine).toBeGreaterThan(0.1 * run.excretedG[run.length - 1]!)
+    expect(loc.largeIntestine).toBeGreaterThan(0.1 * leftBodyAtEnd(run))
     for (let t = 0; t < end; t += run.stepMin) expect(nowWhere(run, t).stage, `${t} min`).not.toBe('done')
     expect(nowWhere(run, end - run.stepMin)).toMatchObject({ kind: 'gut', stage: 'largeIntestine' })
   })
@@ -125,7 +126,7 @@ describe('where the meal is now', () => {
     if (gutIsDone(loc)) {
       expect(w).toMatchObject({
         kind: 'done',
-        restLeft: run.events.firstExit !== null && loc.largeIntestine <= 0.1 * run.excretedG[run.length - 1]!,
+        restLeft: run.events.firstExit !== null && loc.largeIntestine <= 0.1 * leftBodyAtEnd(run),
       })
     } else {
       expect(w.kind).toBe('gut')

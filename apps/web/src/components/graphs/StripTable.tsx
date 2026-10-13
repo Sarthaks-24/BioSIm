@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ActiveSignalId, Simulation } from '@lifepeek/engine'
+import type { ActiveSignalId, RunResult } from '@lifepeek/engine'
 import { formatBand, formatSignal } from '../../lib/formatSignal.ts'
 import { momentNameKey } from '../../lib/moments.ts'
 import { stripDescription } from '../../lib/stripSummary.ts'
@@ -26,8 +26,8 @@ export default function StripTable({
   slots,
   slot,
 }: {
-  run: Simulation
-  kept: Simulation | null
+  run: RunResult
+  kept: RunResult | null
   /** The lit layer's graphs (GraphColumn's slots). */
   slots: readonly Slot[]
   slot: string | null

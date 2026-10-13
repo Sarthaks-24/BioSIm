@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { GATE_ROUTES, SIM_BODY, gateSteps, modeFor } from './helpers/gate.ts'
+import { GATE_ROUTES, SIM_BODY, gateSteps, modeFor, onlyIn } from './helpers/gate.ts'
 
 // Works offline in class: after one visit the service worker holds the whole app, so the page
 // reloads without a network and still plays.
@@ -22,6 +22,24 @@ for (const route of GATE_ROUTES.offline) {
     await context.setOffline(false)
   })
 }
+
+// E-2: the engine is a lazy chunk, and the service worker precaches it, so a page opened cold
+// without a network (a new tab, after one visit) still runs the model: the body, the graphs and
+// the timeline all need a run.
+test('a cold start offline runs the engine (a new tab after one visit)', async ({ page, context }) => {
+  onlyIn('desktop')
+  await page.goto('/sim')
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+  await context.setOffline(true)
+  const cold = await context.newPage()
+  await cold.goto('/sim?v=2&a=cola:1&t=60')
+  await expect(cold.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+  await expect(cold.getByRole('slider', { name: 'Timeline' })).toBeVisible()
+  await expect(cold.locator('[data-stage] figure svg[role="img"]').first()).toBeVisible()
+  await context.setOffline(false)
+})
 
 // A classroom laptop keeps a tab open for days (council round 3): when a new version is waiting,
 // the open page says so and offers a reload, instead of keeping the old app until every tab is

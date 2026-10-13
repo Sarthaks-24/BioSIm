@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import { compareSummary, singleSummary, type Summary } from '../../lib/summary.ts'
 import { LineSwatch } from './KeptTag.tsx'
 
@@ -31,7 +31,7 @@ function Headline({ summary }: { summary: Summary }) {
  * kept grey for the kept one; both dark enough to read as text). The reason is the quieter second
  * sentence; on a phone it gives way to the body (the headline stays).
  */
-export default function SummaryLine({ run, kept, className = '' }: { run: Simulation; kept: Simulation | null; className?: string }) {
+export default function SummaryLine({ run, kept, className = '' }: { run: RunResult; kept: RunResult | null; className?: string }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const summary = useMemo(() => (kept ? compareSummary(run, kept, t, lang) : singleSummary(run, t, lang)), [run, kept, t, lang])

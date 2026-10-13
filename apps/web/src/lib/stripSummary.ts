@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { valueAt, type ActiveSignalId, type Series, type Simulation } from '@lifepeek/engine'
+import { valueAt, type ActiveSignalId, type Series, type RunResult } from '@lifepeek/engine'
 import { glucoseLeftBase } from '../components/graphs/marks.ts'
 import { formatNumber } from './formatSignal.ts'
 import { KNEE_MIN, formatDuration } from './time.ts'
@@ -16,7 +16,7 @@ import { KNEE_MIN, formatDuration } from './time.ts'
  * - Energy: what came in and what the resting body used in the first 6 h (the same window for
  *   every meal, so two meals compare). Described, never scored.
  */
-export function stripSummary(id: ActiveSignalId, run: Simulation, t: TFunction, lang: string): string | null {
+export function stripSummary(id: ActiveSignalId, run: RunResult, t: TFunction, lang: string): string | null {
   if (run.meal.items.length === 0) return null
   const series = run.signals.get(id)
   if (!series) return null
@@ -56,8 +56,8 @@ export function stripSummary(id: ActiveSignalId, run: Simulation, t: TFunction, 
 /** The graph's description: this meal's summary, then the kept meal's, named ("Kept: Cola. …"). */
 export function stripDescription(
   id: ActiveSignalId,
-  run: Simulation,
-  kept: Simulation | null,
+  run: RunResult,
+  kept: RunResult | null,
   keptName: string,
   t: TFunction,
   lang: string,

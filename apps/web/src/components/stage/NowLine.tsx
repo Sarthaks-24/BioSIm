@@ -1,7 +1,7 @@
 import { useCallback, useMemo, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { activeStage, type Simulation, type StageId } from '@lifepeek/engine'
+import { activeStage, type RunResult, type StageId } from '@lifepeek/engine'
 import { ORGAN_TONE } from '../../anatomy/tones.ts'
 import { isDrinkOnly } from '../../lib/summary.ts'
 import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } from '../../lib/nowWhere.ts'
@@ -14,12 +14,12 @@ import { mealNames, shortMealNames } from './mealText.ts'
  * The organ the body lights (activeStage), for the full stage text ("More").
  * Re-renders only when the stage changes, not every frame.
  */
-export function useNowStage(run: Simulation): StageId {
+export function useNowStage(run: RunResult): StageId {
   return useClock(useCallback((s) => activeStage(run, s.simMin), [run]))
 }
 
 /** Where the meal is now, in words (lib/nowWhere.ts). Re-renders only when the words change. */
-function useNowWhere(run: Simulation | null): NowWhere | null {
+function useNowWhere(run: RunResult | null): NowWhere | null {
   const key = useClock(useCallback((s) => (run ? nowKey(nowWhere(run, s.simMin)) : ''), [run]))
   return useMemo(() => (key ? parseNowKey(key) : null), [key])
 }
@@ -154,8 +154,8 @@ export function NowLine({
   panelId,
   className = '',
 }: {
-  run: Simulation
-  kept: Simulation | null
+  run: RunResult
+  kept: RunResult | null
   open: boolean
   onToggle: () => void
   /** The pill: "More" opens from it, and focus returns to it when the text closes. */
@@ -178,7 +178,10 @@ export function NowLine({
   // The kept meal's row holds its longest version the same way (it goes from "being eaten" to
   // "the gut is finished with it", and may wrap differently in Hindi or on the projector).
   const keptName = keptItems ? t('now.kept', { meal: shortMealNames(keptItems, i18n.language) }) : ''
-  const keptVersions = useMemo(() => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []), [kept, keptDrink, t])
+  const keptVersions = useMemo(
+    () => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []),
+    [kept, keptDrink, t],
+  )
   const cell = 'col-start-1 row-start-1'
   return (
     <div data-now={w.stage} className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>

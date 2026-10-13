@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { activeStage, buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
+import { activeStage, buildMeal, decodeMeal } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN } from './time.ts'
 import { groupClose, hitAreas, momentNameKey, runMoments } from './moments.ts'

@@ -2,7 +2,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
-import { runKey, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
+import { loadEngine, runKey, useEngineState, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
 import { useClock, useMealClock } from '../state/clock.ts'
@@ -17,13 +17,18 @@ import Notes from '../components/stage/Notes.tsx'
 import Timeline from '../components/stage/Timeline.tsx'
 import { mealNames } from '../components/stage/mealText.ts'
 import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
-import { LoadBoundary, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
+import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
 
 /**
  * The sheets (table, keys) are downloaded the first time one is opened: they are not part of the
  * first paint (size budget). If they don't arrive, a small box says so (review 15, MED 2).
  */
 const sheets = lazyWithRetry(() => import('../components/stage/Sheets.tsx'))
+
+// The engine is not in the stage's first download (E-2): its download starts as soon as this page's
+// code runs, before the stage's first render, and the stage draws once it is here (hooks/useRun.ts).
+// Once only: if it does not arrive, the box in the body's place offers "Try again" (EngineWait).
+void loadEngine()
 
 /**
  * P keeps the meal, and says what happened (the button shows it; a screen reader hears it): the
@@ -78,8 +83,8 @@ const ACTIONS: Record<KeyAction, () => void> = {
  */
 export default function Simulator() {
   const { t } = useTranslation()
-  const run = useRun('current')
-  const kept = useRun('kept')
+  const { run } = useRun('current')
+  const { run: kept } = useRun('kept')
   useMealClock()
   useLinkSync()
   useMomentsOnClock(run, kept)
@@ -109,33 +114,32 @@ export default function Simulator() {
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
     // dock's timeline (on a phone the Play button and its gap), so graphs and timeline share x.
+    // `data-stage` once the first run is drawn: until the engine is here only the meal bar shows.
     <div
-      data-stage=""
+      data-stage={run ? '' : undefined}
       className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-surface-page [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
     >
       <h1 className="sr-only">{t('sim.title')}</h1>
       <div className="lg:col-span-2">
         <MealBar />
       </div>
-      <div className="lg:col-span-2">
-        <Notes run={run} kept={kept} />
-      </div>
-      <BodyPane run={run} kept={kept} />
+      <div className="lg:col-span-2">{run && <Notes run={run} kept={kept} />}</div>
+      {run ? <BodyPane run={run} kept={kept} /> : <EngineWait />}
       {/*
        * On a phone the graph row has a fixed height, the same for every tab (so the body never
        * jumps when the tab changes), sized for the tallest: blood sugar with its medical note.
        * The body gets the rest of the first screen.
        */}
-      <div className="flex min-h-0 max-lg:h-[15rem] [&>section]:flex-1">
-        <GraphColumn run={run} kept={kept} />
-      </div>
+      <div className="flex min-h-0 max-lg:h-[15rem] [&>section]:flex-1">{run && <GraphColumn run={run} kept={kept} />}</div>
       {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
       <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
-        <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
-          <Timeline run={run} kept={kept} />
-        </Dock>
+        {run && (
+          <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
+            <Timeline run={run} kept={kept} />
+          </Dock>
+        )}
       </div>
-      {sheet && (
+      {sheet && run && (
         <LoadBoundary
           key={attempt}
           onFail={sheets.reset}
@@ -147,6 +151,37 @@ export default function Simulator() {
             <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} />
           </Suspense>
         </LoadBoundary>
+      )}
+    </div>
+  )
+}
+
+/** How long the engine may take before the stage says it is on its way (architecture §3.1). */
+const WORKING_AFTER_MS = 300
+
+/**
+ * In the body's place until the engine is here (E-2): nothing for the first 300 ms (it usually
+ * arrives sooner), then "Working it out…", said once by a screen reader. If it does not arrive,
+ * the load-failure box with "Try again" (and, after a failed try, "Reload").
+ */
+function EngineWait() {
+  const { t } = useTranslation()
+  const { failed, attempts } = useEngineState()
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setSlow(true), WORKING_AFTER_MS)
+    return () => clearTimeout(id)
+  }, [])
+  return (
+    <div data-engine-wait="" className="grid min-h-40 place-items-center p-4 text-center">
+      {failed ? (
+        <div className="max-w-[20rem]">
+          <LoadFailed onRetry={() => void loadEngine()} attempt={attempts - 1} focus />
+        </div>
+      ) : (
+        <p role="status" className="text-body text-ink-muted">
+          {slow ? t('stage.working') : ''}
+        </p>
       )}
     </div>
   )

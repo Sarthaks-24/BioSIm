@@ -1,4 +1,4 @@
-import type { Simulation } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import type { Sheet } from '../../state/sheet.ts'
 import type { Slot } from './GraphColumn.tsx'
 import StripTable from '../graphs/StripTable.tsx'
@@ -25,8 +25,8 @@ export default function Sheets({
   slots,
 }: {
   sheet: NonNullable<Sheet>
-  run: Simulation
-  kept: Simulation | null
+  run: RunResult
+  kept: RunResult | null
   slots: readonly Slot[]
 }) {
   return sheet.kind === 'table' ? <StripTable run={run} kept={kept} slots={slots} slot={sheet.slot} /> : <KeysHelp />

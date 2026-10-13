@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PROFILE,
   ORGANISM_PROFILES,
-  PROVIDES,
   SIGNALS,
   isActiveSignal,
   isChartable,
   type ActiveSignalId,
   type OrganismId,
 } from '@lifepeek/engine'
+import { PROVIDES } from '@lifepeek/engine/run'
 import * as humanAnatomy from '../anatomy/human.ts'
 import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'

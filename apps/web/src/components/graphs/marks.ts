@@ -1,4 +1,4 @@
-import { DEFAULT_ORGANISM, ORGANISM_MODELS, valueAt, type ActiveSignalId, type EventId, type Simulation } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, ORGANISM_PARAMS, valueAt, type ActiveSignalId, type EventId, type RunResult } from '@lifepeek/engine'
 
 /**
  * Which moments a graph marks on its own line, and when a moment is worth marking at all.
@@ -9,14 +9,14 @@ import { DEFAULT_ORGANISM, ORGANISM_MODELS, valueAt, type ActiveSignalId, type E
  * and summary sentences (WP-14, WP-15) use `glucoseLeftBase` for the same rule (lib/moments.ts).
  *
  * Values are read on the run's own clock (`run.stepMin`), and the threshold from the run's
- * organism model, never from a global parameter object (verify-1 C2). Every v2.0 run is human.
+ * organism's parameter set (ORGANISM_PARAMS), never from a global parameter object (verify-1 C2). Every v2.0 run is human.
  */
 
-/** The model a run was made with. v2.0 runs carry no organism, and every one is human. */
-const modelOf = (_run: Simulation) => ORGANISM_MODELS[DEFAULT_ORGANISM]
+/** The parameter set a run was made with. v2.0 runs carry no organism, and every one is human. */
+const paramsOf = (_run: RunResult) => ORGANISM_PARAMS[DEFAULT_ORGANISM]
 
 /** The rise above the before-meal level at the peak, in mg/dL (0 when there is no peak). */
-export function glucoseRise(run: Simulation): number {
+export function glucoseRise(run: RunResult): number {
   const g = run.signals.get('blood.glucose')
   const peak = run.moments.get('event.glucosePeak')?.atMin
   if (!g || peak == null) return 0
@@ -24,7 +24,7 @@ export function glucoseRise(run: Simulation): number {
 }
 
 /** True when blood sugar rose clearly above the before-meal level (more than the 5 mg/dL threshold). */
-export const glucoseLeftBase = (run: Simulation) => glucoseRise(run) > modelOf(run).params.glucose.backToBaseMgDl
+export const glucoseLeftBase = (run: RunResult) => glucoseRise(run) > paramsOf(run).glucose.backToBaseMgDl
 
 /** The moment drawn as a ring on each graph's own line, if the graph has one. */
 const MARKED: Partial<Record<ActiveSignalId, EventId>> = {
@@ -33,7 +33,7 @@ const MARKED: Partial<Record<ActiveSignalId, EventId>> = {
   'gut.stomach.contentG': 'event.stomachHalfEmpty',
 }
 
-export function markedMoment(signal: ActiveSignalId, run: Simulation): { id: EventId; atMin: number } | null {
+export function markedMoment(signal: ActiveSignalId, run: RunResult): { id: EventId; atMin: number } | null {
   const id = MARKED[signal]
   if (!id) return null
   if (id === 'event.glucosePeak' && !glucoseLeftBase(run)) return null
@@ -62,7 +62,7 @@ export interface StripMarker {
   labelKey: 'graph.highest' | 'graph.halfEnergyLeft' | 'signals.event.stomachHalfEmpty.name'
 }
 
-export function stripMarker(signal: ActiveSignalId, run: Simulation): StripMarker | null {
+export function stripMarker(signal: ActiveSignalId, run: RunResult): StripMarker | null {
   const moment = markedMoment(signal, run)
   const series = run.signals.get(signal)
   if (!moment || !series) return null

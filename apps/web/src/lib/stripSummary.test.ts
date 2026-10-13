@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import i18n from 'i18next'
-import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
+import { buildMeal, decodeMeal } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import { lookupFood } from '../data/foods.ts'
 import { stripDescription, stripSummary } from './stripSummary.ts'

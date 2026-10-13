@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
@@ -64,7 +64,7 @@ interface Marker {
   lines: string[]
 }
 
-export default function Timeline({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function Timeline({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
   const kneeLabel = useRef<HTMLSpanElement>(null)
@@ -98,7 +98,7 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
   }, [t])
 
   const markers = useMemo(() => {
-    const of = (sim: Simulation | null, lane: Marker['lane']): Marker[] => {
+    const of = (sim: RunResult | null, lane: Marker['lane']): Marker[] => {
       if (!sim || sim.meal.items.length === 0) return []
       const line = (m: Moment) => {
         const name = t(momentNameKey(m.id, sim))

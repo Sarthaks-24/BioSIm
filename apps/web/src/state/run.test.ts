@@ -4,6 +4,7 @@ import { V1_LINKS } from '../lib/v1-links.fixture.ts'
 import { lookupFood } from '../data/foods.ts'
 import { DEFAULT_LAYER, DEFAULT_MEAL, DEFAULT_RUN_PROFILE, INITIAL_RUN, linkQuery, useRunStore } from './run.ts'
 import { useClock } from './clock.ts'
+import * as engine from '@lifepeek/engine/run'
 import { computeRun, runKey } from '../hooks/useRun.ts'
 
 const run = () => useRunStore.getState()
@@ -62,9 +63,7 @@ describe('opening links', () => {
       const q = search(link.href)
       run().loadLink(q ? `${q}&o=frog` : 'o=frog')
       expect(run().unknownOrganism, link.href).toBe('frog')
-      expect(run().meal.length + (run().kept?.items.length ?? 0), link.href).toBe(
-        link.a.length + link.b.length - run().droppedFoods,
-      )
+      expect(run().meal.length + (run().kept?.items.length ?? 0), link.href).toBe(link.a.length + link.b.length - run().droppedFoods)
     }
     // The next link without `o` clears it.
     run().loadLink('v=2&a=cola:1')
@@ -232,8 +231,8 @@ describe('bare page', () => {
 
 describe('runs (hooks/useRun.ts)', () => {
   it('recomputes from inputs: the kept run has signals and moments but no dots', () => {
-    const current = computeRun(one('cola'), DEFAULT_RUN_PROFILE, 'current')
-    const kept = computeRun(one('cola'), DEFAULT_RUN_PROFILE, 'kept')
+    const current = computeRun(engine, one('cola'), DEFAULT_RUN_PROFILE, 'current')
+    const kept = computeRun(engine, one('cola'), DEFAULT_RUN_PROFILE, 'kept')
     expect(current.particles.length).toBeGreaterThan(0)
     expect(kept.particles).toHaveLength(0)
     expect(kept.signals.get('blood.glucose')).toBeDefined()

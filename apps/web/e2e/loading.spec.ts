@@ -1,6 +1,6 @@
-import { test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { CALLOUTS } from '../src/anatomy/callouts.ts'
-import { verdict } from './helpers/gate.ts'
+import { SIM_BODY, onlyIn, verdict } from './helpers/gate.ts'
 
 // B17 (T7, FP-7): no broken frames while the stage loads. Seen on WebKit under load: graph lines
 // drawn outside their plot, organ labels ~90 px off their organs. 1, 3 and 6 s after the page is
@@ -79,4 +79,51 @@ test('B17 no broken frames while the stage loads (1, 3 and 6 s)', async ({ page 
     problems.push(...found.map((p) => `${at / 1000} s: ${p}`))
   }
   verdict('B17 frames while loading', MODE, problems)
+})
+
+// E-2 (architecture §3.1): the engine is a lazy chunk, fetched when /sim mounts. Until it is here
+// only the meal bar shows; after 300 ms "Working it out…" says why. A file that does not arrive
+// gets the load-failure box with "Try again", never the error page. Project desktop.
+test.describe('the engine arriving late, or not at all', () => {
+  // The service worker would serve the file from its cache; these tests need the network.
+  test.use({ serviceWorkers: 'block' })
+  const ENGINE = /\/run-[\w-]+\.js$/
+  // Chromium: WebKit and Firefox keep a failed module for the page's life (hence Reload).
+  test.beforeEach(() => onlyIn('desktop'))
+
+  test('slow: "Working it out…" after 300 ms, then the stage', async ({ page }) => {
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route(ENGINE, async (route) => {
+      await held
+      await route.continue()
+    })
+    await page.goto('/sim?v=2&a=cola:1')
+    await expect(page.getByRole('button', { name: 'Add food' })).toBeVisible()
+    await expect(page.getByRole('status').filter({ hasText: 'Working it out…' })).toBeVisible()
+    await expect(page.locator('[data-stage]')).toHaveCount(0)
+    release()
+    await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+    await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
+    await expect(page.getByText('Working it out…')).toHaveCount(0)
+  })
+
+  test('failed: the box says so, "Try again" loads it, and after a second failure it offers Reload', async ({ page }) => {
+    // Past main.tsx's one reload after a failed file (the stale-tab fix): this is the case it can't fix.
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    let online = false
+    await page.route(ENGINE, (route) => (online ? route.continue() : route.abort()))
+    await page.goto('/sim?v=2&a=cola:1')
+    const failed = page.getByRole('alert').filter({ hasText: 'This didn’t load' })
+    await expect(failed).toHaveText('This didn’t load. Check the internet connection and try again.')
+    await expect(page.getByRole('heading', { level: 1, name: 'Something didn’t load' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Add food' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Reload' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible()
+    online = true
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+    await expect(failed).toHaveCount(0)
+  })
 })

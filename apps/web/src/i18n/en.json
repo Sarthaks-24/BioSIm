@@ -534,6 +534,7 @@
     "body": "The body",
     "bodyLabel": "The body, digesting {{meal}}",
     "empty": "Pick a food to start the clock.",
+    "working": "Working it out…",
     "examples": "Foods to start with",
     "layer": "Body system",
     "graphs": "Graphs",

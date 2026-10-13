@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NUTRIENT_KINDS, type Simulation } from '@lifepeek/engine'
+import { NUTRIENT_KINDS, type RunResult } from '@lifepeek/engine'
 import NutrientGlyph from '../NutrientGlyph.tsx'
 
 /**
@@ -9,7 +9,7 @@ import NutrientGlyph from '../NutrientGlyph.tsx'
  * colour is never the only cue. Where it goes is the stage's choice (BodyPane): over the legs, or on
  * a phone a line of its own.
  */
-export default function ParticleKey({ run, className = '' }: { run: Simulation; className?: string }) {
+export default function ParticleKey({ run, className = '' }: { run: RunResult; className?: string }) {
   const { t } = useTranslation()
   const kinds = useMemo(() => NUTRIENT_KINDS.filter((k) => run.particles.some((p) => p.kind === k)), [run])
   if (kinds.length === 0) return null

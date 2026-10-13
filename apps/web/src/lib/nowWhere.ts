@@ -1,4 +1,4 @@
-import { activeStage, gutIsDone, mealLocationAt, type MealLocation, type Simulation, type StageId } from '@lifepeek/engine'
+import { activeStage, gutIsDone, leftBodyAtEnd, mealLocationAt, type MealLocation, type RunResult, type StageId } from '@lifepeek/engine'
 
 /**
  * Where the meal is now, in words a class 7–10 student reads at a glance (council round 2, C1):
@@ -54,7 +54,7 @@ const shareIn = (loc: MealLocation, place: Place) =>
 const LEFTOVERS_DONE = 0.1
 
 /** The large intestine has passed on (nearly) all the waste it will pass on in this run. */
-const wastePassed = (run: Simulation, loc: MealLocation) => loc.largeIntestine <= LEFTOVERS_DONE * run.excretedG[run.length - 1]!
+const wastePassed = (run: RunResult, loc: MealLocation) => loc.largeIntestine <= LEFTOVERS_DONE * leftBodyAtEnd(run)
 
 /**
  * The gut has finished with the meal: the engine's test (`gutIsDone`: under 1 % of the meal still
@@ -70,7 +70,7 @@ const wastePassed = (run: Simulation, loc: MealLocation) => loc.largeIntestine <
  * stomach or the intestines at 48 h (several kilos, over the model's limit, which the notes say)
  * is not done: the line says where it still is.
  */
-export function gutFinished(run: Simulation, tMin: number, loc: MealLocation = mealLocationAt(run, tMin)): boolean {
+export function gutFinished(run: RunResult, tMin: number, loc: MealLocation = mealLocationAt(run, tMin)): boolean {
   if (!gutIsDone(loc)) return false
   const exit = run.events.firstExit
   if (exit && tMin < exit.typical) return false
@@ -78,7 +78,7 @@ export function gutFinished(run: Simulation, tMin: number, loc: MealLocation = m
   return wastePassed(run, loc) || tMin >= run.horizonMin
 }
 
-export function nowWhere(run: Simulation, tMin: number): NowWhere {
+export function nowWhere(run: RunResult, tMin: number): NowWhere {
   const stage: StageId = activeStage(run, tMin)
   if (stage === 'mouth' || stage === 'esophagus') return { kind: 'before', stage }
   const loc = mealLocationAt(run, tMin)
@@ -113,7 +113,7 @@ export const nowKey = (w: NowWhere): string => JSON.stringify(w)
 export const parseNowKey = (key: string): NowWhere => JSON.parse(key) as NowWhere
 
 /** Every set of words this run's Now line will say, in order: the line keeps the room of the longest. */
-export function nowKeysOf(run: Simulation): string[] {
+export function nowKeysOf(run: RunResult): string[] {
   const keys = new Set<string>()
   for (let t = 0; t <= run.horizonMin; t += run.stepMin) keys.add(nowKey(nowWhere(run, t)))
   return [...keys]

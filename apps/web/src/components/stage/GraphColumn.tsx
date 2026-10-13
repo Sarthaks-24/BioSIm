@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DEFAULT_ORGANISM, SIGNALS, isChartable, type ActiveSignalId, type ChartableSeries, type Simulation } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, SIGNALS, isChartable, type ActiveSignalId, type ChartableSeries, type RunResult } from '@lifepeek/engine'
 import { useProjector } from '../../hooks/useProjector.ts'
 import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
@@ -32,11 +32,11 @@ export function slotsOf(signals: readonly ActiveSignalId[]): Slot[] {
 }
 
 /** The lit layer's graph slots that have a line to draw for this run: never an empty frame. */
-export function useSlots(run: Simulation): Slot[] {
+export function useSlots(run: RunResult | null): Slot[] {
   const layer = useRunStore((s) => s.layer)
   const system = ORGANISMS[DEFAULT_ORGANISM].systems.find((s) => s.id === layer)
   return useMemo(
-    () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && run.signals.has(s.signals[0]!)),
+    () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && !!run?.signals.has(s.signals[0]!)),
     [system, run],
   )
 }
@@ -78,7 +78,7 @@ function useTabbed() {
  * The plots start `--plot-gutter` in from the column's edge, exactly where the dock's timeline
  * starts, so the playhead on every graph is straight above the timeline's thumb.
  */
-export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t, i18n } = useTranslation()
   const profile = useRunStore((s) => s.profile)
   const meal = useRunStore((s) => s.meal)

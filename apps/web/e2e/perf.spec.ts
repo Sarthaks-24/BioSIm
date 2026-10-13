@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { CPU_PATH, cpuPerFrame, median } from '../scripts/cpu-frame.mjs'
-import { GATE_ROUTES, gateSteps, measureFps, modeFor, verdict } from './helpers/gate.ts'
+import { GATE_ROUTES, bodySettled, gateSteps, measureFps, modeFor, verdict } from './helpers/gate.ts'
 
 // 30 fps gate (roadmap A9): the CPU is slowed 6× (a cheap phone), the body is flat (project perf
 // has no WebGL), and the page plays for 10 s, three times. The median counts.
@@ -65,4 +65,46 @@ test('CPU per frame while playing (report)', async ({ page }) => {
     'report',
     [],
   )
+})
+
+// E-2 (architecture §3.1): the engine is a lazy chunk, fetched when /sim mounts. From the request
+// for it to the stage drawn with the first run, at 4× CPU slowdown: p50 of 5 cold loads ≤ 400 ms.
+// Report for a week, then enforce. Measured after the body has settled (bodySettled), from the
+// page's own clock: the engine file's request (resource timing) to the first `[data-stage]`.
+test('first run after the engine loads, 4× CPU (report)', async ({ browser }) => {
+  test.setTimeout(180_000)
+  const LOADS = 5
+  const firstRun: number[] = []
+  const toStage: number[] = []
+  await gateSteps('first run', 'report', async () => {
+    for (let i = 0; i < LOADS; i++) {
+      // A new context each time: nothing cached, no service worker yet (a first visit).
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' })
+      const page = await context.newPage()
+      await page.addInitScript(() => {
+        localStorage.setItem('lifepeek:medicalNoteSeen', '1')
+        const seen = () => {
+          if (!document.querySelector('[data-stage]')) return false
+          ;(window as { __stageAt?: number }).__stageAt = performance.now()
+          return true
+        }
+        new MutationObserver((_m, o) => seen() && o.disconnect()).observe(document, { subtree: true, childList: true, attributes: true })
+      })
+      const cdp = await context.newCDPSession(page)
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
+      await page.goto('/sim?v=2&a=cola:1')
+      await bodySettled(page)
+      const t = await page.evaluate(() => {
+        const engine = performance.getEntriesByType('resource').find((e) => /\/run-[\w-]+\.js$/.test(e.name))
+        return { engineAt: engine?.startTime ?? NaN, stageAt: (window as { __stageAt?: number }).__stageAt ?? NaN }
+      })
+      firstRun.push(t.stageAt - t.engineAt)
+      toStage.push(t.stageAt)
+      await context.close()
+    }
+  })
+  const p50 = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!
+  const ms = (xs: number[]) => xs.map((x) => Math.round(x)).join(', ')
+  const label = `first run p50 ${Math.round(p50(firstRun))} ms from the engine request (${ms(firstRun)}); page start → stage p50 ${Math.round(p50(toStage))} ms (${ms(toStage)}); 4× CPU`
+  verdict(label, 'report', firstRun.length === LOADS && p50(firstRun) <= 400 ? [] : ['over 400 ms (or not measured)'])
 })

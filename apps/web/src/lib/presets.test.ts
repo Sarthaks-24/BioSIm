@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { decodeMeal, simulate, valueAt, type MealItem } from '@lifepeek/engine'
+import { decodeMeal, valueAt, type MealItem } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { runMoments } from './moments.ts'
 import { LESSONS, PRESETS, QR_PATH, TASKS } from './presets.ts'

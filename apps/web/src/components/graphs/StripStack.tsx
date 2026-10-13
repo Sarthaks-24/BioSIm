@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ActiveSignalId, ChartableSeries, ProfileId, Series, Simulation } from '@lifepeek/engine'
+import type { ActiveSignalId, ChartableSeries, ProfileId, Series, RunResult } from '@lifepeek/engine'
 import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
 import { stripDescription, stripSummary } from '../../lib/stripSummary.ts'
@@ -35,8 +35,8 @@ interface RunStripProps {
   /** The graph's slot ("gut", "blood", "energy"): its tab, and the table it opens. */
   slot: string
   series: ChartableSeries
-  run: Simulation
-  kept: Simulation | null
+  run: RunResult
+  kept: RunResult | null
   /** The meals' short names, for the legend. */
   runName: string
   keptName: string

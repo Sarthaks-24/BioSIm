@@ -74,6 +74,11 @@
 //   ink-muted for ink-2) and PageShell, which the not-found page in the entry chunk uses:
 //   /sim 187.955 → 188.045 KB on main with FIX-H (+0.09; ledger row +0.1 against a planned −0.1),
 //   Home 144.55 → 144.62 KB.
+//   E-2 (2026-10-14, branch v3): the engine is a lazy chunk (`@lifepeek/engine/run`, loaded by
+//   hooks/useRun.ts when /sim mounts); the main thread keeps the lean catalog (its definitions,
+//   retired names and reserved rows moved to catalog-docs.ts), the codec and the view helpers
+//   (view.ts): /sim 188.781 → 183.897 KB on v3 with T7 (−4.9), engine chunk 4.7 KB. The
+//   "engine in /sim" guard below is enforced from here on.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
@@ -83,6 +88,9 @@ import { fileURLToPath } from 'node:url'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
+
+/** The engine entry's key in the manifest (packages/engine/src/run.ts, relative to apps/web). */
+const ENGINE = '../../packages/engine/src/run.ts'
 
 const BUDGETS = [
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
@@ -97,6 +105,8 @@ const BUDGETS = [
     mode: 'enforce',
   },
   { name: 'precache (raw)', precache: true, max: 2600 * KB, mode: 'enforce' },
+  // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
+  { name: 'engine (lazy)', roots: [ENGINE], minus: ['index.html', 'src/pages/Simulator.tsx'], max: 45 * KB, mode: 'report' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
@@ -195,6 +205,41 @@ for (const r of rows) {
   console.log(
     `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (report only; missing: ${missing.join(', ')})` : ' ok'}`,
   )
+}
+
+// Engine not in /sim (E-2, architecture §4; enforced): /sim's first download must not carry the
+// engine (its own error text) or any other system's signals (the first ID of each, as the lean
+// catalog and the packs keep them out). The engine chunk is a lazy, precached file, and a production
+// build has dropped ctx.get's development checks (core/module.ts GUARDS).
+const guardProblems = []
+{
+  const NOT_IN_SIM = [
+    'simulate: unknown organism',
+    'heart.rate', // circulation
+    'lungs.breathRate', // breathing
+    'kidney.filtrationRate', // kidneys
+    'blood.insulin', // hormones
+    'brain.glucoseUse', // nerves
+  ]
+  for (const f of staticFiles(['index.html', 'src/pages/Simulator.tsx'])) {
+    const text = fs.readFileSync(path.join(dist, f), 'utf8')
+    for (const s of NOT_IN_SIM) if (text.includes(s)) guardProblems.push(`${f} (in /sim's first download) has "${s}"`)
+  }
+  const engine = manifest[ENGINE]
+  if (!engine?.isDynamicEntry) guardProblems.push(`${ENGINE} is not a lazy chunk of its own`)
+  else {
+    const text = fs.readFileSync(path.join(dist, engine.file), 'utf8')
+    if (!text.includes('simulate: unknown organism'))
+      guardProblems.push(`${engine.file} is not the engine (no "simulate: unknown organism")`)
+    if (text.includes('not in needs')) guardProblems.push(`${engine.file} still has ctx.get's development checks ("not in needs")`)
+    if (!precacheFiles().includes(engine.file)) guardProblems.push(`${engine.file} is not precached: /sim would not run offline`)
+  }
+  console.log(`\nEngine not in /sim (enforce): ${guardProblems.length ? `FAILS\n  ${guardProblems.join('\n  ')}` : 'ok'}`)
+}
+
+if (guardProblems.length) {
+  console.error('\nThe engine guard failed. See apps/web/scripts/check-budget.mjs.')
+  process.exit(1)
 }
 
 if (rows.some((r) => r.failed)) {

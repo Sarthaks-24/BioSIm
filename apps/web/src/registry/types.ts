@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import type { ActiveSignalId, Clock, OrganismId, ProfileId, Simulation } from '@lifepeek/engine'
+import type { ActiveSignalId, Clock, OrganismId, ProfileId, RunResult } from '@lifepeek/engine'
 
 /**
  * The registry: organisms, their systems and organs as data (ROADMAP A5 + O-0, plans/v2
@@ -12,7 +12,7 @@ import type { ActiveSignalId, Clock, OrganismId, ProfileId, Simulation } from '@
 
 /** A layer's props: the run it draws. Settled when the first layer ships. */
 export interface LayerProps {
-  sim: Simulation
+  sim: RunResult
   /** Accessible description of what the picture shows. */
   label: string
 }

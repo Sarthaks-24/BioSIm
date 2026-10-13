@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PROFILE, simulate, valueAt } from '@lifepeek/engine'
+import { DEFAULT_PROFILE, valueAt } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { ORGANISMS } from '../registry/index.ts'
 import { FILL_SIGNAL, bodyStateAt, gramsIn } from './bodyState.ts'

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { valueAt, type Simulation } from '@lifepeek/engine'
+import { valueAt, type RunResult } from '@lifepeek/engine'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
@@ -40,8 +40,8 @@ export default function StripAnnouncer({
   slots: readonly Slot[]
   /** The graphs in view. */
   shown: readonly Slot[]
-  run: Simulation
-  kept: Simulation | null
+  run: RunResult
+  kept: RunResult | null
 }) {
   const { t, i18n } = useTranslation()
   const region = useRef<HTMLParagraphElement>(null)
@@ -56,7 +56,7 @@ export default function StripAnnouncer({
           const s = run.signals.get(id)
           if (!s) return []
           const k = i === 0 ? kept?.signals.get(id) : undefined
-          const value = (series: typeof s, sim: Simulation) => formatSignal(valueAt(series, simMin, sim.stepMin), series.meta, t, lang)
+          const value = (series: typeof s, sim: RunResult) => formatSignal(valueAt(series, simMin, sim.stepMin), series.meta, t, lang)
           const own = `${t(`${s.meta.i18nKey}.name`)} ${value(s, run)}`
           return [k && kept ? `${own}, ${t('table.keptValue', { value: value(k, kept) })}` : own]
         }),

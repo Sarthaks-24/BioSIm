@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { DEFAULT_ORGANISM, ORGANISM_MODELS, valueAt, type Meal, type Simulation } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, ORGANISM_PARAMS, valueAt, type Meal, type RunResult } from '@lifepeek/engine'
 import { shortMealNames } from '../components/stage/mealText.ts'
 import { formatDuration } from './time.ts'
 
@@ -45,11 +45,11 @@ export const isDrinkOnly = (meal: Meal) => meal.items.length > 0 && meal.solid.m
 export const SIMILAR_RATIO = 1.15
 
 /** When half of the meal has left the stomach (event.stomachHalfEmpty); the end of the run if never. */
-const halfMin = (run: Simulation) => run.moments.get('event.stomachHalfEmpty')?.atMin ?? run.horizonMin
+const halfMin = (run: RunResult) => run.moments.get('event.stomachHalfEmpty')?.atMin ?? run.horizonMin
 /** True when half of the meal never left the stomach within the run (review 14-17, LOW 6). */
-const neverHalf = (run: Simulation) => run.moments.get('event.stomachHalfEmpty')?.atMin == null
+const neverHalf = (run: RunResult) => run.moments.get('event.stomachHalfEmpty')?.atMin == null
 
-export function summaryData(run: Simulation, kept: Simulation | null): SummaryData {
+export function summaryData(run: RunResult, kept: RunResult | null): SummaryData {
   if (run.meal.items.length === 0) return { kind: 'empty' }
   const single = { kind: 'single', halfMin: halfMin(run), byWeight: run.events.noNutrients, open: neverHalf(run) } as const
   if (!kept || kept.meal.items.length === 0) return single
@@ -100,13 +100,13 @@ export interface BloodData {
  * timeline's rule, marks.ts glucoseLeftBase). Worked out here, not imported from marks.ts: that
  * import split the stage's first download into one more file (size budget).
  */
-function bloodOf(run: Simulation): { peak: number; backMin: number } | null {
+function bloodOf(run: RunResult): { peak: number; backMin: number } | null {
   const g = run.signals.get('blood.glucose')
   const peakMin = run.moments.get('event.glucosePeak')?.atMin
   const backMin = run.moments.get('event.glucoseBackToBase')?.atMin
   if (!g || peakMin == null || backMin == null) return null
   const peak = valueAt(g, peakMin, run.stepMin)
-  return peak - g.values[0]! > ORGANISM_MODELS[DEFAULT_ORGANISM].params.glucose.backToBaseMgDl ? { peak, backMin } : null
+  return peak - g.values[0]! > ORGANISM_PARAMS[DEFAULT_ORGANISM].glucose.backToBaseMgDl ? { peak, backMin } : null
 }
 
 /**
@@ -117,7 +117,7 @@ function bloodOf(run: Simulation): { peak: number; backMin: number } | null {
  * the sentence is about blood sugar: how much longer it stays raised, and, when the highest points
  * match, why. Null when it does not apply (other foods, no rise, or under 15 min apart).
  */
-export function bloodData(run: Simulation, kept: Simulation): BloodData | null {
+export function bloodData(run: RunResult, kept: RunResult): BloodData | null {
   if (!sameFoods(run.meal, kept.meal)) return null
   const blood = { run: bloodOf(run), kept: bloodOf(kept) }
   if (!blood.run || !blood.kept) return null
@@ -158,7 +158,7 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
  * food name, since some foods are feminine (इडली, दाल) and some masculine (केला); i18n/agreement.test.ts
  * holds them to it, and to the case each name is passed in below.
  */
-function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: string, oblique = false): Record<RunKey, string> {
+function names(run: RunResult, kept: RunResult | null, t: TFunction, lang: string, oblique = false): Record<RunKey, string> {
   const thisMeal = t(oblique ? 'summary.oblique.thisMeal' : 'summary.thisMeal')
   const keptMeal = t(oblique ? 'summary.oblique.keptMeal' : 'summary.keptMeal')
   // The same foods in other amounts are named by amount, "1 serving of cola" and "4 servings of
@@ -170,7 +170,7 @@ function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: str
       // English names go mid-sentence in lower case ("servings of cola"); Hindi has no case.
       food: lang.startsWith('en') ? food.toLowerCase() : food,
     })
-  const short = (s: Simulation) =>
+  const short = (s: RunResult) =>
     s.meal.items.length > 2
       ? ''
       : byAmount
@@ -186,7 +186,7 @@ function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: str
 }
 
 /** One meal: "Half of the food energy in Cola has left the stomach after 30 min." */
-export function singleSummary(run: Simulation, t: TFunction, lang: string): Summary | null {
+export function singleSummary(run: RunResult, t: TFunction, lang: string): Summary | null {
   const d = summaryData(run, null)
   if (d.kind !== 'single') return null
   const meal = names(run, null, t, lang, true).run
@@ -196,7 +196,7 @@ export function singleSummary(run: Simulation, t: TFunction, lang: string): Summ
 }
 
 /** This meal against the kept one: "Cola leaves the stomach about 9× faster than Cheeseburger + French fries." */
-export function compareSummary(run: Simulation, kept: Simulation, t: TFunction, lang: string): Summary | null {
+export function compareSummary(run: RunResult, kept: RunResult, t: TFunction, lang: string): Summary | null {
   const b = bloodData(run, kept)
   if (b) {
     // Both names stand before a postposition in Hindi ("… के बाद").

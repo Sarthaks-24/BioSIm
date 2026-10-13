@@ -1,6 +1,6 @@
 import { Suspense, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DEFAULT_ORGANISM, type Simulation } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, type RunResult } from '@lifepeek/engine'
 import BodyView from '../BodyView.tsx'
 import { LoadBoundary, LoadFailed, lazyWithRetry } from '../LoadBoundary.tsx'
 import { lookupFood } from '../../data/foods.ts'
@@ -37,7 +37,7 @@ const EXAMPLES = ['cola', 'roti', 'apple'] as const
  * to, and the summary a row under it. It used to lie over the top of the body and hid the stomach
  * there, most of all in Hindi (WP-18); as rows, nothing covers the picture.
  */
-export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function BodyPane({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t, i18n } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const hasMeal = meal.length > 0

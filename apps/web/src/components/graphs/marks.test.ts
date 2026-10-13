@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildMeal, decodeMeal, indexAt, simulate, stomachFraction, valueAt, type Simulation } from '@lifepeek/engine'
+import { buildMeal, decodeMeal, indexAt, stomachFraction, valueAt, type RunResult } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { FOODS, lookupFood } from '../../data/foods.ts'
 import { stripMarker } from './marks.ts'
 
@@ -7,7 +8,7 @@ const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), 
 const meals = [...FOODS.map((f) => `${f.id}:1`), 'cheeseburger:1,fries:1,cola:1', 'cheeseburger:1,fries:1', 'roti:2,dal:1', 'cola:4']
 
 /** Grams in the stomach as a share of the meal's grams, at minute m. */
-const gramsShare = (sim: Simulation, m: number) => valueAt(sim.signals.get('gut.stomach.contentG')!, m) / sim.meal.total.massG
+const gramsShare = (sim: RunResult, m: number) => valueAt(sim.signals.get('gut.stomach.contentG')!, m) / sim.meal.total.massG
 
 describe('the ring on the stomach graph says what it marks (council MUST 1)', () => {
   it.each(meals)('%s: the ring sits on the grams line, and the quantity its label names is half there', (meal) => {

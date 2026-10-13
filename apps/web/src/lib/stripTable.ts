@@ -1,4 +1,4 @@
-import { EVENT_IDS, valueAt, type ActiveSignalId, type EventId, type Series, type Simulation } from '@lifepeek/engine'
+import { EVENT_IDS, valueAt, type ActiveSignalId, type EventId, type Series, type RunResult } from '@lifepeek/engine'
 import { runMoments, type Moment } from './moments.ts'
 
 /**
@@ -23,7 +23,7 @@ export interface TableColumn {
  * line, how much people differ (when the graph draws that band), then the second line (energy
  * used at rest), then the kept meal's line (only the first line has a kept ghost, as on the graph).
  */
-export function tableColumns(signals: readonly ActiveSignalId[], run: Simulation, kept: Simulation | null): TableColumn[] {
+export function tableColumns(signals: readonly ActiveSignalId[], run: RunResult, kept: RunResult | null): TableColumn[] {
   const cols: TableColumn[] = []
   signals.forEach((id, i) => {
     const s = run.signals.get(id)
@@ -49,7 +49,7 @@ export function cellValue(col: TableColumn, min: number, stepMin: number): numbe
  * by the graph it was first drawn on (event.mostlyAbsorbed is about carbohydrate, protein and fat,
  * not only the carbohydrate signal the catalog files it under).
  */
-export function momentRows(run: Simulation, kept: Simulation | null): { id: EventId; run?: Moment; kept?: Moment }[] {
+export function momentRows(run: RunResult, kept: RunResult | null): { id: EventId; run?: Moment; kept?: Moment }[] {
   const own = new Map(runMoments(run).map((m) => [m.id, m]))
   const other = new Map((kept && kept.meal.items.length > 0 ? runMoments(kept) : []).map((m) => [m.id, m]))
   return EVENT_IDS.filter((id) => own.has(id) || other.has(id)).map((id) => ({ id, run: own.get(id), kept: other.get(id) }))

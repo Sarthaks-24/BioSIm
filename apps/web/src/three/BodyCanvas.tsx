@@ -12,7 +12,7 @@ import {
   Vector3,
   setConsoleFunction,
 } from 'three'
-import { NUTRIENT_KINDS, activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
+import { NUTRIENT_KINDS, activeStage, type NutrientKind, type RunResult, type StageId } from '@lifepeek/engine'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { particlePosition, tumble } from '../anatomy/human.ts'
 import { bodyStateAt } from '../anatomy/bodyState.ts'
@@ -40,7 +40,7 @@ setConsoleFunction((type: 'log' | 'warn' | 'error', message: string, ...params: 
 })
 
 interface Props {
-  sim: Simulation
+  sim: RunResult
   /** Accessible description of what the picture shows. */
   label: string
   /** Called if the GPU drops the WebGL context (common on cheap phones); the parent shows the flat view instead. */
@@ -199,7 +199,7 @@ function FirstFrame({ onDrawn }: { onDrawn: () => void }) {
  * Where most of the meal is now. Re-renders only when that changes (a few times per meal), not
  * every sim minute while playing.
  */
-function useStage(sim: Simulation, clock: BodyClock): StageId {
+function useStage(sim: RunResult, clock: BodyClock): StageId {
   const [stage, setStage] = useState(() => activeStage(sim, clock.now()))
   const shown = useRef(stage)
   useEffect(() => {
@@ -228,7 +228,7 @@ function Lighting() {
 }
 
 /** Re-render the canvas whenever simulated time, the meal or the motion setting changes. */
-function Invalidator({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
+function Invalidator({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; reduced: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => clock.subscribe(() => invalidate()), [clock, invalidate])
   useEffect(() => invalidate(), [sim, reduced, invalidate])
@@ -236,7 +236,7 @@ function Invalidator({ sim, clock, reduced }: { sim: Simulation; clock: BodyCloc
 }
 
 /** Organ highlight per frame: −1 faded (empty), 0 normal, 1 where the meal is now. */
-function writeState(u: LayerUniforms, sim: Simulation, t: number) {
+function writeState(u: LayerUniforms, sim: RunResult, t: number) {
   const s = bodyStateAt(sim, t)
   u.uFill.value = s.stomachFill
   const state = u.uState.value
@@ -257,7 +257,7 @@ function writeState(u: LayerUniforms, sim: Simulation, t: number) {
   }
 }
 
-function Body({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
+function Body({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; reduced: boolean }) {
   const geo = sharedGeometry()
   const mats = useMemo(() => {
     const u = layerUniforms()
@@ -310,7 +310,7 @@ function DepthClear() {
   return <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} onBeforeRender={(gl) => gl.clearDepth()} />
 }
 
-function Swarm({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; reduced: boolean }) {
+function Swarm({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; reduced: boolean }) {
   const geo = sharedGeometry()
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
   const materials = useMemo(() => Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, particleMaterial(NUTRIENT_COLOR[k])])), []) as Record<
@@ -319,9 +319,9 @@ function Swarm({ sim, clock, reduced }: { sim: Simulation; clock: BodyClock; red
   >
   useEffect(() => () => Object.values(materials).forEach((m) => m.dispose()), [materials])
   const byKind = useMemo(() => {
-    const groups = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, [] as Simulation['particles']])) as Record<
+    const groups = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, [] as RunResult['particles']])) as Record<
       NutrientKind,
-      Simulation['particles']
+      RunResult['particles']
     >
     for (const p of sim.particles) groups[p.kind].push(p)
     return groups

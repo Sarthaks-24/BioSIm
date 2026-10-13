@@ -1,4 +1,4 @@
-import { EVENT_IDS, type EventId, type Simulation } from '@lifepeek/engine'
+import { EVENT_IDS, type EventId, type RunResult } from '@lifepeek/engine'
 import { glucoseLeftBase } from '../components/graphs/marks.ts'
 
 /**
@@ -20,7 +20,7 @@ export interface Moment {
   high?: number
 }
 
-export function runMoments(run: Simulation): Moment[] {
+export function runMoments(run: RunResult): Moment[] {
   const leftBase = glucoseLeftBase(run)
   const out: Moment[] = []
   for (const id of EVENT_IDS) {
@@ -36,7 +36,7 @@ export function runMoments(run: Simulation): Moment[] {
  * The words for a moment. "Half has left the stomach" is by food energy (water: by weight), so
  * it says "the energy" when the meal has any, as the stomach graph's ring does (council MUST 1).
  */
-export function momentNameKey(id: EventId, run: Simulation): string {
+export function momentNameKey(id: EventId, run: RunResult): string {
   if (id === 'event.stomachHalfEmpty' && !run.events.noNutrients) return 'graph.halfEnergyLeft'
   return `signals.${id}.name`
 }

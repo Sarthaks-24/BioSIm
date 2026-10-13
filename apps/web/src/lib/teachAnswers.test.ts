@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { simulate, valueAt, type ActiveSignalId, type MealItem, type Simulation } from '@lifepeek/engine'
+import { valueAt, type ActiveSignalId, type MealItem, type RunResult } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { lookupFood } from '../data/foods.ts'
@@ -17,7 +18,7 @@ vi.mock('../i18n/index.ts', () => ({
  * Each question is answered from the screen its link opens (lib/presets.ts TASKS).
  */
 const run = (items: MealItem[]) => simulate({ items }, { lookup: lookupFood, particles: 0 })
-const at = (sim: Simulation, id: ActiveSignalId, min: number) => valueAt(sim.signals.get(id)!, min)
+const at = (sim: RunResult, id: ActiveSignalId, min: number) => valueAt(sim.signals.get(id)!, min)
 const [halfLeft, , bloodAt1h, energyAt3h] = TASKS
 const cola = run(halfLeft!.meal)
 const burgerFries = run(energyAt3h!.kept!)

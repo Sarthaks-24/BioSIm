@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { MODEL_VERSION, PARAMS, type Simulation } from '@lifepeek/engine'
+import { MODEL_VERSION, PARAMS, type RunResult } from '@lifepeek/engine'
 import { readPref, writePref } from '../../lib/prefs.ts'
 import { useRunStore } from '../../state/run.ts'
 import { MEDICAL_HREF } from '../MedicalNote.tsx'
@@ -13,7 +13,7 @@ import { InfoIcon } from '../kit/index.ts'
  * a link named that no longer exist, and a meal over the size the model is good for. The texts are v1's; the newer-version one is new.
  * The "too big" alert for a food being added sits where it is added (food sheet, servings).
  */
-export default function Notes({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function Notes({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t } = useTranslation()
   const linkVersion = useRunStore((s) => s.linkModelVersion)
   const unknownOrganism = useRunStore((s) => s.unknownOrganism)

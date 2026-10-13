@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import i18n from 'i18next'
-import { buildMeal, decodeMeal, simulate, type Simulation } from '@lifepeek/engine'
+import { buildMeal, decodeMeal, type RunResult } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import hi from './hi.json'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { shortFoodName, shortMealNames } from '../components/stage/mealText.ts'
@@ -152,7 +153,7 @@ describe('Hindi agreement with food names (FIX-F)', () => {
 })
 
 describe('the summary sentence in Hindi (FIX-F)', () => {
-  const sims = new Map<string, Simulation>()
+  const sims = new Map<string, RunResult>()
   const sim = (meal: string) => {
     if (!sims.has(meal)) sims.set(meal, simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 }))
     return sims.get(meal)!

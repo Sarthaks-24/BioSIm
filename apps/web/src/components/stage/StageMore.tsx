@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Simulation } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import { CloseIcon } from '../kit/index.ts'
 import { addEnglish } from '../../i18n/index.ts'
 import stagesText from 'virtual:lifepeek-en/stages'
@@ -22,7 +22,7 @@ export default function StageMore({
   onClose,
   className = '',
 }: {
-  run: Simulation
+  run: RunResult
   id: string
   onClose: () => void
   className?: string

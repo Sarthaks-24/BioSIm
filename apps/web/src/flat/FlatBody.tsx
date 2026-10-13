@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
+import { activeStage, type NutrientKind, type RunResult, type StageId } from '@lifepeek/engine'
 import { useBodyClock } from '../hooks/useBodyClock.ts'
 import { useMotion } from '../state/motion.ts'
 import {
@@ -56,7 +56,7 @@ const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.25 }
  * `final`: this is the body the stage shows (no WebGL, or it failed), not the stand-in while the 3D
  * body loads; once drawn it says so with `data-ready`, which the e2e tests wait for.
  */
-export default function FlatBody({ sim, label, final = false }: { sim: Simulation; label: string; final?: boolean }) {
+export default function FlatBody({ sim, label, final = false }: { sim: RunResult; label: string; final?: boolean }) {
   const wrapper = useRef<HTMLDivElement>(null)
   const still = useRef<HTMLCanvasElement>(null)
   const moving = useRef<HTMLCanvasElement>(null)
@@ -190,7 +190,7 @@ function paintMoving(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
-  sim: Simulation,
+  sim: RunResult,
   time: number,
   state: BodyState,
   reduced: boolean,

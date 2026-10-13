@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
+import { buildMeal, decodeMeal } from '@lifepeek/engine'
+import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN, KNEE_MIN, timeToPos } from './time.ts'
 import { MAX_POINTS, domainFor, minAt, posAt, samplesOf, xAt, yAt, yTicks } from './axis.ts'

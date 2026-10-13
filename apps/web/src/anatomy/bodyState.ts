@@ -1,4 +1,4 @@
-import { activeStage, valueAt, type ActiveSignalId, type Simulation, type StageId } from '@lifepeek/engine'
+import { activeStage, valueAt, type ActiveSignalId, type RunResult, type StageId } from '@lifepeek/engine'
 import { ORGANISMS } from '../registry/index.ts'
 import { stomachFill } from './human.ts'
 
@@ -35,12 +35,12 @@ export const FILL_SIGNAL = {
 const HOLDS_G = { stomach: 2, smallIntestine: 1, largeIntestine: 1 } as const
 
 /** Grams in an organ at t (minutes), from its fill signal. 0 if the run has no such signal. */
-export function gramsIn(sim: Simulation, organ: keyof typeof FILL_SIGNAL, tMin: number): number {
+export function gramsIn(sim: RunResult, organ: keyof typeof FILL_SIGNAL, tMin: number): number {
   const series = sim.signals.get(FILL_SIGNAL[organ])
   return series ? valueAt(series, tMin, sim.stepMin) : 0
 }
 
-export function bodyStateAt(sim: Simulation, tMin: number): BodyState {
+export function bodyStateAt(sim: RunResult, tMin: number): BodyState {
   const stomach = gramsIn(sim, 'stomach', tMin)
   return {
     stage: activeStage(sim, tMin),
