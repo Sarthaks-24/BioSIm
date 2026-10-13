@@ -6,6 +6,7 @@ import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
+import StripAnnouncer from '../graphs/StripAnnouncer.tsx'
 import { shortMealNames } from './mealText.ts'
 
 /**
@@ -18,7 +19,7 @@ export interface Slot {
   signals: ActiveSignalId[]
 }
 
-function slotsOf(signals: readonly ActiveSignalId[]): Slot[] {
+export function slotsOf(signals: readonly ActiveSignalId[]): Slot[] {
   const slots: Slot[] = []
   for (const id of signals) {
     const family = id.split('.')[0]!
@@ -27,6 +28,16 @@ function slotsOf(signals: readonly ActiveSignalId[]): Slot[] {
     else slots.push({ id: family, signals: [id] })
   }
   return slots
+}
+
+/** The lit layer's graph slots that have a line to draw for this run: never an empty frame. */
+export function useSlots(run: Simulation): Slot[] {
+  const layer = useRunStore((s) => s.layer)
+  const system = ORGANISMS[DEFAULT_ORGANISM].systems.find((s) => s.id === layer)
+  return useMemo(
+    () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && run.signals.has(s.signals[0]!)),
+    [system, run],
+  )
 }
 
 /**
@@ -71,22 +82,18 @@ function useTabbed() {
  */
 export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simulation | null }) {
   const { t, i18n } = useTranslation()
-  const layer = useRunStore((s) => s.layer)
   const profile = useRunStore((s) => s.profile)
   const meal = useRunStore((s) => s.meal)
   const keptItems = useRunStore((s) => s.kept?.items)
-  const { organism, systems } = ORGANISMS[DEFAULT_ORGANISM]
-  const system = systems.find((s) => s.id === layer)
-  // Only slots with a line to draw: never an empty frame.
-  const slots = useMemo(
-    () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && run.signals.has(s.signals[0]!)),
-    [system, run],
-  )
-  // The picked tab lives in a store, so the keymap can switch it too (S/B/E, WP-15).
+  const { organism } = ORGANISMS[DEFAULT_ORGANISM]
+  const slots = useSlots(run)
+  // The picked tab lives in a store, so the key map can switch it too (S, B, E: lib/keys.ts).
   const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
-  const visible = tabbed ? slots.filter((s) => s.id === shown) : slots
+  const visible = useMemo(() => (tabbed ? slots.filter((s) => s.id === shown) : slots), [tabbed, slots, shown])
+  // What the live region reads out when the clock stops: the lines on the graphs in view.
+  const spoken = useMemo(() => visible.flatMap((s) => s.signals), [visible])
   // The legend names both meals (council 2026-10-13): "— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g".
   const runName = shortMealNames(meal, i18n.language)
   const keptName = keptItems ? shortMealNames(keptItems, i18n.language) : ''
@@ -118,6 +125,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
           return (
             <RunStrip
               key={slot.id}
+              slot={slot.id}
               series={run.signals.get(id) as ChartableSeries}
               second={secondId ? run.signals.get(secondId) : null}
               range={organism.signalOverrides[id]?.displayRange}
@@ -132,6 +140,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
           )
         })}
       </StripStack>
+      <StripAnnouncer signals={spoken} run={run} kept={kept} />
     </section>
   )
 }

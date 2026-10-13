@@ -18,6 +18,11 @@
 //   /next 195.0 → 181.4 KB, 3D body 249.2 → 258.9 KB.
 //   WP-14 (2026-10-13): the dock's key moments, the Now line and the summary sentence are first
 //   paint; the "More" stage text and the report form load on first use: /next 183.0 → 188.8 KB.
+//   WP-15 (2026-10-13): the key map, the graphs' summaries, the table and settings buttons and the
+//   particle key are first paint; the table, the keys sheet and the food search load on first use
+//   (one chunk, components/stage/Sheets.tsx). The English texts of the other pages and of v1's
+//   simulator now load with those pages (scripts/i18n-sections.mjs): /next 190.6 → 189.2 KB,
+//   /sim 181.7 → 179.8 KB, Home 157.4 → 153.5 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

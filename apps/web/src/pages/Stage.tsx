@@ -1,15 +1,41 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
 import { useMomentsOnClock, useRun } from '../hooks/useRun.ts'
-import { formatDuration } from '../lib/time.ts'
+import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
+import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
 import { useClock, useMealClock } from '../state/clock.ts'
-import { Dock, PlayButton } from '../components/kit/index.ts'
+import { useRunStore } from '../state/run.ts'
+import { useSheet } from '../state/sheet.ts'
+import { useStripTab } from '../state/stripTab.ts'
+import { Dock, IconButton, PlayButton, SettingsIcon } from '../components/kit/index.ts'
 import BodyPane from '../components/stage/BodyPane.tsx'
-import GraphColumn from '../components/stage/GraphColumn.tsx'
+import GraphColumn, { useSlots } from '../components/stage/GraphColumn.tsx'
 import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
 import Timeline2 from '../components/stage/Timeline2.tsx'
+
+/** The sheets (table, keys) are downloaded the first time one is opened: they are not part of the first paint (size budget). */
+const Sheets = lazy(() => import('../components/stage/Sheets.tsx'))
+
+/** What each key of the map (lib/keys.ts) does on the stage. */
+const ACTIONS: Record<KeyAction, () => void> = {
+  back: () => useClock.getState().step(-10),
+  forward: () => useClock.getState().step(10),
+  backHour: () => useClock.getState().step(-60),
+  forwardHour: () => useClock.getState().step(60),
+  start: () => useClock.getState().step(-HORIZON_MIN),
+  end: () => useClock.getState().step(HORIZON_MIN),
+  nextMoment: () => useClock.getState().stepToMoment(1),
+  prevMoment: () => useClock.getState().stepToMoment(-1),
+  play: () => useClock.getState().toggle(),
+  keep: () => useRunStore.getState().keep(),
+  table: () => useSheet.getState().open({ kind: 'table', slot: useStripTab.getState().tab }),
+  help: () => useSheet.getState().open({ kind: 'help' }),
+  stripGut: () => useStripTab.getState().show('gut'),
+  stripBlood: () => useStripTab.getState().show('blood'),
+  stripEnergy: () => useStripTab.getState().show('energy'),
+}
 
 /**
  * The v2 one-screen stage (UI-1), at the unlisted /next until WP-19 swaps it in for /sim.
@@ -29,20 +55,23 @@ export default function Stage() {
   const kept = useRun('kept')
   useMealClock()
   useLinkSync()
-  useMomentsOnClock(run)
+  useMomentsOnClock(run, kept)
 
-  // Space plays and pauses when focus is not on a control that uses it (as on v1 /sim).
-  // The full key map (PageDown, K, P, T, ?) and its off-switch come in WP-15.
+  // The key map (lib/keys.ts): keyboard and presentation clicker. Keys a focused control uses
+  // itself (typing, Space on a button, arrows on the slider) are left to it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement
-      if (e.code !== 'Space' || el.closest('input, select, textarea, button, a, [role="slider"], dialog, summary')) return
+      if (e.defaultPrevented || keyBelongsToTarget(e.target as Element, e.key)) return
+      const action = actionFor(e, useKeys.getState().off)
+      if (!action) return
       e.preventDefault()
-      useClock.getState().toggle()
+      ACTIONS[action]()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+  const sheet = useSheet((s) => s.sheet)
+  const slots = useSlots(run)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
@@ -69,11 +98,34 @@ export default function Stage() {
       </div>
       {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
       <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
-        <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />}>
+        <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
           <Timeline2 run={run} kept={kept} />
         </Dock>
       </div>
+      {sheet && (
+        <Suspense fallback={null}>
+          <Sheets sheet={sheet} run={run} kept={kept} slots={slots} />
+        </Suspense>
+      )}
     </div>
+  )
+}
+
+/** "Keys and settings": the key list, and the switches for letter keys and motion (KeysHelp). */
+function Settings() {
+  const { t } = useTranslation()
+  const keysOff = useKeys((s) => s.off)
+  return (
+    <IconButton
+      icon={<SettingsIcon />}
+      label={t('keys.button')}
+      title={t('keys.button')}
+      aria-haspopup="dialog"
+      aria-keyshortcuts={keysOff ? undefined : '?'}
+      onClick={() => useSheet.getState().open({ kind: 'help' })}
+      // Words from 1280 px up; the icon alone (its name stays) where the dock is narrow.
+      className="max-xl:w-11 max-xl:justify-center max-xl:px-0 lg:max-xl:w-9 [&>span]:max-xl:sr-only"
+    />
   )
 }
 

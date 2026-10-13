@@ -4,7 +4,7 @@ import type { Simulation } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
-import { momentNameKey, runMoments, stackRows, type Moment } from '../../lib/moments.ts'
+import { groupClose, hitAreas, momentNameKey, runMoments, type Moment } from '../../lib/moments.ts'
 
 /**
  * The dock's timeline (WP-11 slider, WP-14 key moments). It uses the same squeezed scale as v1:
@@ -13,14 +13,16 @@ import { momentNameKey, runMoments, stackRows, type Moment } from '../../lib/mom
  *
  * "When things happen" is shown once, here (03 WP-14): this meal's key moments are filled blue
  * dots ON the bar, the kept meal's are hollow grey rings just BELOW it, like the two runs' dots on
- * the graphs' playheads. Shape and place tell them apart, never the grey alone. Each is a button
- * that pauses and moves the clock there; "leftovers start leaving" also shows its low–high range.
- * A dot's name shows above it on hover and focus, and stays while the clock is paused on it
- * (after a click, or PageDown).
+ * the graphs' playheads. Shape and place tell them apart, never the grey alone. Each marker is a
+ * button that pauses and moves the clock there; "leftovers start leaving" also shows its low–high
+ * range. Moments that nearly coincide (cola's first hour) are one marker that names them all
+ * (council round 2, WP-15), with one dot per moment. A marker's names show above the bar on hover
+ * and focus, and stay while the clock is paused on one of its moments (after a click, or PageDown).
  *
  * The thumb, the filled part and the slider's value are moved straight from the meal clock
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing here.
- * Keys: ← → 10 min (Shift: 1 h), Home / End, PageDown / PageUp next / previous key moment.
+ * Keys on the slider: ← → 10 min (Shift: 1 h), Home / End, PageDown / PageUp next / previous key
+ * moment. Each meal's markers are one Tab stop; ← → move between them.
  */
 
 /**
@@ -35,37 +37,36 @@ const TICK_FITS: Record<number, string> = {
   2160: '@max-[40rem]:hidden',
 }
 
-/** Half a marker's hit area at most (px): 24 px targets (WCAG 2.5.8), split where dots are closer. */
-const HALF_HIT = 12
-/** Markers closer than this (px) go in a row of their own: away from the bar for this meal, further down for the kept one. */
-const MIN_GAP = 12
-/** Distance between two rows of markers (px). */
-const ROW_PX = 14
+/**
+ * Moments closer than this (px) along the bar are one marker (council round 2): 24 px from
+ * 1024 px up, 44 px on a phone, a finger's width. Each marker is a target that wide (WCAG 2.5.8).
+ */
+const GAP_WIDE = 24
+const GAP_PHONE = 44
 /** A paused clock this close (minutes) to a moment is "at" it: its name stays shown. */
 const AT_MOMENT_MIN = 0.5
 
-interface Marker extends Moment {
-  /** 0 = on its lane's line; 1, 2 … = stacked away from the bar, where moments nearly coincide. */
-  row: number
-  /** How far (px) the dot is drawn right of its time, on a phone, to clear a moment just before it. */
-  shift: number
-  /** Half its hit area's width, left and right of the dot (px). */
-  before: number
-  after: number
-  /** 'run' = this meal (filled, on the bar), 'kept' = the kept meal (hollow, below). */
+/** One marker on the bar: one moment, or a few that nearly coincide, of one meal. */
+interface Marker {
+  /** 'run' = this meal (filled dots, on the bar), 'kept' = the kept meal (hollow rings, below it). */
   lane: 'run' | 'kept'
   key: string
-  /** Name + time, for the button and the label above it. */
-  label: string
+  /** Its moments in time order; the marker sits at the first, and a press jumps there. */
+  moments: Moment[]
+  atMin: number
+  /** Its hit area, px left and right of the first dot. */
+  before: number
+  after: number
+  /** One line per moment, "name, time": the button's name and the label above the bar. */
+  lines: string[]
 }
 
 export default function Timeline2({ run, kept }: { run: Simulation; kept: Simulation | null }) {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
   const width = useTrackWidth(track)
-  // From 640 px up there is room above the bar for a second row of dots; a phone has none (the
-  // clock is right above the track), so there close dots are nudged sideways instead.
-  const roomAbove = useMinWidth('40rem')
+  // Phones get finger-sized targets, so moments merge sooner there.
+  const gap = useMinWidth('64rem') ? GAP_WIDE : GAP_PHONE
 
   useEffect(() => {
     const el = track.current
@@ -81,45 +82,60 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
   }, [t])
 
   const markers = useMemo(() => {
-    const of = (sim: Simulation | null, lane: Marker['lane']): Marker[] =>
-      sim && sim.meal.items.length > 0
-        ? runMoments(sim).map((m) => {
-            const name = t(momentNameKey(m.id, sim))
-            const time =
-              m.low != null && m.high != null
-                ? t('dock.usually', {
-                    time: formatDuration(m.atMin, t),
-                    low: formatDuration(m.low, t),
-                    high: formatDuration(m.high, t),
-                  })
-                : formatDuration(m.atMin, t)
-            return {
-              ...m,
-              lane,
-              key: `${lane}:${m.id}`,
-              label: t(lane === 'run' ? 'dock.marker' : 'dock.keptMarker', { name, time }),
-              row: 0,
-              shift: 0,
-              before: HALF_HIT,
-              after: HALF_HIT,
-            }
-          })
-        : []
-    return [...layout(of(run, 'run'), width, roomAbove), ...layout(of(kept, 'kept'), width, roomAbove)]
-  }, [run, kept, t, width, roomAbove])
-  // Rows stacked above the bar (this meal) and below it (the kept meal) need room of their own.
-  const rows = (lane: Marker['lane']) => Math.max(0, ...markers.filter((m) => m.lane === lane).map((m) => m.row))
-  const lift = rows('run')
+    const of = (sim: Simulation | null, lane: Marker['lane']): Marker[] => {
+      if (!sim || sim.meal.items.length === 0) return []
+      const line = (m: Moment) => {
+        const name = t(momentNameKey(m.id, sim))
+        const time =
+          m.low != null && m.high != null
+            ? t('dock.usually', { time: formatDuration(m.atMin, t), low: formatDuration(m.low, t), high: formatDuration(m.high, t) })
+            : formatDuration(m.atMin, t)
+        return t(lane === 'run' ? 'dock.marker' : 'dock.keptMarker', { name, time })
+      }
+      const groups = group(
+        runMoments(sim).sort((p, q) => p.atMin - q.atMin),
+        width,
+        gap,
+      )
+      const hits = hitAreas(
+        groups.map((g) => posAt(g[0]!.atMin) * width),
+        gap,
+      )
+      return groups.map((moments, i) => ({
+        lane,
+        key: `${lane}:${moments[0]!.id}`,
+        moments,
+        atMin: moments[0]!.atMin,
+        lines: moments.map(line),
+        ...hits[i]!,
+      }))
+    }
+    return [...of(run, 'run'), ...of(kept, 'kept')]
+  }, [run, kept, t, width, gap])
 
-  // Which name shows: the dot under the pointer or focus, else the one the paused clock is at.
+  // Which names show: the marker under the pointer or focus; else every moment the paused clock
+  // is at, of both meals (cola's "half has left" and "highest" can share a minute, and so can the
+  // kept meal's), so none hides behind another.
   const [hot, setHot] = useState<string | null>(null)
   const atMoment = useCallback(
     (s: { simMin: number; playing: boolean }) =>
-      s.playing ? null : (markers.find((m) => Math.abs(m.atMin - s.simMin) < AT_MOMENT_MIN)?.key ?? null),
+      s.playing
+        ? ''
+        : markers
+            .flatMap((m) => m.moments.filter((x) => Math.abs(x.atMin - s.simMin) < AT_MOMENT_MIN).map((x) => `${m.key}|${x.id}`))
+            .join(' '),
     [markers],
   )
   const here = useClock(atMoment)
-  const shown = markers.find((m) => m.key === (hot ?? here))
+  const tip = useMemo(() => {
+    const hotMarker = markers.find((m) => m.key === hot)
+    if (hotMarker) return { key: hotMarker.key, atMin: hotMarker.atMin, lines: hotMarker.lines }
+    if (!here) return null
+    const at = new Set(here.split(' '))
+    const lines = markers.flatMap((m) => m.lines.filter((_, i) => at.has(`${m.key}|${m.moments[i]!.id}`)))
+    const first = markers.find((m) => m.moments.some((x) => at.has(`${m.key}|${x.id}`)))!
+    return { key: here, atMin: first.atMin, lines }
+  }, [markers, hot, here])
 
   const timeAt = (clientX: number) => {
     const r = track.current!.getBoundingClientRect()
@@ -157,11 +173,9 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
   const lane = (which: Marker['lane']) => markers.filter((m) => m.lane === which)
   return (
     // The top padding holds "6 h → 48 h squeezed" (from 640 px up); the bottom one the hour ticks,
-    // and with a kept meal its hollow dots first. A size container: which hour labels fit depends
-    // on the track's own width in rem, so projector mode and Hindi drop labels sooner.
-    <div
-      className={`@container relative select-none sm:pt-5 ${lift ? 'pt-5' : 'pt-2'} ${!kept ? 'pb-5' : rows('kept') ? 'pb-12' : 'pb-9'}`}
-    >
+    // and with a kept meal its hollow markers first. A size container: which hour labels fit
+    // depends on the track's own width in rem, so projector mode and Hindi drop labels sooner.
+    <div className={`@container relative pt-2 select-none sm:pt-5 ${kept ? 'pb-9' : 'pb-5'}`}>
       {/*
        * "6 h → 48 h squeezed", over the squeezed part of the bar: it starts just right of the dotted
        * line and, when it is longer than that part (Hindi, projector), grows to the left from the
@@ -207,7 +221,7 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
         </div>
         <MarkerLane markers={lane('run')} lane="run" label={t('dock.moments')} onHot={setHot} />
         {kept && <MarkerLane markers={lane('kept')} lane="kept" label={t('dock.keptMoments')} onHot={setHot} />}
-        {shown && <MarkerTip key={shown.key} marker={shown} width={width} lift={lift} />}
+        {tip && <MarkerTip key={tip.key} atMin={tip.atMin} lines={tip.lines} width={width} />}
       </div>
       {TIMELINE_TICKS.map((m) => (
         <span
@@ -228,7 +242,7 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
   )
 }
 
-/** The track's width in CSS px (for splitting close markers' hit areas); re-renders only on resize. */
+/** The track's width in CSS px (for merging close markers and sizing their targets); re-renders only on resize. */
 function useTrackWidth(ref: React.RefObject<HTMLDivElement | null>) {
   const [width, setWidth] = useState(0)
   useLayoutEffect(() => {
@@ -242,31 +256,14 @@ function useTrackWidth(ref: React.RefObject<HTMLDivElement | null>) {
   return width
 }
 
-/**
- * One run's moments placed along the bar, in time order: rows where they nearly coincide
- * (stackRows), and hit areas 24 px wide, or split halfway to a closer neighbour in the same row,
- * so every moment can be clicked.
- */
-function layout(markers: Marker[], width: number, stack: boolean): Marker[] {
-  const sorted = [...markers].sort((p, q) => p.atMin - q.atMin)
-  const xs = sorted.map((m) => posAt(m.atMin) * width)
-  // Stacked: rows where dots nearly coincide. Nudged: one row, each dot at least MIN_GAP right of
-  // the one before (the label and the clock still give its exact time).
-  const rows = stack ? stackRows(xs, MIN_GAP) : xs.map(() => 0)
-  const drawn = [...xs]
-  if (!stack) for (let i = 1; i < drawn.length; i++) drawn[i] = Math.max(drawn[i]!, drawn[i - 1]! + MIN_GAP)
-  const half = (i: number, j: number) => Math.min(HALF_HIT, Math.abs(drawn[j]! - drawn[i]!) / 2)
-  return sorted.map((m, i) => {
-    const prev = rows.lastIndexOf(rows[i]!, i - 1)
-    const next = rows.indexOf(rows[i]!, i + 1)
-    return {
-      ...m,
-      row: rows[i]!,
-      shift: drawn[i]! - xs[i]!,
-      before: prev >= 0 ? half(prev, i) : HALF_HIT,
-      after: next >= 0 ? half(i, next) : HALF_HIT,
-    }
-  })
+/** One meal's moments (sorted by time) as markers: moments closer than `gap` px along the bar share one. */
+function group(moments: Moment[], width: number, gap: number): Moment[][] {
+  const groups: Moment[][] = []
+  groupClose(
+    moments.map((m) => posAt(m.atMin) * width),
+    gap,
+  ).forEach((g, i) => (groups[g] ??= []).push(moments[i]!))
+  return groups
 }
 
 /** True while the window is at least `min` wide (a CSS length); re-renders only when that changes. */
@@ -283,7 +280,11 @@ function useMinWidth(min: string) {
   return match
 }
 
-/** One run's moments as buttons along the bar (laid out by `layout`). */
+/**
+ * One meal's markers along the bar, as a toolbar: one Tab stop; ← → (and Home / End) move
+ * between its markers, Enter or Space jumps the clock to one. The stage's key map leaves those
+ * keys to it (lib/keys.ts).
+ */
 function MarkerLane({
   markers,
   lane,
@@ -296,97 +297,116 @@ function MarkerLane({
   onHot: (key: string | null) => void
 }) {
   const kept = lane === 'kept'
-  // With stacked rows each row's hit areas are as tall as the row, so they never overlap.
-  const stacked = markers.some((m) => m.row > 0)
+  const box = useRef<HTMLDivElement>(null)
+  const [focus, setFocus] = useState(0)
+  const at = Math.max(0, Math.min(focus, markers.length - 1))
+  if (markers.length === 0) return null
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const last = markers.length - 1
+    const to = (
+      { ArrowRight: at + 1, ArrowDown: at + 1, ArrowLeft: at - 1, ArrowUp: at - 1, Home: 0, End: last } as Record<string, number>
+    )[e.key]
+    if (to === undefined) return
+    e.preventDefault()
+    const i = Math.max(0, Math.min(last, to))
+    setFocus(i)
+    box.current?.querySelectorAll<HTMLButtonElement>('button')[i]?.focus()
+  }
   return (
-    <ul
+    <div
+      ref={box}
+      role="toolbar"
       aria-label={label}
-      // This meal on the bar's centre line; the kept meal 0.6875 rem (11 px) below it, clear of the bar.
-      className={`pointer-events-none absolute inset-x-0 h-0 ${kept ? 'top-[calc(50%+0.6875rem)]' : 'top-1/2'}`}
+      onKeyDown={onKeyDown}
+      // This meal's dots on the bar's centre line, the kept meal's 1 rem (16 px) below it. Their
+      // 24 px tall targets reach 16 px above and 8 px below this meal's line, and 8 px above and 16
+      // px below the kept one's, so the two rows meet but never overlap, and the dock stays as
+      // short as before (a phone's first screen has no height to spare).
+      className={`pointer-events-none absolute inset-x-0 h-0 ${kept ? 'top-[calc(50%+1rem)]' : 'top-1/2'}`}
     >
-      {markers.map((m) => {
-        const range = m.low != null && m.high != null
-        return (
-          <li
-            key={m.key}
-            className="absolute top-0"
-            style={{ left: `calc(${posAt(m.atMin) * 100}% + ${m.shift}px)`, top: (kept ? 1 : -1) * m.row * ROW_PX }}
-          >
-            {m.row > 0 && (
-              // A raised dot hangs from a thin stem to its time on the line below.
-              <span
-                aria-hidden="true"
-                className={`absolute left-0 w-px -translate-x-1/2 ${kept ? 'bg-kept/60' : 'bg-run/60'}`}
-                style={kept ? { bottom: 0, height: m.row * ROW_PX } : { top: 0, height: m.row * ROW_PX }}
-              />
-            )}
-            {range && (
+      {markers.map((m, i) => (
+        <div key={m.key} className="absolute top-0" style={{ left: `${posAt(m.atMin) * 100}%` }}>
+          {m.moments.map((x) =>
+            x.low != null && x.high != null ? (
               // The between-person range: a light bar from low to high, centred on the dot's line.
               <span
+                key={x.id}
                 aria-hidden="true"
                 data-range=""
                 className={`absolute top-0 h-2 -translate-y-1/2 rounded-full ${kept ? 'border border-kept/70 bg-shelf' : 'bg-run/30'}`}
                 style={{
-                  left: `calc(${posAt(m.low!) - posAt(m.atMin)} * var(--track-w) - ${m.shift}px)`,
-                  width: `calc(${posAt(m.high!) - posAt(m.low!)} * var(--track-w))`,
+                  left: `calc(${posAt(x.low) - posAt(m.atMin)} * var(--track-w))`,
+                  width: `calc(${posAt(x.high) - posAt(x.low)} * var(--track-w))`,
                 }}
               />
-            )}
-            <button
-              type="button"
-              aria-label={m.label}
-              data-marker={lane}
-              data-moment={m.id}
-              onClick={() => {
-                const clock = useClock.getState()
-                clock.pause()
-                clock.setSimMin(m.atMin)
-              }}
-              onPointerEnter={() => onHot(m.key)}
-              onPointerLeave={() => onHot(null)}
-              onFocus={() => onHot(m.key)}
-              onBlur={() => onHot(null)}
-              className={`pointer-events-auto absolute top-0 grid -translate-y-1/2 cursor-pointer place-items-center rounded-full focus-visible:outline-offset-0 ${stacked ? 'h-3.5' : 'h-6'}`}
-              style={{ left: -m.before, width: m.before + m.after } as CSSProperties}
+            ) : null,
+          )}
+          <button
+            type="button"
+            tabIndex={i === at ? 0 : -1}
+            aria-label={m.lines.join('; ')}
+            data-marker={lane}
+            data-moment={m.moments.map((x) => x.id).join(' ')}
+            onClick={() => {
+              const clock = useClock.getState()
+              clock.pause()
+              clock.setSimMin(m.atMin)
+            }}
+            onPointerEnter={() => onHot(m.key)}
+            onPointerLeave={() => onHot(null)}
+            onFocus={() => {
+              setFocus(i)
+              onHot(m.key)
+            }}
+            onBlur={() => onHot(null)}
+            className={`pointer-events-auto absolute top-0 h-6 cursor-pointer rounded-full focus-visible:outline-offset-0 ${kept ? '-translate-y-1/3' : '-translate-y-2/3'}`}
+            style={{ left: -m.before, width: m.before + m.after }}
+          >
+            {/* One dot per moment, overlapping a little: a marker of three moments shows three. The first dot's centre is its time. */}
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute flex -translate-y-1/2 ${kept ? 'top-1/3' : 'top-2/3'}`}
+              style={{ left: `calc(${m.before}px - ${kept ? 0.3125 : 0.4375}rem)` }}
             >
-              <span
-                aria-hidden="true"
-                data-dot=""
-                className={`pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${
-                  kept ? 'size-2.5 border-kept bg-shelf' : 'size-3.5 border-shelf bg-run'
-                }`}
-                style={{ left: m.before }}
-              />
-            </button>
-          </li>
-        )
-      })}
-    </ul>
+              {m.moments.map((x, j) => (
+                <span
+                  key={x.id}
+                  data-dot=""
+                  className={`shrink-0 rounded-full border-2 ${j > 0 ? '-ml-1' : ''} ${kept ? 'size-2.5 border-kept bg-shelf' : 'size-3.5 border-shelf bg-run'}`}
+                />
+              ))}
+            </span>
+          </button>
+        </div>
+      ))}
+    </div>
   )
 }
 
 /**
- * The name of one moment, above the bar, in the dark pill the body uses for the organ the food is
- * in. Centred over its dot, but always kept inside the track (measured before paint).
+ * The names of the moments shown, one per line, above the bar, in the dark pill the body uses for
+ * the organ the food is in. Centred over its marker, but always kept inside the track (measured
+ * before paint).
  */
-function MarkerTip({ marker, width, lift }: { marker: Marker; width: number; lift: number }) {
+function MarkerTip({ atMin, lines, width }: { atMin: number; lines: string[]; width: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   const [left, setLeft] = useState<number | null>(null)
   useLayoutEffect(() => {
     const w = ref.current?.offsetWidth ?? 0
-    const x = posAt(marker.atMin) * width + marker.shift - w / 2
+    const x = posAt(atMin) * width - w / 2
     setLeft(Math.max(0, Math.min(x, width - w)))
-  }, [marker, width])
+  }, [atMin, lines, width])
   return (
     <span
       ref={ref}
       aria-hidden="true"
       data-marker-tip=""
-      className="pointer-events-none absolute z-10 w-max max-w-full rounded-control bg-ink px-2 py-0.5 text-caption font-semibold text-white shadow-[0_1px_3px_rgb(20_33_61/0.35)]"
-      // Above the bar and above any raised row of dots.
-      style={{ bottom: `calc(50% + 0.875rem + ${lift * ROW_PX}px)`, ...(left === null ? { left: 0, visibility: 'hidden' } : { left }) }}
+      className="pointer-events-none absolute bottom-[calc(50%+0.875rem)] z-10 flex w-max max-w-full flex-col rounded-control bg-ink px-2 py-0.5 text-caption font-semibold text-white shadow-[0_1px_3px_rgb(20_33_61/0.35)]"
+      style={left === null ? { left: 0, visibility: 'hidden' } : { left }}
     >
-      {marker.label}
+      {lines.map((l) => (
+        <span key={l}>{l}</span>
+      ))}
     </span>
   )
 }

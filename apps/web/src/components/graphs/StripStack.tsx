@@ -1,10 +1,11 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { valueAt, type ActiveSignalId, type ChartableSeries, type ProfileId, type Series, type Simulation } from '@lifepeek/engine'
+import type { ActiveSignalId, ChartableSeries, ProfileId, Series, Simulation } from '@lifepeek/engine'
 import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
-import { KNEE_MIN, formatDuration } from '../../lib/time.ts'
-import { StatusTag } from '../kit/index.ts'
+import { stripDescription, stripSummary } from '../../lib/stripSummary.ts'
+import { useSheet } from '../../state/sheet.ts'
+import { StatusTag, TableIcon } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
 import HowWeKnow, { Section } from './HowWeKnow.tsx'
 import SignalStrip from './SignalStrip.tsx'
@@ -31,6 +32,8 @@ export default function StripStack({ weights, children }: { weights: readonly nu
 }
 
 interface RunStripProps {
+  /** The graph's slot ("gut", "blood", "energy"): its tab, and the table it opens. */
+  slot: string
   series: ChartableSeries
   run: Simulation
   kept: Simulation | null
@@ -59,7 +62,7 @@ const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
  * Energy is two lines on one kcal/h axis: coming in (this meal) and used at rest (the same for
  * every meal), each with its running total; it is described, never scored (plan-graphs §3.8).
  */
-export function RunStrip({ series, run, kept, runName, keptName, profile, range, second, tabbed, className }: RunStripProps) {
+export function RunStrip({ slot, series, run, kept, runName, keptName, profile, range, second, tabbed, className }: RunStripProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   // The run's table holds only active signals.
@@ -83,16 +86,10 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
   const secondLine = useMemo(() => second && { series: second, label: t('status.sameEveryMeal') }, [second, t])
   const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
 
-  // Energy: what came in and what the resting body used in the first 6 h (the same window for
-  // every meal, so two meals compare), then the G6 sentence: "When more comes in than is used,
-  // the body stores the extra for later." Described, never scored.
-  const summary =
-    totals?.second &&
-    t(`${series.meta.i18nKey}.summary`, {
-      time: formatDuration(KNEE_MIN, t),
-      in: formatNumber(valueAt(totals.run, KNEE_MIN, run.stepMin), totals.run.meta, lang),
-      used: formatNumber(valueAt(totals.second, KNEE_MIN, run.stepMin), totals.second.meta, lang),
-    })
+  // Read after the graph's name (aria-describedby) and above its table: this meal, then the kept one (G8).
+  const description = useMemo(() => stripDescription(id, run, kept, keptName, t, lang), [id, run, kept, keptName, t, lang])
+  // Energy: the same sentence, shown at the top of "How we know" too (G6). Described, never scored.
+  const summary = second ? stripSummary(id, run, t, lang) : null
 
   const notes = glucose ? (
     <>
@@ -125,22 +122,47 @@ export function RunStrip({ series, run, kept, runName, keptName, profile, range,
       second={secondLine}
       totals={totals}
       title={title}
-      summary={summary || undefined}
+      summary={description}
       tabbed={tabbed}
       clock={clock}
       info={
-        <HowWeKnow
-          meta={series.meta}
-          title={title}
-          sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
-          profile={profile}
-          notes={notes}
-          // More of the same food stays up longer at the same highest point (capped release).
-          limits={glucose ? [t('limits.glucoseSameHighest')] : undefined}
-        />
+        <span className="flex items-center gap-0.5">
+          <TableButton slot={slot} name={title ?? t(`${series.meta.i18nKey}.name`)} />
+          <HowWeKnow
+            meta={series.meta}
+            title={title}
+            sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
+            profile={profile}
+            notes={notes}
+            // More of the same food stays up longer at the same highest point (capped release).
+            limits={glucose ? [t('limits.glucoseSameHighest')] : undefined}
+          />
+        </span>
       }
       // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).
       footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-2" /> : undefined}
     />
+  )
+}
+
+/**
+ * "Show as table" (G8): the graph's numbers and key moments as a table, in a sheet that is
+ * downloaded the first time one is opened (Stage.tsx). The T key opens it too.
+ */
+function TableButton({ slot, name }: { slot: string; name: string }) {
+  const { t } = useTranslation()
+  const label = t('table.showFor', { name })
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-haspopup="dialog"
+      onClick={() => useSheet.getState().open({ kind: 'table', slot })}
+      // The size of the ⓘ beside it: 44 px to touch on a phone, 28 px in the header line from 1024 px up.
+      className="-my-2 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:-my-1 lg:size-7"
+    >
+      <TableIcon />
+    </button>
   )
 }

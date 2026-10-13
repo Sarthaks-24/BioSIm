@@ -17,7 +17,8 @@ test.beforeEach(async ({ page }) => {
 test.describe('timeline key moments', () => {
   test('clicking "half has left the stomach" moves the clock and the link’s t, and names it', async ({ page }) => {
     await page.goto('/next?v=2&a=cola:1')
-    const marker = page.getByRole('button', { name: /^Half the energy has left the stomach, \d+ min$/ })
+    // Cola's "half has left" and "highest" nearly coincide: one marker names both (council round 2).
+    const marker = page.getByRole('button', { name: /^Half the energy has left the stomach, \d+ min(;|$)/ })
     await marker.click()
     const slider = page.getByRole('slider').first()
     await expect(slider).not.toHaveAttribute('aria-valuenow', '0')
@@ -26,15 +27,16 @@ test.describe('timeline key moments', () => {
     expect(now).toBeLessThan(60)
     await expect.poll(() => Number(params(page).get('t'))).toBe(now)
     // While the clock is paused on it, its name shows above the bar.
-    await expect(page.locator('[data-marker-tip]')).toHaveText(/^Half the energy has left the stomach, \d+ min$/)
+    await expect(page.locator('[data-marker-tip] > span').first()).toHaveText(/^Half the energy has left the stomach, \d+ min$/)
   })
 
   test('the kept meal’s markers are hollow and drawn below the bar', async ({ page }) => {
+    // Hollow rings below the bar; nearly coinciding moments share a marker (council round 2).
     await page.goto(COLA_KEPT_BURGER)
     const run = page.locator('[data-marker="run"] [data-dot]')
     const kept = page.locator('[data-marker="kept"] [data-dot]')
     await expect(kept.first()).toBeVisible()
-    expect(await kept.count()).toBeGreaterThanOrEqual(3)
+    expect(await kept.count()).toBeGreaterThanOrEqual(2)
     const look = (dot: typeof run) =>
       dot.first().evaluate((el) => {
         const cs = getComputedStyle(el)
@@ -46,6 +48,11 @@ test.describe('timeline key moments', () => {
     expect(k.fill).toBe(r.ring)
     expect(k.y).toBeGreaterThan(r.y)
     await expect(page.getByRole('button', { name: /^Kept: Half the energy has left the stomach, \d+ h/ })).toBeAttached()
+    // Their targets meet, never overlap: this meal's end 8 px below the bar, the kept meal's start there.
+    const box = async (sel: string) => (await page.locator(sel).first().boundingBox())!
+    const runBox = await box('[data-marker="run"]')
+    const keptBox = await box('[data-marker="kept"]')
+    expect(keptBox.y).toBeGreaterThanOrEqual(runBox.y + runBox.height - 0.5)
   })
 
   test('the squeezed part of the bar says so (English and Hindi)', async ({ page }) => {

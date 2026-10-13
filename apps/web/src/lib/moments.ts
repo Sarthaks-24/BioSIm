@@ -42,16 +42,27 @@ export function momentNameKey(id: EventId, run: Simulation): string {
 }
 
 /**
- * Rows for markers drawn along a bar, so two that nearly coincide (cola's "half has left" and
- * "blood sugar highest" are both near 35 min) never hide each other: each goes in the first row
- * where it is at least `gap` px from the previous marker in that row. `xs` must be sorted.
+ * Markers drawn along a bar, merged where they nearly coincide (council round 2): cola's "half
+ * has left", "blood sugar highest" and "back near the before-meal level" all fall in its first
+ * hour, a few pixels apart, and would pile up on the thumb. Each marker starts a new group unless
+ * it is less than `gap` px after the one before it; a group is drawn as one target that names all
+ * its moments. `xs` must be sorted. Returns each marker's group index.
  */
-export function stackRows(xs: readonly number[], gap: number): number[] {
-  const last: number[] = []
-  return xs.map((x) => {
-    let row = last.findIndex((l) => x - l >= gap)
-    if (row < 0) row = last.length
-    last[row] = x
-    return row
-  })
+export function groupClose(xs: readonly number[], gap: number): number[] {
+  let group = -1
+  return xs.map((x, i) => (i === 0 || x - xs[i - 1]! >= gap ? ++group : group))
+}
+
+/**
+ * The hit area of each target along a bar, as px left and right of its point: `size` wide, or
+ * split halfway where a neighbour is closer, so two targets never overlap. A single target, or
+ * the first and last, get the full half `size` on their open side (verify: a lone marker was
+ * once given a 12 px button with its dot on the edge). `xs` must be sorted.
+ */
+export function hitAreas(xs: readonly number[], size: number): { before: number; after: number }[] {
+  const half = size / 2
+  return xs.map((x, i) => ({
+    before: i > 0 ? Math.min(half, (x - xs[i - 1]!) / 2) : half,
+    after: i < xs.length - 1 ? Math.min(half, (xs[i + 1]! - x) / 2) : half,
+  }))
 }

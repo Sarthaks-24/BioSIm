@@ -1,0 +1,111 @@
+import { create } from 'zustand'
+import { readPref, writePref } from './prefs.ts'
+
+/**
+ * The stage's one key map (G8 + UI-6), for a keyboard and for a presentation clicker (which sends
+ * Page Down / Page Up). Stage.tsx listens on the window and runs the action; the help sheet
+ * (KeysHelp) lists the same keys.
+ *
+ * - ← → 10 minutes, Shift + ← → 1 hour; Home / End: start and end of the clock.
+ * - Page Down / Page Up: next / previous key moment (a clicker's two buttons).
+ * - Space or K: play and pause. P: keep this meal to compare. T: the graphs as a table.
+ * - S, B, E: show the Stomach, Blood sugar or Energy graph (when the graphs show one at a time).
+ * - ?: this list, with the switches.
+ *
+ * Keys typed into a text box, a list or a dialog are never taken, nor keys a focused control
+ * uses itself (Space on a button, arrows on a slider or in a group of choices). Ctrl, Alt and Cmd
+ * combinations are the browser's.
+ *
+ * WCAG 2.1.4: shortcuts made of one character (letters, ?, Space) can be switched off. The choice
+ * is saved on the device as `lifepeek:keysOff` ('1'). Arrows, Page Up/Down, Home and End are not
+ * characters (a clicker needs them), so they stay on.
+ */
+export type KeyAction =
+  | 'back'
+  | 'forward'
+  | 'backHour'
+  | 'forwardHour'
+  | 'start'
+  | 'end'
+  | 'nextMoment'
+  | 'prevMoment'
+  | 'play'
+  | 'keep'
+  | 'table'
+  | 'help'
+  | 'stripGut'
+  | 'stripBlood'
+  | 'stripEnergy'
+
+const LETTERS: Record<string, KeyAction> = {
+  k: 'play',
+  ' ': 'play',
+  p: 'keep',
+  t: 'table',
+  s: 'stripGut',
+  b: 'stripBlood',
+  e: 'stripEnergy',
+  '?': 'help',
+}
+
+export interface KeyInput {
+  key: string
+  shiftKey: boolean
+  ctrlKey: boolean
+  altKey: boolean
+  metaKey: boolean
+}
+
+/** The action a key press asks for, or null. */
+export function actionFor(e: KeyInput, keysOff: boolean): KeyAction | null {
+  if (e.ctrlKey || e.altKey || e.metaKey) return null
+  switch (e.key) {
+    case 'ArrowLeft':
+      return e.shiftKey ? 'backHour' : 'back'
+    case 'ArrowRight':
+      return e.shiftKey ? 'forwardHour' : 'forward'
+    case 'PageDown':
+      return 'nextMoment'
+    case 'PageUp':
+      return 'prevMoment'
+    case 'Home':
+      return 'start'
+    case 'End':
+      return 'end'
+  }
+  // One-character shortcuts (WCAG 2.1.4): the off-switch turns these off.
+  if (keysOff || e.key.length !== 1) return null
+  return LETTERS[e.key.toLowerCase()] ?? null
+}
+
+/** Where typing goes: text boxes, lists, and any dialog (it has its own keys, and Esc). */
+const TYPING = 'input, select, textarea, [contenteditable="true"], dialog, [role="dialog"], [role="listbox"], [role="combobox"]'
+/** Controls that use the arrows (and Home / End) themselves. Page Up / Down always step moments. */
+const ARROWS = '[role="slider"], [role="radiogroup"], [role="tablist"], [role="menu"], [role="toolbar"], [data-arrows]'
+/** Controls that Space (and Enter) press. */
+const PRESSABLE = 'button, a[href], summary, [role="button"], [role="checkbox"], [role="switch"], [role="tab"]'
+
+/** True when the focused element should get this key, not the stage. */
+export function keyBelongsToTarget(target: Element | null, key: string): boolean {
+  if (!target || !target.closest) return false
+  if (target.closest(TYPING)) return true
+  if (key.startsWith('Arrow') || key === 'Home' || key === 'End') return !!target.closest(ARROWS)
+  if (key === ' ' || key === 'Enter') return !!target.closest(PRESSABLE)
+  return false
+}
+
+export const KEYS_OFF_PREF = 'keysOff'
+
+interface KeysState {
+  /** True when the one-character shortcuts are switched off (saved on the device). */
+  off: boolean
+  setOff: (off: boolean) => void
+}
+
+export const useKeys = create<KeysState>((set) => ({
+  off: readPref(KEYS_OFF_PREF) === '1',
+  setOff: (off) => {
+    writePref(KEYS_OFF_PREF, off ? '1' : '0')
+    set({ off })
+  },
+}))

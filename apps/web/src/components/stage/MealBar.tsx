@@ -59,9 +59,10 @@ export default function MealBar() {
           </div>
         )}
         <div className="flex shrink-0 items-center gap-1 max-lg:ml-auto">
-          <KeepButton compact={!!kept} />
-          <CopyLink compact={!!kept} />
-          <ReportMistake compact={!!kept} />
+          {/* Their words stay after keeping (council SHOULD 11): from 1280 px up, as before. */}
+          <KeepButton />
+          <CopyLink />
+          <ReportMistake />
         </div>
       </div>
     </section>
@@ -189,7 +190,7 @@ function PersonInfo({ profile }: { profile: Parameters<typeof PersonTag>[0]['pro
  * Copy the address: the link sync keeps it equal to this exact run. If copying is blocked (some
  * school browsers), the link is shown to copy by hand.
  */
-function CopyLink({ compact }: { compact: boolean }) {
+function CopyLink() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<'idle' | 'copied' | 'manual'>('idle')
   const anchor = useRef<HTMLButtonElement>(null)
@@ -209,8 +210,7 @@ function CopyLink({ compact }: { compact: boolean }) {
     )
   }
   return (
-    // Not on phones (plan-ui-ux §3.5) nor on the projector (§3.4). Words from 1280 px up, unless the
-    // kept tag needs the room.
+    // Not on phones (plan-ui-ux §3.5) nor on the projector (§3.4). Words from 1280 px up.
     <span className="max-lg:hidden in-data-[contrast=high]:hidden">
       <IconButton
         ref={anchor}
@@ -218,9 +218,7 @@ function CopyLink({ compact }: { compact: boolean }) {
         label={status === 'copied' ? t('sim.shareCopied') : t('sim.share')}
         title={t('sim.share')}
         onClick={copy}
-        className={
-          compact ? 'w-9 justify-center px-0 [&>span]:sr-only' : 'max-xl:w-9 max-xl:justify-center max-xl:px-0 [&>span]:max-xl:sr-only'
-        }
+        className="max-xl:w-9 max-xl:justify-center max-xl:px-0 [&>span]:max-xl:sr-only"
       />
       {/* Said once by screen readers when the link is copied (verify-1 A5): a status region of its own. */}
       <span role="status" className="sr-only">
@@ -246,10 +244,10 @@ function CopyLink({ compact }: { compact: boolean }) {
 /**
  * "Report a mistake" (D-FEED): the same form as v1. Without an API it opens the pre-filled GitHub
  * issue in a new tab and sends nothing; the report carries this run's link. Words from 1280 px
- * up unless the kept tag needs the room; the flag alone on a phone. Not on the projector, like
+ * up; the flag alone on a phone. Not on the projector, like
  * "Copy link" (a teacher reports from their own screen).
  */
-function ReportMistake({ compact }: { compact: boolean }) {
+function ReportMistake() {
   const { t } = useTranslation()
   const [loaded, setLoaded] = useState(false)
   const button = (onClick: () => void) => (
@@ -261,11 +259,7 @@ function ReportMistake({ compact }: { compact: boolean }) {
       onClick={onClick}
       // The loaded form's own button replaces this one: it takes the focus back, so closing the form returns there.
       autoFocus={loaded}
-      className={
-        compact
-          ? 'w-11 justify-center px-0 lg:w-9 [&>span]:sr-only'
-          : 'max-xl:w-11 max-xl:justify-center max-xl:px-0 lg:max-xl:w-9 [&>span]:max-xl:sr-only'
-      }
+      className="max-xl:w-11 max-xl:justify-center max-xl:px-0 lg:max-xl:w-9 [&>span]:max-xl:sr-only"
     />
   )
   return (
