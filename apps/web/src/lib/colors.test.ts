@@ -7,9 +7,7 @@ import {
   INK,
   KEPT,
   KEPT_DASH,
-  LEFT_BODY,
   LINE_GROUPS,
-  MEAL_COLOR,
   NUTRIENT_COLOR,
   ORGAN_COLOR,
   RUN,
@@ -64,13 +62,10 @@ const fmt = (n: number) => n.toFixed(2)
 describe('colour tokens', () => {
   it('match styles.css', () => {
     for (const [k, v] of Object.entries(NUTRIENT_COLOR)) expect(token(k), k).toBe(v)
-    expect(token('meal-a')).toBe(MEAL_COLOR.a)
-    expect(token('meal-b')).toBe(MEAL_COLOR.b)
     expect(token('ink')).toBe(INK)
     expect(token('stomach')).toBe(ORGAN_COLOR.stomach)
     expect(token('small-intestine')).toBe(ORGAN_COLOR.smallIntestine)
     expect(token('large-intestine')).toBe(ORGAN_COLOR.largeIntestine)
-    expect(token('left-body')).toBe(LEFT_BODY)
   })
 
   it('v2 tokens match styles.css in the normal and projector themes', () => {
@@ -95,8 +90,8 @@ describe('colour tokens', () => {
 
 describe('colour checks (ported from the dataviz validator)', () => {
   it('reproduce the numbers quoted in plan-graphs §2 and §3.4', () => {
-    // v1 compare colours: teal and magenta collapse for deutan readers.
-    expect(deltaE(MEAL_COLOR.a, MEAL_COLOR.b, 'deutan')).toBeCloseTo(1.5, 1)
+    // v1's compare colours (meal A teal, meal B magenta; gone in WP-20) collapse for deutan readers.
+    expect(deltaE('#0f766e', '#9d2f6a', 'deutan')).toBeCloseTo(1.5, 1)
     // v1 carbs yellow is below the 3:1 line minimum (the validator's default surface, #fcfcfb).
     expect(contrast(NUTRIENT_COLOR.carbs, '#fcfcfb')).toBeCloseTo(1.77, 2)
     // The energy pair: CVD 27.6, normal vision 34.1.

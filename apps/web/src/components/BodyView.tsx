@@ -10,8 +10,7 @@ const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
  * 3D when the device can, the flat diagram otherwise — while the 3D code loads, if WebGL is
  * missing, if it crashes, or if the GPU drops the context. The flat view says why it's showing.
  *
- * `sim` is one run: v1 /sim passes each meal's Simulation, the v2 stage its current run (the
- * same type; both carry the signal table the bodies read through `valueAt`).
+ * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
  */
 export default function BodyView({ sim, label }: { sim: Simulation; label: string }) {
   const [lost, setLost] = useState(false)

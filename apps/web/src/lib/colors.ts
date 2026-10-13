@@ -15,8 +15,6 @@ export const NUTRIENT_COLOR: Record<NutrientKind, string> = {
   water: '#1f7ae0',
 }
 
-export const MEAL_COLOR = { a: '#0f766e', b: '#9d2f6a' } as const
-
 /**
  * Organ colours, used by the 3D body, the flat diagram and the charts. Stomach and small intestine
  * differ in lightness too, for projectors. The large intestine is a muted violet since the WP-17
@@ -32,12 +30,11 @@ export const ORGAN_COLOR: Record<StageId, string> = {
 }
 
 export const INK = '#14213d'
-export const LEFT_BODY = '#b8c4c9'
 
 /**
  * v2 surface and text tokens per theme (plan-ui-ux §3.2), mirroring styles.css: `normal` is the
  * @theme block, `projector` is what html[data-contrast='high'] ends up with. `ink` and `ink2` are
- * the shared v1 names (--color-ink, --color-ink-2); the rest are the new v2 names.
+ * the names every page shares (--color-ink, --color-ink-2); the rest are the new v2 names.
  */
 export const THEME = {
   normal: {

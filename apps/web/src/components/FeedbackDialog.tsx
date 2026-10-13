@@ -14,8 +14,8 @@ addEnglish(feedbackText)
  * that fails the same GitHub issue is offered, so nothing typed is lost. Either way the dialog
  * warns that GitHub issues are public.
  *
- * Used by v1 /sim (its underlined link) and the v2 stage (a button in the meal bar, `trigger`).
- * Each page passes its own run as a link query (`context`), so the form needs neither store.
+ * Used by the stage (a button in the meal bar, `trigger`). It is given the run as a link query
+ * (`context`), so the form needs no store.
  */
 export default function FeedbackDialog({
   context,
@@ -24,9 +24,9 @@ export default function FeedbackDialog({
 }: {
   /** The run being viewed, as a link query ("v=2&a=cola:1…"), so the report can be reproduced. */
   context: () => string
-  /** The button that opens the form, given the function that opens it. Default: v1's underlined link. */
-  trigger?: (open: () => void) => ReactNode
-  /** Open the form as soon as it mounts (the v2 stage loads it on the first click). */
+  /** The button that opens the form, given the function that opens it. */
+  trigger: (open: () => void) => ReactNode
+  /** Open the form as soon as it mounts (the stage loads it on the first click). */
   openOnMount?: boolean
 }) {
   const { t } = useTranslation()
@@ -70,13 +70,7 @@ export default function FeedbackDialog({
   useEffect(() => void (openOnMount && open()), [])
   return (
     <>
-      {trigger ? (
-        trigger(open)
-      ) : (
-        <button type="button" onClick={open} className="text-sm font-semibold underline underline-offset-4">
-          {t('sim.reportError')}
-        </button>
-      )}
+      {trigger(open)}
       <dialog
         ref={ref}
         aria-labelledby="fb-title"

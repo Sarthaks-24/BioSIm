@@ -7,11 +7,10 @@ import { DEFAULT_PACE, HORIZON_MIN, posToTime, timeToPos, type Pace } from '../l
  * The meal clock (v2, roadmap A4a): simulated minutes since the first bite, for the whole page.
  * Graphs and the 3D body read it per frame with `useClock.getState().simMin` or
  * `useClock.subscribe((s) => s.simMin, draw)`, so playing does not re-render React components.
- * Text that shows "now" reads `useSimMinute()`, which re-renders at most once per sim minute.
+ * Text that shows "now" selects only what it shows, so it re-renders only when that changes.
  *
  * It never starts by itself: only `play()` / `toggle()` (the user pressing Play) start it, so a
- * page opened with reduced motion stays still. v1 `/sim` keeps its own clock in state/sim.ts
- * until WP-20.
+ * page opened with reduced motion stays still.
  */
 export interface ClockState {
   /** Sim minutes, 0 … HORIZON_MIN. */
@@ -85,9 +84,6 @@ export const useClock = create<ClockState>()(
     },
   })),
 )
-
-/** The current sim minute, rounded: for text. Re-renders at most once per sim minute. */
-export const useSimMinute = () => useClock((s) => Math.round(s.simMin))
 
 export interface FrameSource {
   request: (cb: (now: number) => void) => number

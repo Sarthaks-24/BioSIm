@@ -28,8 +28,6 @@ import { useClock } from './clock.ts'
  *   a = the meal, b = the kept run. `?v=2&a=cola:1&b=cheeseburger:1,fries:1` opens as
  *   "cola, with cheeseburger + fries kept", so every old A/B link is still a comparison.
  * Time lives in the meal clock (state/clock.ts); `loadLink` sets it from the link's `t`.
- *
- * v1 `/sim` keeps its own store (state/sim.ts) until WP-20; nothing here touches it.
  */
 
 /** A kept run: what to recompute, not what came out. */
@@ -97,7 +95,7 @@ export const INITIAL_RUN = {
 export const useRunStore = create<RunState>((set, get) => ({
   ...INITIAL_RUN,
 
-  // The cap rules are v1's (state/sim.ts addFood / setServings), for one meal.
+  // The cap rules are v1's (its two meals' addFood / setServings), for one meal.
   addFood: (foodId) => {
     const items = get().meal
     if (items.some((i) => i.foodId === foodId) || items.length >= MAX_ITEMS) return false

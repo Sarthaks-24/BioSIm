@@ -37,13 +37,12 @@ export function catalogKeys(): KeyUse {
   return { required, optional }
 }
 
-/** Organisms, their profiles, systems (with life process and known limits), organs and display overrides. */
+/** Organisms, their profiles, systems (with life process and known limits) and organs. */
 export function registryKeys(): KeyUse {
   const required = new Set<string>()
   for (const { organism, systems, organs } of Object.values(ORGANISMS)) {
     required.add(`${organism.i18nKey}.name`)
     for (const p of organism.profiles) for (const sub of ['tag', 'desc']) required.add(`${PROFILES[p].i18nKey}.${sub}`)
-    for (const o of Object.values(organism.signalOverrides)) if (o?.limitKey) required.add(o.limitKey)
     for (const s of systems) {
       required.add(`${s.i18nKey}.name`)
       required.add(`lifeProcess.${s.lifeProcess}`)

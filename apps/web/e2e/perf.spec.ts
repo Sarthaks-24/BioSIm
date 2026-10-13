@@ -6,11 +6,9 @@ import { GATE_ROUTES, gateSteps, measureFps, modeFor, verdict } from './helpers/
 // Report mode prints the number and never fails (see GATE_ROUTES.fps for why /sim still reports).
 // The real 2 GB phone check: docs/PHONE-CHECK.md (first run in WP-16, again in WP-22).
 
-/** v1 has a "Back to the start" button; the v2 stage rewinds with Home on its timeline. */
+/** The stage rewinds with Home on its timeline. */
 async function backToStart(page: Page) {
-  const back = page.getByRole('button', { name: 'Back to the start' })
-  if (await back.count()) await back.click()
-  else await page.getByRole('slider').first().press('Home')
+  await page.getByRole('slider').first().press('Home')
 }
 
 const RUNS = 3

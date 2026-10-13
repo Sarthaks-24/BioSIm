@@ -18,9 +18,9 @@ export function computeRun(items: MealItem[], profile: ProfileId, which: 'curren
 }
 
 /**
- * The current run or the kept run, recomputed only when its inputs change (like v1's
- * useSimulation). This is the ONLY place the v2 screen calls `simulate`, so moving the engine to
- * a worker later (plan-architecture A16) changes this one file.
+ * The current run or the kept run, recomputed only when its inputs change. This is the ONLY
+ * place the stage calls `simulate`, so moving the engine to a worker later (plan-architecture
+ * A16) changes this one file.
  * The kept run is null when nothing is kept.
  */
 export function useRun(which: 'current'): Simulation

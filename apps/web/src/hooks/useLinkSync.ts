@@ -8,15 +8,15 @@ import { useClock } from '../state/clock.ts'
 const LINK_PARAMS = ['v', 'a', 'b', 'o'] as const
 
 /**
- * The v2 screen's version of useUrlSync: keeps the address bar and the run in step, through the
- * router, so the address bar can always be copied as a link.
+ * Keeps the address bar and the run in step, through the router, so the address bar can always
+ * be copied as a link.
  * - a link (`v`, `a`, `b` or `o`) opens its meal, kept run, person, layer, time and language;
  *   `?v=2` with no meals is a deliberately empty run and stays empty;
  * - a bare page keeps the open meal, or opens the default meal if none (a bare `?lang=` still
  *   switches the language);
  * - it writes `a` (meal), `b` (kept), `t`, `lang`, and `who` / `layer` only when not the default.
  *
- * The lessons of v1's useUrlSync (WP-01), kept here:
+ * The lessons of v1's link hook (useUrlSync, WP-01; deleted in WP-20), kept here:
  * - Run and language changes are written at once. Only time is debounced: dragging the timeline
  *   changes it many times a second, and browsers limit how often a page may rewrite its URL. A
  *   timer for the rest can fire seconds late while the 3D view is busy, and a link copied right

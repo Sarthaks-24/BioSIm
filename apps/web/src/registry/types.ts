@@ -10,15 +10,14 @@ import type { ActiveSignalId, Clock, OrganismId, ProfileId, Simulation } from '@
  * global i18n keys. `registry.test.ts` checks every reference; `i18n.test.ts` marks the keys used.
  */
 
-/** Today's body props (v1 `Simulation`). WP-16 moves the bodies to the new run shape. */
-export interface BodyProps {
+/** A layer's props: the run it draws. Settled when the first layer ships. */
+export interface LayerProps {
   sim: Simulation
   /** Accessible description of what the picture shows. */
   label: string
 }
-export type BodyComponent = ComponentType<BodyProps>
-/** A layer drawn over the base body. Its props are settled when the first layer ships. */
-export type LayerComponent = ComponentType<BodyProps>
+/** A layer drawn over the base body. */
+export type LayerComponent = ComponentType<LayerProps>
 /** Dynamic import, so the registry stays data-only and every drawing is its own chunk. */
 export type Loader<C> = () => Promise<{ default: C }>
 
@@ -51,12 +50,8 @@ export interface OrganismDef {
   /** Stated people this organism offers; each must be in the engine's ORGANISM_PROFILES. The first is the default. */
   profiles: readonly ProfileId[]
   defaultSystem: SystemId
-  /** Required: the no-WebGL body. Every organism can be drawn flat. */
-  bodyFlat: Loader<BodyComponent>
-  /** Optional: a leaf or an amoeba may be 2D only. */
-  body3d?: Loader<BodyComponent>
   /** Per-organism display hints (a cow's blood sugar needs another axis). The graphs read `displayRange`. */
-  signalOverrides: Partial<Record<ActiveSignalId, { displayRange?: readonly [number, number]; limitKey?: string }>>
+  signalOverrides: Partial<Record<ActiveSignalId, { displayRange?: readonly [number, number] }>>
 }
 
 export interface SystemDef {

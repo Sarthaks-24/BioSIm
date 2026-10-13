@@ -7,7 +7,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
  * Every check runs in one of two modes:
  * - "enforce": a problem fails the test.
  * - "report": a problem is printed as a `[gate]` line and added to the test's annotations, and
- *   the test still passes. v1 pages run in this mode: they were not built for the gate.
+ *   the test still passes. A page not yet built for a check runs it in this mode.
  *
  * GATE_ROUTES says which page each check runs on and in which mode. A page that does not exist
  * yet is "pending" and its test is marked fixme. When a WP makes a page pass a check, it flips
@@ -95,7 +95,7 @@ export function verdict(check: string, mode: Mode, problems: string[]) {
 
 /**
  * Runs steps that use `expect`. In report mode a failing step is printed instead of failing the
- * test, so a check written once can watch a v1 page and later guard a new one.
+ * test, so a check written once can watch a page before it is ready and guard it after.
  */
 export async function gateSteps(check: string, mode: Mode, steps: () => Promise<void>) {
   if (mode === 'enforce') return steps().then(() => verdict(check, mode, []))
@@ -228,7 +228,7 @@ type Impact = 'minor' | 'moderate' | 'serious' | 'critical'
 
 /**
  * axe (WCAG 2.1 A and AA rules). Serious and critical issues are the gate. In report mode they
- * are printed, and `failOn` still fails the test on the impacts it lists (v1 pages: critical).
+ * are printed, and `failOn` still fails the test on the impacts it lists (a page in report mode: critical).
  * The full axe result is attached to the test report either way.
  */
 export async function checkAxe(page: Page, { mode = 'enforce', failOn = [] }: { mode?: Mode; failOn?: Impact[] } = {}) {

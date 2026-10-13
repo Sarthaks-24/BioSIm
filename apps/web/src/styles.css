@@ -8,7 +8,7 @@
 /*
  * Lab-paper palette: cool pale paper, textbook ink, translucent tissue.
  * Light on purpose — classroom projectors wash out dark UIs.
- * Meal A / B and each nutrient also differ by shape or letter, never colour alone.
+ * Each nutrient also differs by shape, never by colour alone.
  */
 @theme {
   --font-sans: 'Atkinson Hyperlegible Next', 'Noto Sans Devanagari', system-ui, sans-serif;
@@ -19,10 +19,6 @@
   --color-rule: #c3d0cc;
   --color-ink: #14213d;
   --color-ink-2: #46536e;
-  --color-tissue: #d9536a;
-
-  --color-meal-a: #0f766e;
-  --color-meal-b: #9d2f6a;
 
   /* Nutrients: outside the pink/peach tissue range so particles stay visible inside organs. */
   --color-carbs: #f2b705;
@@ -36,13 +32,13 @@
   --color-stomach: #c8405f;
   --color-small-intestine: #f0a868;
   --color-large-intestine: #7870a8;
-  --color-left-body: #b8c4c9;
 
   /*
-   * v2 "textbook plate" tokens (plan-ui-ux §3.2). New names so v1 looks exactly the same; the v1
-   * names above go in WP-20. Structure comes from space and three rules, not cards: Paper is the
-   * page and stage, Shelf only the dock and graph column, Sunk2 hover/track/selected, Rule2 the
-   * only dividers, Grid the graph paper inside graphs. Text is always ink or ink-2 (shared with v1).
+   * v2 "textbook plate" tokens (plan-ui-ux §3.2). New names beside the first palette's (paper,
+   * panel, sunk, rule), which the other pages still use; the "2" goes once they move to these.
+   * Structure comes from space and three rules, not cards: Paper is the page and stage, Shelf
+   * only the dock and graph column, Sunk2 hover/track/selected, Rule2 the only dividers, Grid the
+   * graph paper inside graphs. Text is always ink or ink-2 (every page's).
    * Projector values are in the html[data-contrast='high'] block below; colors.ts mirrors both.
    */
   --color-paper2: #eef3f1;
@@ -114,8 +110,7 @@ html {
 }
 
 /*
- * All text sizes are in rem (no px), so these two rules scale everything — including chart
- * labels, which LineChart sizes from the root font size.
+ * All text sizes are in rem (no px), so these two rules scale everything, graph labels included.
  */
 html:lang(hi) {
   /* Devanagari needs a larger size and more line height so the vowel marks (matras) stay legible. */
@@ -149,7 +144,7 @@ html[data-contrast='high']:lang(hi) {
   font-size: 119.5%;
 }
 /*
- * Only the stage is fitted to the 1280×800 box. Every other page (v1 /sim until WP-20, Home, About)
+ * Only the stage is fitted to the 1280×800 box. Every other page (Home, About, Teach…)
  * scrolls, so it keeps the projector size it had before WP-17 (118.75 %, Hindi 125 %) and is not
  * shrunk by the stage's fit (review 14-17, MED 5). `html[data-fit]` is set by the Layout as soon
  * as a one-screen route is matched, before its code has loaded (no size jump while it loads,

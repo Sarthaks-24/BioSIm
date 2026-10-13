@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { PARAMS } from '@lifepeek/engine'
 
-/** v1 only: the 48 h bar. New code (WP-09+) reads the run's own clock, `run.horizonMin`. */
+/** The 48 h bar of the meal clock and the timeline. A run's own length is `run.horizonMin`. */
 export const HORIZON_MIN = PARAMS.horizonMin
 
 /**
@@ -27,8 +27,6 @@ export function posToTime(pos: number): number {
 export const KNEE_FRACTION = KNEE_POS
 
 export const TIMELINE_TICKS = [0, 60, 120, 180, 240, 360, 720, 1440, 2160, 2880]
-/** Ticks kept on narrow screens so labels don't collide. */
-export const TIMELINE_TICKS_NARROW = [0, 120, 240, 360, 1440, 2880]
 
 /** "35 min", "3 h", "3 h 20 min" — rounded to 5 minutes so the model doesn't pretend to be precise. */
 export function formatDuration(min: number, t: TFunction): string {
@@ -43,7 +41,6 @@ export function formatDuration(min: number, t: TFunction): string {
   return t('units.hm', { h, m: rest })
 }
 
-/** Playback paces: seconds to play the whole 2-day bar. */
-export const PACES = [240, 120, 60, 30] as const
-export type Pace = (typeof PACES)[number]
+/** Playback pace: seconds to play the whole 2-day bar. */
+export type Pace = 240 | 120 | 60 | 30
 export const DEFAULT_PACE: Pace = 60

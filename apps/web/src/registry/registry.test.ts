@@ -15,7 +15,6 @@ import hi from '../i18n/hi.json'
 import { ORGANISMS } from './index.ts'
 import { registryKeys } from './i18nKeys.ts'
 import { UNIT_KEYS } from './units.ts'
-import type { SystemDef, OrganismDef } from './types.ts'
 
 /** Each organism's anatomy file. A new organism must add its own here (the type requires it). */
 const ANATOMY: { readonly [O in OrganismId]: Record<string, unknown> } = { human: humanAnatomy }
@@ -24,9 +23,6 @@ const ANATOMY: { readonly [O in OrganismId]: Record<string, unknown> } = { human
 function text(json: unknown, key: string): unknown {
   return key.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), json)
 }
-
-/** The flat drawing of a system: its own flat layer, or the organism's flat body when the body draws it. */
-const flatDrawing = (system: SystemDef, organism: OrganismDef) => (system.draw === 'body' ? organism.bodyFlat : system.draw.layerFlat)
 
 const entries = Object.entries(ORGANISMS) as [OrganismId, (typeof ORGANISMS)[OrganismId]][]
 
@@ -68,16 +64,17 @@ describe.each(entries)('registry: %s', (id, { organism, systems, organs }) => {
     }
   })
 
-  it('draws every system flat (no WebGL needed)', async () => {
+  it('draws every layer flat (no WebGL needed)', async () => {
+    // A system the body draws ('body') needs no layer: the shared flat body (BodyView) draws it.
     for (const s of systems) {
-      const mod = await flatDrawing(s, organism)()
+      if (s.draw === 'body') continue
+      const mod = await s.draw.layerFlat()
       expect(mod.default, s.id).toBeTypeOf('function')
     }
   })
 
   it('names only limits.* texts as known limits', () => {
-    const limits = [...systems.flatMap((s) => s.knownLimits), ...Object.values(organism.signalOverrides).map((o) => o?.limitKey)]
-    for (const k of limits) if (k !== undefined) expect(k).toMatch(/^limits\.\w+$/)
+    for (const k of systems.flatMap((s) => s.knownLimits)) expect(k).toMatch(/^limits\.\w+$/)
   })
 
   it('has a unit text for every signal it provides', () => {
