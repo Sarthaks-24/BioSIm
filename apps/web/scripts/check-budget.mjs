@@ -99,8 +99,9 @@
 //   T10 / FP-9 (2026-10-14): dead code out (the store's swapKept and setPace, PersonTag, FirstRunNote)
 //   and cold English loaded with its part: the "How we know" panel's own words, the rings' notes,
 //   the units in words and whose body it is with the panel (whose body: the "⋯" panel too), the long
-//   disclaimer with Science (scripts/i18n-sections.mjs): /sim 188.729 → 188.257 KB on main 466a989
-//   (−0.47), Home 144.70 → 144.23 KB. This script now enforces the Home ratchet (147 KB, B26), the
+//   disclaimer with Science (scripts/i18n-sections.mjs); projector mode under 640 px keeps the phone's
+//   type (CSS): /sim 189.079 → 188.668 KB on main 647a379 (−0.41; ledger row −0.41, planned −0.2),
+//   Home 144.92 → 144.52 KB. This script now enforces the Home ratchet (147 KB, B26), the
 //   Track A total (R66: ≤ +1.0 KB over eee16c9, no slack) and that every lazy chunk is precached.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
