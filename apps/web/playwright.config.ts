@@ -1,4 +1,4 @@
-import { defineConfig, type PlaywrightTestConfig } from '@playwright/test'
+import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/test'
 
 // Set PLAYWRIGHT_BASE_URL to run the gate against a deployed site (WP-22) or a server you started;
 // otherwise the tests build the app and serve the preview locally. That build has the +40 %
@@ -70,15 +70,58 @@ const projects: PlaywrightTestConfig['projects'] = [
     testMatch: ['stage.spec.ts'],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
+  ...trackA(),
   {
     // The fps check, with the nowebgl setup (flat body). It waits for every other project so no
     // other test competes for the CPU while it counts frames.
     name: 'perf',
     testMatch: ['perf.spec.ts'],
-    dependencies: ['desktop', 'projector', 'phone', 'reduced', 'nowebgl'],
+    dependencies: ['desktop', 'projector', 'phone', 'reduced', 'nowebgl', ...trackA().map((p) => p.name!)],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
 ]
+
+/**
+ * Track A projects (T0; plan qa-fixes §3.1). They report until the T-step that fixes their bugs
+ * flips them (e2e/invariants.spec.ts INVARIANTS, e2e/helpers/gate.ts RED_LIST). WebKit and Firefox
+ * run only with E2E_ENGINES=1 (main and nightly CI); the visual shots only with E2E_VISUAL=1
+ * (their Linux baselines come from the visual-baselines workflow, §3.3).
+ */
+function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
+  const phoneAt = (width: number, height: number) => ({
+    viewport: { width, height },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+    launchOptions: webgl,
+  })
+  const invariants = ['invariants.spec.ts']
+  return [
+    // One report test per QA-sweep bug seen failing on eee16c9 (e2e/red-list.md); each sets its own window.
+    { name: 'redlist', testMatch: ['redlist.spec.ts'], use: { viewport: desktop, launchOptions: webgl } },
+    { name: 'phone-small', testMatch: invariants, use: phoneAt(360, 640) },
+    // A 360×640 phone with its browser bars showing.
+    { name: 'phone-560', testMatch: invariants, use: phoneAt(360, 560) },
+    { name: 'phone-xs', testMatch: invariants, use: phoneAt(320, 568) },
+    { name: 'tablet-portrait', testMatch: invariants, use: phoneAt(768, 1024) },
+    // Phone landscape and a 1280-wide laptop at 200 % zoom; the spec also checks 740×360, 844×390, 640×400.
+    { name: 'landscape', testMatch: invariants, use: phoneAt(640, 360) },
+    // Projector mode at 1024×768; the spec also checks 1280×800 and 1366×768.
+    { name: 'projector-sizes', testMatch: invariants, use: { viewport: { width: 1024, height: 768 }, launchOptions: webgl } },
+    // Site data and the service worker blocked (a school-managed browser); desktop and phone sizes.
+    { name: 'storage-blocked', testMatch: invariants, use: { viewport: desktop, serviceWorkers: 'block', launchOptions: webgl } },
+    ...(process.env.E2E_ENGINES
+      ? [
+          { name: 'webkit-desktop', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['Desktop Safari'], viewport: desktop } },
+          { name: 'webkit-phone', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['iPhone 13'] } },
+          { name: 'firefox-desktop', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['Desktop Firefox'], viewport: desktop } },
+        ]
+      : []),
+    ...(process.env.E2E_VISUAL
+      ? [{ name: 'visual', testMatch: ['visual.spec.ts'], use: { viewport: desktop, launchOptions: noWebgl, reducedMotion: 'reduce' as const } }]
+      : []),
+  ]
+}
 
 export default defineConfig({
   testDir: 'e2e',
