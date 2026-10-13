@@ -58,8 +58,9 @@ test('a whole lesson with the keyboard only: add a food, play, step through the 
     seen.push(await now(page))
   }
   expect(seen).toEqual([...seen].sort((a, b) => a - b))
-  // Paused on a moment: its name shows over the bar, and screen readers hear the graphs' values.
-  await expect(page.locator('[data-marker-tip]')).toBeVisible()
+  // Paused on a moment, screen readers hear the graphs' values. Its name does not pop up over the
+  // graph (council round 3): only a marker's own hover, keyboard focus or press shows it.
+  await expect(page.locator('[data-marker-tip]')).toHaveCount(0)
   await expect(page.locator('[data-announcer]')).toHaveText(/after eating: .+ \d+/)
   await page.keyboard.press('PageUp')
   await expect.poll(() => now(page)).toBe(seen[1])
@@ -194,6 +195,25 @@ test.describe('the timeline’s key moments (council round 2)', () => {
           expect(overlap, `${url}: "${a.name}" overlaps "${b.name}"`).toBe(false)
         }
       }
+      // Each marker is drawn as ONE dot (a cluster: one pill with its count), and in each row
+      // two markers' dots are at least a target apart: 44 px on a phone, 24 px from 1024 px up
+      // (council round 3: a phone showed a cluster as four dots ~10 px apart).
+      const gap = test.info().project.name === 'phone' ? 44 : 24
+      for (const lane of ['run', 'kept']) {
+        const dots = await page.locator(`[data-marker="${lane}"]`).evaluateAll((els) =>
+          els.map((el) => {
+            const dots = el.querySelectorAll('[data-dot]')
+            const r = dots[0]?.getBoundingClientRect()
+            const moments = (el.getAttribute('data-moment') ?? '').split(' ').length
+            return { n: dots.length, x: r ? r.x + r.width / 2 : NaN, count: dots[0]?.textContent ?? '', moments }
+          }),
+        )
+        for (const [i, d] of dots.entries()) {
+          expect(d.n, `${url}: ${lane} marker ${i} dots`).toBe(1)
+          expect(d.count, `${url}: ${lane} marker ${i} count`).toBe(d.moments > 1 ? String(d.moments) : '')
+          if (i > 0) expect(d.x - dots[i - 1]!.x, `${url}: ${lane} markers ${i - 1}–${i}`).toBeGreaterThanOrEqual(gap - 0.5)
+        }
+      }
     }
     // Cola's first hour (half has left, highest) is one marker that names both.
     await page.goto('/sim?v=2&a=cola:1&lang=en')
@@ -234,33 +254,34 @@ test.describe('the timeline’s key moments (council round 2)', () => {
     )
   })
 
-  test('paused where moments coincide, all are named, the kept meal’s too; Page Down visits the kept meal’s moments', async ({ page }) => {
+  test('pressed where moments coincide, all are named, the kept meal’s too; Page Down visits the kept meal’s moments', async ({ page }) => {
     onlyIn('desktop')
     // Cola kept and cola + water now: cola's "half has left" and "highest" share a minute, in both meals.
     await page.goto('/sim?v=2&a=cola:1,water:1&b=cola:1')
     await expect(page.locator('[data-marker="kept"]').first()).toBeAttached()
-    await page.locator('body').press('Home')
-    await page.locator('body').press('PageDown')
+    await page.locator('[data-marker="run"]').first().click()
+    // The pointer moves away: the names stay while the clock is where the press put it.
+    await page.mouse.move(5, 5)
     await expect(page.locator('[data-marker-tip] > span')).toHaveText([
       /^Half the energy has left the stomach, \d+ min$/,
       /^Blood sugar highest, \d+ min$/,
       /^Kept: Half the energy has left the stomach, \d+ min$/,
       /^Kept: Blood sugar highest, \d+ min$/,
     ])
+    // Once the clock moves on, they go.
+    await page.locator('body').press('PageDown')
+    await expect(page.locator('[data-marker-tip]')).toHaveCount(0)
     // Burger + fries kept: its "half has left" (hours after cola's) is a stop for Page Down.
     await page.goto(COLA_KEPT_BURGER)
     const keptHalf = page.locator('[data-marker="kept"][data-moment~="event.stomachHalfEmpty"]')
     await expect(keptHalf).toBeAttached()
+    // Its time, as its name says it ("…, 4 h 35 min", rounded to 5 min).
+    const [, h, m] = /, (\d+) h(?: (\d+) min)?/.exec((await keptHalf.getAttribute('aria-label'))!)!
+    const at = Number(h) * 60 + Number(m ?? 0)
     await page.locator('body').press('Home')
     for (let i = 0; i < 8; i++) {
       await page.locator('body').press('PageDown')
-      if (
-        await page
-          .locator('[data-marker-tip]')
-          .getByText(/^Kept: Half the energy has left the stomach/)
-          .count()
-      )
-        return
+      if (Math.abs((await now(page)) - at) <= 5) return
     }
     throw new Error('Page Down never stopped at the kept meal’s "half has left"')
   })
