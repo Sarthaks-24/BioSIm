@@ -29,6 +29,15 @@ Rules for the reviewer:
 - "ग्राफ़" with no ending stands for "graphs" (plural) in `stage.graphs`, `table.title` and
   `keys.table`, and for one graph in `graph.label`, `graph.halfNote` and `keys.strips`. Please
   confirm the plural ones read as plural, or suggest a clearer form.
+- Food names fill `{{meal}}`, `{{fast}}`, `{{slow}}`, `{{a}}` and `{{b}}`. Some are feminine (इडली, दाल, रोटी),
+  some masculine (केला, सेब), and a meal can be two foods ("रोटी + दाल"). So no verb or adjective agrees
+  with a food name (FIX-F): the name is the subject only of "… तेज़ है" (तेज़ does not change), or sits
+  before a postposition ("… की तुलना में", "… को … समय लगता है"), or after a label ending in a noun
+  ("रखा गया भोजन: इडली", "रखा गया भोजन (दाल):"). `agreement.test.ts` checks every food in these
+  sentences. Please keep to this if you reword them. Open point: "केला" and "उबला अंडा" stay as they are
+  before a postposition ("केला की तुलना में", not "केले की"); tell us if that reads wrong.
+- `stats.medianDays` uses माध्यक, the word for "median" in NCERT गणित कक्षा 10, अध्याय 13 "सांख्यिकी"
+  ("माध्य (mean), माध्यक (median) और बहुलक (mode)").
 
 ## Renamed lines (old name → LifePeek, only the name changed)
 
@@ -262,7 +271,7 @@ The `/stats` page, its footer link, and one new line on the privacy page (`priva
 | `stats.reported` | Reported | बताई गईं | draft |
 | `stats.fixed` | Fixed | ठीक की गईं | draft |
 | `stats.lastWeeks` | in the last {{weeks}} weeks | पिछले {{weeks}} हफ़्तों में | draft |
-| `stats.medianDays` | Median days to fix | ठीक करने में लगे दिन (माध्यिका) | draft |
+| `stats.medianDays` | Median days to fix | ठीक करने में लगे दिन (माध्यक) | draft |
 | `stats.medianNote` | half were fixed sooner, half later | आधी इससे जल्दी ठीक हुईं, आधी बाद में | draft |
 | `stats.noFixes` | nothing fixed in these weeks | इन हफ़्तों में कुछ ठीक नहीं हुआ | draft |
 | `stats.tableTitle` | Week by week | हफ़्ते-दर-हफ़्ते | draft |
@@ -308,7 +317,7 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `keep.button` | Keep to compare | तुलना के लिए रखें | draft |
 | `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | इस भोजन को ग्राफ़ों पर टूटी रेखा के रूप में रख देता है। फिर भोजन बदलें और तुलना करें। | draft |
 | `keep.already` | This meal is the one kept | यही भोजन रखा गया है | draft |
-| `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
+| `keep.tag` | Kept: {{meal}} | रखा गया भोजन: {{meal}} | draft |
 | `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
 
 ## Graphs (WP-12)
@@ -406,8 +415,8 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `summary.label` | Summary | सारांश | draft |
 | `summary.single` | Half of the food energy in {{meal}} has left the stomach after {{time}}. | {{meal}} की आधी ऊर्जा {{time}} बाद आमाशय से निकल चुकी है। | draft |
 | `summary.singleWater` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
-| `summary.similar` | {{a}} and {{b}} leave the stomach at about the same speed. | {{a}} और {{b}} लगभग एक ही गति से आमाशय से निकलते हैं। | draft |
-| `summary.faster` | {{fast}} leaves the stomach about {{x}} faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} तेज़ी से आमाशय से निकलता है। | draft |
+| `summary.similar` | {{a}} and {{b}} leave the stomach at about the same speed. | {{a}} और {{b}} को आमाशय से निकलने में लगभग बराबर समय लगता है। | draft |
+| `summary.faster` | {{fast}} leaves the stomach about {{x}} faster than {{slow}}. | {{fast}} आमाशय से निकलने में {{slow}} की तुलना में लगभग {{x}} तेज़ है। | draft |
 | `summary.reasonDrink` | {{fast}} is only a drink: drinks start leaving straight away, while solid food is ground first. | {{fast}} केवल एक पेय है: पेय तुरंत निकलने लगते हैं, जबकि ठोस भोजन पहले पीसा जाता है। | draft |
 | `summary.reasonCalories` | {{slow}} has more food energy ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach lets only a little through each minute. | {{slow}} में अधिक ऊर्जा है ({{kcalSlow}} बनाम {{kcalFast}} किलो कैलोरी), और आमाशय हर मिनट थोड़ा-सा ही आगे जाने देता है। | draft |
 | `summary.thisMeal` | this meal | यह भोजन | draft |
@@ -416,7 +425,7 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `dock.moments` | Key moments of this meal | इस भोजन के मुख्य पल | draft |
 | `dock.keptMoments` | Key moments of the kept meal | रखे गए भोजन के मुख्य पल | draft |
 | `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
-| `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया: {{name}}, {{time}} | draft |
+| `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया भोजन: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
 
 ## Text alternatives, keys and settings (WP-15)
@@ -487,7 +496,7 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `now.drink.mouth` | the drink is swallowed in a few gulps | पेय कुछ घूँटों में निगला जाता है | draft |
 | `now.drink.esophagus` | muscle waves push each gulp down to the stomach | पेशियों की लहरें हर घूँट को नीचे आमाशय तक धकेलती हैं | draft |
 | `now.drink.stomach` | the stomach lets the drink through a little at a time | आमाशय पेय को थोड़ा-थोड़ा करके आगे जाने देता है | draft |
-| `now.kept` | {{meal}} (kept): | {{meal}} (रखा गया): | draft |
+| `now.kept` | {{meal}} (kept): | रखा गया भोजन ({{meal}}): | draft |
 | `now.in.mouth` | being eaten | खाया जा रहा है | draft |
 | `now.in.mouthDrink` | being drunk | पिया जा रहा है | draft |
 | `now.in.esophagus` | on its way down to the stomach | आमाशय की ओर जा रहा है | draft |
@@ -496,7 +505,7 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `now.in.largeIntestine` | {{amount}} in the large intestine | {{amount}} भाग बड़ी आँत में | draft |
 | `now.in.done` | the gut is finished with it | पाचन पूरा हो चुका | draft |
 | `summary.times` | {{n}}× | {{n}} गुना | draft |
-| `summary.fasterMore` | {{fast}} leaves the stomach more than {{x}} faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में {{x}} से भी अधिक तेज़ी से आमाशय से निकलता है। | draft |
+| `summary.fasterMore` | {{fast}} leaves the stomach more than {{x}} faster than {{slow}}. | {{fast}} आमाशय से निकलने में {{slow}} की तुलना में {{x}} से भी अधिक तेज़ है। | draft |
 | `summary.singleMore` | Half of the food energy in {{meal}} takes more than {{time}} to leave the stomach. | {{meal}} की आधी ऊर्जा को आमाशय से निकलने में {{time}} से अधिक समय लगता है। | draft |
 | `summary.singleWaterMore` | Half of {{meal}} takes more than {{time}} to leave the stomach. | {{meal}} के आधे भाग को आमाशय से निकलने में {{time}} से अधिक समय लगता है। | draft |
 | `graph.halfEnergyLeftOf` | {{meal}}: half the energy has left the stomach | {{meal}}: आधी ऊर्जा आमाशय से निकल गई | draft |
@@ -691,7 +700,7 @@ WP-20; until then they ship and need the same check.
 | `anatomy.pancreas` | Pancreas | अग्न्याशय | draft |
 | `verdict.single` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
 | `verdict.similar` | Both meals leave the stomach at about the same speed. | दोनों भोजन लगभग एक ही गति से आमाशय से निकलते हैं। | draft |
-| `verdict.faster` | {{fast}} leaves the stomach about {{x}}× faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} गुना तेज़ी से आमाशय से निकलता है। | draft |
+| `verdict.faster` | {{fast}} leaves the stomach about {{x}}× faster than {{slow}}. | {{fast}} आमाशय से निकलने में {{slow}} की तुलना में लगभग {{x}} गुना तेज़ है। | draft |
 | `verdict.times` | Half of each meal has left the stomach after: Meal A {{a}}, Meal B {{b}}. | हर भोजन का आधा भाग इतने समय बाद आमाशय से निकल चुका है: भोजन A — {{a}}, भोजन B — {{b}}। | draft |
 | `verdict.reasonDrink` | {{fast}} is only a drink: drinks start leaving straight away, at about 2 kcal a minute, while solid food is first ground for about 20 minutes and then leaves at about 1.4 kcal a minute. | {{fast}} केवल एक पेय है: पेय तुरंत निकलने लगते हैं, लगभग 2 किलो कैलोरी प्रति मिनट की दर से, जबकि ठोस भोजन पहले लगभग 20 मिनट तक पीसा जाता है और फिर लगभग 1.4 किलो कैलोरी प्रति मिनट की दर से निकलता है। | draft |
 | `verdict.reasonCalories` | {{slow}} has more calories ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach only lets food through slowly — about 2 kcal a minute for drinks and 1.4 for solid food. | {{slow}} में अधिक कैलोरी है ({{kcalSlow}} बनाम {{kcalFast}} किलो कैलोरी), और आमाशय भोजन को धीरे-धीरे ही आगे जाने देता है — पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट और ठोस भोजन के लिए 1.4। | draft |
@@ -704,6 +713,55 @@ WP-20; until then they ship and need the same check.
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `now.keptShort` | Kept: | रखा गया: | draft |
+
+## Hindi agreement (FIX-F)
+
+"This meal" and "the kept meal" before a postposition (`इस भोजन की`, `रखे गए भोजन की तुलना में`), for the
+summary sentences whose Hindi puts the meal's name there. English needs no second form, so its text repeats.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `summary.oblique.thisMeal` | this meal | इस भोजन | draft |
+| `summary.oblique.keptMeal` | the kept meal | रखे गए भोजन | draft |
+
+## Foods (content/foods/*.json)
+
+Each food's Hindi name and serving label, from its file in `content/foods/` (change them there, then
+run `--write`). The app puts the short name (without the part in brackets) into sentences such as the
+summary, so those sentences are worded to fit feminine (इडली, दाल, रोटी) and masculine (केला, सेब) names alike.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `foods/apple.name` | Apple | सेब | draft |
+| `foods/apple.serving.label` | 1 medium apple (182 g) | 1 मध्यम सेब (182 ग्राम) | draft |
+| `foods/banana.name` | Banana | केला | draft |
+| `foods/banana.serving.label` | 1 medium banana (118 g) | 1 मध्यम केला (118 ग्राम) | draft |
+| `foods/boiled-egg.name` | Boiled egg | उबला अंडा | draft |
+| `foods/boiled-egg.serving.label` | 1 large egg (50 g) | 1 बड़ा अंडा (50 ग्राम) | draft |
+| `foods/cheeseburger.name` | Cheeseburger | चीज़बर्गर | draft |
+| `foods/cheeseburger.serving.label` | 1 fast-food cheeseburger (119 g) | 1 फ़ास्ट-फ़ूड चीज़बर्गर (119 ग्राम) | draft |
+| `foods/cola.name` | Cola | कोला | draft |
+| `foods/cola.serving.label` | 1 can (330 mL) | 1 कैन (330 मि.ली.) | draft |
+| `foods/dal.name` | Dal (masoor) | दाल (मसूर) | draft |
+| `foods/dal.serving.label` | 1 katori (150 g) | 1 कटोरी (150 ग्राम) | draft |
+| `foods/fries.name` | French fries | फ़्रेंच फ़्राइज़ | draft |
+| `foods/fries.serving.label` | 1 medium portion (117 g) | 1 मध्यम हिस्सा (117 ग्राम) | draft |
+| `foods/green-salad.name` | Green salad (no dressing) | हरा सलाद (बिना ड्रेसिंग) | draft |
+| `foods/green-salad.serving.label` | 1 bowl: lettuce, cucumber, tomato (150 g) | 1 कटोरी: सलाद पत्ता, खीरा, टमाटर (150 ग्राम) | draft |
+| `foods/idli.name` | Idli | इडली | draft |
+| `foods/idli.serving.label` | 2 idlis (about 45 g each) | 2 इडली (लगभग 45 ग्राम प्रत्येक) | draft |
+| `foods/milk.name` | Milk (full fat) | दूध (फुल क्रीम) | draft |
+| `foods/milk.serving.label` | 1 glass (250 mL) | 1 गिलास (250 मि.ली.) | draft |
+| `foods/orange-juice.name` | Orange juice | संतरे का रस | draft |
+| `foods/orange-juice.serving.label` | 1 glass (250 mL) | 1 गिलास (250 मि.ली.) | draft |
+| `foods/roti.name` | Roti / chapati (whole wheat) | रोटी / चपाती (गेहूँ) | draft |
+| `foods/roti.serving.label` | 2 rotis (72 g) | 2 रोटी (72 ग्राम) | draft |
+| `foods/water.name` | Water | पानी | draft |
+| `foods/water.serving.label` | 1 glass (250 mL) | 1 गिलास (250 मि.ली.) | draft |
+| `foods/white-bread.name` | White bread | सफ़ेद ब्रेड | draft |
+| `foods/white-bread.serving.label` | 2 slices (50 g) | 2 स्लाइस (50 ग्राम) | draft |
+| `foods/white-rice.name` | White rice (cooked) | सफ़ेद चावल (पका हुआ) | draft |
+| `foods/white-rice.serving.label` | 1 cup (158 g) | 1 कप (158 ग्राम) | draft |
 
 ## Sign-off
 

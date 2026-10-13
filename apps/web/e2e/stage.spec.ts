@@ -151,7 +151,7 @@ test.describe('/next stage', () => {
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1')
     await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi')
-    await expect(page.getByText(/^रखा गया: .+ \+ .+$/).filter({ visible: true }).first()).toBeVisible()
+    await expect(page.getByText(/^रखा गया भोजन: .+ \+ .+$/).filter({ visible: true }).first()).toBeVisible()
   })
 
   test('adding a food updates the link', async ({ page }) => {

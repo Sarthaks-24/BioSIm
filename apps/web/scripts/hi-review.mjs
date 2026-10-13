@@ -14,17 +14,30 @@
 //
 // So nobody keeps the list by hand any more: add the string to en.json and hi.json, run --write,
 // and only a reviewer ever changes a status. The CSV opens in any spreadsheet (UTF-8 with BOM).
+//
+// The foods' Hindi names and serving labels (content/foods/*.json) are listed too (FIX-F), as
+// `foods/<id>.name` and `foods/<id>.serving.label` in a "Foods" section of their own: the app puts
+// the names into its sentences, so the reviewer and the release gate see them like any other string.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const web = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const I18N = path.join(web, 'src', 'i18n')
+const FOODS_DIR = path.resolve(web, '..', '..', 'content', 'foods')
 export const REVIEW_FILE = path.join(I18N, 'REVIEW.md')
 const CSV_FILE = path.join(web, 'hi-review.csv')
 
 /** Where keys new to REVIEW.md go, until someone moves them under a better heading. */
 const NEW_SECTION = '## New strings (added by scripts/hi-review.mjs)'
+/** Where food rows (`foods/<id>.…`) go, with a few lines on where they come from. */
+const FOODS_SECTION = '## Foods (content/foods/*.json)'
+const FOODS_INTRO = [
+  "Each food's Hindi name and serving label, from its file in `content/foods/` (change them there, then",
+  'run `--write`). The app puts the short name (without the part in brackets) into sentences such as the',
+  'summary, so those sentences are worded to fit feminine (इडली, दाल, रोटी) and masculine (केला, सेब) names alike.',
+]
+const isFoodKey = (key) => key.startsWith('foods/')
 const TABLE_HEAD = ['| Key | English | Hindi | Status |', '|---|---|---|---|']
 /** A table row: | `key` | English | Hindi | status | */
 const ROW = /^\| `([^`]+)` \| (.*) \| (.*) \| ([^|]*) \|$/
@@ -45,9 +58,32 @@ export const STATUS = /^(draft|reviewed by \S+ \d{4}-\d{2}-\d{2})$/
 
 const isReviewed = (status) => status !== 'draft' && STATUS.test(status)
 
+/** The foods' names and serving labels as `foods/<id>.name` → text, per language (a text without Hindi is left out). */
+export function readFoodTexts(dir = FOODS_DIR) {
+  const en = new Map()
+  const hi = new Map()
+  for (const file of fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort()) {
+    const food = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'))
+    for (const [field, text] of [
+      ['name', food.name],
+      ['serving.label', food.serving?.label],
+    ]) {
+      if (!text?.hi) continue
+      const key = `foods/${food.id}.${field}`
+      en.set(key, String(text.en ?? ''))
+      hi.set(key, String(text.hi))
+    }
+  }
+  return { en, hi }
+}
+
 export function readTexts() {
   const read = (name) => flatten(JSON.parse(fs.readFileSync(path.join(I18N, name), 'utf8')))
-  return { en: read('en.json'), hi: read('hi.json') }
+  const foods = readFoodTexts()
+  return { en: new Map([...read('en.json'), ...foods.en]), hi: new Map([...read('hi.json'), ...foods.hi]) }
 }
 
 /**
@@ -89,15 +125,16 @@ export function syncReview(markdown, { en, hi } = readTexts()) {
     lines.push(`| \`${key}\` | ${wantEn} | ${wantHi} | ${status} |`)
   }
   const missing = [...hi.keys()].filter((k) => !seen.has(k))
-  if (missing.length) {
-    for (const k of missing) problems.push(`${k}: not listed (added as draft)`)
-    const rows = missing.map((k) => `| \`${k}\` | ${cell(en.get(k) ?? '')} | ${cell(hi.get(k))} | draft |`)
-    let at = lines.indexOf(NEW_SECTION)
+  for (const k of missing) problems.push(`${k}: not listed (added as draft)`)
+  const add = (section, intro, keys) => {
+    if (!keys.length) return
+    const rows = keys.map((k) => `| \`${k}\` | ${cell(en.get(k) ?? '')} | ${cell(hi.get(k))} | draft |`)
+    const at = lines.indexOf(section)
     if (at < 0) {
       // A section of its own, just before the sign-off.
       const signOff = lines.indexOf('## Sign-off')
       const before = signOff < 0 ? lines.length : signOff
-      lines.splice(before, 0, NEW_SECTION, '', ...TABLE_HEAD, ...rows, '')
+      lines.splice(before, 0, section, '', ...intro, ...(intro.length ? [''] : []), ...TABLE_HEAD, ...rows, '')
     } else {
       // At the end of that section's table.
       let end = at + 1
@@ -106,6 +143,12 @@ export function syncReview(markdown, { en, hi } = readTexts()) {
       lines.splice(end, 0, ...rows)
     }
   }
+  add(
+    NEW_SECTION,
+    [],
+    missing.filter((k) => !isFoodKey(k)),
+  )
+  add(FOODS_SECTION, FOODS_INTRO, missing.filter(isFoodKey))
   return { markdown: lines.join('\n'), problems }
 }
 
