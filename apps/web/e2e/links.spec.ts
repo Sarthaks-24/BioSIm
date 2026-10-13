@@ -27,7 +27,7 @@ test.describe('Back', () => {
     await open(page, '/sim?v=2&a=cola:1')
     for (const [button, sheet] of [
       ['Add food', 'Add food'],
-      ['Keys and settings', 'Keys and settings'],
+      ['Settings', 'Settings'],
     ] as const) {
       await page.getByRole('button', { name: button }).filter({ visible: true }).first().click()
       await expect(page.getByRole('dialog', { name: sheet })).toBeVisible()
@@ -66,13 +66,15 @@ test.describe('Back', () => {
     expect(new URL(page.url()).pathname).toBe('/sim')
     expect(param(page, 'a'), 'the food is still in the link').toBe('cola:1,fries:1')
     await showChip(page, /^French fries, Servings 1$/)
-    // Back leaves the stage (to Home, where the reader was); Forward brings the meal back as it was left.
-    await page.goBack()
-    await expect(page).toHaveURL(/\/$/)
-    await page.goForward()
-    await page.locator('[data-stage]').waitFor()
-    await page.waitForTimeout(500)
-    expect(param(page, 'a'), 'Forward does not bring back the old meal').toBe('cola:1,fries:1')
+    // Forward steps onto the sheet's old entry (it held the link while the sheet was open), and
+    // Back again: the sheet stays shut, and the food stays.
+    for (const step of ['forward', 'back'] as const) {
+      await (step === 'forward' ? page.goForward() : page.goBack())
+      await page.waitForTimeout(500)
+      expect(new URL(page.url()).pathname).toBe('/sim')
+      expect(param(page, 'a'), `${step}: the old meal does not come back`).toBe('cola:1,fries:1')
+      await expect(sheet).toBeHidden()
+    }
     await showChip(page, /^French fries, Servings 1$/)
   })
 })
