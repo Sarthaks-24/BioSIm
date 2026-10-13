@@ -142,15 +142,22 @@ export async function expectNoPageScroll(page: Page, { mode = 'enforce' }: { mod
  * Waits until the body picture is drawn at its settled size: `data-ready` on the 3D body after its
  * first frame (BodyCanvas waits for a stable box and the fonts), or on the flat body when it is the
  * one shown. Until then the flat stand-in is swapped for the 3D body, and anything measured on it
- * can be detached mid-check (T7: the "body has no box" and "leader NaN" flakes). A drawn stage with
- * no body (the empty state before FP-1) goes on at once; a body never ready, after `timeout`.
+ * can be detached mid-check (T7: the "body has no box" and "leader NaN" flakes). A drawn stage
+ * with no body (the empty state before FP-1), or with a body squeezed to 0 px (which never draws:
+ * B1 before FP-1), goes on at once; a body never ready, after `timeout`.
  */
 export async function bodySettled(page: Page, timeout = 15_000) {
   await page
     .waitForFunction(
-      () =>
-        !!document.querySelector('[data-body][data-ready]') ||
-        (!!document.querySelector('[data-stage]') && !document.querySelector('[data-body]')),
+      () => {
+        if (document.querySelector('[data-body][data-ready]')) return true
+        if (!document.querySelector('[data-stage]')) return false
+        const bodies = [...document.querySelectorAll('[data-body]')]
+        return bodies.every((b) => {
+          const r = b.getBoundingClientRect()
+          return r.width === 0 || r.height === 0
+        })
+      },
       null,
       { timeout },
     )
