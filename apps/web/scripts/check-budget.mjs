@@ -60,7 +60,8 @@
 //   WP-20 (2026-10-13): v1 deleted; the stage is pages/Simulator.tsx. v1's code had already left
 //   the bundle with WP-19 (no route imported it), so what went now is what Tailwind still found in
 //   v1's files (CSS), v1's texts (hi.json) and the registry's unused body loaders: /sim 189.5 →
-//   187.5 KB, Home 145.5 → 144.6 KB, precache 1942.7 → 1929.0 KB.
+//   187.5 KB, Home 145.5 → 144.6 KB, precache 1942.7 → 1929.0 KB. Merged with FIX-G (its
+//   @source lines went with the files): /sim 188.2 KB, Home 144.9 KB, precache 1942.5 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
