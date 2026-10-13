@@ -7,10 +7,10 @@ marks it `reviewed by <initials> <date>`).
 Nobody keeps this list by hand (WP-18). After adding or changing a string in `en.json` and
 `hi.json`, run `node apps/web/scripts/hi-review.mjs --write`: new keys get a `draft` row (under
 "New strings", to move under a better heading if you like), the English and Hindi columns follow
-the JSON files, a reviewed row whose Hindi changed goes back to `draft`, and rows of deleted keys
-go. `i18n.test.ts` fails while this file is out of date. `node apps/web/scripts/hi-review.mjs`
-writes `apps/web/hi-review.csv` (key, English, Hindi, status) for the reviewer and lists every key
-not yet reviewed. Only the reviewer changes a status.
+the JSON files, a reviewed row whose Hindi or English changed goes back to `draft`, and rows of
+deleted keys go. `i18n.test.ts` fails while this file is out of date.
+`node apps/web/scripts/hi-review.mjs` writes `apps/web/hi-review.csv` (key, English, Hindi, status)
+for the reviewer and lists every key not yet reviewed. Only the reviewer changes a status.
 
 Rules for the reviewer:
 
@@ -23,6 +23,12 @@ Rules for the reviewer:
 - On the privacy page, the first four items of "आपके डिवाइस पर क्या रहता है" (`privacy.sections[0].items[0]`
   to `[3]`; `[1]` was added with the reduced-motion setting, `[2]` with the letter-key switch in WP-15) and the paragraph under "गलती की रिपोर्ट करना"
   (`privacy.sections[1].intro[0]`) are new wording; please check them closely.
+- `keep.help` is the help of the "Keep to compare" button, so it now says what the button does, as
+  an active sentence with the button as its unspoken subject ("इस भोजन को … रख देता है"), not a passive
+  "रखा जाता है". "ग्राफ़ों पर" is plural, like "on the graphs". Please check it reads naturally.
+- "ग्राफ़" with no ending stands for "graphs" (plural) in `stage.graphs`, `table.title` and
+  `keys.table`, and for one graph in `graph.label`, `graph.halfNote` and `keys.strips`. Please
+  confirm the plural ones read as plural, or suggest a clearer form.
 
 ## Renamed lines (old name → LifePeek, only the name changed)
 
@@ -300,7 +306,7 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `stage.thisMeal` | This meal | यह भोजन | draft |
 | `stage.keptMeal` | The kept meal | रखा गया भोजन | draft |
 | `keep.button` | Keep to compare | तुलना के लिए रखें | draft |
-| `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | यह भोजन ग्राफ़ पर टूटी रेखा के रूप में रखा जाता है। फिर भोजन बदलें और तुलना करें। | draft |
+| `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | इस भोजन को ग्राफ़ों पर टूटी रेखा के रूप में रख देता है। फिर भोजन बदलें और तुलना करें। | draft |
 | `keep.already` | This meal is the one kept | यही भोजन रखा गया है | draft |
 | `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
 | `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
