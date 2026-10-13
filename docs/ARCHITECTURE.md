@@ -67,7 +67,7 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 | `lib/` | Time scale and formatting, colours (tested against `styles.css`), API client, presets, WebGL checks |
 | `lib/axis.ts`, `lib/formatSignal.ts` | v2 graphs: the shared x scale (same as the dock's thumb) and each signal's fixed y range, stretched once if a value falls outside; numbers rounded to the signal's display step, in Latin digits, with the unit from i18n |
 | `data/` | Loads the food files at build time (a quick field check in the browser; the full schema runs in CI and `foods.test.ts`) |
-| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry). English is bundled, except the texts of the pages that bring their own (privacy, about, teach, science, stats, the report form, v1's simulator: `scripts/i18n-sections.mjs`, `addEnglish`); Hindi is fetched when first needed |
+| `i18n/` | `en.json`, `hi.json` — a test fails if keys differ, or if a key is unused or missing (including the keys built from the catalog and the registry). English is bundled, except the texts of the pages that bring their own (privacy, about, teach, science, stats, the report form, v1's simulator: `scripts/i18n-sections.mjs`, `addEnglish`); Hindi is fetched when first needed. `REVIEW.md` lists every Hindi string with its reviewer status, kept in step with the JSON by `scripts/hi-review.mjs --write` (which also exports `hi-review.csv`; `i18n.test.ts` fails when it is out of date). `pseudo.ts`: the +40 % pseudo-locale for the layout tests, only in builds with `VITE_PSEUDO=1` |
 
 ## Performance
 

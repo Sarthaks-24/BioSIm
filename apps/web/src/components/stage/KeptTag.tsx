@@ -35,18 +35,27 @@ export default function KeptTag() {
   return (
     <span className="inline-flex min-h-11 max-w-full min-w-0 shrink items-center gap-2 rounded-control border-[1.5px] border-dashed border-kept pl-2.5 text-control text-ink lg:min-h-9">
       <LineSwatch kept />
-      {/* Never cut short: on a phone the tag has its own row and the words may wrap. */}
-      <span className="min-w-0 font-semibold whitespace-nowrap max-lg:whitespace-normal">{t('keep.tag', { meal: names })}</span>
-      <span className="tabular shrink-0 whitespace-nowrap text-ink-2">{t('units.kcal', { n: mealKcalRounded(kept.items) })}</span>
-      <button
-        type="button"
-        onClick={() => useRunStore.getState().unkeep()}
-        aria-label={t('keep.remove', { meal: names })}
-        title={t('keep.remove', { meal: names })}
-        className="grid size-11 shrink-0 place-items-center rounded-r-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:size-9"
-      >
-        <CloseIcon />
-      </button>
+      {/* Never cut short: the words wrap when the meal bar is full (on a phone the tag has its own
+          row). Its kcal is for the wider screens: a phone's first screen has no room for it (WP-18). */}
+      <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{t('keep.tag', { meal: names })}</span>
+      <span className="tabular shrink-0 whitespace-nowrap text-ink-2 max-lg:sr-only">{t('units.kcal', { n: mealKcalRounded(kept.items) })}</span>
+      <UnkeepButton meal={names} className="rounded-r-control lg:size-9" />
     </span>
+  )
+}
+
+/** "Stop comparing with …": ends the kept run. In the kept tag, and on a phone in the Now line's kept row. */
+export function UnkeepButton({ meal, className = '' }: { meal: string; className?: string }) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      onClick={() => useRunStore.getState().unkeep()}
+      aria-label={t('keep.remove', { meal })}
+      title={t('keep.remove', { meal })}
+      className={`grid size-11 shrink-0 place-items-center text-ink-2 hover:bg-sunk2 hover:text-ink ${className}`}
+    >
+      <CloseIcon />
+    </button>
   )
 }

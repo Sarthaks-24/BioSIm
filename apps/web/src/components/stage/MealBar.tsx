@@ -30,16 +30,25 @@ export default function MealBar() {
 
   return (
     <section aria-labelledby="meal-bar-title" className="border-b border-rule2 bg-paper2">
-      {/* Phone rows: the meal (chips, add, kcal) / the person and Keep / the kept run, if any. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:flex-nowrap lg:gap-x-4 lg:px-4">
-        <div className="flex min-w-0 basis-full items-center gap-2 lg:basis-auto">
+      {/*
+       * Phone rows: the meal (chips, add, kcal) / the person and Keep / the kept run, if any. From
+       * 1024 px up one line while it fits: the meal counts as 20 rem (its name, a chip, + and kcal;
+       * more chips scroll, and a chip's name shortens before its servings or ✕) and grows up to its
+       * whole length; the kept run likewise counts as 14 rem, its words wrap before the line does.
+       * "Copy link" and "Report a mistake" keep
+       * their words only on a bar at least 88 rem wide (rem: Hindi's larger type needs a wider
+       * screen). Only when the rest still does not fit (a long translation) does the line wrap,
+       * instead of squeezing the chips to nothing or running off the page (WP-18).
+       */}
+      <div className="@container/bar flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:gap-x-4 lg:px-4">
+        <div className="flex min-w-0 basis-full items-center gap-2 lg:max-w-max lg:flex-[1_1_20rem]">
           <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-2 max-lg:sr-only">
             <LineSwatch />
             {t('stage.meal')}
           </h2>
           <ChipStrip>
             {meal.map((item) => (
-              <li key={item.foodId} className="shrink-0">
+              <li key={item.foodId} className="max-w-full shrink-0">
                 <MealChip item={item} />
               </li>
             ))}
@@ -52,14 +61,18 @@ export default function MealBar() {
           )}
         </div>
         <PersonInfo profile={profile} />
-        {/* Takes the free space from 1024 px up, so the kept run and Keep sit at the right end. */}
-        <span aria-hidden="true" className="hidden flex-1 lg:block" />
         {kept && (
-          <div className="flex min-w-0 shrink-0 max-lg:order-last max-lg:basis-full">
+          // On a phone the Now line names the kept meal, with its ✕, right under the meal bar: this
+          // row gives way to it while it shows (styles.css), so the body keeps the height (WP-18).
+          <div
+            data-kept-tag=""
+            className="flex min-w-0 max-lg:order-last max-lg:basis-full lg:ml-auto lg:max-w-max lg:flex-[1_1_14rem]"
+          >
             <KeptTag />
           </div>
         )}
-        <div className="flex shrink-0 items-center gap-1 max-lg:ml-auto">
+        {/* From 1024 px up the kept run and Keep sit at the right end. */}
+        <div className={`flex shrink-0 items-center gap-1 max-lg:ml-auto ${kept ? '' : 'lg:ml-auto'}`}>
           {/* Their words stay after keeping (council SHOULD 11): from 1280 px up, as before. */}
           <KeepButton />
           <CopyLink />
@@ -118,7 +131,7 @@ function MealChip({ item }: { item: MealItem }) {
   const steps = [...new Set<number>([...SERVING_STEPS, item.servings])].sort((x, y) => x - y)
   return (
     <>
-      <span ref={anchor} className="inline-flex">
+      <span ref={anchor} className="inline-flex max-w-full">
         <FoodChip
           emoji={food.emoji}
           name={name}
@@ -164,7 +177,7 @@ function MealChip({ item }: { item: MealItem }) {
   )
 }
 
-/** "Adult model ⓘ": the ⓘ opens who the model is, with a link to the sources. */
+/** "Typical adult ⓘ": the ⓘ opens who the model is, with a link to the sources. */
 function PersonInfo({ profile }: { profile: Parameters<typeof PersonTag>[0]['profile'] }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -225,7 +238,7 @@ function CopyLink() {
     )
   }
   return (
-    // Not on phones (plan-ui-ux §3.5) nor on the projector (§3.4). Words from 1280 px up.
+    // Not on phones (plan-ui-ux §3.5) nor on the projector (§3.4). Words on a wide bar (see MealBar).
     <span className="max-lg:hidden in-data-[contrast=high]:hidden">
       <IconButton
         ref={anchor}
@@ -233,7 +246,7 @@ function CopyLink() {
         label={status === 'copied' ? t('sim.shareCopied') : t('sim.share')}
         title={t('sim.share')}
         onClick={copy}
-        className="max-xl:w-9 max-xl:justify-center max-xl:px-0 [&>span]:max-xl:sr-only"
+        className="@max-[88rem]/bar:w-9 @max-[88rem]/bar:justify-center @max-[88rem]/bar:px-0 @max-[88rem]/bar:[&>span]:sr-only"
       />
       {/* Said once by screen readers when the link is copied (verify-1 A5): a status region of its own. */}
       <span role="status" className="sr-only">
@@ -258,8 +271,8 @@ function CopyLink() {
 
 /**
  * "Report a mistake" (D-FEED): the same form as v1. Without an API it opens the pre-filled GitHub
- * issue in a new tab and sends nothing; the report carries this run's link. Words from 1280 px
- * up; the flag alone on a phone. Not on the projector, like
+ * issue in a new tab and sends nothing; the report carries this run's link. Words on a wide bar
+ * (see MealBar); the flag alone on a phone. Not on the projector, like
  * "Copy link" (a teacher reports from their own screen).
  */
 function ReportMistake() {
@@ -275,7 +288,7 @@ function ReportMistake() {
       onClick={onClick}
       // The loaded form's own button replaces this one: it takes the focus back, so closing the form returns there.
       autoFocus={loaded}
-      className="max-xl:w-11 max-xl:justify-center max-xl:px-0 lg:max-xl:w-9 [&>span]:max-xl:sr-only"
+      className="@max-[88rem]/bar:w-11 @max-[88rem]/bar:justify-center @max-[88rem]/bar:px-0 lg:@max-[88rem]/bar:w-9 @max-[88rem]/bar:[&>span]:sr-only"
     />
   )
   return (

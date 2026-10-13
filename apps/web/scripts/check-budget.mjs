@@ -40,6 +40,9 @@
 //   feedback and the reduced-motion CSS were paid for by leaving v1's store out of the stage (the
 //   bodies' default clock is now the meal clock; v1 passes its own, hooks/useBodyClock.ts): /next
 //   stays 188.9 KB (JS 0.1 KB smaller, CSS 0.2 KB larger), /sim 179.2 KB.
+//   WP-18 (2026-10-13): the stage's Hindi layout fixes (Now line as a row, kept row, chips that
+//   shorten, tick room, knee side) and the "Typical adult" strings: /next 188.9 (main with FIX-D)
+//   → 189.2 KB. The pseudo-locale (i18n/pseudo.ts) is only in VITE_PSEUDO=1 builds, never here.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

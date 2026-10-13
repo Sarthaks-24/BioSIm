@@ -94,7 +94,7 @@ The display is a **band**, from 0.65× to 1.45× the typical curve, because glyc
 
 Two lines on one kcal/h axis: the food energy from this meal **coming in**, and the energy the body **uses at rest**. It is a comparison, not a score: nothing is "good" or "bad", and there is no 0–100 bar.
 
-**The person.** Energy use depends on who is eating, so every run states its person (`core/profile.ts`). The default, and the only one in v2.0, is `adult-ref`, tagged "Adult model": the ICMR-NIN 2020 reference Indian adult man, 19–39 years, 65 kg, at rest. Digestion and blood sugar do not depend on the person; their data come from studies of adults.
+**The person.** Energy use depends on who is eating, so every run states its person (`core/profile.ts`). The default, and the only one in v2.0, is `adult-ref`, tagged "Typical adult" (until WP-18 "Adult model"): the ICMR-NIN 2020 reference Indian adult man, 19–39 years, 65 kg, at rest. Digestion and blood sugar do not depend on the person; their data come from studies of adults.
 
 **Energy coming in** (`energy.inRate`, `energy.inTotal`): status *simulated* ("Calculated from studies").
 

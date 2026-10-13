@@ -518,7 +518,7 @@
       "usedRate": {
         "name": "Energy used at rest",
         "short": "Used",
-        "desc": "Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the adult model."
+        "desc": "Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the typical adult."
       },
       "usedTotal": {
         "name": "Energy used so far",
@@ -557,7 +557,7 @@
   },
   "profiles": {
     "adult-ref": {
-      "tag": "Adult model",
+      "tag": "Typical adult",
       "desc": "Based on the ICMR-NIN 2020 reference adult man (65 kg), at rest. Digestion times come from studies of adults."
     }
   },
@@ -641,6 +641,7 @@
       "stomach": "the stomach lets the drink through a little at a time"
     },
     "kept": "{{meal}} (kept):",
+    "keptShort": "Kept:",
     "in": {
       "mouth": "being eaten",
       "mouthDrink": "being drunk",

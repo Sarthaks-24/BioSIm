@@ -70,7 +70,7 @@ test('a whole lesson with the keyboard only: add a food, play, step through the 
 
   // P keeps the meal to compare; then "Keep to compare" is off, and says why.
   await page.keyboard.press('p')
-  await expect(page.getByText('Kept: Cola + Apple', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Kept: Cola + Apple', { exact: true }).filter({ visible: true }).first()).toBeVisible()
   await expect.poll(() => params(page).get('b')).toBe('cola:1,apple:1')
   const keep = page.getByRole('button', { name: 'Keep to compare' })
   await expect(keep).toHaveAttribute('aria-disabled', 'true')

@@ -32,8 +32,9 @@ const EXAMPLES = ['cola', 'roti', 'apple'] as const
  * food is and what that organ does, with "More") and the summary sentence. They are rows of this
  * pane, so their height comes out of the body's, never the graphs' or the dock's, and nothing
  * scrolls. On a phone the first screen has no height to spare (council 2026-10-13): the Now line
- * lies over the top of the body in place of the layer switch, while there is only one layer to
- * switch to, and only the summary is a row, under the body.
+ * is a row above the body, in place of the layer switch while there is only one layer to switch
+ * to, and the summary a row under it. It used to lie over the top of the body and hid the stomach
+ * there, most of all in Hindi (WP-18); as rows, nothing covers the picture.
  */
 export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulation | null }) {
   const { t, i18n } = useTranslation()
@@ -102,7 +103,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
           )}
         </div>
         {/* What the food pieces are (council round 2): over the legs, out of the organs' way. */}
-        {hasMeal && <ParticleKey run={run} className="absolute bottom-1.5 left-3 max-w-[70%] lg:left-4" />}
+        {hasMeal && <ParticleKey run={run} className="pointer-events-none absolute bottom-1.5 left-4 max-w-[70%] flex-wrap max-lg:hidden" />}
         {open && (
           // Beside the body from 1024 px up (the lit organ stays in view); over it on a phone.
           <LoadBoundary
@@ -120,10 +121,14 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
           </LoadBoundary>
         )}
       </div>
+      {/*
+       * On a phone the picture is short and the large intestine's label sits by the legs, so the
+       * key is a line of its own under the picture, never on a label (WP-18). It scrolls if long.
+       */}
+      {hasMeal && <ParticleKey run={run} className="overflow-x-auto overscroll-x-contain px-3 pb-0.5 whitespace-nowrap [scrollbar-width:none] lg:hidden" />}
       {hasMeal && (
         // From 1024 px up one band under the body. On a phone the band dissolves (`contents`): the
-        // Now line lies over the top of the body, where the layer switch was (it costs the body no
-        // height; a fade of paper keeps it readable over the head), and the summary is a row under it.
+        // Now line is the pane's first row, above the body, and the summary its last.
         <div className="max-lg:contents lg:flex lg:flex-col lg:gap-1.5 lg:border-t lg:border-rule2 lg:px-4 lg:py-2.5">
           <NowLine
             run={run}
@@ -132,9 +137,9 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             onToggle={() => (open ? closeMore() : setMore(true))}
             moreRef={moreButton}
             panelId={panelId}
-            className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-10 max-lg:bg-linear-to-b max-lg:from-paper2 max-lg:from-70% max-lg:to-transparent max-lg:px-3 max-lg:pt-2 max-lg:pb-4"
+            className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
-          <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-rule2 max-lg:px-3 max-lg:py-1.5" />
+          <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-rule2 max-lg:px-3 max-lg:py-1" />
         </div>
       )}
     </section>

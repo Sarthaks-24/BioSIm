@@ -7,8 +7,8 @@ import { activeStage, gutIsDone, mealLocationAt, type MealLocation, type Simulat
  * Read from the model's own location signals (`mealLocationAt`, grams of tracked nutrients).
  *
  * - `stage` is the organ the body lights (`activeStage`), so the words and the picture agree;
- *   `done` once the gut has (all but) finished with the meal (engine `gutIsDone`), where the
- *   body keeps the last organ lit (review 14-17, HIGH 1).
+ *   `done` once the gut has finished with the meal (`gutFinished`), where the body keeps the last
+ *   organ lit (review 14-17, HIGH 1).
  * - `here` is that organ's share of the meal, as a word (`Amount`).
  * - `also` is the biggest other part, if it is a real part (≥ 15 %): further along (the small or
  *   large intestine, or already taken into the body) or, behind, still in the stomach.
@@ -21,7 +21,10 @@ export type Place = 'stomach' | 'smallIntestine' | 'largeIntestine' | 'body'
 export type NowWhere =
   | { kind: 'before'; stage: 'mouth' | 'esophagus' }
   | { kind: 'gut'; stage: 'stomach' | 'smallIntestine' | 'largeIntestine'; here: Amount; also: { place: Place; amount: Amount } | null }
-  /** `body`: the share taken into the body; the rest (if any) left it as waste. */
+  /**
+   * `body`: the share taken into the body. `restLeft`: the meal has leftovers (fibre and the
+   * like, the "leftovers start leaving" moment), and they have left the body as waste.
+   */
   | { kind: 'done'; stage: 'done'; body: Amount; restLeft: boolean }
 
 /** A share of the meal (0–1) as a word. "About half" is 40–60 %, so it is never wrong by much. */
@@ -47,12 +50,28 @@ const shareIn = (loc: MealLocation, place: Place) =>
         ? loc.largeIntestine
         : loc.stomach) / loc.total
 
+/** The large intestine has passed on all but this share of what will leave the body. */
+const LEFTOVERS_DONE = 0.1
+
+/**
+ * The gut has finished with the meal: the engine's test (`gutIsDone`: under 1 % of the meal still
+ * in the gut) and, since that 1 % counts the meal's water, the large intestine has also passed on
+ * nearly all it will (FIX-C review: "done" used to start while a fifth to a half of the waste was
+ * still in the colon, yet said "the rest left as waste").
+ */
+export function gutFinished(run: Simulation, loc: MealLocation): boolean {
+  const out = run.excretedG[run.length - 1]!
+  return gutIsDone(loc) && loc.largeIntestine <= LEFTOVERS_DONE * out
+}
+
 export function nowWhere(run: Simulation, tMin: number): NowWhere {
   const stage: StageId = activeStage(run, tMin)
   if (stage === 'mouth' || stage === 'esophagus') return { kind: 'before', stage }
   const loc = mealLocationAt(run, tMin)
-  if (gutIsDone(loc))
-    return { kind: 'done', stage: 'done', body: amountOf(loc.absorbed / loc.total), restLeft: loc.leftBody / loc.total >= 0.01 }
+  // Only a meal with leftovers (the "leftovers start leaving" moment) has a rest that leaves as
+  // waste; for cola or water the words say what v1 did: (almost) all of it was absorbed.
+  if (gutFinished(run, loc))
+    return { kind: 'done', stage: 'done', body: amountOf(loc.absorbed / loc.total), restLeft: run.events.firstExit !== null }
   const at = GUT.indexOf(stage)
   // Further along first (where the meal is going), then the stomach behind it.
   const candidates = [...GUT.slice(at + 1), ...(at > 0 ? (['stomach'] as const) : [])]

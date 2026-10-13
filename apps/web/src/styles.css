@@ -259,6 +259,10 @@ body {
   [data-stage]:has([data-first-run]) :is([data-summary], [data-now]) {
     display: none;
   }
+  /* The Now line's kept row (name, where it is, ✕) stands in for the meal bar's kept tag (WP-18). */
+  [data-stage]:not(:has([data-first-run])):has([data-now-kept]) [data-kept-tag] {
+    display: none;
+  }
 }
 
 :focus-visible {

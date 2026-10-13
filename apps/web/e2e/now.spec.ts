@@ -96,10 +96,18 @@ test.describe('the Now line', () => {
   test('with a kept meal it also says where that meal is', async ({ page }) => {
     await page.goto(`${COLA_KEPT_BURGER}&t=40`)
     const kept = page.locator('[data-now-kept]')
+    // The live words (the row also holds invisible copies of its longest versions, WP-18). A phone
+    // shows "Kept:" where wider screens name the meal; screen readers hear the name everywhere.
+    const words = kept.locator('> .grid > span:not([aria-hidden])')
     await expect(kept).toHaveAttribute('data-now-kept', 'stomach')
-    await expect(kept).toHaveText('Cheeseburger + French fries (kept): almost all in the stomach')
+    if (test.info().project.name !== 'phone')
+      await expect(words).toHaveText('Cheeseburger + French fries (kept): almost all in the stomach', { useInnerText: true })
+    else await expect(words).toContainText('Cheeseburger + French fries (kept):')
+    await expect(words.locator('.font-semibold')).toHaveText('almost all in the stomach')
+    await expect(words).toBeVisible()
     await page.goto(`${COLA_KEPT_BURGER}&t=40&lang=hi`)
-    await expect(kept).toHaveText('चीज़बर्गर + फ़्रेंच फ़्राइज़ (रखा गया): लगभग सारा भाग आमाशय में')
+    await expect(words.locator('.font-semibold')).toHaveText('लगभग सारा भाग आमाशय में')
+    await expect(words).toContainText('चीज़बर्गर + फ़्रेंच फ़्राइज़ (रखा गया):')
   })
 
   test('once the gut has finished with the meal it says "Done", never "Stomach" (cheeseburger at 30 h)', async ({ page }) => {

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import en from './en.json'
 import hi from './hi.json'
 import { catalogKeys, registryKeys } from '../registry/i18nKeys.ts'
+import { REVIEW_FILE, reviewRows, syncReview } from '../../scripts/hi-review.mjs'
 
 /** Flatten to "a.b.c" → value, with arrays as a single entry holding their length. */
 function flatten(obj: unknown, prefix = ''): Map<string, unknown> {
@@ -73,5 +74,13 @@ describe('translations', () => {
       built.has(k) || literal.has(k) || [...literal].some((l) => k.startsWith(`${l}.`)) || [...prefixes].some((p) => p && k.startsWith(p))
     const unused = [...fe.keys()].filter((k) => !used(k))
     expect(unused).toEqual([])
+  })
+
+  // 00 gate 3.1 / 03 WP-18: every Hindi string has a reviewer status, and the list shows the texts
+  // that ship. Fix with: node apps/web/scripts/hi-review.mjs --write
+  it('REVIEW.md lists every Hindi string, with its current texts and a status', () => {
+    const markdown = readFileSync(REVIEW_FILE, 'utf8')
+    expect(syncReview(markdown).problems).toEqual([])
+    for (const row of reviewRows(markdown)) expect(row.status, row.key).toMatch(/^(draft|reviewed by \S+ \d{4}-\d{2}-\d{2})$/)
   })
 })
