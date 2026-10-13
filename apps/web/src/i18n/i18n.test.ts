@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import en from './en.json'
 import hi from './hi.json'
 import { catalogKeys, registryKeys } from '../registry/i18nKeys.ts'
-import { REVIEW_FILE, reviewRows, syncReview } from '../../scripts/hi-review.mjs'
+import { REVIEW_FILE, STATUS, reviewRows, syncReview } from '../../scripts/hi-review.mjs'
 
 /** Flatten to "a.b.c" → value, with arrays as a single entry holding their length. */
 function flatten(obj: unknown, prefix = ''): Map<string, unknown> {
@@ -81,6 +81,44 @@ describe('translations', () => {
   it('REVIEW.md lists every Hindi string, with its current texts and a status', () => {
     const markdown = readFileSync(REVIEW_FILE, 'utf8')
     expect(syncReview(markdown).problems).toEqual([])
-    for (const row of reviewRows(markdown)) expect(row.status, row.key).toMatch(/^(draft|reviewed by \S+ \d{4}-\d{2}-\d{2})$/)
+    for (const row of reviewRows(markdown)) expect(row.status, row.key).toMatch(STATUS)
+  })
+
+  // Review FIX-D + WP-18, LOW 5: the list's own rules, on a made-up list.
+  it('a reviewed row goes back to draft when its Hindi or its English changes; a malformed status is a problem', () => {
+    const texts = {
+      en: new Map([
+        ['a', 'One'],
+        ['b', 'Two'],
+        ['c', 'Three'],
+        ['d', 'Four'],
+      ]),
+      hi: new Map([
+        ['a', 'एक'],
+        ['b', 'दो'],
+        ['c', 'तीन'],
+        ['d', 'चार'],
+      ]),
+    }
+    const row = (key: string, en: string, hi: string, status: string) => `| \`${key}\` | ${en} | ${hi} | ${status} |`
+    const before = [
+      row('a', 'One', 'एक', 'reviewed by AB 2026-10-01'),
+      row('b', 'Two (old)', 'दो', 'reviewed by AB 2026-10-01'),
+      row('c', 'Three', 'तीन (पुराना)', 'reviewed by AB 2026-10-01'),
+      row('d', 'Four', 'चार', 'Reviewed by AB'),
+    ].join('\n')
+    const { markdown, problems } = syncReview(before, texts)
+    expect(reviewRows(markdown).map((r) => [r.key, r.status])).toEqual([
+      ['a', 'reviewed by AB 2026-10-01'],
+      ['b', 'draft'],
+      ['c', 'draft'],
+      ['d', 'draft'],
+    ])
+    expect(problems).toEqual([
+      'b: English differs from en.json',
+      'c: Hindi differs from hi.json',
+      'd: status "Reviewed by AB" is neither draft nor "reviewed by <initials> <YYYY-MM-DD>"',
+    ])
+    expect(syncReview(markdown, texts).problems).toEqual([])
   })
 })

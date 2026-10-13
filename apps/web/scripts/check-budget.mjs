@@ -43,6 +43,9 @@
 //   WP-18 (2026-10-13): the stage's Hindi layout fixes (Now line as a row, kept row, chips that
 //   shorten, tick room, knee side) and the "Typical adult" strings: /next 188.9 (main with FIX-D)
 //   → 189.2 KB. The pseudo-locale (i18n/pseudo.ts) is only in VITE_PSEUDO=1 builds, never here.
+//   FIX-E (2026-10-13): "done" for big meals, an empty import as a load failure, the load box's
+//   focus and the stricter motion pref were paid for by the Now line's word keys becoming their
+//   JSON text (lib/nowWhere.ts): /next stays 189.2 KB (+2 bytes).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

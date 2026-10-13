@@ -72,5 +72,7 @@ describe('the in-app choice in CSS', () => {
   it('main.tsx reads the same saved choice, so html[data-motion] is right before the first draw', () => {
     const main = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8')
     expect(main).toContain(`readPref('${REDUCE_MOTION_PREF}')`)
+    // Like the store (parseChoice): only '1' or '0' is a choice; anything else follows the device (review FIX-D + WP-18, LOW 6).
+    expect(main).toContain("if (motionChoice === '1' || motionChoice === '0')")
   })
 })
