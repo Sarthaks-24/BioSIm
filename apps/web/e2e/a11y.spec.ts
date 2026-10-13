@@ -54,10 +54,13 @@ test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives
   await expect(button).toBeFocused()
 
   // The panel sits at the end of the page; tabbing past its last link must not leave the page.
+  // Its controls: "Close" in its top row (FP-5), then the sources' links.
   await page.keyboard.press('Enter')
   await expect(panel).toBeFocused()
   const links = await panel.getByRole('link').count()
   expect(links).toBeGreaterThan(0)
+  await page.keyboard.press('Tab')
+  await expect(panel.getByRole('button', { name: 'Close' })).toBeFocused()
   for (let i = 0; i < links; i++) await page.keyboard.press('Tab')
   await expect(panel.getByRole('link').last()).toBeFocused()
   await page.keyboard.press('Tab')
@@ -115,10 +118,13 @@ test.describe('"More" and the report form when their code does not load', () => 
     await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
     online = true
     await failed.getByRole('button', { name: 'Try again' }).click()
-    await expect(page.getByRole('region', { name: 'Stomach' })).toContainText('Hydrochloric acid')
+    // A column beside the body from 1024 px up, a sheet on a phone (FP-5).
+    await expect(page.getByRole('region', { name: 'Stomach' }).or(page.getByRole('dialog', { name: 'Stomach' }))).toContainText(
+      'Hydrochloric acid',
+    )
   })
 
-  test('"Report a mistake": the button stays, says so under it, and "Try again" opens the form', async ({ page }) => {
+  test('"Report a mistake": a box says so, and "Try again" opens the form', async ({ page }) => {
     // Not on the projector: a teacher reports from their own screen (MealBar).
     onlyIn('desktop', 'phone')
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
@@ -213,7 +219,7 @@ test.describe('a "How we know" panel whose code does not load', () => {
     await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
     online = true
     await panel.getByRole('button', { name: 'Try again' }).click()
-    await expect(panel.getByRole('heading', { level: 3 })).toBeVisible()
+    await expect(panel.getByRole('heading', { name: 'How sure we are' })).toBeVisible()
     await expect(panel.getByRole('alert')).toHaveCount(0)
   })
 })

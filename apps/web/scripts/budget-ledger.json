@@ -100,18 +100,18 @@
       "grossKB": 0.3,
       "clawbackKB": -0.2,
       "plannedNetKB": 0.1,
-      "measuredNetKB": null,
-      "measuredAt": null
+      "measuredNetKB": -0.24,
+      "measuredAt": "2026-10-14"
     },
     {
       "fp": "FP-8b",
       "step": "T9b",
-      "what": "Home (B8, B9, hero); /sim unchanged",
+      "what": "Home (B8, B9, hero); its race loads after the first paint",
       "grossKB": 0,
       "clawbackKB": 0,
       "plannedNetKB": 0,
-      "measuredNetKB": null,
-      "measuredAt": null
+      "measuredNetKB": -0.45,
+      "measuredAt": "2026-10-14"
     }
   ]
 }

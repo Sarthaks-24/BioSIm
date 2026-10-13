@@ -19,6 +19,7 @@
  *        (WP-20 deleted the v1 files it used to skip; its `V1_EXEMPT` list is empty).
  */
 import type { SourceId } from './sources.ts'
+import type { BreathingSignalId } from './catalog/breathing.ts'
 import type { EffortSignalId } from './catalog/effort.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
@@ -39,7 +40,9 @@ export type Unit =
   | 'breaths/min'
   | 'mL/min'
   | 'min'
+  // Model version 3 (model ACTIVATION_LOG "New units").
   | 'mL'
+  | 'ratio'
   | 'mL/h'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
@@ -83,7 +86,6 @@ export const RESERVED_SIGNAL_IDS = [
   'liver.glycogenG',
   'brain.glucoseUse',
   'heart.rate',
-  'lungs.breathRate',
   'kidney.filtrationRate',
 ] as const
 
@@ -101,18 +103,27 @@ export const EVENT_IDS = [
 export type ActiveSignalId = (typeof ACTIVE_SIGNAL_IDS)[number]
 export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
 /**
- * Pack rows (architecture §1.3 "lazy rows"): IDs a system pack's module produces. Typed here, so
- * links, goldens and the run's table can name them; their rows are in core/catalog/<pack>.ts and
- * load with the run chunk or the pack, never with this file. One line per pack.
+ * Lazy rows (architecture §1.3): signals the engine produces whose rows arrive with their system's
+ * pack (core/catalog/<pack>.ts), so the first download carries only their type. The run chunk
+ * knows every row (core/catalog/rows.ts). lungs.breathRate left the reserved list for the
+ * breathing pack (S-2, model ACTIVATION_LOG), unit kept.
  */
-export type PackSignalId = EffortSignalId
-/** Every ID a run can produce: this file's active rows and the pack rows. */
-export type ProducedSignalId = ActiveSignalId | PackSignalId
+export type PackSignalId = BreathingSignalId | EffortSignalId
+/** Every signal a run produces: the lean catalog's rows and the packs' rows. */
+export type RunSignalId = ActiveSignalId | PackSignalId
 export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId
 export type EventId = (typeof EVENT_IDS)[number]
 export type CatalogId = SignalId | EventId
 
 // ─── Metadata shapes ─────────────────────────────────────────────────────────────────────────
+/** The range every run must stay in (model §5 validRange), never clamped to pass, and what it rests on. */
+export interface ValidRange {
+  low: number
+  high: number
+  /** 'cited' = a read source gives it; 'guard' = a design guard (G). */
+  basis: 'cited' | 'guard'
+}
+
 /** The "how people differ" band around a series (low/high edges). Has its own status. */
 export interface BandMeta {
   status: SignalStatus
@@ -141,6 +152,8 @@ export interface SignalMeta<Id extends SignalId = SignalId> {
   round?: number
   /** i18n key of the "known limit" text shown in "How we know". */
   limitKey?: string
+  /** Version-3 pack rows (architecture §1.3): checked by the fuzz test. */
+  validRange?: ValidRange
 }
 
 export interface EventMeta<Id extends EventId = EventId> {

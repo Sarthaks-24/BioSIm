@@ -23,7 +23,11 @@ test('home page leads to the simulator: cola, ready to play', async ({ page }) =
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('cola')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Watch a meal travel through the body.')
+  await expect(page.getByRole('img', { name: 'The body, resting' })).toBeVisible()
+  // The race and its claim (FP-8): the cola headline over the model's curves, which load after the first paint.
+  await expect(page.getByRole('heading', { level: 2, name: /cola/ })).toBeVisible()
+  await expect(page.locator('[data-home-chart] path')).toHaveCount(2)
   await page.getByRole('link', { name: 'Open the simulator' }).click()
   await expect(page).toHaveURL(/\/sim\?v=3&a=cola/)
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()

@@ -10,14 +10,23 @@ import {
   parseFood,
   type ActivityBout,
   type Params,
-  type ProducedSignalId,
+  type RunSignalId,
   type RunResult,
   type SignalStatus,
 } from '../src/index.ts'
-import { ENERGY_TOTAL, HUMAN_MODULES, buildSignalTable, effortModule, heatLoss, runModules, simulate } from '../src/run.ts'
-import { PRODUCED_SIGNALS, PRODUCED_SIGNAL_IDS } from '../src/core/catalog/index.ts'
+import {
+  ENERGY_TOTAL,
+  HUMAN_MODULES,
+  RUN_SIGNALS,
+  RUN_SIGNAL_IDS,
+  buildSignalTable,
+  effortModule,
+  heatLoss,
+  runModules,
+  simulate,
+} from '../src/run.ts'
 import { PARAM_SOURCES } from '../src/core/sources.ts'
-import { lookup as fixtureLookup } from './fixtures.ts'
+import { FULL, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 import { paramsWith } from './modules/ctx.ts'
 
@@ -33,7 +42,7 @@ const foods = readdirSync(dir)
 const lookup = (id: string) => fixtureLookup(id) ?? foods.find((f) => f.id === id)
 const mealOf = (m: string) => buildMeal(decodeMeal(m), lookup)
 const run = (m: string, activity: ActivityBout[] = []) => simulate(mealOf(m), { particles: 0, activity })
-const values = (sim: RunResult, id: ProducedSignalId) => sim.signals.get(id)!.values
+const values = (sim: RunResult, id: RunSignalId) => sim.signals.get(id)!.values
 const N = 2881
 const setupOf = (m: string, activity: ActivityBout[] = [], params: Params = PARAMS) => ({
   input: { meal: mealOf(m), activity },
@@ -50,7 +59,10 @@ const restingMuscle = (13 * 0.384 * kg) / 24
 
 const walk60: ActivityBout = { kind: 'walk', startMin: 60, durMin: 60 }
 const run60: ActivityBout = { kind: 'run', startMin: 300, durMin: 60 }
-const meals = ['cola:1', 'cheeseburger:1,fries:1,cola:1', 'roti:2,dal:1', 'water:1', '']
+// A drink, a mixed meal and nothing; FULL=1 adds the others (R68).
+const meals = FULL
+  ? ['cola:1', 'cheeseburger:1,fries:1,cola:1', 'roti:2,dal:1', 'water:1', '']
+  : ['cola:1', 'cheeseburger:1,fries:1,cola:1', '']
 /** True when two arrays hold the same bytes (faster than toEqual on 2881-value arrays). */
 const sameBytes = (a: ArrayLike<number> & ArrayBufferView, b: ArrayLike<number> & ArrayBufferView) =>
   a.constructor === b.constructor &&
@@ -232,7 +244,7 @@ describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', ()
 
   it('the rows before the effort pack keep their place in the signal table', () => {
     const keys = [...run('cola:1').signals.keys()]
-    expect(keys).toEqual([...PRODUCED_SIGNAL_IDS])
+    expect(keys).toEqual([...RUN_SIGNAL_IDS])
     expect(keys.slice(-3)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
   })
 
@@ -256,11 +268,11 @@ describe('contract', () => {
   const RANK: { readonly [S in SignalStatus]: number } = { illustration: 0, assumption: 1, simulated: 2 }
 
   it('status ≤ the weakest of its needs and parameters (model D9): every effort row is a Model estimate', () => {
-    const needs = effortModule.needs.filter((id): id is ProducedSignalId => !id.startsWith('x.'))
-    const weakest = Math.min(...needs.map((id) => RANK[PRODUCED_SIGNALS[id].status]))
+    const needs = effortModule.needs.filter((id): id is RunSignalId => !id.startsWith('x.'))
+    const weakest = Math.min(...needs.map((id) => RANK[RUN_SIGNALS[id].status]))
     for (const id of effortModule.provides) {
-      expect(PRODUCED_SIGNALS[id].status, id).toBe('assumption')
-      expect(RANK[PRODUCED_SIGNALS[id].status], id).toBeLessThanOrEqual(weakest)
+      expect(RUN_SIGNALS[id].status, id).toBe('assumption')
+      expect(RANK[RUN_SIGNALS[id].status], id).toBeLessThanOrEqual(weakest)
     }
     // Every effort parameter is read from a page (V-1), none hand-picked.
     for (const [path, entry] of Object.entries(PARAM_SOURCES)) if (path.startsWith('effort.')) expect(entry!.basis, path).toBe('measured')

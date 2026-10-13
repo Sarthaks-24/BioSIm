@@ -12,8 +12,7 @@
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
-import { EVENTS, SIGNALS, type ActiveSignalId, type EventId, type ProducedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
-import { PRODUCED_SIGNALS } from './catalog/index.ts'
+import { EVENTS, SIGNALS, type ActiveSignalId, type EventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
 import type { ActivityBout } from './activity.ts'
 import type { ProfileDef } from './profile.ts'
 import type { EventPoint, Rhythm } from './signal.ts'
@@ -43,7 +42,7 @@ export type SystemId = (typeof SYSTEM_IDS)[number]
 
 /** A module-to-module array that is never public: no link, golden, i18n or signal table row. */
 export type InternalId = `x.${string}`
-export type ModuleSignalId = ProducedSignalId | InternalId
+export type ModuleSignalId = RunSignalId | InternalId
 
 /** Between-person band edges, for a signal whose catalog row has a `band`. */
 export interface Band {
@@ -83,7 +82,7 @@ export interface ModelModule<P = Params> {
   /** The system whose row shows this module's signals (display only). */
   readonly system: SystemId
   readonly needs: readonly ModuleSignalId[]
-  readonly provides: readonly ProducedSignalId[]
+  readonly provides: readonly RunSignalId[]
   readonly internal?: readonly InternalId[]
   /** Timeline markers it writes with `putMoment` (activity's two). The five meal moments still come from events.ts after the run. */
   readonly moments?: readonly EventId[]
@@ -157,7 +156,8 @@ export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetu
   const store = new Map<ModuleSignalId, Written>()
   const moments = new Map<EventId, EventPoint>()
   const rhythms = new Map<SignalId, Rhythm>()
-  const metas: Partial<Record<ModuleSignalId, SignalMeta>> = PRODUCED_SIGNALS
+  // Lean rows only: a pack's lazy rows (core/catalog/<pack>.ts) never have a band.
+  const metas: Partial<Record<ModuleSignalId, SignalMeta>> = SIGNALS
   for (const m of modules) {
     const writes: readonly ModuleSignalId[] = [...m.provides, ...(m.internal ?? [])]
     const fail = (why: string): never => {

@@ -14,13 +14,14 @@ addEnglish(feedbackText)
  * that fails the same GitHub issue is offered, so nothing typed is lost. Either way the dialog
  * warns once that reports are public (B24): the GitHub warning wherever the report goes to GitHub.
  *
- * Used by the stage (a button in the meal bar, `trigger`). It is given the run as a link query
+ * Used by the stage ("Report a mistake" in the meal bar's "⋯"). It is given the run as a link query
  * (`context`), so the form needs no store.
  */
 export default function FeedbackDialog({
   context,
   trigger,
   openOnMount = false,
+  onClose,
 }: {
   /** The run being viewed, as a link query ("v=2&a=cola:1…"), so the report can be reproduced. */
   context: () => string
@@ -28,6 +29,8 @@ export default function FeedbackDialog({
   trigger: (open: () => void) => ReactNode
   /** Open the form as soon as it mounts (the stage loads it on the first click). */
   openOnMount?: boolean
+  /** The form was closed (the stage then lets it go: it was opened from "⋯", which has closed). */
+  onClose?: () => void
 }) {
   const { t } = useTranslation()
   const ref = useRef<HTMLDialogElement>(null)
@@ -74,6 +77,7 @@ export default function FeedbackDialog({
       {trigger(open)}
       <dialog
         ref={ref}
+        onClose={onClose}
         aria-labelledby="fb-title"
         className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl bg-surface-raised p-0 text-ink backdrop:bg-ink/40"
       >

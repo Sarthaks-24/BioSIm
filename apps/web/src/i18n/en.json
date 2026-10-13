@@ -11,8 +11,9 @@
     "menu": "Menu"
   },
   "home": {
+    "promise": "Watch a meal travel through the body.",
+    "intro": "Pick a meal and press Play to see how fast it leaves the stomach, where its sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next.",
     "headline": "Half the food energy in a can of cola leaves your stomach in about half an hour. For a burger with fries, it takes over four hours.",
-    "lead": "LifePeek shows why. Pick a meal, press Play and watch it travel through the body: how fast it leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next.",
     "cta": "Open the simulator",
     "previewCaption": "Food still in the stomach after eating — computed by the LifePeek model",
     "hours": "hours after eating",
