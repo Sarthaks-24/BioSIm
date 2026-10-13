@@ -105,7 +105,7 @@
 //   T4 / FP-5 (2026-10-14): one lazy Overlay (components/Overlay.tsx: popover from 1024 px, sheet
 //   below, Close, Esc + Back) replaces the first-paint Popover; "Report a mistake" leaves the bar's
 //   code (it opens from "⋯"); the no-WebGL note is a Notes line; the phone menu gets a dimmed page:
-//   /sim 189.079 → 188.825 KB on main 647a379 (−0.25; ledger row planned +0.1), Home +0.17.
+//   /sim 188.636 → 188.396 KB on main bef54b1 (−0.24; ledger row planned +0.1), Home +0.18.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
