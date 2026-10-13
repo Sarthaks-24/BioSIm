@@ -68,7 +68,6 @@ const TIMELINE: Record<string, Mode> = {
  */
 const LATER: Record<string, string> = {
   overlays: 'T4 (FP-5)',
-  links: 'T8 (FP-6)',
 }
 /** The running project's mode for a check (`owner`: its LATER line, if a later T-step owns it). */
 function modeOf(owner?: keyof typeof LATER): Mode {
@@ -363,7 +362,9 @@ test('overlays stay on screen, below the header, with a Close button; Esc closes
 
 test('Back closes a sheet and keeps the meal', async ({ page }) => {
   onlyIn('phone-small', 'webkit-phone')
-  const mode = INVARIANTS[test.info().project.name]!
+  // FP-6 (T8): enforced on both. A sheet closed on the page takes its history entry with it, so
+  // the food is checked after that step back; Back with the sheet open closes it (e2e/links.spec.ts).
+  const mode: Mode = 'enforce'
   await gateSteps('Back keeps the meal', mode, async () => {
     const failed = await open(page, '/sim')
     if (failed) throw new Error(failed)
@@ -373,10 +374,15 @@ test('Back closes a sheet and keeps the meal', async ({ page }) => {
     await sheet.getByRole('combobox').fill('fries')
     await sheet.getByRole('combobox').press('Enter')
     await expect(sheet).toBeHidden()
-    await page.goBack()
     await page.waitForTimeout(500)
-    expect(new URL(page.url()).pathname, 'Back after adding a food stays on the stage').toBe('/sim')
-    expect(new URL(page.url()).searchParams.get('a'), 'Back after adding a food keeps it').toContain('fries')
+    expect(new URL(page.url()).pathname, 'closing the sheet stays on the stage').toBe('/sim')
+    expect(new URL(page.url()).searchParams.get('a'), 'closing the sheet keeps the food').toContain('fries')
+    await page.getByRole('button', { name: 'Add food' }).click()
+    await expect(sheet).toBeVisible()
+    await page.goBack()
+    await expect(sheet).toBeHidden()
+    expect(new URL(page.url()).pathname, 'Back closes the sheet and stays on the stage').toBe('/sim')
+    expect(new URL(page.url()).searchParams.get('a'), 'Back keeps the food').toContain('fries')
   })
 })
 
@@ -406,7 +412,8 @@ test('the stage plays', async ({ page }) => {
 
 test('links survive a load (round trip)', async ({ page }) => {
   onlyIn('phone-small', 'storage-blocked')
-  const mode = modeOf('links')
+  // FP-6 (T8): enforced wherever it runs.
+  const mode: Mode = 'enforce'
   await returningVisitor(page)
   const roundTrip = async (links: string[]) => {
     const problems: string[] = []

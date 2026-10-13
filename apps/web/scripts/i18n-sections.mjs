@@ -22,7 +22,9 @@ const PREFIX = 'virtual:lifepeek-en/'
  * The stage's own parts that load on first use bring their text too (FIX-C, size budget): the
  * "How we know" panel its known limits, "More" the full stage texts (the stage keeps
  * only the organs' names), the tables and keys sheet theirs (the stage keeps the buttons' names
- * and the announcer's kept value), and the panel the signals' long descriptions.
+ * and the announcer's kept value), and the panel the signals' long descriptions. The notes about
+ * an opened link (older or newer version, what changed on load) come only when a link has one
+ * (components/stage/LinkNotes.tsx, FP-6).
  */
 export const PAGE_SECTIONS = {
   privacy: [],
@@ -38,6 +40,7 @@ export const PAGE_SECTIONS = {
   keys: ['button'],
   table: ['showFor', 'keptValue'],
   signals: ['**!desc'],
+  link: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

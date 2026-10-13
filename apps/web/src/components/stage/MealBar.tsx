@@ -5,7 +5,8 @@ import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { LoadBoundary, LoadFailed, LoadFailedPanel, lazyWithRetry } from '../LoadBoundary.tsx'
-import { FlagIcon, FoodChip, IconButton, MoreIcon } from '../kit/index.ts'
+import { FlagIcon, FoodChip, IconButton, LinkIcon, MoreIcon } from '../kit/index.ts'
+import { announce } from '../graphs/StripAnnouncer.tsx'
 import AddFoodSheet from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
 import KeptTag, { LineSwatch } from './KeptTag.tsx'
@@ -16,7 +17,9 @@ import { mealKcalRounded } from './mealText.ts'
  * The meal bar's other actions (Typical adult, Copy link, Report a mistake; Keep on a phone) are
  * downloaded the first time "⋯" opens: not part of the first paint (FP-1, size budget).
  */
-const mealActions = lazyWithRetry<{ profile: ProfileId; keep: ReactNode; report: ReactNode }>(() => import('./MealActions.tsx'))
+const mealActions = lazyWithRetry<{ profile: ProfileId; keep: ReactNode; report: ReactNode; manual: boolean }>(
+  () => import('./MealActions.tsx'),
+)
 
 /** The report form is downloaded on the first click: it is not part of the first paint (size budget). */
 const feedbackDialog = lazyWithRetry(() => import('../FeedbackDialog.tsx'))
@@ -40,8 +43,10 @@ type Chip = (inline?: boolean) => ReactNode
  * The meal bar (UI-13 + UI-3 + UI-10; FP-1's plan strip): the meal as flat chips, "+ Add food" and
  * its kcal, then the kept run, "Keep to compare" and "⋯", on one row at every width (bugs B2, B15):
  * chips that don't fit fold into a "+n" chip (PlanStrip). "⋯" holds whose body it is, "Copy link"
- * and "Report a mistake" (and on a phone, where it has no room on the row, Keep), as a panel under
- * the bar. From 1024 px up the kept run counts as 14 rem, its words wrapping before the line does.
+ * (or "Share") and "Report a mistake" (and on a phone, where it has no room on the row, Keep), as a
+ * panel under the bar. From 1024 px up "Copy link" is on the bar too, one click away, beside "⋯"
+ * (R60: teachers copy links often); if copying is blocked, "⋯" opens with the link to copy by hand.
+ * From 1024 px up the kept run counts as 14 rem, its words wrapping before the line does.
  * The solid and dashed line samples are the key for the graphs: this meal, and the kept one.
  */
 export default function MealBar() {
@@ -54,6 +59,21 @@ export default function MealBar() {
   const [more, setMore] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const button = useRef<HTMLButtonElement>(null)
+  // The bar's "Copy link" (from 1024 px up; it copies, as a desktop does): "Link copied" for a
+  // moment, said by the graphs' live region (emptied first, so a second copy is said again). If
+  // copying is blocked (some school browsers), "⋯" opens with the link to copy by hand.
+  const [copied, setCopied] = useState(false)
+  const [manual, setManual] = useState(false)
+  const blocked = () => {
+    setManual(true)
+    setMore(true)
+  }
+  const copy = () =>
+    navigator.clipboard?.writeText(location.href).then(() => {
+      announce(t('sim.shareCopied'))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }, blocked) ?? blocked()
 
   return (
     <section aria-labelledby="meal-bar-title" className="border-b border-border bg-surface-page">
@@ -71,6 +91,16 @@ export default function MealBar() {
           <span className="max-lg:hidden">
             <KeepButton />
           </span>
+          {/* Not on the projector (§3.4). Words from 1280 px up; the icon alone (its name stays) below. */}
+          <span className="max-lg:hidden in-data-[contrast=high]:hidden">
+            <IconButton
+              icon={<LinkIcon />}
+              label={t(copied ? 'sim.shareCopied' : 'sim.share')}
+              title={t('sim.share')}
+              onClick={copy}
+              className="max-xl:w-9 max-xl:justify-center max-xl:px-0 [&>span]:max-xl:sr-only"
+            />
+          </span>
           <IconButton
             ref={button}
             icon={<MoreIcon />}
@@ -85,7 +115,10 @@ export default function MealBar() {
         // The report form (a <dialog>) opens inside the panel, so the panel stays while it shows.
         <Popover
           anchor={button}
-          onClose={() => setMore(false)}
+          onClose={() => {
+            setMore(false)
+            setManual(false)
+          }}
           label={t('stage.actions')}
           className="flex w-[20rem] flex-col items-start gap-1 p-1.5"
         >
@@ -95,7 +128,7 @@ export default function MealBar() {
             fallback={<LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />}
           >
             <Suspense fallback={null}>
-              <mealActions.Component profile={profile} keep={<KeepButton />} report={<ReportMistake />} />
+              <mealActions.Component profile={profile} keep={<KeepButton />} report={<ReportMistake />} manual={manual} />
             </Suspense>
           </LoadBoundary>
         </Popover>

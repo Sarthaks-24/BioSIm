@@ -4,13 +4,13 @@
 //
 //   node apps/web/scripts/hi-new-keys.mjs
 //
-// Some are English-only on purpose and need no Hindi: sim.hindiLater, stats.englishOnly and the
+// Some are English-only on purpose and need no Hindi: link.hindiLater, stats.englishOnly and the
 // English-only texts of scripts/i18n-sections.mjs (ENGLISH_ONLY) show only in a build without Hindi.
 import { readTexts } from './hi-review.mjs'
 import { ENGLISH_ONLY } from './i18n-sections.mjs'
 
 /** Keys (in REVIEW.md's spelling) that show only without Hindi. */
-const ONLY_WITHOUT_HINDI = new Set(['sim.hindiLater', 'stats.englishOnly', ...Object.values(ENGLISH_ONLY)])
+const ONLY_WITHOUT_HINDI = new Set(['link.hindiLater', 'stats.englishOnly', ...Object.values(ENGLISH_ONLY)])
 
 const { en, hi } = readTexts()
 const missing = [...en.keys()].filter((key) => !hi.has(key))

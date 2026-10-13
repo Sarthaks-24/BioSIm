@@ -8,6 +8,7 @@ import {
   decodeShareState,
   encodeShareState,
   mealKcal,
+  type LinkChange,
   type MealItem,
   type ProfileId,
   type ShareLang,
@@ -49,6 +50,8 @@ export interface RunState {
   unknownOrganism: string | null
   /** Foods in the opened link that no longer exist (dropped, and counted for a notice). */
   droppedFoods: number
+  /** The rest of what the opened link asked for that is shown differently or left out (B21; components/stage/LinkNotes.tsx). */
+  changes: LinkChange[]
   /** Set when the user tried to make the meal bigger than the cap allows. */
   capBlocked: boolean
   /** The opened link asked for Hindi, which this build doesn't have (R47): it opened in English, with a note. */
@@ -91,6 +94,7 @@ export const INITIAL_RUN = {
   linkModelVersion: null as number | null,
   unknownOrganism: null as string | null,
   droppedFoods: 0,
+  changes: [] as LinkChange[],
   capBlocked: false,
   hindiLater: false,
 } satisfies Partial<RunState>
@@ -147,14 +151,20 @@ export const useRunStore = create<RunState>((set, get) => ({
     const keptItems = known(s.b)
     // One `who` per link: the kept run is about the same person.
     const profile = s.who ?? DEFAULT_RUN_PROFILE
+    const layer = isLayer(s.layer) ? s.layer : DEFAULT_LAYER
+    // A view this version doesn't have is a change too (the codec checks only its shape).
+    let changes = [...(s.changes ?? []), ...(s.layer && s.layer !== layer ? [{ param: 'layer', asked: s.layer }] : [])]
+    // The e2e build's `lang=pseudo` (i18n/pseudo.ts) is no change. Not in a real build.
+    if (import.meta.env.VITE_PSEUDO === '1') changes = changes.filter((c) => c.asked !== 'pseudo')
     set({
       meal,
       kept: keptOf(keptItems, profile),
       profile,
-      layer: isLayer(s.layer) ? s.layer : DEFAULT_LAYER,
+      layer,
       linkModelVersion: params.has('v') ? s.modelVersion : null,
       unknownOrganism: s.unknownOrganism ?? null,
       droppedFoods: s.a.length + s.b.length - meal.length - keptItems.length,
+      changes,
       capBlocked: false,
     })
     // A link opens paused at its time (never auto-plays).

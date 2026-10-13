@@ -3,32 +3,24 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import i18next from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildMeal, decodeMeal } from '@lifepeek/engine'
-import { simulate } from '@lifepeek/engine/run'
+import { describe, expect, it } from 'vitest'
+import { MODEL_VERSION } from '@lifepeek/engine'
 import en from './en.json'
 import { HINDI, langPrefToSave, linkLanguage, pickLanguage } from './language.ts'
-import { lookupFood } from '../data/foods.ts'
 import LanguageButton from '../components/LanguageButton.tsx'
-import Notes from '../components/stage/Notes.tsx'
+import { linkNotes } from '../lib/linkNotes.ts'
 
 // Hindi is paused (R47): a build without VITE_HINDI=1 is English only. The unit tests run without
 // the flag, like a real build; Playwright's build sets it, so the Hindi e2e tests still run.
 
-// A server render reads a zustand store's first state, so Notes gets a stand-in store: the run
-// state useLinkSync sets for a `?lang=hi` link.
-const fakeRun = vi.hoisted(() => ({ state: { linkModelVersion: null, unknownOrganism: null, droppedFoods: 0, hindiLater: false } }))
-vi.mock('../state/run.ts', () => ({ useRunStore: <T>(select: (s: typeof fakeRun.state) => T) => select(fakeRun.state) }))
+/** The run state useLinkSync sets for a link with no notes (a `?lang=hi` link sets hindiLater). */
+const LINK = { linkModelVersion: MODEL_VERSION, unknownOrganism: null, droppedFoods: 0, hindiLater: false, changes: [] }
 
 const i18n = i18next.createInstance()
 void i18n.use(initReactI18next).init({ lng: 'en', resources: { en: { translation: en } }, interpolation: { escapeValue: false } })
 const render = (el: ReactElement) => renderToStaticMarkup(h(MemoryRouter, null, h(I18nextProvider, { i18n }, el)))
 
 describe('Hindi paused (VITE_HINDI off)', () => {
-  afterEach(() => {
-    fakeRun.state.hindiLater = false
-  })
-
   it('is off in a build without VITE_HINDI=1', () => {
     expect(HINDI).toBe(false)
   })
@@ -71,9 +63,8 @@ describe('Hindi paused (VITE_HINDI off)', () => {
   })
 
   it('the stage says, in English, that Hindi comes later', () => {
-    const run = simulate(buildMeal(decodeMeal('cola:1'), lookupFood), { particles: 0 })
-    expect(render(h(Notes, { run, kept: null }))).not.toContain(en.sim.hindiLater)
-    fakeRun.state.hindiLater = true
-    expect(render(h(Notes, { run, kept: null }))).toContain(en.sim.hindiLater)
+    // The notes about an opened link (components/stage/LinkNotes.tsx draws them).
+    expect(linkNotes(LINK, i18n.t, (id) => id)).not.toContain(en.link.hindiLater)
+    expect(linkNotes({ ...LINK, hindiLater: true }, i18n.t, (id) => id)).toContain(en.link.hindiLater)
   })
 })

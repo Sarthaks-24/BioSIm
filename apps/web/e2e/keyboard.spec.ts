@@ -353,10 +353,21 @@ test.describe('review 15 (FIX-D)', () => {
     })
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     await page.locator('body').press('t')
-    await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+    const sheet = page.getByRole('dialog', { name: 'The graphs as a table' })
+    await expect(sheet).toBeVisible()
+    // Back closes the sheet first (FP-6, B6) …
     await page.goBack()
+    await expect(sheet).toBeHidden()
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    // … so leave with it open the way a link inside the app does.
+    await page.locator('body').press('t')
+    await expect(sheet).toBeVisible()
+    await page.evaluate(() => {
+      history.pushState(null, '', '/')
+      dispatchEvent(new PopStateEvent('popstate'))
+    })
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeHidden()
-    await page.goForward()
+    await page.goBack()
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
