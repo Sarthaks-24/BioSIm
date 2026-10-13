@@ -117,6 +117,7 @@ export default function SignalStrip({
   const meta = series.meta
   const titleId = useId()
   const summaryId = useId()
+  const hatch = useId()
   const [plot, { width, height, rem }] = useSize<HTMLDivElement>()
 
   const { domain, stretched } = useMemo(
@@ -155,15 +156,13 @@ export default function SignalStrip({
   // Measured after layout and placed before paint; hidden until placed, and when nothing fits.
   const markerLabel = useRef<HTMLSpanElement>(null)
   const secondLabel = useRef<HTMLSpanElement>(null)
-  // Words along the plot's top edge (the unit by the y axis, "time squeezed" by the knee): placed
-  // after the labels above, along the top from their corner, only where they touch nothing.
+  // The unit by the y axis, under tabs: placed after the labels above, along the top from the
+  // corner, only where it touches nothing. "Time squeezed" is written once, on the dock (FP-4).
   const unitText = useRef<HTMLSpanElement>(null)
-  const squeezeText = useRef<HTMLSpanElement>(null)
-  const [placed, setPlaced] = useState<Record<'marker' | 'second' | 'unit' | 'squeeze', Box | null>>({
+  const [placed, setPlaced] = useState<Record<'marker' | 'second' | 'unit', Box | null>>({
     marker: null,
     second: null,
     unit: null,
-    squeeze: null,
   })
   const markerWords = marker?.label
   const secondWords = second?.label
@@ -178,29 +177,29 @@ export default function SignalStrip({
     const plotSize = { width, height }
     const sizeOf = (el: HTMLElement | null) => (el && el.offsetWidth > 0 ? { w: el.offsetWidth, h: el.offsetHeight } : null)
     // The ring's label and the second line's name first (they say what a line is); then the unit
-    // and "time squeezed" go along the top edge where they touch nothing, or are left out.
+    // goes along the top edge where it touches nothing, or is left out.
     let secondBox: Box | null = null
     const s = sizeOf(secondLabel.current)
     if (paths && s && paths.secondEndY != null) {
-      secondBox = placeLabel(s, lineEndSpots(paths.secondEndY, width, s.w, s.h), plotSize, paths.points)
+      secondBox = placeLabel(s, lineEndSpots(paths.secondEndY, width, s.w, s.h, height), plotSize, paths.points)
     }
     let markerBox: Box | null = null
     const m = sizeOf(markerLabel.current)
     if (paths?.marker && m) {
       markerBox = placeLabel(m, ringSpots(paths.marker.x, paths.marker.y, m.w, m.h), plotSize, paths.points, secondBox ? [secondBox] : [])
     }
-    const taken = [markerBox, secondBox].filter((b) => !!b)
-    const alongTop = (el: HTMLElement | null, fromX: number) => {
-      const size = sizeOf(el)
-      if (!paths || !size) return null
-      const spots = [0, 1, 2, 3, 4, 6, 8].flatMap((k) => [2, 2 + size.h + 2].map((y) => ({ x: fromX + 4 + k * 12, y })))
-      const box = freeSpot(size, spots, plotSize, paths.points, taken)
-      if (box) taken.push(box)
-      return box
-    }
-    const unitBox = alongTop(unitText.current, 0)
-    const squeezeBox = alongTop(squeezeText.current, xAt(KNEE_MIN, width))
-    const next = { marker: markerBox, second: secondBox, unit: unitBox, squeeze: squeezeBox }
+    const u = sizeOf(unitText.current)
+    const unitBox =
+      paths && u
+        ? freeSpot(
+            u,
+            [0, 1, 2, 3, 4, 6, 8].flatMap((k) => [2, 4 + u.h].map((y) => ({ x: 4 + k * 12, y }))),
+            plotSize,
+            paths.points,
+            [markerBox, secondBox].filter((b) => !!b),
+          )
+        : null
+    const next = { marker: markerBox, second: secondBox, unit: unitBox }
     setPlaced((p) => ((Object.keys(next) as (keyof typeof next)[]).every((k) => sameBox(p[k], next[k])) ? p : next))
   }, [paths, width, height, rem, markerWords, secondWords, fonts, tabbed, lang])
 
@@ -264,7 +263,9 @@ export default function SignalStrip({
        * One graph at a time (tabs): the tab names it, so no title here (it would say "Energy"
        * twice). Value, status and ⓘ; a two-line graph, or a kept meal on the projector: status and
        * ⓘ, then the legend; with a kept meal on a phone, its legend entry gets the next row to
-       * itself (the meal bar right above names this meal, with the same line sample).
+       * itself (the meal bar right above names this meal, with the same line sample). On a phone
+       * "Scale stretched to fit this meal" gets a row of its own too: squeezed beside the status it
+       * took three lines, and pushed the plot under the dock (R60).
        */}
       <figcaption
         className={`grid items-center gap-x-3 ${
@@ -274,7 +275,7 @@ export default function SignalStrip({
               ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'status_status_info'_'read_read_read']"
               : kept
                 ? "grid-cols-[minmax(0,1fr)_auto_auto] gap-y-0.5 [grid-template-areas:'read_status_info'_'kept_kept_kept'_'note_note_note'] lg:[grid-template-areas:'status_status_info'_'read_read_read']"
-                : "grid-cols-[minmax(0,1fr)_auto_auto] [grid-template-areas:'read_status_info']"
+                : "grid-cols-[minmax(0,1fr)_auto_auto] [grid-template-areas:'read_status_info'_'note_note_note']"
         }`}
       >
         <span id={titleId} className={tabbed ? 'sr-only' : 'text-control font-semibold text-ink [grid-area:title]'}>
@@ -286,7 +287,7 @@ export default function SignalStrip({
         <span className="[grid-area:info]">{info}</span>
         {/* On a phone with a kept meal, the legend's entries are rows of the header grid (`contents`). */}
         <span
-          className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${!named && kept ? 'max-lg:contents' : ''}`}
+          className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${named ? '' : 'max-lg:contents'}`}
         >
           <span className={`${group} max-lg:[grid-area:read]`}>
             <LineSwatch />
@@ -364,15 +365,19 @@ export default function SignalStrip({
               {/*
                * After 6 h the time axis is squeezed (42 h in the last 40 % of the width), so a fall
                * that takes hours there looks like a cliff (council round 2, C2): the squeezed part is
-               * tinted, the same sunk surface as the dock's track, and the x axis is broken at the knee.
+               * faintly hatched in the graph paper's colour (a solid tint was the heaviest fill on
+               * screen, ui-audit #3), the knee is one dotted rule, and the x axis is broken there.
                */}
+              <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <path d="M3 0v6" className="stroke-grid" />
+              </pattern>
               <rect
                 data-squeezed=""
                 x={xAt(KNEE_MIN, width)}
                 y="0"
                 width={width - xAt(KNEE_MIN, width)}
                 height={height}
-                className="fill-surface-sunk"
+                fill={`url(#${hatch})`}
               />
               <g className="stroke-grid" strokeWidth="1" shapeRendering="crispEdges">
                 {ticks.slice(0, -1).map((v, i) => (
@@ -388,17 +393,8 @@ export default function SignalStrip({
                   <line key={m} x1={Math.round(xAt(m, width)) + 0.5} x2={Math.round(xAt(m, width)) + 0.5} y1="0" y2={height} />
                 ))}
               </g>
-              {/* The 6 h knee, dotted as on the dock: time runs faster to its right. */}
-              <line
-                x1={xAt(KNEE_MIN, width)}
-                x2={xAt(KNEE_MIN, width)}
-                y1="0"
-                y2={height}
-                className="stroke-ink-muted/60"
-                strokeWidth="2"
-                strokeDasharray="0 4"
-                strokeLinecap="round"
-              />
+              {/* The 6 h knee: one thin rule, the hatch's edge. Time runs faster to its right. */}
+              <line x1={xAt(KNEE_MIN, width)} x2={xAt(KNEE_MIN, width)} y1="0" y2={height} className="stroke-border" />
               {/* The break in the x axis: two short slashes across it, with a gap of paper between. */}
               <g data-axis-break="" transform={`translate(${xAt(KNEE_MIN, width)} ${height + 1})`}>
                 <rect x="-3.5" y="-3" width="7" height="6" className="fill-surface-raised" />
@@ -469,17 +465,6 @@ export default function SignalStrip({
               style={labelStyle(placed.unit)}
             >
               {unitLabel(meta, t)}
-            </span>
-          )}
-          {paths && (
-            <span
-              ref={squeezeText}
-              aria-hidden="true"
-              data-plot-label="squeezed"
-              className="pointer-events-none absolute z-10 rounded-[3px] bg-surface-sunk/85 px-0.5 text-caption leading-tight whitespace-nowrap text-ink-muted max-sm:hidden"
-              style={labelStyle(placed.squeeze)}
-            >
-              {t('graph.squeezed')}
             </span>
           )}
           <Playhead

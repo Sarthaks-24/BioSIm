@@ -29,6 +29,12 @@ export const ORGAN_COLOR: Record<StageId, string> = {
   largeIntestine: '#7870a8',
 }
 
+/**
+ * Carbohydrate yellow is a fill only (1.77:1 on paper, ui-audit): carbs' lines, legend edges and
+ * text use this darker ink of the same hue, at least 4.5:1 on paper and on the projector (FP-4).
+ */
+export const CARBS_INK = '#8a6500'
+
 export const INK = '#14213d'
 
 /**

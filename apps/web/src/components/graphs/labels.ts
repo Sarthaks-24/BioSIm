@@ -137,14 +137,17 @@ export function ringSpots(cx: number, cy: number, w: number, h: number): { x: nu
 
 /**
  * Spots for a line's own name (energy used at rest, a flat line): just above its right end,
- * then just below it, then the same further left, in tenths of the plot.
+ * then just below it, then the same further left, in tenths of the plot; then the free band, if
+ * those all touch a line (a kept meal's line can run right along it, B14): every 6 px down the
+ * plot's right end, from the top.
  */
-export function lineEndSpots(endY: number, width: number, w: number, h: number): { x: number; y: number }[] {
+export function lineEndSpots(endY: number, width: number, w: number, h: number, height = 0): { x: number; y: number }[] {
   const spots: { x: number; y: number }[] = []
   for (let k = 0; k <= 6; k++) {
     const x = width - 4 - w - (k * width) / 10
     spots.push({ x, y: endY - 5 - h }, { x, y: endY + 5 })
   }
+  for (let y = 0; y < height; y += 6) spots.push({ x: width - 4 - w, y })
   return spots
 }
 
