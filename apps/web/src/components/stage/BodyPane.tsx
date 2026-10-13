@@ -37,7 +37,7 @@ const EXAMPLES = ['cola', 'roti', 'apple'] as const
  * to, and the summary a row under it. It used to lie over the top of the body and hid the stomach
  * there, most of all in Hindi (WP-18); as rows, nothing covers the picture.
  */
-export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function BodyPane({ run, kept, summary }: { run: Simulation; kept: Simulation | null; summary: boolean }) {
   const { t, i18n } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const hasMeal = meal.length > 0
@@ -171,12 +171,8 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             panelId={panelId}
             className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
-          {/* Under 680 px tall a phone shows it under the dock instead (Simulator, FP-1). */}
-          <SummaryLine
-            run={run}
-            kept={kept}
-            className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1 max-lg:[@media(height<42.5rem)]:hidden"
-          />
+          {/* Not on a phone under 680 px tall: the stage shows it past the first screen (Simulator, FP-1). */}
+          {summary && <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />}
         </div>
       )}
     </section>

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { expectInFirstScreen, onlyIn } from './helpers/gate.ts'
+import { expectInFirstScreen, onlyIn, openMealActions } from './helpers/gate.ts'
 
 // WP-14 on /sim: the dock's key moments, the Now line, the summary sentence and "Report a
 // mistake" (council verdicts #3, #4, #6 and verification-council K2). Projects desktop (1440),
@@ -200,6 +200,7 @@ test.describe('report a mistake on the stage', () => {
     // Never reach the real GitHub from a test.
     await context.route('https://github.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<title>GitHub stub</title>' }))
     await page.goto('/sim?v=2&a=cola:1')
+    await openMealActions(page)
     await page.getByRole('button', { name: 'Report a mistake' }).click()
     const dialog = page.getByRole('dialog', { name: 'Report a mistake' })
     await expect(dialog.getByText('This opens a public page on GitHub.')).toBeVisible()
@@ -221,6 +222,7 @@ test.describe('report a mistake on the stage', () => {
     onlyIn('desktop')
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await page.goto('/sim?v=2&a=cola:1')
+    await openMealActions(page)
     await page.getByRole('button', { name: 'Copy link' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Link copied' })).toBeAttached()
     await expect(page.locator('button[aria-live]')).toHaveCount(0)

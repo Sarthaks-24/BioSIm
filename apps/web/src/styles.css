@@ -254,13 +254,15 @@ body {
   }
   /*
    * The stacked stage's rows (FP-1): meal bar, notes, the body (its words and at least a 10 rem
-   * picture), the graph and the dock. The graph's row is 26 % of the screen (qa-fixes FP-1), the
+   * picture), the graph and the dock. The graph's row follows the screen's height (9 rem at 600 px,
+   * 15 rem at 844 px, in Hindi's larger rem too: a 390×844 phone keeps its graph, a short one gives
+   * the body the room), the
    * same for every tab so the body never jumps; it gives way to 9 rem before the body gives way,
    * and only then does the page scroll.
    */
   [data-stage] {
-    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 26vh, 15rem)) auto;
-    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 26dvh, 15rem)) auto;
+    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 46.5vh - 8rem, 15rem)) auto;
+    grid-template-rows: auto auto 1fr minmax(9rem, clamp(9rem, 46.5dvh - 8rem, 15rem)) auto;
   }
   /* The Now line's kept row (name, where it is, ✕) stands in for the meal bar's kept tag (WP-18). */
   [data-stage]:not(:has([data-first-run])):has([data-now-kept]) [data-kept-tag] {

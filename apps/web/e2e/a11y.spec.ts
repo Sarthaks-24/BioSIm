@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { GATE_ROUTES, checkAxe, modeFor, onlyIn } from './helpers/gate.ts'
+import { GATE_ROUTES, checkAxe, modeFor, onlyIn, openMealActions } from './helpers/gate.ts'
 
 // axe on every page: 0 serious or critical issues is the gate, enforced on every page since the
 // swap (WP-19). /sim is checked in every project (desktop, projector, phone),
@@ -65,36 +65,36 @@ test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives
   await expect(button).toBeFocused()
 })
 
-test('the stage’s small panels take focus, and Esc gives it back to their button (Typical adult, servings)', async ({ page }) => {
+test('the stage’s small panels take focus, and Esc gives it back to their button (servings, "⋯")', async ({ page }) => {
   onlyIn('desktop', 'phone')
   await page.goto('/sim?v=2&a=cola:1')
-  for (const [button, panel] of [
-    [
-      page
-        .getByRole('button', { name: /Typical adult/ })
-        .filter({ has: page.locator('svg') })
-        .first(),
-      /^Typical adult/,
-    ],
-    [page.getByRole('button', { name: /^Cola/ }).first(), /^Servings: Cola/],
-  ] as const) {
-    await button.focus()
-    await page.keyboard.press('Enter')
-    const dialog = page.getByRole('dialog', { name: panel })
-    await expect(dialog).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(dialog).toBeHidden()
-    await expect(button).toBeFocused()
-  }
+  const button = page.getByRole('button', { name: /^Cola/ }).first()
+  await button.focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog', { name: /^Servings: Cola/ })
+  await expect(dialog).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(button).toBeFocused()
+  // "⋯" (FP-1): its panel holds whose body it is; Esc closes it and gives the focus back.
+  const more = page.getByRole('button', { name: 'More actions' })
+  await more.focus()
+  await page.keyboard.press('Enter')
+  await expect(more).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByText('Typical adult', { exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(more).toHaveAttribute('aria-expanded', 'false')
+  await expect(more).toBeFocused()
 })
 
 test('the header names its menu and the language button by the words it shows (WCAG 2.5.3)', async ({ page }) => {
   onlyIn('desktop')
   await page.goto('/')
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
-  const language = page.getByRole('button', { name: /^भाषा: हिन्दी/ })
+  // The other language's name in its own script (FP-1, B7: a short label keeps the header one row).
+  const language = page.getByRole('button', { name: /^हिंदी/ })
   await expect(language).toBeVisible()
-  await expect(language.locator('[lang="hi"]')).toHaveText('भाषा: हिन्दी')
+  await expect(language.locator('[lang="hi"]')).toHaveText('हिंदी')
 })
 
 // The other parts that load on first use (review 14-17, HIGH 2): the stage text ("More") and the
@@ -125,6 +125,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     let online = false
     await page.route(/FeedbackDialog-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
     await page.goto('/sim?v=2&a=cola:1')
+    await openMealActions(page)
     await page.getByRole('button', { name: 'Report a mistake' }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
     await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()

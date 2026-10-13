@@ -109,6 +109,7 @@ export default function Simulator() {
   const sheet = useSheet((s) => s.sheet)
   const slots = useSlots(run)
   const [attempt, setAttempt] = useState(0)
+  const short = useMedia(SHORT_PHONE)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
@@ -127,7 +128,7 @@ export default function Simulator() {
         <div className="lg:col-span-2">
           <Notes run={run} kept={kept} />
         </div>
-        <BodyPane run={run} kept={kept} />
+        <BodyPane run={run} kept={kept} summary={!short} />
         {/*
          * On a phone the graph row has one height for every tab (so the body never jumps when the
          * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
@@ -158,15 +159,26 @@ export default function Simulator() {
       </div>
       {/*
        * A phone under 680 px tall: the summary sentence moves under the stage, just past the first
-       * screen, which keeps the body, a graph and Play (FP-1). BodyPane hides its own there.
+       * screen, which keeps the body, a graph and Play (FP-1). BodyPane leaves its own out then.
        */}
-      {run.meal.items.length > 0 && (
-        <div className="hidden max-lg:[@media(height<42.5rem)]:block">
-          <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />
-        </div>
-      )}
+      {short && run.meal.items.length > 0 && <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />}
     </>
   )
+}
+
+/** A phone under 680 px tall (FP-1): its stage is the first screen, the summary sentence past it. */
+const SHORT_PHONE = '(max-width: 63.99rem) and (max-height: 42.49rem)'
+
+/** Whether a media query matches; re-renders when that changes. */
+function useMedia(query: string) {
+  const [match, setMatch] = useState(() => matchMedia(query).matches)
+  useEffect(() => {
+    const mq = matchMedia(query)
+    const update = () => setMatch(mq.matches)
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [query])
+  return match
 }
 
 /** "Keys and settings": the key list, and the switches for letter keys and motion (KeysHelp). */

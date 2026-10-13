@@ -78,6 +78,27 @@ export function modeFor(route: GateRoute): Mode {
   return route.plan as Mode
 }
 
+/**
+ * Below 1024 px the meal bar's Typical adult, Keep, Copy link and Report are behind "⋯" (FP-1):
+ * opens it where it shows. Call once the stage is there.
+ */
+export async function openMealActions(page: Page) {
+  await page.locator('[data-stage]').waitFor()
+  const more = page.getByRole('button', { name: 'More actions' })
+  if (await more.isVisible()) await more.click()
+}
+
+/**
+ * Shows a meal chip that may have folded into the "+n" chip (FP-1, B15): opens the "+n" list if
+ * the chip is not on the strip.
+ */
+export async function showChip(page: Page, name: RegExp) {
+  const chip = page.getByRole('button', { name })
+  await expect(chip.or(page.getByRole('button', { name: /^\+\d+ / })).first()).toBeVisible()
+  if (!(await chip.isVisible())) await page.getByRole('button', { name: /^\+\d+ / }).click()
+  await expect(chip).toBeVisible()
+}
+
 /** Only run the current test in these projects (one spec file serves several projects). */
 export function onlyIn(...projects: string[]) {
   const name = test.info().project.name
@@ -552,20 +573,21 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
  * from then on the test guards the fix.
  */
 export const RED_LIST: Record<string, Mode> = {
-  B1: 'report',
-  B2: 'report',
+  // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15.
+  B1: 'enforce',
+  B2: 'enforce',
   B3: 'report',
   B4: 'report',
   B5: 'report',
   B6: 'report',
-  B7: 'report',
+  B7: 'enforce',
   B8: 'report',
   B9: 'report',
   B10: 'report',
   B11: 'report',
   B12: 'report',
   B13: 'report',
-  B15: 'report',
+  B15: 'enforce',
   B18: 'report',
   B19: 'report',
   B20: 'report',

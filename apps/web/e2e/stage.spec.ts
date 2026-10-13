@@ -1,5 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
-import { GATE_ROUTES, SIM_BODY, expectInFirstScreen, expectNoPageScroll, gateSteps, modeFor, onlyIn } from './helpers/gate.ts'
+import {
+  GATE_ROUTES,
+  SIM_BODY,
+  expectInFirstScreen,
+  expectNoPageScroll,
+  gateSteps,
+  modeFor,
+  onlyIn,
+  openMealActions,
+  showChip,
+} from './helpers/gate.ts'
 
 // The stage draws a body and plays. Projects desktop, projector, phone and reduced have (software)
 // WebGL; project nowebgl has none, so the page must fall back to the flat body and say why.
@@ -57,8 +67,11 @@ test('organ labels never overlap and stay inside the body picture', async ({ pag
     ] as const) {
       await slider.press('Home')
       for (let i = 0; i < times; i++) await slider.press(key)
-      // The four food-path labels always find a place (liver and pancreas only where there is room).
-      await expect.poll(() => visibleLabels(page).then((l) => l.length), { timeout: 15_000 }).toBeGreaterThanOrEqual(4)
+      // The four food-path labels always find a place (liver and pancreas only where there is room);
+      // a picture under 200 px tall labels only the active organ (FP-1), none while it is the mouth.
+      const short = (await body.boundingBox())!.height < 200
+      await expect.poll(() => visibleLabels(page).then((l) => l.length), { timeout: 15_000 }).toBeGreaterThanOrEqual(short ? 0 : 4)
+      if (short) expect((await visibleLabels(page)).length).toBeLessThanOrEqual(1)
       const labels = await visibleLabels(page)
       const frame = (await body.boundingBox())!
       for (const l of labels) {
@@ -135,6 +148,7 @@ test.describe('/sim stage', () => {
   test('Keep to compare, then stop comparing', async ({ page }) => {
     await page.goto('/sim')
     await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+    await openMealActions(page)
     await page.getByRole('button', { name: 'Keep to compare' }).click()
     // The meal bar's tag comes first; the graphs label their dashed line the same way.
     await expect(page.getByText('Kept: Cola', { exact: true }).filter({ visible: true }).first()).toBeVisible()
@@ -162,7 +176,7 @@ test.describe('/sim stage', () => {
     await sheet.getByRole('combobox').fill('fries')
     await sheet.getByRole('combobox').press('Enter')
     await expect(sheet).toBeHidden()
-    await expect(page.getByRole('button', { name: /^French fries, Servings 1$/ })).toBeVisible()
+    await showChip(page, /^French fries, Servings 1$/)
     await expect.poll(() => params(page).get('a')).toBe('cola:1,fries:1')
   })
 

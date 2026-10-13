@@ -37,6 +37,12 @@ export const INVARIANTS: Record<string, Mode> = {
   'firefox-desktop': 'report',
 }
 const PROJECTS = Object.keys(INVARIANTS)
+/**
+ * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project. T2
+ * (FP-1) enforces them on phone-small and tablet-portrait; the project's other checks (overlaps,
+ * overlays, Back, console, links) belong to other FPs and follow INVARIANTS until those land.
+ */
+const BODY_VISIBLE: Record<string, Mode> = { ...INVARIANTS, 'phone-small': 'enforce', 'tablet-portrait': 'enforce' }
 
 const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60'
 /** The stage states of FP-1's acceptance: default, kept, first visit, empty, 6 foods. */
@@ -137,7 +143,7 @@ for (const l of ['en', 'pseudo'] as const) {
   for (const [state, { url, firstVisit }] of Object.entries(STATES)) {
     test(`body visible, ${state}, ${l}`, async ({ page }) => {
       const project = test.info().project.name
-      const mode = INVARIANTS[project]!
+      const mode = BODY_VISIBLE[project]!
       for (const [w, h] of SIZES[project] ?? [[0, 0]]) {
         if (w) await page.setViewportSize({ width: w, height: h })
         const size = page.viewportSize()!
