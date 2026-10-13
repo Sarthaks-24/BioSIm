@@ -24,3 +24,11 @@ export function pickLanguage(saved: string | null, browser: string | undefined, 
 export function linkLanguage(lang: string | null | undefined, hindi = HINDI): Language | null {
   return lang === 'en' || (lang === 'hi' && hindi) ? lang : null
 }
+
+/**
+ * What to save as the language pref when the language becomes `lng` (null: nothing). While Hindi
+ * is paused a saved Hindi choice is ignored, not erased: it is kept for when Hindi comes back.
+ */
+export function langPrefToSave(lng: string, saved: string | null, hindi = HINDI): string | null {
+  return !hindi && saved === 'hi' ? null : lng
+}

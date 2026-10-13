@@ -77,9 +77,39 @@ export function coreText(en) {
   return core
 }
 
+/**
+ * English texts that name Hindi, each with the English-only version (en.json) that replaces it in
+ * a build without Hindi (R47: paused, VITE_HINDI), so no English text promises Hindi there. Like
+ * stats.englishOnly, but swapped here at build time: the app carries one text, not both.
+ */
+export const ENGLISH_ONLY = {
+  'home.how.classBody': 'home.how.classBodyEnglishOnly',
+  'privacy.sections.0.items.0': 'privacy.languageEnglishOnly',
+}
+
+/** en.json as a build ships it: with Hindi the texts as they are, without it the English-only ones. Either way without the `ENGLISH_ONLY` keys themselves. */
+export function englishFor(en, hindi) {
+  const out = structuredClone(en)
+  const parent = (path) => path.slice(0, -1).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), out)
+  for (const [key, englishOnly] of Object.entries(ENGLISH_ONLY)) {
+    const [to, from] = [key.split('.'), englishOnly.split('.')]
+    const [target, source] = [parent(to), parent(from)]
+    if (!source || typeof source[from.at(-1)] !== 'string') throw new Error(`en.json has no ${englishOnly}`)
+    if (!target || typeof target[to.at(-1)] !== 'string') throw new Error(`en.json has no ${key}`)
+    if (!hindi) target[to.at(-1)] = source[from.at(-1)]
+    delete source[from.at(-1)]
+  }
+  return out
+}
+
 export default function i18nSections() {
+  /** Hindi is in the build (VITE_HINDI=1, as import.meta.env reads it). */
+  let hindi = false
   return {
     name: 'lifepeek-i18n-sections',
+    configResolved(config) {
+      hindi = config.env.VITE_HINDI === '1'
+    },
     // A plain id (no "/"): a section's chunk is named "lifepeek-en-<section>", not "<section>", so
     // the report form's text is never mistaken for a request to /feedback.
     resolveId(id) {
@@ -88,7 +118,7 @@ export default function i18nSections() {
     load(id) {
       if (!id.startsWith('\0lifepeek-en-')) return
       this.addWatchFile(EN)
-      const en = JSON.parse(fs.readFileSync(EN, 'utf8'))
+      const en = englishFor(JSON.parse(fs.readFileSync(EN, 'utf8')), hindi)
       const name = id.slice('\0lifepeek-en-'.length)
       if (name !== 'core' && !(name in PAGE_SECTIONS)) this.error(`Unknown English section: ${name}`)
       return `export default ${JSON.stringify(name === 'core' ? coreText(en) : { [name]: en[name] })}`

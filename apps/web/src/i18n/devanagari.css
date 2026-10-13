@@ -1,0 +1,7 @@
+/*
+ * Hindi's font. Only a build with Hindi (VITE_HINDI=1) loads this file (i18n/index.ts): while Hindi
+ * is paused (R47) a real build has neither it nor its font files, and the service worker does not
+ * precache them (about 138 KB).
+ */
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/noto-sans-devanagari/600.css';

@@ -2,8 +2,7 @@
 @import '@fontsource/atkinson-hyperlegible-next/400.css';
 @import '@fontsource/atkinson-hyperlegible-next/600.css';
 @import '@fontsource/atkinson-hyperlegible-next/800.css';
-@import '@fontsource/noto-sans-devanagari/400.css';
-@import '@fontsource/noto-sans-devanagari/600.css';
+/* Hindi's font (Noto Sans Devanagari) is in i18n/devanagari.css: only a Hindi build loads it (R47). */
 
 /*
  * Lab-paper palette: cool pale paper, textbook ink, translucent tissue.

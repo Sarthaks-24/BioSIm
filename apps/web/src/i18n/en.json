@@ -23,7 +23,8 @@
       "honest": "Ranges, not fake precision",
       "honestBody": "People differ. Times in the intestines and blood sugar are shown as typical ranges for healthy adults, with the source for every input.",
       "class": "Made for the classroom",
-      "classBody": "Projector mode, English and Hindi, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals."
+      "classBody": "Projector mode, English and Hindi, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals.",
+      "classBodyEnglishOnly": "Projector mode, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals."
     },
     "examples": "Try a comparison",
     "example": "{{meal}}, with {{kept}} kept"
@@ -263,6 +264,7 @@
     "title": "Privacy",
     "updated": "Last updated: <date of launch>",
     "summary": "**Short version: LifePeek does not ask for, collect or store anything about you.** There are no accounts, no logins, no ads, no cookies and no tracking.",
+    "languageEnglishOnly": "your language, whether Projector mode is on, and whether you have closed the \"not medical advice\" note;",
     "sections": [
       {
         "title": "What stays on your device",

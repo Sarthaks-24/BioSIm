@@ -99,17 +99,28 @@ export function verdict(check: string, mode: Mode, problems: string[]) {
  */
 export async function gateSteps(check: string, mode: Mode, steps: () => Promise<void>) {
   if (mode === 'enforce') return steps().then(() => verdict(check, mode, []))
+  const problem = await tryStep(steps)
+  verdict(check, mode, problem ? [problem] : [])
+}
+
+/**
+ * Runs steps that may throw (a click, a wait, an expect) and returns what went wrong as one
+ * problem line, or null if nothing did. So a report-mode check whose page is not ready reports
+ * that, instead of failing its test. A skip inside the steps (test.skip) still skips the test.
+ */
+export async function tryStep(steps: () => Promise<void>): Promise<string | null> {
   try {
     await steps()
-    verdict(check, mode, [])
+    return null
   } catch (e) {
+    if (test.info().expectedStatus === 'skipped') throw e
     // The first lines of an expect() failure say what was expected, where, and what was found.
     const message = String(e instanceof Error ? e.message : e).replace(/\u001b\[\d+m/g, '')
     const lines = message
       .split('\n')
       .map((l) => l.trim())
       .filter(Boolean)
-    verdict(check, mode, [lines.slice(0, 4).join(' / ')])
+    return lines.slice(0, 4).join(' / ')
   }
 }
 

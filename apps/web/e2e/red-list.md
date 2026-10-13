@@ -11,6 +11,10 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 - While a bug's mode is `report`, its test prints `[gate report] redlist red Bn: …` and passes.
   **The T-step that fixes it flips its mode to `enforce`** (then the test must pass) and reruns the
   script, so the JSON shows it green.
+- A step that cannot finish (a button not there, a wait that times out) is one more problem of its
+  bug, never a failed test while the bug reports. Tests that need Hindi (B7, B9, B13, B20's Hindi
+  half) skip on a build without it (R47); the script counts them as skipped, and joins B20's two
+  halves (English, and Hindi read from the saved language, as on B9's Home).
 
 ## Seen failing on eee16c9 (22 of 26)
 
@@ -57,3 +61,5 @@ phone and landscape size, no body in the empty state (U2), the tablet page scrol
 1024), "Keys and settings" and the key-moment markers overlapping the timeline track, the
 "Typical adult" popover without a Close button, `lang=en` added to links, every `dvh` without a `vh`
 fallback. Their modes are in `INVARIANTS` (one per project); T2, T3 and T7 flip theirs.
+They run in English and the +40 % pseudo-locale (`?lang=pseudo`), not Hindi (R47: Hindi is paused);
+the one `lang=hi` link of the round-trip check reports whatever its project's mode.
