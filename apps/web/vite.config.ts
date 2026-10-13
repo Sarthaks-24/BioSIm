@@ -3,12 +3,18 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import i18nSections from './scripts/i18n-sections.mjs'
+import prerenderHead from './scripts/prerender-head.mjs'
+import { siteUrl } from './scripts/site-url.mjs'
 
 /**
  * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
  * it the app never loads Hindi's font (i18n/index.ts), and its files are kept out of the precache too.
  */
-const HINDI = loadEnv('production', process.cwd(), 'VITE_').VITE_HINDI === '1'
+const ENV = loadEnv('production', process.cwd(), 'VITE_')
+const HINDI = ENV.VITE_HINDI === '1'
+
+/** The production address, the one build constant (scripts/site-url.mjs): VITE_SITE_URL or the planned name. */
+const SITE_URL = siteUrl(ENV.VITE_SITE_URL)
 
 export default defineConfig({
   plugins: [
@@ -16,6 +22,8 @@ export default defineConfig({
     tailwindcss(),
     // English page texts load with their pages, not with every page (scripts/i18n-sections.mjs).
     i18nSections(),
+    // Each page's head in the built HTML, the 404 page, sitemap.xml and robots.txt (T12a).
+    prerenderHead({ site: SITE_URL }),
     VitePWA({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
@@ -66,6 +74,10 @@ export default defineConfig({
           'stats.json',
           'og-image.png',
           'screenshots/**',
+          // The per-page HTML and the 404 page are for the server (scripts/prerender-head.mjs);
+          // offline, the service worker serves index.html for every page.
+          '*/index.html',
+          '404.html',
           ...(HINDI ? [] : ['**/noto-sans-devanagari*']),
         ],
         runtimeCaching: [
@@ -90,6 +102,8 @@ export default defineConfig({
       },
     }),
   ],
+  // src/lib/site.ts reads it; set here so it always has the one value (scripts/site-url.mjs).
+  define: { 'import.meta.env.VITE_SITE_URL': JSON.stringify(SITE_URL) },
   resolve: {
     // three.js from its source modules instead of its one-file build, so the lazy 3D chunk (only
     // a device with WebGL downloads it) takes only the modules it uses. The pages import no

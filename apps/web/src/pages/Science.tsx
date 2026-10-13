@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { FOODS } from '../data/foods.ts'
@@ -32,6 +32,15 @@ export default function Science() {
       <h1 className="text-display font-extrabold tracking-tight">{t('science.title')}</h1>
       <p className="mt-4 text-lg text-ink-muted">{t('science.lead')}</p>
       <p className="tabular mt-2 text-sm text-ink-muted">{t('science.version', { version: MODEL_VERSION })}</p>
+      {/* Science → the simulator and Teach (T12a, internal links). */}
+      <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-semibold">
+        <Link to="/sim" className="underline underline-offset-2">
+          {t('science.trySim')}
+        </Link>
+        <Link to="/teach" className="underline underline-offset-2">
+          {t('science.teachLink')}
+        </Link>
+      </p>
 
       <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('science.modelTitle')}</h2>
       <p>{t('science.modelBody')}</p>

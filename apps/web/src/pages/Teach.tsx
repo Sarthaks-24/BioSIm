@@ -68,6 +68,12 @@ export default function Teach() {
     <PageShell>
       <h1 className="text-display font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
       <p className="mt-4 text-lg text-ink-muted">{t('teach.lead')}</p>
+      {/* Teach → Science (T12a, internal links). */}
+      <p className="mt-2">
+        <Link to="/science" className="font-semibold underline underline-offset-2">
+          {t('teach.scienceLink')}
+        </Link>
+      </p>
 
       <h2 className="mt-10 mb-3 text-h2 font-extrabold">{t('teach.plan')}</h2>
       <ol className="list-decimal space-y-3 pl-6">

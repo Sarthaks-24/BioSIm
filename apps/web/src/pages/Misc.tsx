@@ -8,9 +8,15 @@ export function NotFound() {
     <PageShell width="note" as="div">
       <h1 className="text-3xl font-extrabold">{t('notFound.title')}</h1>
       <p className="mt-3 text-ink-muted">{t('notFound.body')}</p>
-      <Link to="/sim" className="mt-6 inline-block rounded-full bg-ink px-5 py-2.5 font-semibold text-white">
-        {t('notFound.cta')}
-      </Link>
+      {/* The built 404.html (scripts/prerender-head.mjs) has the same words, links and classes. */}
+      <p className="mt-6 flex flex-wrap justify-center gap-3">
+        <Link to="/sim" className="inline-block rounded-full bg-ink px-5 py-2.5 font-semibold text-white">
+          {t('notFound.cta')}
+        </Link>
+        <Link to="/" className="inline-block rounded-full border border-border px-5 py-2.5 font-semibold">
+          {t('notFound.home')}
+        </Link>
+      </p>
     </PageShell>
   )
 }

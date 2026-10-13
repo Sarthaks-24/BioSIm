@@ -126,6 +126,7 @@
   "teach": {
     "title": "Using LifePeek in class",
     "lead": "LifePeek is built for a projector and a 40-minute lesson on nutrition and digestion (for example, the “Life Processes” chapter).",
+    "scienceLink": "How the model works, and where its numbers come from",
     "plan": "A 40-minute lesson plan",
     "steps": [
       "Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more.",
@@ -174,6 +175,8 @@
   "science": {
     "title": "Science and sources",
     "lead": "What the model computes, what it assumes, and where every number comes from.",
+    "trySim": "Try it in the simulator",
+    "teachLink": "Lessons for teachers",
     "modelTitle": "What is computed",
     "modelBody": "Stomach emptying is computed from the meal. Drinks start leaving straight away — water within minutes, drinks with calories at about 2 kcal per minute. Solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal per minute, so meals with more calories take longer. (In the model a bigger meal empties at the same rate; real stomachs speed up a little for big meals.) Blood sugar is computed from the carbohydrate being absorbed, its glycemic index, and the slowing effect of fat and protein.",
     "fixedTitle": "What is fixed",
@@ -196,7 +199,8 @@
   "notFound": {
     "title": "Page not found",
     "body": "That page doesn’t exist. Go back to the simulator.",
-    "cta": "Open the simulator"
+    "cta": "Open the simulator",
+    "home": "Go to the home page"
   },
   "units": {
     "min": "{{n}} min",
@@ -244,7 +248,7 @@
     "sourcesLink": "Every food and its sources",
     "licencesTitle": "Licences",
     "licenceCode": "Code: Apache License 2.0. Keep the NOTICE file in copies.",
-    "licenceContent": "Lesson text, translations, illustrations, docs, and our own food-file structure and labels: CC BY 4.0. Credit: “LifePeek by {{name}}, https://lifepeek.vercel.app, CC BY 4.0”.",
+    "licenceContent": "Lesson text, translations, illustrations, docs, and our own food-file structure and labels: CC BY 4.0. Credit: “LifePeek by {{name}}, {{site}}, CC BY 4.0”.",
     "licenceData": "Nutrient and GI values from USDA, the Indian Nutrient Databank, Atkinson et al. and others: not relicensed by us.",
     "licenceName": "The LifePeek name and logo: not licensed. Forks must use a different name.",
     "licenceLibraries": "Bundled libraries and fonts: their own licences.",
@@ -272,7 +276,7 @@
           "a copy of the app, so it works offline in class;",
           "the meals you pick are kept in the page address (the link). A share link contains only the meals, nothing about you."
         ],
-        "outro": ["You can delete all of this by clearing the site data for lifepeek.vercel.app in your browser settings."]
+        "outro": ["You can delete all of this by clearing the site data for {{host}} in your browser settings."]
       },
       {
         "title": "Reporting a mistake",
