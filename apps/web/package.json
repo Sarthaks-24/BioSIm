@@ -14,6 +14,7 @@
     "e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
     "hero": "tsx scripts/build-hero.ts",
+    "resting-body": "tsx scripts/build-resting-body.ts",
     "lint:placeholders": "node scripts/lint-placeholders.mjs",
     "red-list": "node scripts/red-list.mjs",
     "cpu-ratio": "node scripts/cpu-ratio.mjs"

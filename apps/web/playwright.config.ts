@@ -35,6 +35,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'update.spec.ts',
       'loading.spec.ts',
       'links.spec.ts',
+      'overlays.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -50,6 +51,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'keyboard.spec.ts',
       'a11y.spec.ts',
       'teach.spec.ts',
+      'overlays.spec.ts',
     ],
     use: {
       viewport: { width: 1280, height: 800 },
@@ -69,6 +71,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'keyboard.spec.ts',
       'a11y.spec.ts',
       'links.spec.ts',
+      'overlays.spec.ts',
     ],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },
@@ -79,7 +82,7 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'nowebgl',
-    testMatch: ['stage.spec.ts'],
+    testMatch: ['stage.spec.ts', 'overlays.spec.ts'],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
   ...trackA(),
@@ -111,7 +114,8 @@ function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
     hasTouch: true,
     launchOptions: webgl,
   })
-  const invariants = ['invariants.spec.ts']
+  // The overlay checks (FP-5) run on every one of these projects too.
+  const invariants = ['invariants.spec.ts', 'overlays.spec.ts']
   return [
     // One report test per QA-sweep bug seen failing on eee16c9 (e2e/red-list.md); each sets its own window.
     { name: 'redlist', testMatch: ['redlist.spec.ts'], use: { viewport: desktop, launchOptions: webgl } },

@@ -4,7 +4,7 @@ import { PARAMS, SERVING_STEPS, type MealItem, type ProfileId } from '@lifepeek/
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { useRunStore } from '../../state/run.ts'
-import { LoadBoundary, LoadFailed, LoadFailedPanel, lazyWithRetry } from '../LoadBoundary.tsx'
+import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../LoadBoundary.tsx'
 import { FlagIcon, FoodChip, IconButton, LinkIcon, MoreIcon } from '../kit/index.ts'
 import { announce } from '../graphs/StripAnnouncer.tsx'
 import AddFoodSheet from './AddFoodSheet.tsx'
@@ -17,9 +17,13 @@ import { mealKcalRounded } from './mealText.ts'
  * The meal bar's other actions (Typical adult, Copy link, Report a mistake; Keep on a phone) are
  * downloaded the first time "⋯" opens: not part of the first paint (FP-1, size budget).
  */
-const mealActions = lazyWithRetry<{ profile: ProfileId; keep: ReactNode; report: ReactNode; manual: boolean }>(
-  () => import('./MealActions.tsx'),
-)
+const mealActions = lazyWithRetry<{
+  profile: ProfileId
+  keep: ReactNode
+  report: ReactNode
+  manual: boolean
+  onCopied: (copied: boolean) => void
+}>(() => import('./MealActions.tsx'))
 
 /** The report form is downloaded on the first click: it is not part of the first paint (size budget). */
 const feedbackDialog = lazyWithRetry(() => import('../FeedbackDialog.tsx'))
@@ -55,25 +59,30 @@ export default function MealBar() {
   const profile = useRunStore((s) => s.profile)
   const kept = useRunStore((s) => s.kept)
   const [bouts] = useState(fixtureBouts)
-  // "⋯": a panel under it (Popover: Esc, a press elsewhere or Tab out closes it, focus comes back).
+  // "⋯": a menu by it (Popover: Esc, a press elsewhere or Tab out closes it, focus comes back), and
+  // each of its actions closes it too (FP-5).
   const [more, setMore] = useState(false)
   const [attempt, setAttempt] = useState(0)
+  // "Report a mistake" was chosen in "⋯": its form, a dialog of its own (the menu has closed).
+  const [report, setReport] = useState(false)
+  const [reportAttempt, setReportAttempt] = useState(0)
   const button = useRef<HTMLButtonElement>(null)
-  // The bar's "Copy link" (from 1024 px up; it copies, as a desktop does): "Link copied" for a
-  // moment, said by the graphs' live region (emptied first, so a second copy is said again). If
-  // copying is blocked (some school browsers), "⋯" opens with the link to copy by hand.
+  // "Copy link" (the bar's from 1024 px up, else the one in "⋯"): "Link copied" for a moment, said
+  // by the graphs' live region (emptied first, so a second copy is said again) and shown under "⋯"
+  // (from 1024 px up the bar's own button says it). If copying is blocked (some school browsers),
+  // "⋯" opens with the link to copy by hand.
   const [copied, setCopied] = useState(false)
   const [manual, setManual] = useState(false)
   const blocked = () => {
     setManual(true)
     setMore(true)
   }
-  const copy = () =>
-    navigator.clipboard?.writeText(location.href).then(() => {
-      announce(t('sim.shareCopied'))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    }, blocked) ?? blocked()
+  const said = () => {
+    announce(t('sim.shareCopied'))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+  const copy = () => navigator.clipboard?.writeText(location.href).then(said, blocked) ?? blocked()
 
   return (
     <section aria-labelledby="meal-bar-title" className="border-b border-border bg-surface-page">
@@ -86,7 +95,7 @@ export default function MealBar() {
             <KeptTag />
           </div>
         )}
-        <div className={`flex shrink-0 items-center gap-1 ${kept ? '' : 'lg:ml-auto'}`}>
+        <div className={`relative flex shrink-0 items-center gap-1 ${kept ? '' : 'lg:ml-auto'}`}>
           {/* Its words stay after keeping (council SHOULD 11). */}
           <span className="max-lg:hidden">
             <KeepButton />
@@ -109,10 +118,18 @@ export default function MealBar() {
             aria-expanded={more}
             onClick={() => setMore(!more)}
           />
+          {copied && (
+            // Copied from "⋯", which has closed: said under it. From 1024 px up the bar's button says it.
+            <span
+              aria-hidden="true"
+              className="absolute top-full right-0 z-30 mt-1 rounded-control bg-ink px-3 py-1 text-caption font-semibold whitespace-nowrap text-white lg:hidden"
+            >
+              {t('sim.shareCopied')}
+            </span>
+          )}
         </div>
       </div>
       {more && (
-        // The report form (a <dialog>) opens inside the panel, so the panel stays while it shows.
         <Popover
           anchor={button}
           onClose={() => {
@@ -120,7 +137,9 @@ export default function MealBar() {
             setManual(false)
           }}
           label={t('stage.actions')}
-          className="flex w-[20rem] flex-col items-start gap-1 p-1.5"
+          width="w-[20rem]"
+          className="flex flex-col items-start gap-1"
+          menu
         >
           <LoadBoundary
             key={attempt}
@@ -128,10 +147,52 @@ export default function MealBar() {
             fallback={<LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />}
           >
             <Suspense fallback={null}>
-              <mealActions.Component profile={profile} keep={<KeepButton />} report={<ReportMistake />} manual={manual} />
+              <mealActions.Component
+                profile={profile}
+                keep={<KeepButton />}
+                report={
+                  // "Report a mistake" (D-FEED): the same form as v1. Without an API it opens the
+                  // pre-filled GitHub issue in a new tab and sends nothing; the report carries this
+                  // run's link. Not on the projector, like "Copy link" (a teacher reports from their own screen).
+                  <span className="in-data-[contrast=high]:hidden">
+                    <IconButton
+                      icon={<FlagIcon />}
+                      label={t('sim.reportError')}
+                      title={t('sim.reportError')}
+                      aria-haspopup="dialog"
+                      onClick={() => setReport(true)}
+                    />
+                  </span>
+                }
+                manual={manual}
+                onCopied={(copied) => {
+                  setMore(false)
+                  button.current?.focus()
+                  if (copied) said()
+                }}
+              />
             </Suspense>
           </LoadBoundary>
         </Popover>
+      )}
+      {report && (
+        // The report form, downloaded on first use. If it doesn't load, a box says so, with "Try again" and "Close".
+        <LoadBoundary
+          key={reportAttempt}
+          onFail={feedbackDialog.reset}
+          fallback={
+            <LoadFailedBox attempt={reportAttempt} onRetry={() => setReportAttempt((a) => a + 1)} onClose={() => setReport(false)} />
+          }
+        >
+          <Suspense fallback={null}>
+            <feedbackDialog.Component
+              context={() => window.location.search.replace(/^\?/, '')}
+              openOnMount
+              trigger={() => null}
+              onClose={() => setReport(false)}
+            />
+          </Suspense>
+        </LoadBoundary>
       )}
     </section>
   )
@@ -230,7 +291,7 @@ function PlanStrip({ meal, bouts }: { meal: readonly MealItem[]; bouts: readonly
         </button>
       )}
       {open && hidden > 0 && (
-        <Popover anchor={plus} onClose={() => setOpen(false)} label={t('stage.meal')} className="w-[20rem]">
+        <Popover anchor={plus} onClose={() => setOpen(false)} label={t('stage.meal')} width="w-[20rem]">
           {fit?.kcal === false && <p className="tabular mb-2 text-control font-semibold">{total}</p>}
           <ul className="flex flex-col items-start gap-1.5">
             {chips.slice(n - hidden).map((chip, i) => (
@@ -284,11 +345,18 @@ function MealChip({ item, inline = false }: { item: MealItem; inline?: boolean }
         />
       </span>
       {open && (
-        <Panel anchor={anchor} onClose={() => setOpen(false)} label={`${t('sim.servings')}: ${name}`} className="w-[17rem]">
-          <p className="text-control font-semibold">
-            {name} <span className="font-normal text-ink-muted">({localized(food.serving.label, lang)})</span>
-          </p>
-          <p className="mt-0.5 text-caption text-ink-muted">{t('sim.servings')}</p>
+        <Panel anchor={anchor} onClose={() => setOpen(false)} label={`${t('sim.servings')}: ${name}`} width="w-[17rem]">
+          {/* A popover's title says "Servings: Cola"; in the "+n" list the chip is right above. */}
+          {inline ? (
+            <>
+              <p className="text-control font-semibold">
+                {name} <span className="font-normal text-ink-muted">({localized(food.serving.label, lang)})</span>
+              </p>
+              <p className="mt-0.5 text-caption text-ink-muted">{t('sim.servings')}</p>
+            </>
+          ) : (
+            <p className="text-caption text-ink-muted">{localized(food.serving.label, lang)}</p>
+          )}
           <div role="group" aria-label={t('sim.servings')} className="mt-2 grid grid-cols-5 gap-1">
             {steps.map((n) => (
               <button
@@ -318,43 +386,3 @@ function MealChip({ item, inline = false }: { item: MealItem; inline?: boolean }
 
 /** A servings picker inside the "+n" list: the same contents, in the flow under its chip. */
 const InlinePanel = ({ children }: { children: ReactNode }) => <div className="mt-2">{children}</div>
-
-/**
- * "Report a mistake" (D-FEED): the same form as v1. Without an API it opens the pre-filled GitHub
- * issue in a new tab and sends nothing; the report carries this run's link. Not on the projector, like
- * "Copy link" (a teacher reports from their own screen).
- */
-function ReportMistake() {
-  const { t } = useTranslation()
-  const [loaded, setLoaded] = useState(false)
-  const [attempt, setAttempt] = useState(0)
-  const button = (onClick: () => void) => (
-    <IconButton
-      icon={<FlagIcon />}
-      label={t('sim.reportError')}
-      title={t('sim.reportError')}
-      aria-haspopup="dialog"
-      onClick={onClick}
-      // The loaded form's own button replaces this one: it takes the focus back, so closing the form returns there.
-      autoFocus={loaded}
-    />
-  )
-  return (
-    <span className="in-data-[contrast=high]:hidden">
-      {loaded ? (
-        // If the form doesn't load, the button stays and says so under it, with "Try again".
-        <LoadBoundary
-          key={attempt}
-          onFail={feedbackDialog.reset}
-          fallback={<LoadFailedPanel trigger={button} onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />}
-        >
-          <Suspense fallback={button(() => {})}>
-            <feedbackDialog.Component context={() => window.location.search.replace(/^\?/, '')} openOnMount trigger={button} />
-          </Suspense>
-        </LoadBoundary>
-      ) : (
-        button(() => setLoaded(true))
-      )}
-    </span>
-  )
-}

@@ -18,7 +18,7 @@ import {
   type RunResult,
 } from '../src/index.ts'
 import { ACTIVITY_CODES, ENERGY_TOTAL, HUMAN_MODULES, LEFT_WATER, activityProblems, runModules, simulate } from '../src/run.ts'
-import { lookup as fixtureLookup } from './fixtures.ts'
+import { FULL, firstDiff, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 import { paramsWith } from './modules/ctx.ts'
 
@@ -278,7 +278,10 @@ describe('x.energy.total: the one "energy used" later modules read (model D2)', 
 describe('rest invariance (model D13 iv) and what activity never moves', () => {
   /** Every signal a version-3 run had before E-3b-eng, byte for byte (the new rows are D13 iii additions). */
   const BEFORE = ACTIVE_SIGNAL_IDS.slice(0, ACTIVE_SIGNAL_IDS.indexOf('gut.absorbRate.carbs'))
-  const meals = ['cola:1', 'cheeseburger:1,fries:1,cola:1', 'roti:2,dal:1', 'water:1', '']
+  // A drink, a mixed meal and nothing; FULL=1 adds the others (R68).
+  const meals = FULL
+    ? ['cola:1', 'cheeseburger:1,fries:1,cola:1', 'roti:2,dal:1', 'water:1', '']
+    : ['cola:1', 'cheeseburger:1,fries:1,cola:1', '']
 
   it('no plan, an empty plan and bouts at MET 1 give the same run, to the byte', () => {
     const atRest = paramsWith('activity.met.walk', 1)
@@ -293,10 +296,10 @@ describe('rest invariance (model D13 iv) and what activity never moves', () => {
         stepMin: 1,
       }).signals
       for (const [id, s] of base.signals) {
-        expect(none.signals.get(id)!.values, `${m} ${id}`).toEqual(s.values)
-        expect(Float32Array.from(restOnly.get(id)!.values), `${m} ${id} rest-only`).toEqual(s.values)
+        expect(firstDiff(s.values, none.signals.get(id)?.values), `${m} ${id}`).toBe(-1)
+        expect(firstDiff(s.values, Float32Array.from(restOnly.get(id)!.values)), `${m} ${id} rest-only`).toBe(-1)
       }
-      expect(restOnly.get(ENERGY_TOTAL)!.values).toEqual(arrays(m).get(ENERGY_TOTAL)!.values)
+      expect(firstDiff(restOnly.get(ENERGY_TOTAL)!.values, arrays(m).get(ENERGY_TOTAL)!.values)).toBe(-1)
       for (const id of [
         'event.stomachHalfEmpty',
         'event.glucosePeak',
@@ -320,7 +323,7 @@ describe('rest invariance (model D13 iv) and what activity never moves', () => {
         'gut.absorbRate.water',
         'energy.foodEffectRate',
       ] as const)
-        expect(values(moving, id), `${m} ${id}`).toEqual(values(rest, id))
+        expect(firstDiff(values(moving, id), values(rest, id)), `${m} ${id}`).toBe(-1)
       expect([...rest.moments].filter(([id]) => !id.startsWith('event.activity'))).toEqual(
         [...moving.moments].filter(([id]) => !id.startsWith('event.activity')),
       )
@@ -393,12 +396,14 @@ describe('the gut: absorbed per minute and the water balance', () => {
 })
 
 describe('fuzz: meals × activity plans', () => {
-  it('every signal stays finite and not below 0 for 60 random plans (fixed seed)', () => {
+  // 20 plans in a normal run, 300 with FULL=1 (model §5 fuzz; R68). Same seed, so the first 20 are the same.
+  const PLANS = FULL ? 300 : 20
+  it(`every signal stays finite and not below 0 for ${PLANS} random plans (fixed seed)`, () => {
     let seed = 7
     const rnd = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31
     const pick = <T>(xs: readonly T[]) => xs[Math.floor(rnd() * xs.length)]!
     const menu = ['cola:1', 'cheeseburger:1,fries:1', 'roti:2,dal:1', 'water:1', 'standard-meal:1', '']
-    for (let k = 0; k < 60; k++) {
+    for (let k = 0; k < PLANS; k++) {
       const plan: ActivityBout[] = []
       let t = Math.floor(rnd() * 600)
       for (let b = 0, count = 1 + Math.floor(rnd() * 8); b < count && t <= 2880; b++) {

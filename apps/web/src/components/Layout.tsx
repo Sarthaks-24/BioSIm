@@ -45,8 +45,9 @@ function MenuIcon({ open }: { open: boolean }) {
 }
 
 /**
- * The phone menu's state. It closes when a link is followed (the page changes), on Escape (focus
- * goes back to its button) and on a tap anywhere else.
+ * The phone menu's state. It closes when one of its links or buttons is used (the projector switch
+ * too: FP-5, B10), on Escape (focus goes back to its button) and on a tap anywhere else: on the
+ * dimmed page under it, the tap ends there, so it never presses what was under it.
  */
 function useMenu() {
   const [open, setOpen] = useState(false)
@@ -66,8 +67,9 @@ function useMenu() {
       button.current?.focus()
     }
     const onDown = (e: PointerEvent) => {
-      const target = e.target as Node
-      if (!button.current?.contains(target) && !document.getElementById(id)?.contains(target)) setOpen(false)
+      const target = e.target as Element
+      if (!button.current?.contains(target) && !document.getElementById(id)?.contains(target) && !target.closest('[data-scrim]'))
+        setOpen(false)
     }
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onDown)
@@ -207,7 +209,17 @@ export default function Layout() {
              * On a phone the links fold into a menu (council round 2): a row of its own cost the
              * stage's body about 50 px of the first screen. Opened, they drop down under the header.
              */}
-            <div id={menu.id} className={menuBox}>
+            <div
+              id={menu.id}
+              className={menuBox}
+              // Each link and button in the phone menu closes it; the projector switch gives the focus back to ≡.
+              onClick={(e) => {
+                const used = menu.open && (e.target as Element).closest('a, button')
+                if (!used) return
+                menu.setOpen(false)
+                if (used.matches('button')) menu.button.current?.focus()
+              }}
+            >
               <nav aria-label={t('nav.main')} className="flex flex-col gap-1 unfold:flex-row">
                 <NavLink to="/sim" className={nav}>
                   {t('nav.simulator')}
@@ -246,6 +258,15 @@ export default function Layout() {
           </div>
         </header>
 
+        {menu.open && (
+          // Under the phone menu: the page dimmed, the header clear (it is above this).
+          <div
+            data-scrim=""
+            aria-hidden="true"
+            onClick={() => menu.setOpen(false)}
+            className="fixed inset-0 z-20 bg-ink/30 unfold:hidden"
+          />
+        )}
         <main id="main" className={fit ? 'flex min-h-0 flex-1 flex-col' : 'flex-1'}>
           <Outlet />
         </main>

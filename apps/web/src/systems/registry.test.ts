@@ -66,10 +66,11 @@ describe('systems registry (architecture §5.2)', () => {
       public: false,
       slots: [
         { id: 'gut', signals: ['gut.stomach.contentG'], unit: 'g' },
-        // Not an engine signal yet, nor a row of any pack: what S-2 adds.
+        // S-2's engine signal, but no pack has registered its row yet (the breathing pack is U-2's).
         { id: 'blood', signals: ['lungs.tidalVolume' as never], unit: 'mL/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
-        { id: 'gut', signals: ['blood.glucose'], unit: 'mg/dL' },
+        // A reserved name: no engine module provides it.
+        { id: 'gut', signals: ['kidney.filtrationRate' as never], unit: 'mg/dL' },
       ],
       organs: ['lungs' as never],
     }
@@ -81,9 +82,10 @@ describe('systems registry (architecture §5.2)', () => {
       'breathing: two slots share an id',
       'breathing: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
       'breathing: slot 2 (blood) unit mL/min has no text (registry/units.ts)',
-      'breathing: slot 2 (blood) signal lungs.tidalVolume is not provided by the engine (PROVIDES)',
       'breathing: slot 2 (blood) signal lungs.tidalVolume has no row registered by its pack',
       "breathing: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
+      'breathing: slot 4 (gut) signal kidney.filtrationRate is not provided by the engine (PROVIDES)',
+      'breathing: slot 4 (gut) signal kidney.filtrationRate has no row registered by its pack',
     ])
   })
 

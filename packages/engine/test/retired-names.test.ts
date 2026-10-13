@@ -38,11 +38,12 @@ const files = ['apps', 'packages'].flatMap((d) => sourceFiles(join(ROOT, d)))
 
 function findRetired(file: string): string[] {
   const hits: string[] = []
-  readFileSync(file, 'utf8')
-    .split('\n')
-    .forEach((line, i) => {
-      for (const m of line.matchAll(RETIRED_RE)) hits.push(`${rel(file)}:${i + 1}: ${m[0]}`)
-    })
+  const text = readFileSync(file, 'utf8')
+  // Most files have no hit: one search of the whole text, then lines only where there is one.
+  if (text.search(RETIRED_RE) < 0) return hits
+  text.split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(RETIRED_RE)) hits.push(`${rel(file)}:${i + 1}: ${m[0]}`)
+  })
   return hits
 }
 
@@ -58,7 +59,8 @@ describe('retired names', () => {
     expect(V1_EXEMPT).toEqual([])
   })
 
-  it('no quoted retired name appears outside the exempt files', () => {
+  // Reads every source file: slow on a busy machine (R68), so a longer timeout.
+  it('no quoted retired name appears outside the exempt files', { timeout: 20_000 }, () => {
     const exempt = new Set([...ALWAYS_EXEMPT, ...V1_EXEMPT])
     const hits = files.filter((f) => !exempt.has(rel(f))).flatMap(findRetired)
     expect(hits).toEqual([])

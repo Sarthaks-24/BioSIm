@@ -166,6 +166,35 @@ export const PARAMS = {
     },
   },
 
+  /**
+   * Breathing (model §2.2, S-2; sources read in V-2). Oxygen used and carbon dioxide made come from
+   * the energy used (x.energy.total) through Weir's equation without protein, kcal = (3.941 +
+   * 1.106·RQ) per L O2 (Kaiyala 2019, Eq 1). RQ starts at the fasting value, rises with blood
+   * glucose (kRQ, calibrated on Gribok 2016's carbohydrate shake), and in a bout never falls below
+   * a floor that grows with MET (more carbohydrate burned at higher effort; a calibration, R51).
+   * Breathing carries the CO2 away with alveolar CO2 held at 40 mm Hg (OpenStax §22.4), so alveolar
+   * air VA = 0.863·VCO2/40 L/min (0.863 = 760·310/273/1000, the gas-law constant from mL/min dry at
+   * 0 °C to L/min at body temperature). The split of VA into breaths and depth is hand-picked: rate
+   * f = 15·(VA/VA_rest)^(1/3) (15/min at rest, inside OpenStax's 12–18 and the book's 15–18), depth
+   * VT = VA/f + 150 mL of dead space, at most 2.5 L.
+   */
+  gas: {
+    weirO2: 3.941,
+    weirCo2: 1.106,
+    rqFasting: 0.82,
+    rqPerMgDl: 0.0025,
+    rqFloorBase: 0.8,
+    rqFloorPerMet: 0.0127,
+    rqMin: 0.7,
+    rqMax: 1,
+    alveolarCo2MmHg: 40,
+    alveolarK: 0.863,
+    restBreathsPerMin: 15,
+    breathRateExponent: 1 / 3,
+    deadSpaceMl: 150,
+    tidalMaxMl: 2500,
+  },
+
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,

@@ -13,8 +13,10 @@ import {
   returningVisitor,
   skipWithoutHindi,
   tryStep,
+  verdict,
   watchConsole,
 } from './helpers/gate.ts'
+import { PSEUDO_LANG } from '../src/i18n/pseudo.ts'
 
 // The red list (T0; plan qa-fixes §0, §1.1). One report test per QA-sweep bug (cache/plans/v3/qa/
 // bug-sweep.md §3) that was seen failing on eee16c9; e2e/red-list.md lists them, what was measured,
@@ -146,26 +148,57 @@ test.describe('Android 360×640', () => {
   test('B8 Home chart text is ≥ 12 px at 360', async ({ page }) => {
     await red('B8', async (problems) => {
       await page.goto('/')
-      const svg = page.locator('main svg[role="img"]').first()
-      await expect(svg).toBeVisible()
-      const heights = await svg.locator('text').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height).filter((h) => h > 0))
-      const small = heights.filter((h) => h < 12)
+      // The race loads after the first paint (pages/Home.tsx); its axis labels are HTML (FP-8).
+      const chart = page.locator('main [data-home-chart]')
+      await expect(chart.locator('svg[role="img"]')).toBeVisible()
+      const sizes = await chart.evaluateAll((charts) =>
+        charts.flatMap((c) =>
+          [...c.querySelectorAll('*')]
+            .filter((e) => [...e.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim()))
+            .map((e) => ({
+              text: e.textContent!.trim(),
+              px: parseFloat(getComputedStyle(e).fontSize),
+              h: e.getBoundingClientRect().height,
+            })),
+        ),
+      )
+      if (sizes.length < 10) problems.push(`only ${sizes.length} chart labels found`)
+      const small = sizes.filter((s) => s.px < 12 || s.h < 12)
       if (small.length)
-        problems.push(`${small.length} of ${heights.length} chart labels draw under 12 px (smallest ${Math.min(...small).toFixed(1)} px)`)
+        problems.push(
+          `${small.length} of ${sizes.length} chart labels draw under 12 px (${small.map((s) => `"${s.text}" ${s.px} px`).join(', ')})`,
+        )
     })
   })
 
-  test('B9 Hindi Home: "Open the simulator" is in the first screen at 360×640', async ({ page }) => {
+  /** Where "Open the simulator" ends on Home, at the window's size, in the language `lang` (a ?lang= link opens Home in it too). */
+  async function ctaBottom(page: Page, lang?: string) {
+    await page.goto(lang ? `/?lang=${lang}` : '/')
+    const cta = page.locator('main a[href="/sim"]').first()
+    await expect(cta).toBeVisible()
+    await page.evaluate(() => document.fonts.ready)
+    const box = (await cta.boundingBox())!
+    return Math.round(box.y + box.height)
+  }
+
+  test('B9 Home: "Open the simulator" is in the first screen at 360×640, English and pseudo-locale', async ({ page }) => {
     await red('B9', async (problems) => {
-      // Home reads the saved language (a ?lang= link is the stage's).
-      await page.addInitScript(() => localStorage.setItem('lifepeek:lang', 'hi'))
-      await page.goto('/')
-      await skipWithoutHindi(page)
-      const cta = page.locator('main a[href="/sim"]').first()
-      await expect(cta).toBeVisible()
-      const box = (await cta.boundingBox())!
-      if (box.y + box.height > 640) problems.push(`the CTA ends at y ${Math.round(box.y + box.height)} in a 640 px screen`)
+      // The +40 % pseudo-locale stands in for Hindi while it is paused (R47); only the e2e build has it.
+      for (const lang of [undefined, 'pseudo']) {
+        const bottom = await ctaBottom(page, lang)
+        if (lang && (await page.locator('html').getAttribute('lang')) !== PSEUDO_LANG) continue
+        if (bottom > 640) problems.push(`${lang ?? 'English'}: the CTA ends at y ${bottom} in a 640 px screen`)
+      }
     })
+  })
+
+  test('B9 Hindi Home: "Open the simulator" is in the first screen at 360×640 (report, R47)', async ({ page }) => {
+    // Home reads the saved language (a ?lang= link is the stage's).
+    await page.addInitScript(() => localStorage.setItem('lifepeek:lang', 'hi'))
+    await page.goto('/')
+    await skipWithoutHindi(page)
+    const bottom = await ctaBottom(page)
+    verdict('B9 Hindi', 'report', bottom > 640 ? [`the CTA ends at y ${bottom} in a 640 px screen`] : [])
   })
 
   test('B11 a phone and a tablet can share the link', async ({ page }) => {

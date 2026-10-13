@@ -17,7 +17,7 @@ import {
   type EventMeta,
   type SignalMeta,
 } from '../src/index.ts'
-import { HUMAN_PROVIDES } from '../src/run.ts'
+import { BREATHING_SIGNALS, BREATHING_SIGNAL_IDS, HUMAN_PROVIDES, RUN_SIGNAL_IDS, RUN_SIGNALS } from '../src/run.ts'
 import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/core/catalog-docs.ts'
 
 /**
@@ -28,7 +28,7 @@ import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/c
 
 const signals: SignalMeta[] = Object.values(ALL_SIGNALS)
 const events: EventMeta[] = Object.values(EVENTS)
-const allIds = [...ACTIVE_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
+const allIds = [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
 const allRows: (SignalMeta | EventMeta)[] = [...signals, ...events]
 
 /** Dotted, at least two segments, each camelCase starting with a lowercase letter. */
@@ -69,6 +69,11 @@ const FROZEN: Record<string, string> = {
   'heart.rate': 'beats/min',
   'lungs.breathRate': 'breaths/min',
   'kidney.filtrationRate': 'mL/min',
+  // S-2 (breathing pack, lazy rows).
+  'gas.o2UseRate': 'mL/min',
+  'gas.co2OutRate': 'mL/min',
+  'gas.exchangeRatio': 'ratio',
+  'lungs.tidalVolume': 'mL',
   'event.stomachHalfEmpty': 'min',
   'event.glucosePeak': 'min',
   'event.glucoseBackToBase': 'min',
@@ -91,7 +96,8 @@ describe('catalog IDs', () => {
     expect(Object.keys(SIGNALS).sort()).toEqual([...ACTIVE_SIGNAL_IDS].sort())
     expect(Object.keys(RESERVED_SIGNALS).sort()).toEqual([...RESERVED_SIGNAL_IDS].sort())
     expect(Object.keys(EVENTS).sort()).toEqual([...EVENT_IDS].sort())
-    expect(Object.keys(SIGNAL_DOCS).sort()).toEqual([...ACTIVE_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort())
+    expect(Object.keys(BREATHING_SIGNALS).sort()).toEqual([...BREATHING_SIGNAL_IDS].sort())
+    expect(Object.keys(SIGNAL_DOCS).sort()).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort())
     expect(Object.keys(EVENT_DOCS).sort()).toEqual([...EVENT_IDS].sort())
     for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(EVENTS)]) expect(row.id).toBe(key)
   })
@@ -136,7 +142,7 @@ describe('catalog rows', () => {
   // Model ACTIVATION_LOG: a reserved row activates with shipsIn 'v3.0' (or 'v3.1'), its unit kept.
   it("every active row ships in 'v2.0' or 'v3.0', and every reserved row in neither", () => {
     const active = ['v2.0', 'v3.0']
-    for (const id of ACTIVE_SIGNAL_IDS) expect(active, id).toContain(SIGNALS[id].shipsIn)
+    for (const id of RUN_SIGNAL_IDS) expect(active, id).toContain(RUN_SIGNALS[id].shipsIn)
     for (const id of RESERVED_SIGNAL_IDS) expect(active, id).not.toContain(RESERVED_SIGNALS[id].shipsIn)
     for (const e of events) expect(active, e.id).toContain(e.shipsIn)
   })
@@ -149,8 +155,22 @@ describe('catalog rows', () => {
     expect(SIGNALS['energy.foodEffectRate']).toMatchObject({ unit: 'kcal/h', status: 'assumption', reactsToMeal: true })
   })
 
+  it('S-2 activates lungs.breathRate (unit kept) as a graphed sim-clock level and adds the gas rows, lazily', () => {
+    expect(RESERVED_SIGNAL_IDS as readonly string[]).not.toContain('lungs.breathRate')
+    expect(ACTIVE_SIGNAL_IDS as readonly string[]).not.toContain('lungs.breathRate')
+    for (const id of BREATHING_SIGNAL_IDS) {
+      const row = BREATHING_SIGNALS[id]
+      expect(row, id).toMatchObject({ status: 'assumption', clock: 'sim', shipsIn: 'v3.0', reactsToMeal: true })
+      expect(isChartable(row), id).toBe(true)
+      expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
+    }
+    expect(BREATHING_SIGNALS['lungs.breathRate']).toMatchObject({ unit: 'breaths/min', kind: 'level', validRange: { low: 8, high: 50 } })
+    expect(BREATHING_SIGNALS['lungs.tidalVolume'].unit).toBe('mL')
+    expect(BREATHING_SIGNALS['gas.exchangeRatio'].validRange).toMatchObject({ low: 0.7, high: 1 })
+  })
+
   it('every active signal and event cites at least one source, and every cited source is registered', () => {
-    for (const id of ACTIVE_SIGNAL_IDS) expect(SIGNALS[id].sourceIds.length, id).toBeGreaterThan(0)
+    for (const id of RUN_SIGNAL_IDS) expect(RUN_SIGNALS[id].sourceIds.length, id).toBeGreaterThan(0)
     for (const e of events) expect(e.sourceIds.length, e.id).toBeGreaterThan(0)
     const cited = [...allRows.flatMap((r) => r.sourceIds), ...signals.flatMap((s) => s.band?.sourceIds ?? [])]
     for (const id of cited) expect(isRegisteredSource(id), id).toBe(true)
@@ -163,10 +183,10 @@ describe('catalog rows', () => {
       if (s.limitKey) expect(s.limitKey, s.id).toMatch(/^limits\.[a-z][a-zA-Z0-9]*$/)
     }
     // A 'Model estimate' signal must say what it does not know.
-    for (const id of ACTIVE_SIGNAL_IDS) if (SIGNALS[id].status === 'assumption') expect(SIGNALS[id].limitKey, id).toBeDefined()
+    for (const id of RUN_SIGNAL_IDS) if (RUN_SIGNALS[id].status === 'assumption') expect(RUN_SIGNALS[id].limitKey, id).toBeDefined()
     // Markers and the human organism only point at signals the engine produces.
     for (const e of events) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
-    expect([...HUMAN_PROVIDES].sort()).toEqual([...ACTIVE_SIGNAL_IDS].sort())
+    expect([...HUMAN_PROVIDES].sort()).toEqual([...RUN_SIGNAL_IDS].sort())
   })
 })
 

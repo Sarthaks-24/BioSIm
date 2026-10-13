@@ -43,7 +43,6 @@ Rules for the reviewer:
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `home.lead` | LifePeek shows why. Pick a meal, press Play and watch it travel through the body: how fast it leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next. | LifePeek बताता है कि ऐसा क्यों होता है। कोई भोजन चुनें, ‘चलाएँ’ दबाएँ और उसे शरीर में आगे बढ़ते देखें: वह आमाशय से कितनी जल्दी निकलता है, शर्करा, प्रोटीन, वसा और रेशा कहाँ जाते हैं, और रक्त शर्करा व ऊर्जा कैसे बदलती हैं। अगले भोजन से तुलना के लिए एक भोजन रख लें। | draft |
 | `home.previewCaption` | Food still in the stomach after eating — computed by the LifePeek model | खाने के बाद आमाशय में बचा भोजन — LifePeek मॉडल द्वारा गणना | draft |
 | `feedback.failed` | Couldn’t reach the LifePeek server. | LifePeek सर्वर से संपर्क नहीं हो सका। | draft |
 | `disclaimer.long` | LifePeek is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions. | LifePeek पढ़ाने के लिए बनाया गया एक सरल मॉडल है। समय और रक्त शर्करा के मान स्वस्थ वयस्कों की सामान्य सीमाएँ हैं और हर व्यक्ति में काफ़ी अलग होते हैं। इसका उपयोग स्वास्थ्य, आहार या चिकित्सा संबंधी निर्णय लेने के लिए नहीं किया जाना चाहिए। | draft |
