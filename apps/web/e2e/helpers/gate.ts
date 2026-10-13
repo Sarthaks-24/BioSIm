@@ -602,7 +602,8 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
 export const RED_LIST: Record<string, Mode> = {
   // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15. T5 (FP-3) enforces B4; B13 is Hindi, so it
   // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
-  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22.
+  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22. T9b (FP-8) enforces Home: B8, and B9
+  // in English + the pseudo-locale (its Hindi half reports, R47).
   B1: 'enforce',
   B2: 'enforce',
   B3: 'report',
@@ -610,8 +611,8 @@ export const RED_LIST: Record<string, Mode> = {
   B5: 'report',
   B6: 'enforce',
   B7: 'enforce',
-  B8: 'report',
-  B9: 'report',
+  B8: 'enforce',
+  B9: 'enforce',
   B10: 'report',
   B11: 'enforce',
   B12: 'report',
