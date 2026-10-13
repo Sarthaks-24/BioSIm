@@ -1,6 +1,6 @@
 import type { RunResult } from '@lifepeek/engine'
 import type { Sheet } from '../../state/sheet.ts'
-import type { Slot } from './GraphColumn.tsx'
+import type { GraphSlotDef, SystemUi } from '../../systems/registry.ts'
 import StripTable from '../graphs/StripTable.tsx'
 import KeysHelp from './KeysHelp.tsx'
 import MomentList from './MomentList.tsx'
@@ -25,12 +25,15 @@ export default function Sheets({
   run,
   kept,
   slots,
+  ui,
 }: {
   sheet: NonNullable<Sheet>
   run: RunResult
   kept: RunResult | null
-  slots: readonly Slot[]
+  slots: readonly GraphSlotDef[]
+  /** The lit system's words and moments, from the stage: importing them here would split the stage's code. */
+  ui: SystemUi
 }) {
-  if (sheet.kind === 'table') return <StripTable run={run} kept={kept} slots={slots} slot={sheet.slot} />
+  if (sheet.kind === 'table') return <StripTable run={run} kept={kept} slots={slots} slot={sheet.slot} ui={ui} />
   return sheet.kind === 'moments' ? <MomentList moments={sheet.moments} /> : <KeysHelp />
 }

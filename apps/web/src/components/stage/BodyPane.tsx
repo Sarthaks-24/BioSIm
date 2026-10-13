@@ -1,16 +1,16 @@
 import { Suspense, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { DEFAULT_ORGANISM, type RunResult } from '@lifepeek/engine'
+import type { RunResult } from '@lifepeek/engine'
 import BodyView from '../BodyView.tsx'
 import { LoadBoundary, LoadFailed, lazyWithRetry } from '../LoadBoundary.tsx'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { BodyClockContext, MEAL_BODY_CLOCK } from '../../hooks/useBodyClock.ts'
-import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
+import { pickerSystems } from '../../systems/registry.ts'
+import { useSystemUi } from '../../systems/ui.ts'
 import LayerBar from './LayerBar.tsx'
-import { NowLine } from './NowLine.tsx'
 import ParticleKey from './ParticleKey.tsx'
 import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
@@ -53,7 +53,10 @@ export default function BodyPane({
   const { t, i18n } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const hasMeal = meal.length > 0
-  const oneLayer = ORGANISMS[DEFAULT_ORGANISM].systems.length === 1
+  const layer = useRunStore((s) => s.layer)
+  const oneLayer = pickerSystems(layer).length === 1
+  // The lit system's Now line (W-1): digestion's says where the meal is.
+  const { now: NowLine } = useSystemUi()
   const [more, setMore] = useState(false)
   // Clearing the meal closes "More": it must not open again (and take the focus) with the next food.
   const [hadMeal, setHadMeal] = useState(hasMeal)

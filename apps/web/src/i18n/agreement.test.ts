@@ -5,7 +5,7 @@ import { simulate } from '@lifepeek/engine/run'
 import hi from './hi.json'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { shortFoodName, shortMealNames } from '../components/stage/mealText.ts'
-import { compareSummary, singleSummary } from '../lib/summary.ts'
+import { compareSummary, singleSummary } from '../systems/digestion/summary.ts'
 
 /**
  * Hindi agreement with food names (FIX-F). Food names fill the meal placeholders, and Hindi verbs,

@@ -461,7 +461,7 @@ Key names (Space, Page Down, Shift …) stay in English on purpose: they are pri
 | `keys.strips` | Show the Stomach, Blood sugar or Energy graph | आमाशय, रक्त शर्करा या ऊर्जा का ग्राफ़ दिखाएँ | draft |
 | `keys.help` | This list | यह सूची | draft |
 | `keys.letters` | Letter keys | अक्षर कुंजियाँ | draft |
-| `keys.lettersHelp` | Space, K, P, T, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work. | Space, K, P, T, S, B, E और ? शॉर्टकट का काम करते हैं। अगर ये स्क्रीन रीडर या आवाज़ से चलाने में बाधा डालें, तो इन्हें बंद करें। तीर और Page Up / Down फिर भी काम करते हैं। | draft |
+| `keys.lettersHelp` | Space, K, P, T, 1, 2, 3, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work. | Space, K, P, T, 1, 2, 3, S, B, E और ? शॉर्टकट का काम करते हैं। अगर ये स्क्रीन रीडर या आवाज़ से चलाने में बाधा डालें, तो इन्हें बंद करें। तीर और Page Up / Down फिर भी काम करते हैं। | draft |
 | `keys.motion` | Reduce motion | कम हलचल | draft |
 | `keys.motionHelp` | The food pieces in the body stop tumbling. The clock still moves when you press Play. | शरीर में भोजन के कण घूमना बंद कर देते हैं। चलाएँ दबाने पर घड़ी फिर भी चलती है। | draft |
 | `keys.motionDevice` | Until you choose here, this follows the device’s own setting. | जब तक आप यहाँ न चुनें, यह डिवाइस की अपनी सेटिंग के अनुसार रहता है। | draft |

@@ -29,8 +29,9 @@ describe('the stage’s key map', () => {
     expect(actionFor(press('?', { shiftKey: true }), false)).toBe('help')
   })
 
-  it('S, B and E pick the Stomach, Blood sugar and Energy graphs', () => {
-    expect(['s', 'b', 'e'].map((k) => actionFor(press(k), false))).toEqual(['stripGut', 'stripBlood', 'stripEnergy'])
+  it('1, 2 and 3 pick a graph by its place; S, B and E are digestion’s aliases (v3.0)', () => {
+    expect(['1', '2', '3'].map((k) => actionFor(press(k), false))).toEqual(['slot1', 'slot2', 'slot3'])
+    expect(['s', 'b', 'e'].map((k) => actionFor(press(k), false))).toEqual(['slotS', 'slotB', 'slotE'])
   })
 
   it('leaves Ctrl, Alt and Cmd combinations to the browser', () => {
@@ -40,7 +41,7 @@ describe('the stage’s key map', () => {
   })
 
   it('the off-switch turns off every one-character shortcut, but not the clicker keys (WCAG 2.1.4)', () => {
-    for (const k of [' ', 'k', 'p', 't', 's', 'b', 'e', '?']) expect(actionFor(press(k), true), k).toBeNull()
+    for (const k of [' ', 'k', 'p', 't', '1', '2', '3', 's', 'b', 'e', '?']) expect(actionFor(press(k), true), k).toBeNull()
     expect(actionFor(press('PageDown'), true)).toBe('nextMoment')
     expect(actionFor(press('ArrowRight'), true)).toBe('forward')
   })

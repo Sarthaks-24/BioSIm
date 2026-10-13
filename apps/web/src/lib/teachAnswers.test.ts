@@ -7,7 +7,7 @@ import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { lookupFood } from '../data/foods.ts'
 import { LESSONS, TASKS } from './presets.ts'
-import { bloodData, summaryData } from './summary.ts'
+import { bloodData, summaryData } from '../systems/digestion/summary.ts'
 
 // The app's i18n setup needs a browser; the food names only need `localized`.
 vi.mock('../i18n/index.ts', () => ({

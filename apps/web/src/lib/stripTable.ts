@@ -1,5 +1,5 @@
 import { EVENT_IDS, valueAt, type ActiveSignalId, type EventId, type Series, type RunResult } from '@lifepeek/engine'
-import { runMoments, type Moment } from './moments.ts'
+import type { Moment } from './moments.ts'
 
 /**
  * The numbers behind "Show as table" (G8), apart from the words so they can be tested.
@@ -44,13 +44,18 @@ export function cellValue(col: TableColumn, min: number, stepMin: number): numbe
 }
 
 /**
- * The key moments of both meals, one row each, in catalog order: the dock's markers as text.
+ * The key moments of both meals, one row each, in catalog order: the dock's markers as text
+ * (`moments`: the lit system's, SystemUi.moments).
  * A moment only the kept meal has gets a row too. Every moment is named by its own event, never
  * by the graph it was first drawn on (event.mostlyAbsorbed is about carbohydrate, protein and fat,
  * not only the carbohydrate signal the catalog files it under).
  */
-export function momentRows(run: RunResult, kept: RunResult | null): { id: EventId; run?: Moment; kept?: Moment }[] {
-  const own = new Map(runMoments(run).map((m) => [m.id, m]))
-  const other = new Map((kept && kept.meal.items.length > 0 ? runMoments(kept) : []).map((m) => [m.id, m]))
+export function momentRows(
+  moments: (run: RunResult) => Moment[],
+  run: RunResult,
+  kept: RunResult | null,
+): { id: EventId; run?: Moment; kept?: Moment }[] {
+  const own = new Map(moments(run).map((m) => [m.id, m]))
+  const other = new Map((kept && kept.meal.items.length > 0 ? moments(kept) : []).map((m) => [m.id, m]))
   return EVENT_IDS.filter((id) => own.has(id) || other.has(id)).map((id) => ({ id, run: own.get(id), kept: other.get(id) }))
 }

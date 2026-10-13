@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { activeStage, type RunResult, type StageId } from '@lifepeek/engine'
 import { ORGAN_TONE } from '../../anatomy/tones.ts'
-import { isDrinkOnly } from '../../lib/summary.ts'
-import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } from '../../lib/nowWhere.ts'
+import { isDrinkOnly } from './summary.ts'
+import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } from './nowWhere.ts'
 import { useClock } from '../../state/clock.ts'
 import { useRunStore } from '../../state/run.ts'
-import { LineSwatch, UnkeepButton } from './KeptTag.tsx'
-import { mealNames, shortMealNames } from './mealText.ts'
+import { LineSwatch, UnkeepButton } from '../../components/stage/KeptTag.tsx'
+import { mealNames, shortMealNames } from '../../components/stage/mealText.ts'
+import type { NowProps } from '../registry.ts'
 
 /**
  * The organ the body lights (activeStage), for the full stage text ("More").
@@ -18,7 +19,7 @@ export function useNowStage(run: RunResult): StageId {
   return useClock(useCallback((s) => activeStage(run, s.simMin), [run]))
 }
 
-/** Where the meal is now, in words (lib/nowWhere.ts). Re-renders only when the words change. */
+/** Where the meal is now, in words (nowWhere.ts). Re-renders only when the words change. */
 function useNowWhere(run: RunResult | null): NowWhere | null {
   const key = useClock(useCallback((s) => (run ? nowKey(nowWhere(run, s.simMin)) : ''), [run]))
   return useMemo(() => (key ? parseNowKey(key) : null), [key])
@@ -143,26 +144,9 @@ function WhereRow({ w, open, onToggle, pillRef, panelId, drink }: PillProps) {
  *
  * Every row keeps the height of its longest version (invisible copies in the same grid cell), so
  * the body never jumps while playing. On a phone the kept row also stands in for the meal bar's
- * kept tag (styles.css): it names the kept meal and has its ✕ (WP-18).
+ * kept tag (styles.css): it names the kept meal and has its ✕ (WP-18). Digestion's `SystemUi.now` (W-1).
  */
-export function NowLine({
-  run,
-  kept,
-  open,
-  onToggle,
-  moreRef,
-  panelId,
-  className = '',
-}: {
-  run: RunResult
-  kept: RunResult | null
-  open: boolean
-  onToggle: () => void
-  /** The pill: "More" opens from it, and focus returns to it when the text closes. */
-  moreRef: RefObject<HTMLButtonElement | null>
-  panelId: string
-  className?: string
-}) {
+export function NowLine({ run, kept, open, onToggle, moreRef, panelId, className = '' }: NowProps) {
   const { t, i18n } = useTranslation()
   const w = useNowWhere(run)!
   const keptWhere = useNowWhere(kept)

@@ -9,7 +9,9 @@ import { readPref, writePref } from './prefs.ts'
  * - ← → 10 minutes, Shift + ← → 1 hour; Home / End: start and end of the clock.
  * - Page Down / Page Up: next / previous key moment (a clicker's two buttons).
  * - Space or K: play and pause. P: keep this meal to compare. T: the graphs as a table.
- * - S, B, E: show the Stomach, Blood sugar or Energy graph (when the graphs show one at a time).
+ * - 1, 2, 3: show the lit system's first, second or third graph (when the graphs show one at a
+ *   time), and read its values out. S, B, E: digestion's Stomach, Blood sugar and Energy, v3.0
+ *   only (each slot's `letter`, systems/digestion/def.ts; architecture §0).
  * - ?: this list, with the switches.
  *
  * Keys typed into a text box, a list or a dialog are never taken, nor keys a focused control
@@ -40,18 +42,24 @@ export type KeyAction =
   | 'keep'
   | 'table'
   | 'help'
-  | 'stripGut'
-  | 'stripBlood'
-  | 'stripEnergy'
+  | 'slot1'
+  | 'slot2'
+  | 'slot3'
+  | 'slotS'
+  | 'slotB'
+  | 'slotE'
 
 const LETTERS: Record<string, KeyAction> = {
   k: 'play',
   ' ': 'play',
   p: 'keep',
   t: 'table',
-  s: 'stripGut',
-  b: 'stripBlood',
-  e: 'stripEnergy',
+  '1': 'slot1',
+  '2': 'slot2',
+  '3': 'slot3',
+  s: 'slotS',
+  b: 'slotB',
+  e: 'slotE',
   '?': 'help',
 }
 

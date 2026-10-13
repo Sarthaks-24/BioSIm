@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { activeStage, buildMeal, decodeMeal, gutIsDone, leftBodyAtEnd, mealLocationAt } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
-import { FOODS, lookupFood } from '../data/foods.ts'
+import { FOODS, lookupFood } from '../../data/foods.ts'
 import { amountOf, nowKey, nowWhere, parseNowKey } from './nowWhere.ts'
 
 const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 })

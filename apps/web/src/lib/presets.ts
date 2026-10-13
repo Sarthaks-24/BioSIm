@@ -1,5 +1,5 @@
 import { encodeShareState, type MealItem } from '@lifepeek/engine'
-import type { SystemId } from '../registry/types.ts'
+import type { SlotId, SystemId } from '../systems/registry.ts'
 
 /**
  * A ready-made link to the stage (WP-19): a meal, optionally a kept meal to compare it with (the
@@ -15,9 +15,6 @@ export interface Preset {
   /** Minutes after eating the link opens at (paused). */
   t?: number
 }
-
-/** Which graph a lesson or a question is about (the tab shown where graphs show one at a time). */
-export type StripSlot = 'gut' | 'blood' | 'energy'
 
 const one = (...ids: string[]): MealItem[] => ids.map((foodId) => ({ foodId, servings: 1 }))
 
@@ -37,17 +34,19 @@ export const DEFAULT_PRESET: Preset = PRESETS[0]
  * moment (the earliest marker on the timeline of either meal), except for "One cola or four": at
  * 35 min both lines are at the same highest point, so it opens at the half hour where four colas
  * keep blood sugar raised furthest above one (council round 3). presets.test.ts recomputes both.
+ * `slot` is the graph the lesson is about (a slot of its system, the tab shown where graphs show one
+ * at a time): presets carry it inside, never in the link (no `g=`, architecture §0).
  */
 export interface Lesson extends Preset {
   key: 'stomachRace' | 'rotiDal' | 'colaFour'
-  strip: StripSlot
+  slot: SlotId
   t: number
 }
 
 export const LESSONS: readonly Lesson[] = [
-  { key: 'stomachRace', meal: one('cola'), kept: one('cheeseburger', 'fries'), strip: 'gut', t: 35 },
-  { key: 'rotiDal', meal: one('roti', 'dal'), kept: one('white-rice'), strip: 'blood', t: 57 },
-  { key: 'colaFour', meal: one('cola'), kept: [{ foodId: 'cola', servings: 4 }], strip: 'blood', t: 120 },
+  { key: 'stomachRace', meal: one('cola'), kept: one('cheeseburger', 'fries'), slot: 'gut', t: 35 },
+  { key: 'rotiDal', meal: one('roti', 'dal'), kept: one('white-rice'), slot: 'blood', t: 57 },
+  { key: 'colaFour', meal: one('cola'), kept: [{ foodId: 'cola', servings: 4 }], slot: 'blood', t: 120 },
 ]
 
 /**

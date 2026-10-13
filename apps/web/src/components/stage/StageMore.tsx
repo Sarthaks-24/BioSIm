@@ -4,7 +4,7 @@ import type { RunResult } from '@lifepeek/engine'
 import { CloseIcon } from '../kit/index.ts'
 import { addEnglish } from '../../i18n/index.ts'
 import stagesText from 'virtual:lifepeek-en/stages'
-import { toneOf, useNowStage } from './NowLine.tsx'
+import { toneOf, useNowStage } from '../../systems/digestion/NowLine.tsx'
 
 // The full stage texts come with "More" (the stage itself keeps only the organs' names).
 addEnglish(stagesText)

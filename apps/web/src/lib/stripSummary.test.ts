@@ -4,7 +4,9 @@ import { buildMeal, decodeMeal } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import { lookupFood } from '../data/foods.ts'
-import { stripDescription, stripSummary } from './stripSummary.ts'
+import { stripSummary } from '../systems/digestion/stripSummary.ts'
+import { stripDescription } from './stripSummary.ts'
+import { runMoments } from './moments.ts'
 import { cellValue, momentRows, tableColumns, tableTimes } from './stripTable.ts'
 
 /**
@@ -49,6 +51,7 @@ describe('each graph in a sentence', () => {
 
   it('with a kept meal, the description names it and adds its own sentence', () => {
     const d = stripDescription(
+      stripSummary,
       'gut.stomach.contentG',
       sim('cola:1'),
       sim('cheeseburger:1,fries:1'),
@@ -90,7 +93,7 @@ describe('"Show as table"', () => {
   })
 
   it('key moments of both meals, one row each, including one only the kept meal has', () => {
-    const rows = momentRows(sim('cola:1'), sim('roti:2,dal:1'))
+    const rows = momentRows(runMoments, sim('cola:1'), sim('roti:2,dal:1'))
     const leftovers = rows.find((r) => r.id === 'event.firstLeftovers')!
     // Cola has no fibre, so no leftovers: only the kept roti + dal has that moment.
     expect(leftovers.run).toBeUndefined()

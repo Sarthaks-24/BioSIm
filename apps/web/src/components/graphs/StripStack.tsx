@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import type { ActiveSignalId, ChartableSeries, ProfileId, Series, RunResult } from '@lifepeek/engine'
 import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
-import { stripDescription, stripSummary } from '../../lib/stripSummary.ts'
+import { stripDescription } from '../../lib/stripSummary.ts'
 import { useSheet } from '../../state/sheet.ts'
+import type { GraphSlotDef, SystemUi } from '../../systems/registry.ts'
 import { StatusTag, TableIcon } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
 import HowWeKnow, { Say, Section } from './HowWeKnow.tsx'
@@ -32,8 +33,10 @@ export default function StripStack({ weights, children }: { weights: readonly nu
 }
 
 interface RunStripProps {
-  /** The graph's slot ("gut", "blood", "energy"): its tab, and the table it opens. */
-  slot: string
+  /** The graph's slot (systems/registry.ts): its id (tab, table), its "How we know" limits, its ring labels. */
+  slot: GraphSlotDef
+  /** The lit system's sentence for a graph (its text alternative). */
+  summarize: SystemUi['stripSummary']
   series: ChartableSeries
   run: RunResult
   kept: RunResult | null
@@ -50,16 +53,8 @@ interface RunStripProps {
   className?: string
 }
 
-/** "How we know" limits beyond each signal's own, as keys: their text loads with the panel. */
-const LIMITS = ['limits.steadyEmptying'] as const
-const GLUCOSE_LIMITS = ['limits.glucoseSameHighest', ...LIMITS] as const
-
-/** A ring's label when it must name its meal (a kept meal is drawn too). */
-const RING_OF = {
-  'graph.highest': 'graph.highestOf',
-  'graph.halfEnergyLeft': 'graph.halfEnergyLeftOf',
-  'signals.event.stomachHalfEmpty.name': 'graph.halfLeftOf',
-} as const
+/** A slot with no limits of its own. */
+const NO_LIMITS: readonly string[] = []
 
 /** The running total of each rate drawn as a graph, shown after its readout (energy, G6). */
 const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
@@ -73,7 +68,20 @@ const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
  * Energy is two lines on one kcal/h axis: coming in (this meal) and used at rest (the same for
  * every meal), each with its running total; it is described, never scored (plan-graphs §3.8).
  */
-export function RunStrip({ slot, series, run, kept, runName, keptName, profile, range, second, tabbed, className }: RunStripProps) {
+export function RunStrip({
+  slot,
+  summarize,
+  series,
+  run,
+  kept,
+  runName,
+  keptName,
+  profile,
+  range,
+  second,
+  tabbed,
+  className,
+}: RunStripProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   // The run's table holds only active signals.
@@ -100,17 +108,20 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
       ring && {
         atMin: ring.atMin,
         value: ring.value,
-        label: kept ? t(RING_OF[ring.labelKey], { meal: runName, value }) : t(ring.labelKey, { value }),
+        label: kept ? t(slot.marks?.[ring.labelKey] ?? ring.labelKey, { meal: runName, value }) : t(ring.labelKey, { value }),
       }
     )
-  }, [id, run, kept, runName, series, t, lang])
+  }, [id, run, kept, runName, series, slot, t, lang])
   const secondLine = useMemo(() => second && { series: second, label: t('status.sameEveryMeal') }, [second, t])
   const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
 
   // Read after the graph's name (aria-describedby) and above its table: this meal, then the kept one (G8).
-  const description = useMemo(() => stripDescription(id, run, kept, keptName, t, lang), [id, run, kept, keptName, t, lang])
+  const description = useMemo(
+    () => stripDescription(summarize, id, run, kept, keptName, t, lang),
+    [summarize, id, run, kept, keptName, t, lang],
+  )
   // Energy: the same sentence, shown at the top of "How we know" too (G6). Described, never scored.
-  const summary = second ? stripSummary(id, run, t, lang) : null
+  const summary = second ? summarize(id, run, t, lang) : null
 
   const notes = glucose ? (
     <>
@@ -150,17 +161,16 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
       clock={clock}
       info={
         <span className="flex items-center gap-0.5">
-          <TableButton slot={slot} name={title ?? t(`${series.meta.i18nKey}.name`)} />
+          <TableButton slot={slot.id} name={title ?? t(`${series.meta.i18nKey}.name`)} />
           <HowWeKnow
             meta={series.meta}
             title={title}
             sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
             profile={profile}
             notes={notes}
-            // More of the same food stays up longer at the same highest point (capped release). Every
-            // graph: the steady emptying's level-then-fall, which the squeezed axis makes look like a
-            // cliff at 6 h (council round 2, C2).
-            limits={glucose ? GLUCOSE_LIMITS : LIMITS}
+            // The slot's own limits (systems/digestion/def.ts): the steady emptying on every graph, and
+            // on blood sugar that more of the same food stays up longer at the same highest point.
+            limits={slot.limits ?? NO_LIMITS}
           />
         </span>
       }
