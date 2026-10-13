@@ -41,6 +41,25 @@ export const PAGE_SECTIONS = {
   table: ['showFor', 'keptValue'],
   signals: ['**!desc'],
   link: [],
+  // FP-9 (T10): the panel's own words and the rings' notes, the units in words and whose body it
+  // is load with "How we know" (whose body: with the "⋯" panel too); the long disclaimer with Science.
+  graph: [
+    'label',
+    'howFor',
+    'loadFailed',
+    'retry',
+    'stretched',
+    'range',
+    'highest',
+    'halfEnergyLeft',
+    'soFar',
+    'halfEnergyLeftOf',
+    'halfLeftOf',
+    'highestOf',
+  ],
+  units: ['min', 'h', 'hm', 'hShort', 'kcal', 'g', 'mgdl', 'kcalPerH'],
+  profiles: [],
+  disclaimer: ['short', 'firstRun', 'graph', 'more'],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

@@ -27,7 +27,6 @@ export interface ClockState {
   play: () => void
   pause: () => void
   toggle: () => void
-  setPace: (pace: Pace) => void
   /** Pauses and moves by ±minutes (keyboard ← →), clamped to the bar. */
   step: (deltaMin: number) => void
   /** Pauses and jumps to the next (+1) or previous (−1) key moment; before the first one, to 0. */
@@ -66,7 +65,6 @@ export const useClock = create<ClockState>()(
     },
     pause: () => set({ playing: false }),
     toggle: () => (get().playing ? get().pause() : get().play()),
-    setPace: (pace) => set({ pace }),
     step: (deltaMin) => set({ playing: false, simMin: clampSimMin(get().simMin + deltaMin) }),
     stepToMoment: (dir) => {
       const { simMin, moments } = get()

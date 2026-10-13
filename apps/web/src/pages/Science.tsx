@@ -7,10 +7,11 @@ import { addEnglish, localized } from '../i18n/index.ts'
 import { REFERENCES } from '../lib/references.ts'
 import scienceText from 'virtual:lifepeek-en/science'
 import lessonText from 'virtual:lifepeek-en/lesson'
+import disclaimerText from 'virtual:lifepeek-en/disclaimer'
 import PageShell from '../components/PageShell.tsx'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
-addEnglish(scienceText, lessonText)
+addEnglish(scienceText, lessonText, disclaimerText)
 
 export default function Science() {
   const { t, i18n } = useTranslation()

@@ -5,9 +5,11 @@ import type { ProfileId } from '@lifepeek/engine'
 import { IconButton, LinkIcon } from '../kit/index.ts'
 import { addEnglish } from '../../i18n/index.ts'
 import linkText from 'virtual:lifepeek-en/link'
+import profilesText from 'virtual:lifepeek-en/profiles'
 
-// "Share" and "Copy this link" come with the link notes' English (size budget, scripts/i18n-sections.mjs).
-addEnglish(linkText)
+// "Share" and "Copy this link" come with the link notes' English, whose body it is with "How we
+// know"'s (size budget, scripts/i18n-sections.mjs).
+addEnglish(linkText, profilesText)
 
 /**
  * Shares the address: the link sync keeps it equal to this exact run (FP-6, B11). `toSheet`: the
