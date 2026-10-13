@@ -10,6 +10,10 @@ A new, cleaner screen: one body, one meal, and the graphs that explain it.
   screen with no scrolling. On a phone, the body, one graph and Play are in the first screen, and
   the site links are in a menu. Every link shared from 1.x still opens, as "this meal, with the
   other one kept"; `/next` (its address while it was tested) leads to `/sim`.
+- **Removed the old two-body screen**: the two meal cards, the step-by-step tab, the key-moments
+  table, the "where the meal has gone" bar and the old charts. The new screen does each of their
+  jobs (the Now line and its "More" text, the timeline's key moments, "Show as table"), and the
+  site downloads less.
 - **Home and Teach** redone for the new screen: three ready lessons that open on the projector at
   their first key moment, four questions to check understanding, a QR code for students' phones,
   and a share picture and install screenshots.
@@ -34,7 +38,7 @@ A new, cleaner screen: one body, one meal, and the graphs that explain it.
 - Frame rate on a 2 GB Android Go phone: <fps, en and hi, 3D and flat>.
 - Classroom test: <one line: 5 students and 1 teacher, tasks passed, faster than v1?>.
 
-<!-- Before tagging: add a line for the removal of the old screen (WP-20), fill in the two lines above, and change the heading to "2.0.0". npm run release-gate checks this. -->
+<!-- Before tagging: fill in the two lines above, and change the heading to "2.0.0". npm run release-gate checks this. -->
 
 ## 1.0.0 (first public release)
 
