@@ -3,7 +3,7 @@ import { create } from 'zustand'
 /**
  * Which of the stage's two lazy sheets is open (WP-15): the graphs as a table ("Show as table",
  * T) or the keys and settings (?, the dock's settings button). A store, so the key map, the
- * strips' buttons and the dock can open them; Stage.tsx draws the open one and downloads its code
+ * strips' buttons and the dock can open them; pages/Simulator.tsx draws the open one and downloads its code
  * the first time (size budget). `from` is the button to give focus back to when it closes.
  */
 export type Sheet = { kind: 'table'; slot: string | null } | { kind: 'help' } | null

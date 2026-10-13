@@ -18,7 +18,7 @@ import { shortMealNames } from '../stage/mealText.ts'
  * (lib/stripTable.ts), this meal beside the kept one and, where the graph draws it, how much
  * people differ; the graph's summary sentence as the caption; and the key moments of both meals,
  * the dock's markers as text. The graphs can be switched here as on the stage's tabs. Opened from
- * each graph's table button or with T; downloaded the first time (Stage.tsx).
+ * each graph's table button or with T; downloaded the first time (pages/Simulator.tsx).
  */
 export default function StripTable({
   run,

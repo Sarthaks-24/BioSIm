@@ -65,13 +65,13 @@ const KB = 1000
 
 const BUDGETS = [
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
-  // The stage (pages/Stage.tsx) is /sim since WP-19; /next only redirects to it.
-  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Stage.tsx'], max: 190 * KB, mode: 'enforce' },
+  // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
+  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'enforce' },
   // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
   {
     name: '3D body (lazy)',
     roots: ['src/three/BodyCanvas.tsx'],
-    minus: ['index.html', 'src/pages/Stage.tsx'],
+    minus: ['index.html', 'src/pages/Simulator.tsx'],
     max: 270 * KB,
     mode: 'enforce',
   },

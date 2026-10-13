@@ -61,7 +61,7 @@ interface Marker {
   lines: string[]
 }
 
-export default function Timeline2({ run, kept }: { run: Simulation; kept: Simulation | null }) {
+export default function Timeline({ run, kept }: { run: Simulation; kept: Simulation | null }) {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
   const kneeLabel = useRef<HTMLSpanElement>(null)

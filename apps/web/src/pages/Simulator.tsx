@@ -14,7 +14,7 @@ import BodyPane from '../components/stage/BodyPane.tsx'
 import GraphColumn, { useSlots } from '../components/stage/GraphColumn.tsx'
 import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
-import Timeline2 from '../components/stage/Timeline2.tsx'
+import Timeline from '../components/stage/Timeline.tsx'
 import { mealNames } from '../components/stage/mealText.ts'
 import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
 import { LoadBoundary, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
@@ -64,7 +64,8 @@ const ACTIONS: Record<KeyAction, () => void> = {
 }
 
 /**
- * The v2 one-screen stage (UI-1), at /sim since WP-19 (built at the unlisted /next, which now redirects here).
+ * The one-screen stage (UI-1) at /sim: since WP-19 (built at the unlisted /next, which now redirects
+ * here). WP-20 deleted v1's two-meal page and gave this one its file name.
  *
  * Four zones on one grid, rows `auto auto 1fr auto`: the meal bar (and its notes), then the body
  * beside the graph column, then the clock dock. From 1024 px up the columns are
@@ -75,7 +76,7 @@ const ACTIONS: Record<KeyAction, () => void> = {
  * The graphs and the dock's timeline share one x scale and one left and right edge (WP-12), so
  * the playhead on every graph stands straight above the timeline's thumb, like a chart recorder.
  */
-export default function Stage() {
+export default function Simulator() {
   const { t } = useTranslation()
   const run = useRun('current')
   const kept = useRun('kept')
@@ -131,7 +132,7 @@ export default function Stage() {
       {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
       <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
         <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
-          <Timeline2 run={run} kept={kept} />
+          <Timeline run={run} kept={kept} />
         </Dock>
       </div>
       {sheet && (

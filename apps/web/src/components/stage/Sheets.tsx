@@ -14,7 +14,7 @@ export { default as FoodSearch } from './FoodSearch.tsx'
 
 /**
  * The stage's sheets in one file, downloaded together the first time one is opened: the table and
- * the keys (Stage.tsx), and the food search (AddFoodSheet). One small chunk of things that are not
+ * the keys (pages/Simulator.tsx), and the food search (AddFoodSheet). One small chunk of things that are not
  * part of the first paint (size budget); as separate chunks, the bundler would split the code they
  * share with the stage into many small files that every visitor downloads.
  */

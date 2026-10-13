@@ -172,7 +172,7 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
 
 /**
  * "Show as table" (G8): the graph's numbers and key moments as a table, in a sheet that is
- * downloaded the first time one is opened (Stage.tsx). The T key opens it too.
+ * downloaded the first time one is opened (pages/Simulator.tsx). The T key opens it too.
  */
 function TableButton({ slot, name }: { slot: string; name: string }) {
   const { t } = useTranslation()

@@ -8,8 +8,8 @@ import Layout, { type RouteHandle } from './components/Layout.tsx'
 import Home from './pages/Home.tsx'
 import { ErrorPage, NotFound } from './pages/Misc.tsx'
 
-// The v2 screen. Since WP-19 it is /sim; v1's pages/Simulator.tsx is no longer routed (WP-20 deletes it).
-const Stage = lazy(() => import('./pages/Stage.tsx'))
+// The one-screen stage (WP-19 made it /sim; WP-20 deleted v1's page and gave it that file name).
+const Simulator = lazy(() => import('./pages/Simulator.tsx'))
 const Teach = lazy(() => import('./pages/Teach.tsx'))
 const Science = lazy(() => import('./pages/Science.tsx'))
 const About = lazy(() => import('./pages/About.tsx'))
@@ -30,7 +30,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Home /> },
-      { path: '/sim', element: page(<Stage />), handle: { fit: true } satisfies RouteHandle },
+      { path: '/sim', element: page(<Simulator />), handle: { fit: true } satisfies RouteHandle },
       { path: '/next', element: <ToSim /> },
       { path: '/teach', element: page(<Teach />) },
       { path: '/science', element: page(<Science />) },

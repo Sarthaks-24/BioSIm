@@ -24,7 +24,7 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
  *   and End keep working: a clicker needs them.
  * - Reduce motion (`lifepeek:reduceMotion`, state/motion.ts): follows the device until chosen
  *   here, since school computers rarely let pupils change the system setting.
- * Opened with ? or the dock's settings button; downloaded the first time (Stage.tsx).
+ * Opened with ? or the dock's settings button; downloaded the first time (pages/Simulator.tsx).
  */
 export default function KeysHelp() {
   const { t } = useTranslation()

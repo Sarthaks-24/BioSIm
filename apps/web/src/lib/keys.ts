@@ -3,7 +3,7 @@ import { readPref, writePref } from './prefs.ts'
 
 /**
  * The stage's one key map (G8 + UI-6), for a keyboard and for a presentation clicker (which sends
- * Page Down / Page Up). Stage.tsx listens on the window and runs the action; the help sheet
+ * Page Down / Page Up). pages/Simulator.tsx listens on the window and runs the action; the help sheet
  * (KeysHelp) lists the same keys.
  *
  * - ← → 10 minutes, Shift + ← → 1 hour; Home / End: start and end of the clock.
@@ -21,7 +21,7 @@ import { readPref, writePref } from './prefs.ts'
  * B is Blood sugar, although many presentation clickers send B (or .) for "blank the screen". It
  * only picks which graph shows, never changes the meal or the clock, and pressing it again does
  * nothing more, so a teacher who meant "blank" loses nothing (the tabs, S or E pick another). A
- * screen reader hears the graph's values (Stage.tsx), so the change is never silent. "." is free.
+ * screen reader hears the graph's values (pages/Simulator.tsx), so the change is never silent. "." is free.
  *
  * WCAG 2.1.4: shortcuts made of one character (letters, ?, Space) can be switched off. The choice
  * is saved on the device as `lifepeek:keysOff` ('1'). Arrows, Page Up/Down, Home and End are not

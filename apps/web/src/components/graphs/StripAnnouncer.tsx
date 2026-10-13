@@ -9,7 +9,7 @@ import type { Slot } from '../stage/GraphColumn.tsx'
 /** How long the clock must stay still before the graphs' values are read out (ms). */
 const SETTLE_MS = 700
 
-/** The mounted announcer's voice, for the key map (Stage.tsx): null while no stage is open. */
+/** The mounted announcer's voice, for the key map (pages/Simulator.tsx): null while no stage is open. */
 let voice: { say: (text: string) => void; readSlot: (slot: string) => void } | null = null
 
 /**
