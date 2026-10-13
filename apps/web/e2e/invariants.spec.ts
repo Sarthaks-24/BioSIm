@@ -22,7 +22,8 @@ import {
 // Track A invariants (T0; plan qa-fixes §3.1, §3.2) on the new window sizes and engines. All of
 // them report for now (INVARIANTS below): the stage fails most of them before FP-1 and FP-2 (the
 // red list, e2e/red-list.md). T2 enforces phone-small and tablet-portrait, T3 landscape and
-// projector-sizes, T7 storage-blocked; webkit-* and firefox-* report for a week first.
+// projector-sizes, T7 storage-blocked, T5 the dock and timeline checks on every Chromium project
+// (TIMELINE); webkit-* and firefox-* report for a week first.
 
 /** Report or enforce, per project. A T-step flips its projects when its FP lands. */
 export const INVARIANTS: Record<string, Mode> = {
@@ -44,6 +45,21 @@ const PROJECTS = Object.keys(INVARIANTS)
  * overlays, Back, console, links) belong to other FPs and follow INVARIANTS until those land.
  */
 const BODY_VISIBLE: Record<string, Mode> = { ...INVARIANTS, 'phone-small': 'enforce', 'tablet-portrait': 'enforce' }
+/**
+ * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
+ * hour labels apart, the moments' targets and list, Settings on touch). T5 enforces them on every
+ * Chromium project; webkit-* and firefox-* follow INVARIANTS (a week of reports first).
+ */
+const TIMELINE: Record<string, Mode> = {
+  ...INVARIANTS,
+  'phone-small': 'enforce',
+  'phone-560': 'enforce',
+  'phone-xs': 'enforce',
+  'tablet-portrait': 'enforce',
+  landscape: 'enforce',
+  'projector-sizes': 'enforce',
+  'storage-blocked': 'enforce',
+}
 
 /**
  * T7 (FP-7) enforces storage-blocked for what it fixed: the stage loads, plays, switches language and
@@ -51,7 +67,6 @@ const BODY_VISIBLE: Record<string, Mode> = { ...INVARIANTS, 'phone-small': 'enfo
  * removes its line (they fail on every project before it).
  */
 const LATER: Record<string, string> = {
-  overlaps: 'T5 (FP-3)',
   overlays: 'T4 (FP-5)',
 }
 /** The running project's mode for a check (`owner`: its LATER line, if a later T-step owns it). */
@@ -190,11 +205,123 @@ for (const l of ['en', 'pseudo'] as const) {
 }
 
 test('no overlapping controls', async ({ page }) => {
-  const mode = modeOf('overlaps')
+  const mode = TIMELINE[test.info().project.name]!
   for (const url of ['/sim', lang(KEPT, 'pseudo')]) {
     const failed = await open(page, url)
     verdict(`no overlapping controls ${url}`, mode, failed ? [failed] : await interactiveOverlaps(page))
   }
+})
+
+/** The timeline's slider, scrolled into the window (a phone's dock may sit past its first screen). */
+async function slider(page: Page) {
+  const s = page.getByRole('slider').first()
+  await s.scrollIntoViewIfNeeded()
+  return s
+}
+
+test('a 3 × 10 tap grid over the slider’s 44 px band hits the slider (B4)', async ({ page }) => {
+  const mode = TIMELINE[test.info().project.name]!
+  for (const url of ['/sim', lang(KEPT, 'pseudo')]) {
+    await gateSteps(`tap grid ${url}`, mode, async () => {
+      const failed = await open(page, url)
+      if (failed) throw new Error(failed)
+      const s = await slider(page)
+      const missed = await s.evaluate((el) => {
+        const r = el.getBoundingClientRect()
+        const out: string[] = []
+        if (r.height < 43.5) out.push(`the band is ${r.height.toFixed(1)} px tall`)
+        // Three rows (1 px in from the band's top and bottom, and its middle) × ten columns.
+        for (const y of [r.top + 1, r.top + r.height / 2, r.bottom - 1])
+          for (let i = 0; i < 10; i++) {
+            const x = r.left + ((i + 0.5) * r.width) / 10
+            const hit = document.elementFromPoint(x, y)
+            if (!hit || !el.contains(hit)) {
+              const what = hit
+                ? `${hit.tagName.toLowerCase()} "${(hit.getAttribute('aria-label') ?? hit.textContent ?? '').trim().slice(0, 30)}"`
+                : 'nothing'
+              out.push(`(${Math.round(x)}, ${Math.round(y)}) hits ${what}`)
+            }
+          }
+        return out
+      })
+      expect(missed, 'taps that miss the slider').toEqual([])
+      // And a real tap in the band's top row moves the clock there: the middle of the bar is 5 h.
+      const box = (await s.boundingBox())!
+      const at = { x: box.x + box.width / 2, y: box.y + 2 }
+      if (test.info().project.use.hasTouch) await page.touchscreen.tap(at.x, at.y)
+      else await page.mouse.click(at.x, at.y)
+      await expect.poll(async () => Math.abs(Number(await s.getAttribute('aria-valuenow')) - 300)).toBeLessThanOrEqual(10)
+    })
+  }
+})
+
+test('hour labels under the timeline are at least 8 px apart (B13, English and pseudo-locale)', async ({ page }) => {
+  const project = test.info().project.name
+  const mode = TIMELINE[project]!
+  for (const [w, h] of SIZES[project] ?? [[0, 0]]) {
+    if (w) await page.setViewportSize({ width: w, height: h })
+    for (const l of ['en', 'pseudo'] as const) {
+      const where = `${page.viewportSize()!.width}×${page.viewportSize()!.height} ${l}`
+      const failed = await open(page, lang(KEPT, l))
+      if (failed) {
+        verdict(`hour labels apart (${where})`, mode, [failed])
+        continue
+      }
+      if (l === 'pseudo') await skipWithoutPseudo(page)
+      const boxes = await page.locator('[data-tick]').evaluateAll((els) =>
+        els
+          .filter((e) => getComputedStyle(e).visibility !== 'hidden' && e.getClientRects().length > 0)
+          .map((e) => ({ text: e.textContent ?? '', l: e.getBoundingClientRect().left, r: e.getBoundingClientRect().right }))
+          .sort((a, b) => a.l - b.l),
+      )
+      const problems: string[] = []
+      if (boxes.length < 4) problems.push(`only ${boxes.length} hour labels show`)
+      for (let i = 1; i < boxes.length; i++) {
+        const gap = boxes[i]!.l - boxes[i - 1]!.r
+        if (gap < 7.5) problems.push(`"${boxes[i - 1]!.text}" and "${boxes[i]!.text}" ${gap.toFixed(1)} px apart`)
+      }
+      verdict(`hour labels apart (${where})`, mode, problems)
+    }
+  }
+})
+
+test('key moments: finger-wide targets, and a target with several opens their list (U7)', async ({ page }) => {
+  const mode = TIMELINE[test.info().project.name]!
+  await gateSteps('moment targets', mode, async () => {
+    const failed = await open(page, KEPT)
+    if (failed) throw new Error(failed)
+    const targets = page.getByRole('toolbar', { name: 'Key moments' }).getByRole('button')
+    await expect(targets.first()).toBeAttached()
+    // With a kept meal the lane holds its row too: every target is at least 44 × 44 px.
+    for (const b of await targets.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON() as DOMRect))) {
+      expect(b.width, 'target width').toBeGreaterThanOrEqual(43.5)
+      expect(b.height, 'target height').toBeGreaterThanOrEqual(43.5)
+    }
+    await slider(page)
+    await page.locator('[data-marker][aria-haspopup="dialog"]').first().click()
+    const list = page.getByRole('dialog', { name: 'Key moments' })
+    await expect(list).toBeVisible()
+    expect(await list.getByRole('listitem').count()).toBeGreaterThanOrEqual(2)
+    await page.keyboard.press('Escape')
+    await expect(list).toBeHidden()
+  })
+})
+
+test('a touch screen’s Settings: Reduce motion first, no key list (U10)', async ({ page }) => {
+  test.skip(!test.info().project.use.hasTouch, 'touch screens only')
+  const mode = TIMELINE[test.info().project.name]!
+  await gateSteps('Settings on touch', mode, async () => {
+    const failed = await open(page, '/sim')
+    if (failed) throw new Error(failed)
+    const button = page.getByRole('button', { name: 'Settings', exact: true })
+    await button.scrollIntoViewIfNeeded()
+    await button.click()
+    const sheet = page.getByRole('dialog', { name: 'Settings', exact: true })
+    await expect(sheet.getByRole('switch').first()).toHaveAccessibleName('Reduce motion')
+    await expect(sheet.getByRole('switch', { name: 'Reduce motion' })).toBeInViewport()
+    await expect(sheet.getByRole('heading', { name: 'Keys', exact: true })).toBeHidden()
+    await expect(sheet.locator('kbd').first()).toBeHidden()
+  })
 })
 
 test('overlays stay on screen, below the header, with a Close button; Esc closes them', async ({ page }) => {

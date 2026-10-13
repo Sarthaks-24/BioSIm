@@ -420,8 +420,7 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `summary.thisMeal` | this meal | यह भोजन | draft |
 | `summary.keptMeal` | the kept meal | रखा गया भोजन | draft |
 | `dock.squeezed` | {{from}} → {{to}} squeezed | {{from}} → {{to}} सिकोड़ा गया | draft |
-| `dock.moments` | Key moments of this meal | इस भोजन के मुख्य पल | draft |
-| `dock.keptMoments` | Key moments of the kept meal | रखे गए भोजन के मुख्य पल | draft |
+| `dock.moments` | Key moments | मुख्य पल | draft |
 | `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
 | `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया भोजन: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
@@ -448,8 +447,8 @@ Key names (Space, Page Down, Shift …) stay in English on purpose: they are pri
 | `table.moments` | Key moments | मुख्य पल | draft |
 | `table.moment` | Moment | पल | draft |
 | `table.keptValue` | kept meal {{value}} | रखा गया भोजन {{value}} | draft |
-| `keys.button` | Keys and settings | कुंजियाँ और सेटिंग | draft |
-| `keys.title` | Keys and settings | कुंजियाँ और सेटिंग | draft |
+| `keys.button` | Settings | सेटिंग | draft |
+| `keys.title` | Settings | सेटिंग | draft |
 | `keys.settings` | Settings | सेटिंग | draft |
 | `keys.list` | Keys | कुंजियाँ | draft |
 | `keys.play` | Play or pause | चलाएँ या रोकें | draft |
@@ -509,8 +508,7 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `graph.halfEnergyLeftOf` | {{meal}}: half the energy has left the stomach | {{meal}}: आधी ऊर्जा आमाशय से निकल गई | draft |
 | `graph.halfLeftOf` | {{meal}}: half has left the stomach | {{meal}}: आधा भोजन आमाशय से निकल गया | draft |
 | `graph.highestOf` | {{meal}}: highest {{value}} | {{meal}}: सबसे अधिक {{value}} | draft |
-| `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
-| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
+| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का धारीदार भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
 ## Older strings (site pages and shared text, listed by WP-18)
 

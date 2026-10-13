@@ -23,16 +23,16 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 | B1 | body picture 0 px tall at 360×640 and 320×568, EN and HI, ± kept | FP-1 | T2 |
 | B2 | meal bar: 3 rows of controls, 153 px tall, at 320/360/375 | FP-1 | T2 |
 | B3 | body 0 px at 640×360, 844×390, 640×400 (200 % zoom) | FP-2 | T3 |
-| B4 | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360 | FP-3 | T5 |
+| B4 | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360 | FP-3 | T5 (enforced; + 3 × 10 tap grid and no overlaps on every Chromium project) |
 | B5 | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close | FP-5 | T4 |
 | B6 | Back with the Add food sheet open goes to `about:blank` | FP-6 | T8 |
 | B7 | Hindi header 82 px tall at 360 and 320 (limit 56) | FP-1 | T2 |
 | B8 | Home chart: all 10 labels under 12 px at 360 (smallest 8 px) | FP-8 | T9b |
 | B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b |
-| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390) | FP-5 (FP-4) | T4 (T6) |
+| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (T6 done) |
 | B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
 | B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 |
-| B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 |
+| B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 (Hindi reports, R47; EN + pseudo-locale enforced in invariants.spec.ts) |
 | B15 | 6 foods: 2 of 6 chips wholly visible at 1440, 1 of 6 at 360, no "+n" | FP-1 | T2 |
 | B18 | with 250 ms frames the clock runs at 37 % of its pace (3.7 vs 9.9 sim min/s) | FP-7 | T7 (enforced; + hidden page 10 s) |
 | B19 | `THREE.Clock: This module has been deprecated` warning on /sim | FP-7 | T7 (enforced; console clean on every project) |
@@ -47,7 +47,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 
 | Bug | Why | Where it is checked |
 |---|---|---|
-| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. | FP-4 visual shots (§3.3); device lab |
+| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. T6: the label falls back to the free band (labels.ts lineEndSpots); T6 shots at 1440, 390 and the projector (5 kept meals) show no word on a line. | `graphs.spec.ts` "no words on a graph touch a line" (1280 and 390, EN and HI, 5 kept meals); FP-4 visual shots (§3.3); device lab |
 | B16 | Intermittent (seen once in the sweep, not in 3 tries); needs two builds and two pages at once. | `e2e/update.spec.ts` (T7): two tabs, fresh context, second tab 0–1500 ms later, × 5 (desktop, Firefox, WebKit) — reproduced on Firefox before the fix (1 run in 4), clean after (30 rounds); A→B positive. Firefox fresh profile (device lab) |
 | B17 | WebKit under load only; Playwright WebKit on Windows is not Safari. | `e2e/loading.spec.ts` (T7, report): 1/3/6 s, lines in their plot, label dots ≤ 12 px from the re-projected organ; webkit-phone showed lines 20 px under their plot at 1 s before the plot SVG fitted its box. iPhone/iPad (device lab) |
 | B26 | Not a browser bug: Home 144.8 KB > 120 (report row), fps 27.7 < 30 (report). | `npm run budget` (Home row, Track A ledger), `perf.spec.ts` (fps, CPU per frame), `scripts/cpu-ratio.mjs` |

@@ -205,9 +205,9 @@ test.describe('phone 390×844', () => {
         for (const url of ['/sim', '/sim?lang=hi']) {
           await page.goto(url)
           await stageReady(page)
+          // The button is "Settings" since T5 (FP-3); nothing may lie on it, the slider or a moment's target.
           for (const o of await interactiveOverlaps(page))
-            if (/Keys and settings|कुंजियाँ|सेटिंग/.test(o) && /slider|Timeline|समयरेखा|"\d/.test(o))
-              problems.push(`${w}×${h} ${url}: ${o}`)
+            if (/Settings|Keys and settings|सेटिंग|slider|Timeline|समयरेखा|"\d/.test(o)) problems.push(`${w}×${h} ${url}: ${o}`)
         }
       }
     })
@@ -238,7 +238,9 @@ test.describe('phone 390×844', () => {
       await page.waitForTimeout(500)
       if ((await menu.getAttribute('aria-expanded')) === 'true') problems.push('the menu stays open after switching projector mode on')
       const vw = await page.evaluate(() => document.documentElement.clientWidth)
-      for (const tab of await page.getByRole('tab').filter({ visible: true }).all()) {
+      // The graph tabs are toggle buttons in the "Graphs" group (Segmented), not role=tab. T6 keeps
+      // them whole (graphs.spec.ts enforces it); the menu half of B10 is T4's.
+      for (const tab of await page.getByRole('group', { name: 'Graphs' }).getByRole('button').filter({ visible: true }).all()) {
         const clip = await tab.evaluate((e, vw) => {
           const r = e.getBoundingClientRect()
           let right = vw

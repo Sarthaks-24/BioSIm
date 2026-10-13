@@ -52,9 +52,12 @@ export function unitInWords(unit: Unit, t: TFunction): string {
   return key ? t(`units.words.${key}`) : unit
 }
 
-/** "75–140 mg/dL": a between-people range, both ends rounded like the value. */
+/** "75–140 mg/dL": a between-people range, both ends rounded like the value; "90 mg/dL" when they round the same (U10). */
 export function formatBand(low: number, high: number, meta: Pick<SignalMeta, 'round' | 'unit'>, t: TFunction, lang: string): string {
-  return t('graph.range', { low: formatNumber(low, meta, lang), high: formatSignal(high, meta, t, lang) })
+  const from = formatNumber(low, meta, lang)
+  return from === formatNumber(high, meta, lang)
+    ? formatSignal(high, meta, t, lang)
+    : t('graph.range', { low: from, high: formatSignal(high, meta, t, lang) })
 }
 
 /** The unit alone, as the readouts write it ("g", "mg/dL", "किलो कैलोरी/घंटा"): a graph's y-axis unit. */
