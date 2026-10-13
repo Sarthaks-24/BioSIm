@@ -111,8 +111,9 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
           options={slots.map((s) => ({ id: s.id, label: t(`stage.strips.${s.id}`) }))}
           value={shown ?? ''}
           onChange={useStripTab.getState().show}
-          // On the projector the tab is the graph's only title (the strip hides its own): title size.
-          className="in-data-[contrast=high]:*:text-title"
+          // On the projector the tab is the graph's only title (the strip hides its own): title size,
+          // from 640 px up. On a phone the three tabs keep their usual size, so none is cut (B10).
+          className="sm:in-data-[contrast=high]:*:text-title"
         />
       )}
       <StripStack weights={visible.map(() => 1)}>

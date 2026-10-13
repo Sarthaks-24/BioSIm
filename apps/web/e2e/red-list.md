@@ -29,7 +29,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 | B7 | Hindi header 82 px tall at 360 and 320 (limit 56) | FP-1 | T2 |
 | B8 | Home chart: all 10 labels under 12 px at 360 (smallest 8 px) | FP-8 | T9b |
 | B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b |
-| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390) | FP-5 (FP-4) | T4 (T6) |
+| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (T6 done) |
 | B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
 | B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 |
 | B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 |
@@ -47,7 +47,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 
 | Bug | Why | Where it is checked |
 |---|---|---|
-| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. | FP-4 visual shots (§3.3); device lab |
+| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. T6: the label falls back to the free band (labels.ts lineEndSpots); T6 shots at 1440, 390 and the projector (5 kept meals) show no word on a line. | `graphs.spec.ts` "no words on a graph touch a line" (1280 and 390, EN and HI, 5 kept meals); FP-4 visual shots (§3.3); device lab |
 | B16 | Intermittent (seen once in the sweep, not in 3 tries); needs two builds and two pages at once. | `e2e/update.spec.ts` (T7): two tabs, fresh context, second tab 0–1500 ms later, × 5 (desktop, Firefox, WebKit) — reproduced on Firefox before the fix (1 run in 4), clean after (30 rounds); A→B positive. Firefox fresh profile (device lab) |
 | B17 | WebKit under load only; Playwright WebKit on Windows is not Safari. | `e2e/loading.spec.ts` (T7, report): 1/3/6 s, lines in their plot, label dots ≤ 12 px from the re-projected organ; webkit-phone showed lines 20 px under their plot at 1 s before the plot SVG fitted its box. iPhone/iPad (device lab) |
 | B26 | Not a browser bug: Home 144.8 KB > 120 (report row), fps 27.7 < 30 (report). | `npm run budget` (Home row, Track A ledger), `perf.spec.ts` (fps, CPU per frame), `scripts/cpu-ratio.mjs` |

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
+  CARBS_INK,
   ENERGY_IN,
   ENERGY_USED,
   INK,
@@ -63,6 +64,7 @@ describe('colour tokens', () => {
   it('match styles.css', () => {
     for (const [k, v] of Object.entries(NUTRIENT_COLOR)) expect(token(k), k).toBe(v)
     expect(token('ink')).toBe(INK)
+    expect(token('carbs-ink')).toBe(CARBS_INK)
     expect(token('stomach')).toBe(ORGAN_COLOR.stomach)
     expect(token('small-intestine')).toBe(ORGAN_COLOR.smallIntestine)
     expect(token('large-intestine')).toBe(ORGAN_COLOR.largeIntestine)
@@ -94,6 +96,8 @@ describe('colour checks (ported from the dataviz validator)', () => {
     expect(deltaE('#0f766e', '#9d2f6a', 'deutan')).toBeCloseTo(1.5, 1)
     // v1 carbs yellow is below the 3:1 line minimum (the validator's default surface, #fcfcfb).
     expect(contrast(NUTRIENT_COLOR.carbs, '#fcfcfb')).toBeCloseTo(1.77, 2)
+    // So carbs' ink is a darker yellow (FP-4): 5.1:1 there.
+    expect(contrast(CARBS_INK, '#fcfcfb')).toBeGreaterThanOrEqual(LINE_MIN)
     // The energy pair: CVD 27.6, normal vision 34.1.
     expect(cvdDeltaE(ENERGY_IN, ENERGY_USED)).toBeCloseTo(27.6, 1)
     expect(deltaE(ENERGY_IN, ENERGY_USED)).toBeCloseTo(34.1, 1)
@@ -124,7 +128,7 @@ describe.each(THEMES)('%s theme', (name) => {
 
   it(`every graph line is at least ${LINE_MIN}:1 on the page and raised surfaces`, () => {
     const failing: string[] = []
-    for (const line of [RUN, KEPT, ENERGY_IN, ENERGY_USED])
+    for (const line of [RUN, KEPT, ENERGY_IN, ENERGY_USED, CARBS_INK])
       for (const [bg, hex] of Object.entries({ 'surface-page': t.surfacePage, 'surface-raised': t.surfaceRaised }))
         if (contrast(line, hex) < LINE_MIN) failing.push(`${line} on ${bg} ${fmt(contrast(line, hex))}:1`)
     expect(failing).toEqual([])

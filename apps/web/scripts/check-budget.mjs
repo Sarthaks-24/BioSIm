@@ -84,6 +84,10 @@
 //   retired names and reserved rows moved to catalog-docs.ts), the codec and the view helpers
 //   (view.ts): /sim 189.087 → 184.183 KB on v3 with T2 (−4.9), engine chunk 4.7 KB. The
 //   "engine in /sim" guard below is enforced from here on.
+//   T6 / FP-4 (2026-10-14): the squeezed zone a faint hatch with one knee rule, labelled once (on
+//   the dock: each graph's "time squeezed" label and its placement went), the energy label's free
+//   band, one value when a range's ends match, the carbs legend dot's dark edge, the stretched note's
+//   own row on a phone: /sim 188.466 → 188.504 KB on main 19d7421 (+0.04; ledger row +0.04).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
