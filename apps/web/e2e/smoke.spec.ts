@@ -18,7 +18,7 @@ test('home page leads to the simulator: cola, ready to play', async ({ page }) =
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('cola')
   await page.getByRole('link', { name: 'Open the simulator' }).click()
-  await expect(page).toHaveURL(/\/sim\?v=2&a=cola/)
+  await expect(page).toHaveURL(/\/sim\?v=3&a=cola/)
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
   // The first-screen prompt points at Play, and goes once the meal moves.
   const prompt = page.locator('[data-play-prompt]').filter({ visible: true })
@@ -31,7 +31,7 @@ test('home page leads to the simulator: cola, ready to play', async ({ page }) =
 test('a Home example opens its meal with the other one kept, as the same link v1 shared', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Cola, with Cheeseburger + French fries kept' }).click()
-  await expect(page).toHaveURL(/\/sim\?v=2&a=cola%3A1&b=cheeseburger%3A1%2Cfries%3A1/)
+  await expect(page).toHaveURL(/\/sim\?v=3&a=cola%3A1&b=cheeseburger%3A1%2Cfries%3A1/)
   await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).filter({ visible: true }).first()).toBeVisible()
 })
 
@@ -68,13 +68,13 @@ test('/next redirects to /sim and keeps the link', async ({ page }) => {
   await expect(page).toHaveURL(/\/sim\?/)
   await expect.poll(() => params(page).get('a')).toBe('cola:1')
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
-  await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1&t=40&lang=hi')
+  await page.goto('/next?v=3&a=cola:1&b=cheeseburger:1&t=40&lang=hi')
   await expect(page).toHaveURL(/\/sim\?/)
   await expect.poll(() => [...params(page)].join('&')).toBe('v,2&a,cola:1&b,cheeseburger:1&t,40&lang,hi')
 })
 
 test('adding a food updates the link, and leaving and coming back keeps the meal', async ({ page }) => {
-  await page.goto('/sim?v=2&a=water:1&b=milk:1')
+  await page.goto('/sim?v=3&a=water:1&b=milk:1')
   await page.getByRole('button', { name: 'Add food' }).click()
   const sheet = page.getByRole('dialog', { name: 'Add food' })
   await sheet.getByRole('combobox').fill('apple')
@@ -149,7 +149,7 @@ test('the first-run medical note closes for good, and the blood-sugar graph keep
   // A first visit: no "seen" flag.
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, baseURL: test.info().project.use.baseURL })
   const page = await context.newPage()
-  await page.goto('/sim?v=2&a=cola:1&b=water:1')
+  await page.goto('/sim?v=3&a=cola:1&b=water:1')
   const note = page.locator('[data-first-run]')
   await expect(note).toContainText('For learning, not for diet decisions')
   await note.getByRole('button', { name: 'Got it' }).click()

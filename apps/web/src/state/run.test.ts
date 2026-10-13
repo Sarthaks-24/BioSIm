@@ -86,11 +86,15 @@ describe('opening links', () => {
 })
 
 describe('writing links', () => {
-  it('every current-model fixture link, opened and written again, comes out with the same parameters', () => {
-    for (const link of V1_LINKS.filter((l) => l.modelVersion === MODEL_VERSION)) {
+  it('every v2 fixture link, opened and written again, comes out with the same parameters (v becomes the current version)', () => {
+    const v2 = V1_LINKS.filter((l) => l.modelVersion === 2)
+    expect(v2.length).toBeGreaterThan(0)
+    for (const link of v2) {
       useRunStore.setState({ ...INITIAL_RUN })
       const lang = run().loadLink(search(link.href))
-      expect([...new URLSearchParams(written(lang))], link.href).toEqual([...new URLSearchParams(search(link.href))])
+      const expected = new URLSearchParams(search(link.href))
+      expected.set('v', String(MODEL_VERSION))
+      expect([...new URLSearchParams(written(lang))], link.href).toEqual([...expected])
     }
   })
 

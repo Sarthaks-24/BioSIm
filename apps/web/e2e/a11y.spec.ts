@@ -20,7 +20,7 @@ for (const route of GATE_ROUTES.axe) {
 test('axe on /sim with a kept meal, the table and the keys sheet open: 0 serious or critical', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
   for (const lang of ['en', 'hi']) {
-    await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=${lang}`)
+    await page.goto(`/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&lang=${lang}`)
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeAttached()
     await page.waitForLoadState('networkidle')
     await checkAxe(page, { mode: 'enforce' })
@@ -37,7 +37,7 @@ test('axe on /sim with a kept meal, the table and the keys sheet open: 0 serious
 
 test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives it back to its button', async ({ page }) => {
   onlyIn('desktop', 'projector')
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1')
   const button = page
     .getByRole('button', { name: /^How we know: / })
     .filter({ visible: true })
@@ -67,7 +67,7 @@ test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives
 
 test('the stage’s small panels take focus, and Esc gives it back to their button (servings, "⋯")', async ({ page }) => {
   onlyIn('desktop', 'phone')
-  await page.goto('/sim?v=2&a=cola:1')
+  await page.goto('/sim?v=3&a=cola:1')
   const button = page.getByRole('button', { name: /^Cola/ }).first()
   await button.focus()
   await page.keyboard.press('Enter')
@@ -108,7 +108,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     let online = false
     await page.route(/StageMore-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
-    await page.goto('/sim?v=2&a=cola:1&t=20')
+    await page.goto('/sim?v=3&a=cola:1&t=20')
     await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
     const failed = page.getByRole('region', { name: 'More' })
     await expect(failed.getByRole('alert')).toHaveText('This didn’t load. Check the internet connection and try again.')
@@ -124,7 +124,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     let online = false
     await page.route(/FeedbackDialog-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     await openMealActions(page)
     await page.getByRole('button', { name: 'Report a mistake' }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
@@ -140,7 +140,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     let online = false
     await page.route(/\/Sheets-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     await page.locator('body').press('t')
     await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
@@ -160,7 +160,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     onlyIn('desktop', 'phone')
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     await page.route(/\/Sheets-[\w-]+\.js$/, (route) => route.abort())
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     const add = page.getByRole('button', { name: 'Add food' })
     await add.click()
     const alert = page.getByRole('alert').filter({ hasText: 'This didn’t load' })
@@ -183,7 +183,7 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.route(/\/Sheets-[\w-]+\.js$/, (route) =>
       route.fulfill({ contentType: 'text/javascript', body: 'throw new Error("a bug in the sheet")' }),
     )
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     await page.locator('body').press('t')
     await expect(page.getByRole('heading', { level: 1, name: 'Something didn’t load' })).toBeVisible()
@@ -202,7 +202,7 @@ test.describe('a "How we know" panel whose code does not load', () => {
     // Offline until "Try again" (pointing at the button already asks for the file once).
     let online = false
     await page.route(/HowWeKnowPanel-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     const button = page
       .getByRole('button', { name: /^How we know: / })
       .filter({ visible: true })

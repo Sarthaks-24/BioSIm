@@ -168,6 +168,8 @@
     "qrTitle": "Open it on students’ phones",
     "qrCaption": "Students scan this code with the phone camera: LifePeek opens with cola chosen, where questions 1 to 3 start. No login, nothing to install.",
     "qrAlt": "QR code for LifePeek with cola chosen",
+    "changedTitle": "Numbers changed in this version",
+    "changed": "Model version {{version}} follows the textbook more closely on what the small intestine takes in: 90 % of the water (was 80 %), 97 % of the carbohydrate (was 95 %) and 95 % of the protein (was 90 %); fat stays at 95 %. Times in the stomach did not change. Energy coming in from a meal is about 2 % higher, and blood sugar peaks are at most 1 mg/dL higher. Links saved from an older version still open, with a note that some numbers may differ.",
     "answersTitle": "Answers for teachers",
     "answers": [
       "About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline.",

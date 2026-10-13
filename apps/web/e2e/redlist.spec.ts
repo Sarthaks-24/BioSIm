@@ -23,8 +23,8 @@ import {
 // "report", passes either way. The T-step whose FP fixes a bug flips it to "enforce".
 // Project: redlist (Chromium, software WebGL). Each block sets its own window.
 
-const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1'
-const SIX_FOODS = '/sim?v=2&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1'
+const KEPT = '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1'
+const SIX_FOODS = '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1'
 const web = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const phone = (width: number, height: number) => ({
@@ -461,9 +461,9 @@ test.describe('desktop', () => {
   test('B21 a link that is changed on load says so', async ({ page }) => {
     await red('B21', async (problems) => {
       for (const [link, what] of [
-        ['/sim?v=2&a=cola:999', 'a'],
-        ['/sim?v=2&a=water:1,milk:1,roti:1,dal:1,apple:1,banana:1,cola:1,fries:1', 'a'],
-        ['/sim?v=2&a=cola:1&t=99999', 't'],
+        ['/sim?v=3&a=cola:999', 'a'],
+        ['/sim?v=3&a=water:1,milk:1,roti:1,dal:1,apple:1,banana:1,cola:1,fries:1', 'a'],
+        ['/sim?v=3&a=cola:1&t=99999', 't'],
       ] as const) {
         const changed = await linkRoundTripProblems(page, link)
         const notes = await page.locator('[data-stage] [role="note"]').count()
@@ -474,7 +474,7 @@ test.describe('desktop', () => {
 
   test('B22 lang is written only when chosen', async ({ page }) => {
     await red('B22', async (problems) => {
-      const changed = await linkRoundTripProblems(page, '/sim?v=2&a=cola:1')
+      const changed = await linkRoundTripProblems(page, '/sim?v=3&a=cola:1')
       problems.push(...changed.filter((c) => c.startsWith('lang=')))
     })
   })

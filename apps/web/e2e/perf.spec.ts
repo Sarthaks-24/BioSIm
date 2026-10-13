@@ -93,7 +93,7 @@ test('first run after the engine loads, 4× CPU (report)', async ({ browser }) =
       })
       const cdp = await context.newCDPSession(page)
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
-      await page.goto('/sim?v=2&a=cola:1')
+      await page.goto('/sim?v=3&a=cola:1')
       await bodySettled(page)
       const t = await page.evaluate(() => {
         const engine = (performance.getEntriesByType('resource') as PerformanceResourceTiming[]).find((e) =>

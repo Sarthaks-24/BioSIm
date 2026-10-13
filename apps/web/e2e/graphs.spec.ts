@@ -32,7 +32,7 @@ async function centreX(page: Page, selector: string) {
 }
 
 test('the playhead on every graph stands over the dock thumb (within 1 px, 3 widths)', async ({ page }) => {
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1')
   await expect(page.locator('[data-line="run"]').first()).toBeAttached()
   const times: Record<string, string[]> = {
     '0 min': [],
@@ -67,7 +67,7 @@ test('the playhead on every graph stands over the dock thumb (within 1 px, 3 wid
 
 test('the blood-sugar scale is 60 to 200 mg/dL for cola and for a burger (no rescaling)', async ({ page }) => {
   for (const meal of ['cola:1', 'cheeseburger:1', 'cheeseburger:1,fries:1&b=cola:1']) {
-    await page.goto(`/sim?v=2&a=${meal}`)
+    await page.goto(`/sim?v=3&a=${meal}`)
     const axis = (await graph(page, 'Blood sugar')).locator('[data-axis="y"] span')
     await expect(axis.first()).toHaveText('200')
     await expect(axis.last()).toHaveText('60')
@@ -76,7 +76,7 @@ test('the blood-sugar scale is 60 to 200 mg/dL for cola and for a burger (no res
 
 test('the kept run reads in greyscale: a dashed line, named "Kept: …" in the legend', async ({ page }) => {
   // Water keeps blood sugar flat at the before-meal level, so the kept cola's rise stands alone.
-  await page.goto('/sim?v=2&a=water:1&b=cola:1')
+  await page.goto('/sim?v=3&a=water:1&b=cola:1')
   const strip = await graph(page, 'Blood sugar')
   await expect(strip.getByText('Kept: Cola', { exact: true })).toBeVisible()
   const svg = strip.locator('svg[role="img"]')
@@ -113,12 +113,12 @@ test('the kept run reads in greyscale: a dashed line, named "Kept: …" in the l
 
 test('the stomach scale is 0 to 600 g for everyday meals, and stretches once for a very big one', async ({ page }) => {
   for (const meal of ['cola:1', 'roti:2,dal:1,milk:1', 'cheeseburger:1,fries:1&b=cola:1']) {
-    await page.goto(`/sim?v=2&a=${meal}`)
+    await page.goto(`/sim?v=3&a=${meal}`)
     const strip = await graph(page, 'Food in the stomach', 'Stomach')
     await expect(strip.locator('[data-axis="y"] span').first()).toHaveText('600')
     await expect(strip.getByText('Scale stretched to fit this meal')).toHaveCount(0)
   }
-  await page.goto('/sim?v=2&a=cola:4')
+  await page.goto('/sim?v=3&a=cola:4')
   const strip = await graph(page, 'Food in the stomach', 'Stomach')
   await expect(strip.locator('[data-axis="y"] span').first()).toHaveText('1,400')
   await expect(strip.getByText('Scale stretched to fit this meal')).toBeVisible()
@@ -126,7 +126,7 @@ test('the stomach scale is 0 to 600 g for everyday meals, and stretches once for
 
 test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no ghost for "used"', async ({ page }) => {
   for (const meal of ['cola:1', 'cheeseburger:1,fries:1&b=cola:1', 'water:1']) {
-    await page.goto(`/sim?v=2&a=${meal}`)
+    await page.goto(`/sim?v=3&a=${meal}`)
     const strip = await graph(page, 'Energy')
     // One fixed axis for every meal, never an empty frame: both lines are drawn.
     const axis = strip.locator('[data-axis="y"] span')
@@ -143,7 +143,7 @@ test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no 
   }
 
   // Readouts at the playhead: rates and running totals. The resting body uses about 63 kcal/h.
-  await page.goto('/sim?v=2&a=roti:2,dal:1')
+  await page.goto('/sim?v=3&a=roti:2,dal:1')
   const strip = await graph(page, 'Energy')
   const slider = page.getByRole('slider', { name: 'Timeline' })
   await slider.focus()
@@ -164,8 +164,8 @@ test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no 
 test('on the projector the graphs show one at a time, each plot at least 250 px tall (EN and HI)', async ({ page }) => {
   onlyIn('projector')
   for (const [url, tabs] of [
-    ['/sim?v=2&a=cheeseburger:1,fries:1&b=cola:1', ['Stomach', 'Blood sugar', 'Energy']],
-    ['/sim?v=2&a=cheeseburger:1,fries:1&b=cola:1&lang=hi', ['आमाशय', 'रक्त शर्करा', 'ऊर्जा']],
+    ['/sim?v=3&a=cheeseburger:1,fries:1&b=cola:1', ['Stomach', 'Blood sugar', 'Energy']],
+    ['/sim?v=3&a=cheeseburger:1,fries:1&b=cola:1&lang=hi', ['आमाशय', 'रक्त शर्करा', 'ऊर्जा']],
   ] as const) {
     await page.goto(url)
     // The first-visit medical note sits above the stage until it is closed, once per device; the
@@ -191,7 +191,7 @@ test('on the projector the graphs show one at a time, each plot at least 250 px 
 
 test('at 1440 × 900 the three graphs are stacked, each plot at least 90 px tall (EN and HI)', async ({ page }) => {
   onlyIn('desktop')
-  for (const url of ['/sim?v=2&a=cheeseburger:1,fries:1&b=cola:1', '/sim?v=2&a=cheeseburger:1,fries:1&b=cola:1&lang=hi']) {
+  for (const url of ['/sim?v=3&a=cheeseburger:1,fries:1&b=cola:1', '/sim?v=3&a=cheeseburger:1,fries:1&b=cola:1&lang=hi']) {
     await page.goto(url)
     // The first-visit medical note takes room above the stage until it is dismissed (once).
     await page.locator('figure [data-line="run"]').first().waitFor()
@@ -236,7 +236,7 @@ test('no words on a graph touch a line, and the legend names both meals (1280 an
     await page.setViewportSize(size)
     for (const lang of ['en', 'hi']) {
       for (const meal of meals) {
-        await page.goto(`/sim?v=2&a=${meal}&lang=${lang}`)
+        await page.goto(`/sim?v=3&a=${meal}&lang=${lang}`)
         await page.locator('figure [data-line="run"]').first().waitFor()
         const tabs = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
         const tabNames = (await tabs.isVisible()) ? await tabs.getByRole('button').allTextContents() : ['']
@@ -292,7 +292,7 @@ test('no words on a graph touch a line, and the legend names both meals (1280 an
 // emptying ending soon after 6 h, drawn on the squeezed part of the axis: each graph tints that
 // part from the knee to the end and breaks its x axis there.
 test('every graph shows where time is squeezed: a tint from 6 h to the end and a break in the axis', async ({ page }) => {
-  await page.goto('/sim?v=2&a=cheeseburger:1,fries:1&t=420')
+  await page.goto('/sim?v=3&a=cheeseburger:1,fries:1&t=420')
   for (const name of ['Food in the stomach', 'Blood sugar', 'Energy']) {
     const figure = await graph(page, name, { 'Food in the stomach': 'Stomach' }[name] ?? name)
     const plot = (await figure.locator('svg[role="img"]').boundingBox())!
@@ -307,13 +307,13 @@ test('every graph shows where time is squeezed: a tint from 6 h to the end and a
 
 // Council round 2, C3, C5, C6.
 test('the ring’s label names its meal beside a kept one, and sits above the playhead', async ({ page }) => {
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40')
+  await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=40')
   const figure = await graph(page, 'Food in the stomach', 'Stomach')
   const label = figure.locator('[data-plot-label="marker"]')
   await expect(label).toHaveText('Cola: half the energy has left the stomach')
   // Painted over the playhead (which may pass behind it), never under its line.
   expect(await label.evaluate((el) => getComputedStyle(el).zIndex)).toBe('10')
-  await page.goto('/sim?v=2&a=cola:1&t=40')
+  await page.goto('/sim?v=3&a=cola:1&t=40')
   await expect((await graph(page, 'Food in the stomach', 'Stomach')).locator('[data-plot-label="marker"]')).toHaveText(
     'Half the energy has left the stomach',
   )
@@ -321,7 +321,7 @@ test('the ring’s label names its meal beside a kept one, and sits above the pl
 
 test('graphs under tabs write their unit at the top of the y axis', async ({ page }) => {
   onlyIn('projector')
-  await page.goto('/sim?v=2&a=cola:1')
+  await page.goto('/sim?v=3&a=cola:1')
   for (const [tab, unit] of [
     ['Stomach', 'g'],
     ['Blood sugar', 'mg/dL'],

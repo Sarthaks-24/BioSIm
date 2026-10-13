@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react'
 import { Link } from 'react-router'
+import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
 import { LESSONS, QR_PATH, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
 import { SITE_URL } from '../lib/site.ts'
@@ -132,6 +133,9 @@ export default function Teach() {
         ))}
       </ul>
 
+      {/* What moved since the last model version, for a teacher with notes from before (E-3a, MODEL D12). */}
+      <h2 className="mt-10 mb-3 text-h2 font-extrabold">{t('teach.changedTitle')}</h2>
+      <p className="text-ink-muted">{t('teach.changed', { version: MODEL_VERSION })}</p>
       <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-border pt-10 sm:flex-row sm:items-center">
         <figure className="shrink-0">
           <img src={qrCode} alt={t('teach.qrAlt')} width={240} height={240} className="size-60 rounded-lg bg-white" />

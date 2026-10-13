@@ -20,10 +20,10 @@ const VIEWS: Record<string, { width: number; height: number; projector?: boolean
 }
 
 const PAGES: { name: string; url: string; views: string[]; menu?: boolean }[] = [
-  { name: 'sim-0', url: '/sim?v=2&a=cola:1', views: Object.keys(VIEWS) },
-  { name: 'sim-2h-kept', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=120', views: Object.keys(VIEWS) },
-  { name: 'sim-2h', url: '/sim?v=2&a=cola:1&t=120', views: ['desktop', 'phone360'] },
-  { name: 'sim-0-kept', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0', views: ['projector'] },
+  { name: 'sim-0', url: '/sim?v=3&a=cola:1', views: Object.keys(VIEWS) },
+  { name: 'sim-2h-kept', url: '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=120', views: Object.keys(VIEWS) },
+  { name: 'sim-2h', url: '/sim?v=3&a=cola:1&t=120', views: ['desktop', 'phone360'] },
+  { name: 'sim-0-kept', url: '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=0', views: ['projector'] },
   { name: 'home', url: '/', views: ['desktop', 'phone360'] },
   { name: 'teach', url: '/teach', views: ['desktop', 'projector'] },
   // The content pages (FP-10: one token set, one page shell) and the phone menu.
@@ -108,7 +108,7 @@ for (const lang of ['en', 'hi'] as const) {
 test('sim 3D desktop en', async ({ page }) => {
   onlyIn('visual-3d')
   await returningVisitor(page)
-  await page.goto('/sim?v=2&a=cola:1')
+  await page.goto('/sim?v=3&a=cola:1')
   await expect(page.locator('[data-body="3d"]')).toBeVisible()
   await settle(page)
   await expect(page).toHaveScreenshot('sim-3d-desktop-en.png', {

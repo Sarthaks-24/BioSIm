@@ -23,8 +23,8 @@ const LANGS = [
 /** The stage's two fullest states: a first visit (medical note, clock at 0) and a kept meal at 40 min. */
 const STATES = [
   { name: 'first visit', url: '/sim', firstVisit: true },
-  { name: 'kept meal at 40 min', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40', firstVisit: false },
-  { name: 'four foods', url: '/sim?v=2&a=roti:2,dal:1,orange-juice:1,boiled-egg:1&b=cola:1&t=400', firstVisit: false },
+  { name: 'kept meal at 40 min', url: '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=40', firstVisit: false },
+  { name: 'four foods', url: '/sim?v=3&a=roti:2,dal:1,orange-juice:1,boiled-egg:1&b=cola:1&t=400', firstVisit: false },
 ] as const
 
 /** The pseudo-locale is only in builds made with VITE_PSEUDO=1 (Playwright's own server); a deployed site has none. */

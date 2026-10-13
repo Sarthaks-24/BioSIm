@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { valueAt, type ActiveSignalId, type MealItem, type RunResult } from '@lifepeek/engine'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { MODEL_VERSION, PARAMS, valueAt, type ActiveSignalId, type MealItem, type RunResult } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
@@ -78,5 +80,35 @@ describe('Teach: the note under "One cola or four" (council round 3)', () => {
     expect(d.samePeak).toBe(true)
     const longer = Math.round(d.longerMin / 5) * 5
     expect(note).toEqual([d.peak, Math.floor(longer / 60), longer % 60])
+  })
+})
+
+describe('Teach: "Numbers changed in this version" (E-3a)', () => {
+  // The reviewed diff's snapshots (packages/engine/scripts/calibration, `npm run calibrate -- --snapshot`).
+  type Snap = { meals: Record<string, { energyInKcal48h: number; glucosePeakRise: number | null }> }
+  const snap = (v: number) =>
+    JSON.parse(
+      readFileSync(fileURLToPath(new URL(`../../../../packages/engine/scripts/calibration/v${v}.json`, import.meta.url)), 'utf8'),
+    ) as Snap
+  const [now, before] = [snap(MODEL_VERSION), snap(MODEL_VERSION - 1)]
+  const [n] = numbers([en.teach.changed])
+
+  it('the shares absorbed are the model’s (water, carbohydrate, protein, fat)', () => {
+    const a = PARAMS.absorbedInSmallIntestine
+    expect([n![0], n![2], n![4], n![6]]).toEqual([a.water, a.carbs, a.protein, a.fat].map((x) => Math.round(x * 100)))
+  })
+
+  it('energy in is about 2 % higher and blood sugar peaks at most 1 mg/dL higher, on every reviewed meal', () => {
+    const [energyPct, peakMgDl] = n!.slice(-2)
+    for (const [meal, b] of Object.entries(now.meals)) {
+      const a = before.meals[meal]!
+      if (a.energyInKcal48h > 0) expect(Math.abs((b.energyInKcal48h / a.energyInKcal48h - 1) * 100 - energyPct!), meal).toBeLessThan(1)
+      if (a.glucosePeakRise !== null && b.glucosePeakRise !== null)
+        expect(Math.abs(b.glucosePeakRise - a.glucosePeakRise), meal).toBeLessThanOrEqual(peakMgDl!)
+    }
+  })
+
+  it('the snapshot is the model today', () => {
+    expect(now.meals['cola:1']!.energyInKcal48h).toBeCloseTo(at(cola, 'energy.inTotal', 48 * 60), 1)
   })
 })

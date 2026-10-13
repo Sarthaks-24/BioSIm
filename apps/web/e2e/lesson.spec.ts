@@ -74,7 +74,7 @@ test('a 40-minute lesson leaves no leaks (heap, WebGL contexts, three.js memory)
       return ctx
     } as typeof get
   })
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1')
   await bodySettled(page)
   await round(page)
   const base = await snapshot(page)
