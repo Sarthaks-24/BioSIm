@@ -1,6 +1,7 @@
 import i18n, { type BackendModule } from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import en from './en.json'
+// en.json without the texts of the pages that bring their own (scripts/i18n-sections.mjs).
+import en from 'virtual:lifepeek-en/core'
 import { readPref, writePref } from '../lib/prefs.ts'
 
 export const LANGUAGES = ['en', 'hi'] as const
@@ -51,6 +52,14 @@ i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
   writePref('lang', lng)
 })
+
+/**
+ * Adds a page's own English text (its `virtual:lifepeek-en/<section>`), when the page's code
+ * loads, before it draws. Hindi needs no such step: hi.json is fetched whole.
+ */
+export function addEnglish(...texts: Record<string, unknown>[]) {
+  for (const text of texts) i18n.addResourceBundle('en', 'translation', text, true, true)
+}
 
 /** Pick the user's language from a food file's { en, hi? } text. */
 export function localized(text: { en: string; hi?: string | undefined } | undefined, lang: string): string {

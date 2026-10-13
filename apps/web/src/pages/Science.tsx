@@ -3,8 +3,13 @@ import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { FOODS } from '../data/foods.ts'
-import { localized } from '../i18n/index.ts'
+import { addEnglish, localized } from '../i18n/index.ts'
 import { REFERENCES } from '../lib/references.ts'
+import scienceText from 'virtual:lifepeek-en/science'
+import lessonText from 'virtual:lifepeek-en/lesson'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(scienceText, lessonText)
 
 export default function Science() {
   const { t, i18n } = useTranslation()

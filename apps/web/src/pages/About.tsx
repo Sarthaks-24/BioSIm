@@ -4,6 +4,12 @@ import { useTranslation } from 'react-i18next'
 import RichText from '../components/RichText.tsx'
 import { MAKER } from '../lib/credits.ts'
 import { REPO_URL } from '../lib/site.ts'
+import { addEnglish } from '../i18n/index.ts'
+import aboutText from 'virtual:lifepeek-en/about'
+import feedbackText from 'virtual:lifepeek-en/feedback'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(aboutText, feedbackText)
 
 const file = (name: string) => `${REPO_URL}/blob/main/${name}`
 const link = 'underline underline-offset-2 hover:text-ink'

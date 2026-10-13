@@ -2,11 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import i18nSections from './scripts/i18n-sections.mjs'
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    // English page texts load with their pages, not with every page (scripts/i18n-sections.mjs).
+    i18nSections(),
     VitePWA({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).

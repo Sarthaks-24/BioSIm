@@ -1,6 +1,11 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PRESETS, presetHref } from '../lib/presets.ts'
+import { addEnglish } from '../i18n/index.ts'
+import teachText from 'virtual:lifepeek-en/teach'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(teachText)
 
 export default function Teach() {
   const { t } = useTranslation()
