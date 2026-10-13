@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
@@ -180,7 +180,19 @@ const WIDEST_MIN = 11 * 60 + 55
 /** "1 h 30 min" + "after eating". Re-renders only when the rounded text changes (every 5 sim minutes). */
 function ClockText() {
   const { t } = useTranslation()
-  const text = useClock((s) => formatDuration(s.simMin, t))
+  // The store calls this every frame while playing; the text is only made again when the whole
+  // minute changes (formatDuration rounds to it first), not translated anew each frame.
+  const text = useClock(
+    useMemo(() => {
+      let minute = NaN
+      let text = ''
+      return (s: { simMin: number }) => {
+        const m = Math.round(s.simMin)
+        if (m !== minute) [minute, text] = [m, formatDuration(m, t)]
+        return text
+      }
+    }, [t]),
+  )
   return (
     // Phones: "1 h 30 min after eating" on one line above the track. From 1024 px up the label
     // goes under the time, and the box keeps the widest time's width, so the track never shifts.
