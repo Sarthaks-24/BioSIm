@@ -96,6 +96,12 @@
 //   links in its menu, a one-line footer), the summary under the graph on a small projector window
 //   (a portal), the kept tag on one line, room over the head: /sim 188.447 → 188.797 KB on main
 //   edcebce, measured on one machine (+0.35; ledger row planned +0.1).
+//   T9b / FP-8 (2026-10-14): Home's promise beside the resting flat body (an SVG file drawn from
+//   FlatBody at build time, flat/restingBody.ts: no drawing code in any download), the race's axis
+//   text as HTML, the cola headline over the race. The race and its numbers (hero.json) are one
+//   chunk loaded after Home's first paint (components/HomeRace.tsx), which takes its code out of the
+//   entry every page shares: /sim 189.09 → 188.64 KB on main 647a379 (−0.45; ledger row −0.45,
+//   planned 0), Home 144.5 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
