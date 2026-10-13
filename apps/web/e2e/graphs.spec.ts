@@ -136,7 +136,7 @@ test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no 
     await expect(strip.locator('[data-line="second"]')).toHaveCount(1)
     // The kept meal gets a ghost for "coming in" only: "used" is the same for every meal.
     await expect(strip.locator('[data-line="kept"]')).toHaveCount(meal.includes('&b=') ? 1 : 0)
-    // Each line says how sure we are; "used" is a best guess, the same for every meal.
+    // Each line says how sure we are; "used" is a model estimate, the same for every meal.
     await expect(strip.locator('[data-status="simulated"]')).toHaveCount(1)
     await expect(strip.locator('[data-status="assumption"]')).toHaveCount(1)
     await expect(strip.getByText('The same for every meal (resting body)')).toBeVisible()

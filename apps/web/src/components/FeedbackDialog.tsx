@@ -12,7 +12,7 @@ addEnglish(feedbackText)
  * Without an API (production) the report opens straight away as a pre-filled GitHub issue in a
  * new tab, and nothing is sent until the user submits it there. With an API it is POSTed, and if
  * that fails the same GitHub issue is offered, so nothing typed is lost. Either way the dialog
- * warns that GitHub issues are public.
+ * warns once that reports are public (B24): the GitHub warning wherever the report goes to GitHub.
  *
  * Used by the stage (a button in the meal bar, `trigger`). It is given the run as a link query
  * (`context`), so the form needs no store.
@@ -60,7 +60,8 @@ export default function FeedbackDialog({
   }
 
   const field = 'mt-1 w-full rounded-lg border border-border bg-white px-3 py-2'
-  const warning = <p className="text-xs font-semibold text-ink">{t('feedback.publicWarning')}</p>
+  // One privacy warning (B24): GitHub's whenever the report opens there, else the API's.
+  const goesToGitHub = !HAS_API || status === 'failed'
 
   const open = () => {
     setStatus('idle')
@@ -93,8 +94,7 @@ export default function FeedbackDialog({
             {t('feedback.source')}
             <input name="source" maxLength={500} className={field} />
           </label>
-          <p className="text-xs text-ink-muted">{t('feedback.privacy')}</p>
-          {!HAS_API && warning}
+          <p className="text-xs font-semibold text-ink">{t(goesToGitHub ? 'feedback.publicWarning' : 'feedback.privacy')}</p>
           <div role="status" className="text-sm font-semibold">
             {status === 'sent' && t('feedback.sent')}
             {status === 'failed' && (
@@ -105,7 +105,6 @@ export default function FeedbackDialog({
                     {t('feedback.openIssue')}
                   </a>
                 </p>
-                {warning}
               </div>
             )}
           </div>

@@ -114,7 +114,7 @@
     "close": "Close",
     "privacy": "Reports are public. Please don’t include names, school, emails or health information.",
     "openIssue": "Send it as a GitHub issue instead",
-    "publicWarning": "This opens a public page on GitHub. Don't type your name, school or phone number.",
+    "publicWarning": "This opens a public page on GitHub. Don't type your name, school, phone number, email or any health information.",
     "openIssueDirect": "Open the report on GitHub"
   },
   "disclaimer": {
@@ -134,7 +134,7 @@
     "plan": "A 40-minute lesson plan",
     "steps": [
       "Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more.",
-      "Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger.",
+      "Open cola with burger + fries kept (the first ready lesson below). It opens at 35 min; press Home to start from eating, then press Play. The dashed grey line is the kept burger.",
       "Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now.",
       "Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front.",
       "Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph."
@@ -368,8 +368,8 @@
       "help": "Worked out by the model from published measurements."
     },
     "assumption": {
-      "label": "Best guess",
-      "help": "A formula or a reasonable estimate, not measured for this meal."
+      "label": "Model estimate",
+      "help": "Worked out by the app's maths, not measured: a formula or a reasonable estimate."
     },
     "illustration": {
       "label": "Drawing only",
@@ -503,7 +503,7 @@
   },
   "limits": {
     "glucoseTail": "After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner.",
-    "glucoseBand": "The shaded band is a best guess of how much healthy people differ.",
+    "glucoseBand": "The shaded band is a model estimate of how much healthy people differ.",
     "energyInAtwater": "Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted.",
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
