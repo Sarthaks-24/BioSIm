@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import i18n from '../i18n/index.ts'
+import { linkLanguage } from '../i18n/language.ts'
 import { linkQuery, useRunStore } from '../state/run.ts'
 import { useClock } from '../state/clock.ts'
 
@@ -13,7 +14,7 @@ const LINK_PARAMS = ['v', 'a', 'b', 'o'] as const
  * - a link (`v`, `a`, `b` or `o`) opens its meal, kept run, person, layer, time and language;
  *   `?v=2` with no meals is a deliberately empty run and stays empty;
  * - a bare page keeps the open meal, or opens the default meal if none (a bare `?lang=` still
- *   switches the language);
+ *   switches the language; `lang=hi` only in a Hindi build, i18n/language.ts);
  * - it writes `a` (meal), `b` (kept), `t`, `lang`, and `who` / `layer` only when not the default.
  *
  * The lessons of v1's link hook (useUrlSync, WP-01; deleted in WP-20), kept here:
@@ -74,7 +75,10 @@ export function useLinkSync() {
       useRunStore.getState().openDefault()
       lang = params.get('lang')
     }
-    if ((lang === 'en' || lang === 'hi') && lang !== i18n.language) void i18n.changeLanguage(lang)
+    // While Hindi is paused (R47), a Hindi link opens in English and says so (components/stage/Notes.tsx).
+    const wanted = linkLanguage(lang)
+    useRunStore.setState({ hindiLater: lang === 'hi' && !wanted })
+    if (wanted && wanted !== i18n.language) void i18n.changeLanguage(wanted)
     // Write back the canonical form (this also fills in a bare page).
     writeUrl()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to navigation

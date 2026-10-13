@@ -40,6 +40,7 @@
     "shareCopied": "Link copied",
     "reportError": "Report a mistake",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
+    "hindiLater": "Hindi is coming later, so this link opens in English.",
     "oldLink": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
     "newerLink": "This link was made with a newer version of LifePeek, so this version may show it differently.",
     "afterEating": "after eating",
@@ -355,6 +356,7 @@
     "foods": "Foods",
     "languages": "Languages",
     "languageNames": "English and Hindi",
+    "englishOnly": "English",
     "lastRelease": "Last release",
     "noRelease": "None yet"
   },

@@ -62,6 +62,11 @@
 //   v1's files (CSS), v1's texts (hi.json) and the registry's unused body loaders: /sim 189.5 →
 //   187.5 KB, Home 145.5 → 144.6 KB, precache 1942.7 → 1929.0 KB. Merged with FIX-G (its
 //   @source lines went with the files): /sim 188.2 KB, Home 144.9 KB, precache 1942.5 KB.
+//   T0h (2026-10-13): Hindi paused behind VITE_HINDI (R47). Real builds have no hi.json chunk (the
+//   precache loses it: 1942.5 → about 1872 KB), no language button, and a note for `?lang=hi`
+//   links. Vite's lazy-import helper, which had ridden in the i18n chunk with the hi.json import,
+//   is kept there by a chunk group (vite.config.ts) rather than becoming a file of its own:
+//   /sim stays 188.2 KB, Home 144.9 → 144.8 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

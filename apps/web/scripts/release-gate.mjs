@@ -14,7 +14,9 @@
 //   2. DATA-SOURCES.md says on which date the INDB permission email was sent;
 //   3. no source in packages/engine/src/core/sources.ts is still 'toVerify', and the engine's own
 //      contract test passes with RELEASE_GATE=1;
-//   4. every Hindi string in REVIEW.md is `reviewed by …` (and REVIEW.md matches the JSON files);
+//   4. every Hindi string in REVIEW.md is `reviewed by …` (and REVIEW.md matches the JSON files),
+//      only for a release with Hindi (VITE_HINDI=1, as for the build): Hindi is paused (R47), and
+//      without the flag hi.json does not ship, so check 1 skips it too;
 //   5. GOVERNANCE.md exists;
 //   6. CHANGELOG.md's newest entry is not marked "unreleased" and has no `<…>` left in it.
 import { spawnSync } from 'node:child_process'
@@ -44,8 +46,11 @@ const SHIPPED_FILES = [
   'CONTRIBUTING.md',
   'GOVERNANCE.md',
 ]
+/** Hindi ships only in a build with VITE_HINDI=1 (R47: paused); without it hi.json is not in the app. */
+const HINDI = process.env.VITE_HINDI === '1'
 /** REVIEW.md is the reviewer's list, not shipped; its privacy rows repeat en.json/hi.json, checked here anyway. */
-const SKIP = (file) => /\.test\.[cm]?[jt]sx?$/.test(file) || rel(file) === 'apps/web/src/i18n/REVIEW.md'
+const SKIP = (file) =>
+  /\.test\.[cm]?[jt]sx?$/.test(file) || rel(file) === 'apps/web/src/i18n/REVIEW.md' || (!HINDI && rel(file) === 'apps/web/src/i18n/hi.json')
 const TEXT = /\.(tsx?|mjs|js|json|md|txt|xml|html|css|svg|webmanifest|cff)$|^[A-Z-]+$/
 
 function walk(dir, out = []) {
@@ -79,6 +84,7 @@ const check = (title, problems) => results.push({ title, problems })
   // Any other angle-bracket placeholder on the privacy page (both languages) …
   const texts = readTexts()
   for (const [lang, map] of Object.entries(texts)) {
+    if (lang === 'hi' && !HINDI) continue
     for (const [key, value] of map) {
       if (!key.startsWith('privacy.')) continue
       for (const [m] of value.matchAll(/<[^<>]+>/g)) {
@@ -135,8 +141,9 @@ const check = (title, problems) => results.push({ title, problems })
   check("Every model source is read in full (no 'toVerify' in sources.ts)", problems)
 }
 
-// 4. Hindi review (D-HIREV: every v2.0 key reviewed).
-{
+// 4. Hindi review (D-HIREV: every v2.0 key reviewed). Only when this release has Hindi
+// (VITE_HINDI=1): while Hindi is paused (R47) the app ships English only.
+if (HINDI) {
   const { markdown, problems: stale } = syncReview(fs.readFileSync(REVIEW_FILE, 'utf8'))
   const problems = stale.length ? [`REVIEW.md is out of date (${stale.length}); run: node apps/web/scripts/hi-review.mjs --write`] : []
   const rows = reviewRows(markdown)
@@ -173,6 +180,7 @@ check(
 // Report.
 const failed = results.filter((r) => r.problems.length)
 console.log('\nRelease gate (file checks). Human steps: docs/RELEASE-CHECKLIST.md\n')
+if (!HINDI) console.log('Hindi is paused (R47): the Hindi review check runs only with VITE_HINDI=1.\n')
 for (const r of results) {
   console.log(`${r.problems.length ? '[ ]' : '[x]'} ${r.title}`)
   for (const p of r.problems) console.log(`      ${p}`)
