@@ -33,7 +33,7 @@ export default function Privacy() {
     <PageShell>
       <h1 className="text-display font-extrabold tracking-tight">{t('privacy.title')}</h1>
       <p className="mt-2 text-sm text-ink-muted">{t('privacy.updated')}</p>
-      <p className="mt-6 max-w-[68ch] rounded-xl border border-border bg-surface-raised px-4 py-3 text-lg">
+      <p className="mt-6 max-w-[68ch] border-l-2 border-ink py-1 pl-4 text-lg">
         <RichText text={t('privacy.summary')} />
       </p>
 
