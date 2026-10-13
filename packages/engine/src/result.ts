@@ -10,10 +10,11 @@ import type { SimEvents } from './events.ts'
 import type { Particle } from './particles.ts'
 import type { SignalTable } from './core/signal.ts'
 import type { HumanInput, ProfileId } from './core/organism.ts'
+import type { ActivityBout } from './core/activity.ts'
 
 /**
- * One run's input: the foods (looked up by id), the organism and the stated person. Later: the
- * activity bouts (E-3b), and `| { organism: 'plant'; conditions: {...}; profile: 'leaf-ref' }`.
+ * One run's input: the foods (looked up by id), the organism, the stated person and the activity
+ * bouts (E-3b-eng). Later: `| { organism: 'plant'; conditions: {...}; profile: 'leaf-ref' }`.
  */
 export type RunInput = HumanInput
 
@@ -32,6 +33,8 @@ export interface RunResult extends SignalTable {
   meal: Meal
   /** The stated person this run is about (energy.usedRate). Run metadata, not a signal. */
   profile: ProfileId
+  /** The activity bouts of this run, in start order (empty = resting). Run metadata, not a signal. */
+  activity: readonly ActivityBout[]
   curves: Record<FoodPhase, EmptyingCurve>
   /** Minute the meal starts arriving in the stomach (end of eating + swallow). */
   stomachArrivalMin: number

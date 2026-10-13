@@ -15,7 +15,7 @@ import { N } from './ctx.ts'
  */
 
 const meal = buildMeal(decodeMeal('standard-meal:1,glucose-50:1'), lookup)
-const setup = { input: { meal }, params: PARAMS, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }
+const setup = { input: { meal, activity: [] }, params: PARAMS, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }
 
 describe('module order (DAG)', () => {
   it('the frozen order is activity → gut → energy → bloodSugar → gas → effort → circulation → water → lymph', () => {
@@ -23,17 +23,18 @@ describe('module order (DAG)', () => {
   })
 
   it('the human modules follow it, and every need is written by an earlier module', () => {
-    expect(HUMAN_MODULES.map((m) => m.id)).toEqual(['gut', 'energy', 'bloodSugar'])
+    expect(HUMAN_MODULES.map((m) => m.id)).toEqual(['activity', 'gut', 'energy', 'bloodSugar'])
     expect(moduleGraphErrors(HUMAN_MODULES)).toEqual([])
     expect(HUMAN_MODEL.modules).toBe(HUMAN_MODULES)
   })
 
   it('the check finds a wrong order, a need nobody writes earlier, and a second writer', () => {
-    const [gut, energy, bloodSugar] = HUMAN_MODULES as [ModelModule, ModelModule, ModelModule]
-    const swapped = moduleGraphErrors([energy, gut, bloodSugar])
+    const [activity, gut, energy, bloodSugar] = HUMAN_MODULES as [ModelModule, ModelModule, ModelModule, ModelModule]
+    const swapped = moduleGraphErrors([activity, energy, gut, bloodSugar])
     expect(swapped).toContain(`gut: out of order (frozen order: ${MODULE_ORDER.join(' → ')})`)
     expect(swapped).toContain('energy: needs gut.absorbed.carbsG, which no earlier module writes')
-    expect(moduleGraphErrors([gut, energy, bloodSugar, { ...gut, id: 'lymph', needs: [] }])).toContain(
+    expect(moduleGraphErrors([gut, energy, bloodSugar])).toContain('energy: needs x.activity.met, which no earlier module writes')
+    expect(moduleGraphErrors([activity, gut, energy, bloodSugar, { ...gut, id: 'lymph', needs: [] }])).toContain(
       'gut.leftBodyG: written by gut and lymph',
     )
   })
@@ -69,7 +70,7 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
     run: () => {},
     ...over,
   })
-  const gut = HUMAN_MODULES[0]!
+  const gut = HUMAN_MODULES.find((m) => m.id === 'gut')!
   const fill = () => new Float64Array(N)
 
   it('get of an ID not in needs throws, even when it was written', () => {
@@ -154,16 +155,20 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
     ).toContain('event.glucosePeak: written by gas and lymph')
   })
 
-  it('a run of today’s modules has no rhythms, and its moments are the five from events.ts', () => {
+  it('a run of today’s modules has no rhythms; its moments are the five from events.ts and activity’s two', () => {
     const sim = simulate(meal, { particles: 0 })
     expect(sim.rhythms.size).toBe(0)
-    expect(HUMAN_MODULES.flatMap((m) => [...(m.moments ?? []), ...(m.rhythms ?? [])])).toEqual([])
-    expect(sim.moments.size).toBe(5)
+    expect(HUMAN_MODULES.flatMap((m) => m.rhythms ?? [])).toEqual([])
+    expect(HUMAN_MODULES.flatMap((m) => m.moments ?? [])).toEqual(['event.activityStart', 'event.activityEnd'])
+    expect(sim.moments.size).toBe(7)
+    // Resting: the activity moments do not happen.
+    expect(sim.moments.get('event.activityStart')?.atMin).toBeNull()
+    expect(sim.moments.get('event.activityEnd')?.atMin).toBeNull()
   })
 
   it('every module names the system that shows it', () => {
     for (const m of HUMAN_MODULES) expect(SYSTEM_IDS, m.id).toContain(m.system)
-    expect(HUMAN_MODULES.map((m) => m.system)).toEqual(['digestion', 'digestion', 'digestion'])
+    expect(HUMAN_MODULES.map((m) => m.system)).toEqual(['digestion', 'digestion', 'digestion', 'digestion'])
   })
 })
 
@@ -174,7 +179,7 @@ describe('no global PARAMS', () => {
 
   it('no module file names PARAMS: modules read ctx.params only', () => {
     const files = readdirSync(modulesDir).filter((f) => f.endsWith('.ts'))
-    expect(files.sort()).toEqual(['bloodSugar.ts', 'energy.ts', 'gut.ts', 'index.ts'])
+    expect(files.sort()).toEqual(['activity.ts', 'bloodSugar.ts', 'energy.ts', 'gut.ts', 'index.ts'])
     for (const f of files) expect(readFileSync(join(modulesDir, f), 'utf8'), f).not.toMatch(/\bPARAMS\b/)
   })
 

@@ -133,10 +133,20 @@ describe('catalog rows', () => {
     for (const s of signals.filter((s) => s.clock === 'real')) expect(isChartable(s), s.id).toBe(false)
   })
 
-  it("every active row ships in 'v2.0' and every reserved row does not", () => {
-    for (const id of ACTIVE_SIGNAL_IDS) expect(SIGNALS[id].shipsIn, id).toBe('v2.0')
-    for (const id of RESERVED_SIGNAL_IDS) expect(RESERVED_SIGNALS[id].shipsIn, id).not.toBe('v2.0')
-    for (const e of events) expect(e.shipsIn, e.id).toBe('v2.0')
+  // Model ACTIVATION_LOG: a reserved row activates with shipsIn 'v3.0' (or 'v3.1'), its unit kept.
+  it("every active row ships in 'v2.0' or 'v3.0', and every reserved row in neither", () => {
+    const active = ['v2.0', 'v3.0']
+    for (const id of ACTIVE_SIGNAL_IDS) expect(active, id).toContain(SIGNALS[id].shipsIn)
+    for (const id of RESERVED_SIGNAL_IDS) expect(active, id).not.toContain(RESERVED_SIGNALS[id].shipsIn)
+    for (const e of events) expect(active, e.id).toContain(e.shipsIn)
+  })
+
+  it('E-3b-eng activates gut.absorbRate.* with their reserved unit, and adds the energy rows', () => {
+    for (const k of ['carbs', 'protein', 'fat', 'water'] as const)
+      expect(SIGNALS[`gut.absorbRate.${k}`]).toMatchObject({ unit: 'g/min', kind: 'rate', shipsIn: 'v3.0' })
+    expect(SIGNALS['energy.activityRate']).toMatchObject({ unit: 'kcal/h', status: 'assumption', reactsToMeal: false })
+    expect(SIGNALS['energy.activityTotal']).toMatchObject({ unit: 'kcal', status: 'assumption', reactsToMeal: false })
+    expect(SIGNALS['energy.foodEffectRate']).toMatchObject({ unit: 'kcal/h', status: 'assumption', reactsToMeal: true })
   })
 
   it('every active signal and event cites at least one source, and every cited source is registered', () => {

@@ -9,6 +9,7 @@ import { runModules } from './core/module.ts'
 import { DEFAULT_ORGANISM, DEFAULT_PROFILE, type OrganismId, type OrganismModel } from './core/organism.ts'
 import { PROFILES, isProfileId, type ProfileDef } from './core/profile.ts'
 import type { RunInput, RunResult } from './result.ts'
+import { activityProblems, sortBouts, type ActivityBout } from './core/activity.ts'
 import { LEFTOVERS_IN_COLON, stomachArrivalMin } from './modules/gut.ts'
 import { HUMAN_MODULES, PROVIDES } from './modules/index.ts'
 
@@ -32,11 +33,13 @@ export const ORGANISM_MODELS: { readonly [O in OrganismId]: OrganismModel<Params
 export interface SimOptions {
   /** Dots for the picture (default 48). 0 = none (tests, summaries). */
   particles?: number
+  /** With `simulate(meal)` only: the activity bouts (a RunInput carries its own). Default: none. */
+  activity?: readonly ActivityBout[]
 }
 
 /**
  * Runs the whole model for one meal, minute by minute for 48 h: the organism's modules in their
- * frozen order (modules/: gut → energy → bloodSugar; core/module.ts), then the key moments
+ * frozen order (modules/: activity → gut → energy → bloodSugar; core/module.ts), then the key moments
  * (events.ts) and the particles for the picture (particles.ts). The result (result.ts) is the
  * signal table plus the few things that are not signals; the view helpers (view.ts) read it.
  */
@@ -47,8 +50,9 @@ const isMeal = (input: RunInput | Meal): input is Meal => 'liquid' in input
  *   - `simulate(input: RunInput, { lookup })`: what the app runs (useRun). The foods are looked up
  *     by id with `lookup`, exactly as `buildMeal` does;
  *   - `simulate(meal)`: a built Meal, for the default person (a wrapper the tests use).
- * An unknown organism or profile throws: the UI never passes one (a link's unknown `o` already
- * became human, and an unknown `who` was dropped, in share.ts).
+ * An unknown organism or profile, or an activity plan outside the codec's limits (core/activity.ts),
+ * throws: the UI never passes one (a link's unknown `o` already became human, and an unknown `who`
+ * or a bad bout was dropped, in share.ts).
  */
 export function simulate(meal: Meal, opts?: SimOptions): RunResult
 export function simulate(input: RunInput, opts: SimOptions & { lookup: FoodLookup }): RunResult
@@ -62,14 +66,23 @@ export function simulate(input: RunInput | Meal, opts: SimOptions & { lookup?: F
   else throw new Error('simulate: a RunInput needs opts.lookup to find its foods')
   const profileId: string = isMeal(input) ? DEFAULT_PROFILE[model.id] : (input.profile ?? DEFAULT_PROFILE[model.id])
   if (!isProfileId(profileId) || PROFILES[profileId].organism !== model.id) throw new Error(`simulate: unknown profile "${profileId}"`)
-  return simulateHuman(meal, model, PROFILES[profileId], opts.particles ?? 48)
+  const activity = (isMeal(input) ? opts.activity : input.activity) ?? []
+  const problems = activityProblems(activity)
+  if (problems.length) throw new Error(`simulate: ${problems.join('; ')}`)
+  return simulateHuman(meal, sortBouts(activity), model, PROFILES[profileId], opts.particles ?? 48)
 }
 
-function simulateHuman(meal: Meal, model: OrganismModel<Params>, profile: ProfileDef, particleCount: number): RunResult {
+function simulateHuman(
+  meal: Meal,
+  activity: readonly ActivityBout[],
+  model: OrganismModel<Params>,
+  profile: ProfileDef,
+  particleCount: number,
+): RunResult {
   const { params } = model
   const step = params.stepMin
   const n = Math.floor(params.horizonMin / step) + 1
-  const out = runModules(model.modules, { input: { meal }, params, profile, n, stepMin: step })
+  const out = runModules(model.modules, { input: { meal, activity }, params, profile, n, stepMin: step })
   const get = (id: Parameters<typeof out.signals.get>[0]) => out.signals.get(id)!.values
 
   // The key moments, from what the gut and bloodSugar modules wrote (E-3b-eng moves them into the
@@ -95,6 +108,7 @@ function simulateHuman(meal: Meal, model: OrganismModel<Params>, profile: Profil
     modelVersion: model.modelVersion,
     meal,
     profile: profile.id,
+    activity,
     curves,
     stomachArrivalMin: arrival,
     stepMin: step,

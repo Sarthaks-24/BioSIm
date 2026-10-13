@@ -65,5 +65,14 @@ export const fattyMeal = food({
   glycemicIndex: { value: 60, reference: 'glucose' },
 })
 
-export const all = [glucose50, water, standardMeal, bread50, fattyMeal]
+/** Charrière et al. 2016's drink: 60 g glucose in 500 mL water (240 kcal). */
+export const glucose60 = food({
+  id: 'glucose-60',
+  phase: 'liquid',
+  grams: 560,
+  nutrients: { energyKcal: 240, carbsG: 60, sugarsG: 60, fiberG: 0, proteinG: 0, fatG: 0, waterG: 500 },
+  glycemicIndex: { value: 100, reference: 'glucose' },
+})
+
+export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60]
 export const lookup = (id: string) => all.find((f) => f.id === id)

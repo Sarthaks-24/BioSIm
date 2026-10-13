@@ -5,6 +5,11 @@
  * It also writes, for bloodSugar, the grams of carbohydrate leaving the stomach each minute per
  * phase (liquid / solid), and for the "leftovers" moment the running total of fibre reaching the
  * colon. Those are internal arrays (`x.*`), never shown.
+ *
+ * E-3b-eng: it also writes the grams absorbed per minute (gut.absorbRate.*, the rate of each
+ * gut.absorbed.* total, which the energy module's food effect reads) and the running total of the
+ * meal's water leaving the body (x.gut.leftWaterG, for the water balance). Activity never reaches
+ * the gut in v3.0 (model D6, C3): the gut reads no activity.
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
@@ -17,6 +22,17 @@ import type { ModelModule } from '../core/module.ts'
 export const CARBS_OUT = { liquid: 'x.gut.liquidCarbsOutG', solid: 'x.gut.solidCarbsOutG' } as const
 /** Running total of fibre (leftovers) that has reached the colon, g. */
 export const LEFTOVERS_IN_COLON = 'x.gut.leftoversInColonG'
+/** Running total of the meal's water that has left the body (in faeces), g: the water part of gut.leftBodyG. */
+export const LEFT_WATER = 'x.gut.leftWaterG'
+
+/** The absorbed-per-minute signal of each nutrient that has one (model ACTIVATION_LOG, E-3b-eng). */
+export const ABSORB_RATE_ID = {
+  carbs: 'gut.absorbRate.carbs',
+  protein: 'gut.absorbRate.protein',
+  fat: 'gut.absorbRate.fat',
+  water: 'gut.absorbRate.water',
+} as const satisfies Partial<Record<NutrientKind, string>>
+const RATE_KINDS = Object.keys(ABSORB_RATE_ID) as (keyof typeof ABSORB_RATE_ID)[]
 
 /** Minute the meal starts arriving in the stomach (end of eating + swallow). */
 export const stomachArrivalMin = (meal: Meal, params: Params): number => meal.eatingMin + params.esophagus.transitMin
@@ -37,8 +53,9 @@ export const gutModule: ModelModule = {
     'gut.absorbed.waterG',
     'gut.absorbed.fibreG',
     'gut.leftBodyG',
+    ...RATE_KINDS.map((k) => ABSORB_RATE_ID[k]),
   ],
-  internal: [CARBS_OUT.liquid, CARBS_OUT.solid, LEFTOVERS_IN_COLON],
+  internal: [CARBS_OUT.liquid, CARBS_OUT.solid, LEFTOVERS_IN_COLON, LEFT_WATER],
   run(ctx) {
     const { params, n } = ctx
     const { meal } = ctx.input
@@ -83,6 +100,7 @@ export const gutModule: ModelModule = {
     const colonG = zeros()
     const excretedG = zeros()
     const leftoversInColonCum = zeros()
+    const leftWaterCum = zeros()
     const absorbedG = {} as Record<NutrientKind, Float64Array>
     for (const k of NUTRIENT_KINDS) {
       const small = runSegment(outflow[k], siT, params.absorbedInSmallIntestine[k], params.absorptionTauMin[k])
@@ -99,6 +117,7 @@ export const gutModule: ModelModule = {
         abs[i] = small.absorbedCum[i]! + large.absorbedCum[i]!
         out += large.outflow[i]!
         excretedG[i]! += out
+        if (k === 'water') leftWaterCum[i] = out
         // Leftovers = fibre, the part the body cannot digest. Small unabsorbed amounts of sugar,
         // protein or fat are fermented by gut bacteria and don't count as "left over".
         if (k === 'fiber') {
@@ -122,5 +141,14 @@ export const gutModule: ModelModule = {
     ctx.put(CARBS_OUT.liquid, carbsOut.liquid)
     ctx.put(CARBS_OUT.solid, carbsOut.solid)
     ctx.put(LEFTOVERS_IN_COLON, leftoversInColonCum)
+    ctx.put(LEFT_WATER, leftWaterCum)
+    // Grams absorbed in the step that ends at minute i, per minute (index 0: what is already in).
+    // Never below 0: the running total can dip by rounding (1e-14 g) where nothing is absorbed.
+    for (const k of RATE_KINDS) {
+      const total = absorbedG[k]
+      const rate = zeros()
+      for (let i = 0; i < n; i++) rate[i] = Math.max(0, total[i]! - (i > 0 ? total[i - 1]! : 0)) / step
+      ctx.put(ABSORB_RATE_ID[k], rate)
+    }
   },
 }

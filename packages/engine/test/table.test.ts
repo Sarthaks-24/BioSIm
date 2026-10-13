@@ -38,7 +38,7 @@ const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 /** The run's modules again, for the arrays they wrote (Float64, before the table's copy). */
 const modulesOf = (sim: RunResult) =>
   runModules(HUMAN_MODULES, {
-    input: { meal: sim.meal },
+    input: { meal: sim.meal, activity: sim.activity },
     params: PARAMS,
     profile: PROFILES[sim.profile],
     n: sim.length,

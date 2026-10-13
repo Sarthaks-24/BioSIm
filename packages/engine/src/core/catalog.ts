@@ -9,7 +9,7 @@
  *     means the same quantity, unit and definition in every organism that provides it.
  *     New anatomy gets new segments (gut.rumen.*, leaf.*, cell.*, gill.*).
  *   - Derived views (% of meal, rise above fasting, per kg) are HELPERS (core/derive.ts), not IDs.
- *   - Rows with shipsIn 'v2.0' are produced by the engine. All other rows are RESERVED names: they
+ *   - Rows with shipsIn 'v2.0' or 'v3.0' are produced by the engine. All other rows are RESERVED names: they
  *     exist so nobody invents a new name for the same thing. The engine must not emit them yet.
  *   - This file is the lean catalog the first download carries: active rows, events, IDs and
  *     types. Reserved rows and each row's `definition` and `retired` names are in catalog-docs.ts.
@@ -29,11 +29,11 @@ export type Unit =
   'g' | 'g/min' | 'g/h' | 'kcal' | 'kcal/h' | 'kcal/min' | 'mg/dL' | 'xFasting' | 'beats/min' | 'breaths/min' | 'mL/min' | 'min'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
-/** Which release produces the signal. Only 'v2.0' is active. The others match ROADMAP bundles D, E, F. */
-export type ShipsIn = 'v2.0' | 'lookInside' | 'bloodSugar' | 'alwaysRunning'
+/** Which release produces the signal: 'v2.0' and 'v3.0' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
+export type ShipsIn = 'v2.0' | 'v3.0' | 'v3.1' | 'lookInside' | 'bloodSugar' | 'alwaysRunning'
 
 // ─── IDs ─────────────────────────────────────────────────────────────────────────────────────
-/** Glossary rows 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13. The engine produces exactly these in v2.0. */
+/** Glossary rows 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, then version 3's. The engine produces exactly these. */
 export const ACTIVE_SIGNAL_IDS = [
   'gut.stomach.contentG',
   'gut.stomach.liquidG',
@@ -51,15 +51,19 @@ export const ACTIVE_SIGNAL_IDS = [
   'energy.inTotal',
   'energy.usedRate',
   'energy.usedTotal',
+  // Model version 3 (E-3b-eng, model §2.1 and ACTIVATION_LOG). Added at the end, so every earlier row keeps its place.
+  'gut.absorbRate.carbs',
+  'gut.absorbRate.protein',
+  'gut.absorbRate.fat',
+  'gut.absorbRate.water',
+  'energy.activityRate',
+  'energy.activityTotal',
+  'energy.foodEffectRate',
 ] as const
 
 /** Glossary rows 3, 7, 14–20. Reserved names: typed and documented, NOT produced yet. */
 export const RESERVED_SIGNAL_IDS = [
   'gut.stomach.outflowRate',
-  'gut.absorbRate.carbs',
-  'gut.absorbRate.protein',
-  'gut.absorbRate.fat',
-  'gut.absorbRate.water',
   'blood.insulin',
   'liver.glucoseOutput',
   'liver.glycogenG',
@@ -76,6 +80,8 @@ export const EVENT_IDS = [
   'event.glucoseBackToBase',
   'event.mostlyAbsorbed',
   'event.firstLeftovers',
+  'event.activityStart',
+  'event.activityEnd',
 ] as const
 
 export type ActiveSignalId = (typeof ACTIVE_SIGNAL_IDS)[number]
@@ -138,6 +144,21 @@ export const isChartable = (m: SignalMeta): m is ChartableMeta => m.status !== '
 const k = (id: string) => `signals.${id}`
 const GUT_EMPTYING = ['ziessman2009', 'brener1983', 'hunt1975', 'abell2008', 'siegel1988'] as const
 const GUT_TRANSIT = ['openstax-ap2e-23', 'nandhra2023'] as const
+/** The Compendium (MET and its conversion) and the person's weight (ICMR-NIN 2020 reference man). */
+const ACTIVITY_SOURCES = ['herrmann2024', 'icmr-nin2020'] as const
+const absorbRate = <Id extends 'gut.absorbRate.carbs' | 'gut.absorbRate.protein' | 'gut.absorbRate.fat' | 'gut.absorbRate.water'>(
+  id: Id,
+): SignalMeta<Id> => ({
+  id,
+  unit: 'g/min',
+  status: 'simulated',
+  clock: 'sim',
+  kind: 'rate',
+  sourceIds: ['openstax-ap2e-23'],
+  i18nKey: k(id),
+  reactsToMeal: true,
+  shipsIn: 'v3.0',
+})
 
 /**
  * The rows the engine produces (shipsIn 'v2.0'): what the screen needs to draw, label and source a
@@ -350,6 +371,54 @@ export const SIGNALS: { readonly [Id in ActiveSignalId]: SignalMeta<Id> } = {
     round: 5,
     limitKey: 'limits.energyUsedResting',
   },
+
+  // ── Model version 3 (E-3b-eng) ──
+  // The rate of each running total gut.absorbed.*: grams absorbed in the step that ends at that minute, per minute.
+  'gut.absorbRate.carbs': absorbRate('gut.absorbRate.carbs'),
+  'gut.absorbRate.protein': absorbRate('gut.absorbRate.protein'),
+  'gut.absorbRate.fat': absorbRate('gut.absorbRate.fat'),
+  'gut.absorbRate.water': absorbRate('gut.absorbRate.water'),
+  // Energy used by moving, above rest (net MET, model D3). Never beside food energy in a sentence.
+  'energy.activityRate': {
+    id: 'energy.activityRate',
+    unit: 'kcal/h',
+    status: 'assumption',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: ACTIVITY_SOURCES,
+    i18nKey: k('energy.activityRate'),
+    reactsToMeal: false,
+    shipsIn: 'v3.0',
+    round: 5,
+    limitKey: 'limits.activityMet',
+  },
+  'energy.activityTotal': {
+    id: 'energy.activityTotal',
+    unit: 'kcal',
+    status: 'assumption',
+    clock: 'sim',
+    kind: 'runningTotal',
+    sourceIds: ACTIVITY_SOURCES,
+    i18nKey: k('energy.activityTotal'),
+    reactsToMeal: false,
+    shipsIn: 'v3.0',
+    round: 5,
+    limitKey: 'limits.activityMet',
+  },
+  // Energy used by digesting and storing the meal (thermic effect of food, model §2.1).
+  'energy.foodEffectRate': {
+    id: 'energy.foodEffectRate',
+    unit: 'kcal/h',
+    status: 'assumption',
+    clock: 'sim',
+    kind: 'rate',
+    sourceIds: ['westerterp2004', 'reed1996'],
+    i18nKey: k('energy.foodEffectRate'),
+    reactsToMeal: true,
+    shipsIn: 'v3.0',
+    round: 1,
+    limitKey: 'limits.foodEffect',
+  },
 }
 
 export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
@@ -407,6 +476,30 @@ export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
     sourceIds: ['nandhra2023', 'openstax-ap2e-23', 'wang2015'],
     i18nKey: k('event.firstLeftovers'),
     shipsIn: 'v2.0',
+  },
+
+  // The first bout's start and the last bout's end (the plan's own times; never when there is no bout).
+  'event.activityStart': {
+    id: 'event.activityStart',
+    unit: 'min',
+    status: 'assumption',
+    clock: 'sim',
+    foundOn: 'energy.activityRate',
+    hasRange: false,
+    sourceIds: ['herrmann2024'],
+    i18nKey: k('event.activityStart'),
+    shipsIn: 'v3.0',
+  },
+  'event.activityEnd': {
+    id: 'event.activityEnd',
+    unit: 'min',
+    status: 'assumption',
+    clock: 'sim',
+    foundOn: 'energy.activityRate',
+    hasRange: false,
+    sourceIds: ['herrmann2024'],
+    i18nKey: k('event.activityEnd'),
+    shipsIn: 'v3.0',
   },
 }
 

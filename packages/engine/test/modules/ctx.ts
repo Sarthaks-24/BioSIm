@@ -7,6 +7,7 @@ import {
   type SignalStore,
   type Meal,
   type Written,
+  type ActivityBout,
 } from '../../src/index.ts'
 import { runModules } from '../../src/run.ts'
 
@@ -22,6 +23,7 @@ export function runAlone(
   meal: Meal,
   upstream: Partial<Record<ModuleSignalId, Written>> = {},
   params: Params = PARAMS,
+  activity: readonly ActivityBout[] = [],
 ): SignalStore {
   const ids = Object.keys(upstream) as ModuleSignalId[]
   const source: ModelModule = {
@@ -34,7 +36,8 @@ export function runAlone(
       for (const id of ids) ctx.put(id, upstream[id]!.values, upstream[id]!.band)
     },
   }
-  return runModules([source, module], { input: { meal }, params, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }).signals
+  return runModules([source, module], { input: { meal, activity }, params, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin })
+    .signals
 }
 
 /** A deep copy of PARAMS with one number changed. */

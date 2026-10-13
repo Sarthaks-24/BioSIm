@@ -29,50 +29,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     reactsToMeal: true,
     shipsIn: 'lookInside',
   },
-  'gut.absorbRate.carbs': {
-    id: 'gut.absorbRate.carbs',
-    unit: 'g/min',
-    status: 'simulated',
-    clock: 'sim',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('gut.absorbRate.carbs'),
-    reactsToMeal: true,
-    shipsIn: 'lookInside',
-  },
-  'gut.absorbRate.protein': {
-    id: 'gut.absorbRate.protein',
-    unit: 'g/min',
-    status: 'simulated',
-    clock: 'sim',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('gut.absorbRate.protein'),
-    reactsToMeal: true,
-    shipsIn: 'lookInside',
-  },
-  'gut.absorbRate.fat': {
-    id: 'gut.absorbRate.fat',
-    unit: 'g/min',
-    status: 'simulated',
-    clock: 'sim',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('gut.absorbRate.fat'),
-    reactsToMeal: true,
-    shipsIn: 'lookInside',
-  },
-  'gut.absorbRate.water': {
-    id: 'gut.absorbRate.water',
-    unit: 'g/min',
-    status: 'simulated',
-    clock: 'sim',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('gut.absorbRate.water'),
-    reactsToMeal: true,
-    shipsIn: 'lookInside',
-  },
   'blood.insulin': {
     id: 'blood.insulin',
     unit: 'xFasting',
@@ -241,6 +197,20 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Grams of water absorbed per minute (small + large intestine).',
     retired: ['gut.si.absorbRate.water'],
   },
+  'energy.activityRate': {
+    definition:
+      'Energy used per hour by moving, above resting use: (MET − 1)·3.5·kg/200 kcal/min × 60, with the 2024 Compendium MET of the bout (net MET, model D3). 0 at rest.',
+    retired: ['activity.kcalRate', 'energy.activity.rate'],
+  },
+  'energy.activityTotal': {
+    definition: 'Running total of energy.activityRate since the meal started.',
+    retired: ['activity.kcalTotal', 'energy.activity.total'],
+  },
+  'energy.foodEffectRate': {
+    definition:
+      'Energy used per hour to digest and store the meal (thermic effect of food): shares of the absorbed carbohydrate, protein and fat energy (Westerterp 2004), through a first-order lag.',
+    retired: ['energy.tef', 'energy.dit'],
+  },
   'blood.insulin': {
     definition: "Plasma insulin as a multiple of the fasting level. NOT today's lagged 'insulin action' term in glucose.ts.",
     retired: ['insulin.relative', 'insulin.action', 'pancreas.insulinAction', 'pancreas.insulinSecretion'],
@@ -297,6 +267,14 @@ export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
     definition:
       'Leftovers (fibre the body cannot digest) start leaving the body. Typical value plus a low–high range that depends mostly on the person. Absent if < 1 g fibre.',
     retired: ['events.firstExit', 'events.exit'],
+  },
+  'event.activityStart': {
+    definition: 'Minute the first activity bout of the plan starts. Absent when the person only rests.',
+    retired: [],
+  },
+  'event.activityEnd': {
+    definition: 'Minute the last activity bout of the plan ends. Absent when the person only rests.',
+    retired: [],
   },
 }
 

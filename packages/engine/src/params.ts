@@ -128,6 +128,42 @@ export const PARAMS = {
       protein: 4,
       fat: 9,
     },
+    /**
+     * The food effect (thermic effect of food, model §2.1): digesting and storing what was absorbed
+     * costs energy. Share of each absorbed nutrient's Atwater energy, the middle of Westerterp
+     * 2004's "0 to 3% for fat, 5 to 10% for carbohydrate, 20 to 30% for protein". It reaches the
+     * body's energy use through a first-order lag. tauMin is calibrated on the consensus test meal
+     * (Abell 2008, 255 kcal): 59 % of its 6 h effect comes in the first 3 h (Reed & Hill 1996:
+     * 60 %). The plan's first guess, 60 min, gave 44 %: the gut model already spreads absorption
+     * over ~3 h, so little lag is left for the body (E-3b-eng calibration, docs/MODEL.md).
+     */
+    foodEffect: {
+      carbs: 0.075,
+      protein: 0.25,
+      fat: 0.02,
+      tauMin: 20,
+    },
+  },
+
+  /**
+   * Activity (model §2.1, D3). A MET is an activity's energy cost as a multiple of 3.5 mL O2 per kg
+   * per minute, and 1 L O2 ≈ 5 kcal, so kcal/min = MET·3.5·kg/200 (2024 Adult Compendium,
+   * Herrmann 2024 and pacompendium.com "Unit conversions"). The model keeps the person's own resting
+   * use (energy.usedRate) and adds only the cost above rest, (MET − 1)·3.5·kg/200 (net MET, ACSM):
+   * MET 1 is exactly rest. METs are the 2024 Compendium rows of core/activity.ts.
+   */
+  activity: {
+    restO2MlPerKgMin: 3.5,
+    kcalPerLO2: 5,
+    met: {
+      walk: 3.8,
+      walkBrisk: 4.8,
+      run: 9.3,
+      sitClass: 1.8,
+      football: 7.0,
+      cricket: 4.8,
+      badminton: 5.5,
+    },
   },
 
   glucose: {

@@ -13,6 +13,7 @@
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
 import { EVENTS, SIGNALS, type ActiveSignalId, type EventId, type SignalId, type SignalMeta } from './catalog.ts'
+import type { ActivityBout } from './activity.ts'
 import type { ProfileDef } from './profile.ts'
 import type { EventPoint, Rhythm } from './signal.ts'
 
@@ -49,9 +50,10 @@ export interface Band {
   high: Float64Array
 }
 
-/** What a run is about. Later: the activity bouts (E-3b). */
+/** What a run is about: the meal and the activity bouts (empty = resting all the time; E-3b-eng). */
 export interface ModuleInput {
   meal: Meal
+  activity: readonly ActivityBout[]
 }
 
 /** What a module sees while it runs. */
@@ -82,7 +84,7 @@ export interface ModelModule<P = Params> {
   readonly needs: readonly ModuleSignalId[]
   readonly provides: readonly ActiveSignalId[]
   readonly internal?: readonly InternalId[]
-  /** Timeline markers it writes with `putMoment`. Today's five still come from events.ts after the run (E-3b-eng moves them). */
+  /** Timeline markers it writes with `putMoment` (activity's two). The five meal moments still come from events.ts after the run. */
   readonly moments?: readonly EventId[]
   /** Real-clock rates it writes with `putRhythm` (heart, breathing: S-2, S-3). */
   readonly rhythms?: readonly ActiveSignalId[]

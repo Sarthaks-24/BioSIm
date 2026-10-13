@@ -174,6 +174,58 @@ export const SOURCES = {
     citation:
       'FAO/WHO. Carbohydrates in human nutrition. Report of a Joint FAO/WHO Expert Consultation. FAO Food and Nutrition Paper 66. Rome, 1998.',
   },
+  // ── New in model version 3 (E-3b-eng: activity and the food effect) ──
+  /**
+   * Checked 2026-10-13 (V-0 item 1, V-0b item 1): "METs reflect the ratio of a PA's energy cost in
+   * mL/kg/min relative to a standardized RMR of 3.5 mL/kg/min"; pacompendium.com "1 MET = 3.5
+   * ml/kg/min", "METS to Kcal/min = multiply METS x 3.5 x body weight in kg then divide by 200".
+   * Rows read on pacompendium.com, none marked estimated: 17190 3.8, 17200 4.8, 12050 9.3, 07021 1.0;
+   * hidden kinds 09065 1.8, 15610 7.0, 15150 4.8, 15030 5.5.
+   */
+  herrmann2024: {
+    kind: 'dataset',
+    check: 'checked',
+    usedFor: '2024 Adult Compendium: MET definition, kcal/min conversion, MET of each activity',
+    url: 'https://pacompendium.com',
+    citation:
+      'Herrmann SD, et al. 2024 Adult Compendium of Physical Activities: a third update of the energy costs of human activities. J Sport Health Sci 2024;13:6–12.',
+  },
+  /**
+   * Checked 2026-10-14 (E-3b-eng, full text, Europe PMC PMC524030): "Reported DIT values for separate
+   * nutrients are 0 to 3% for fat, 5 to 10% for carbohydrate, 20 to 30% for protein"; "A mixed diet
+   * consumed at energy balance results in a diet induced energy expenditure of 5 to 15 %".
+   */
+  westerterp2004: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'food effect per nutrient (0–3 % fat, 5–10 % carbohydrate, 20–30 % protein); mixed diet 5–15 %',
+    url: 'https://doi.org/10.1186/1743-7075-1-5',
+    citation: 'Westerterp KR. Diet induced thermogenesis. Nutr Metab (Lond) 2004;1:5.',
+  },
+  /**
+   * Checked 2026-10-14 (E-3b-eng, full text, Europe PMC PMC4736092): 60 g glucose in 500 mL water,
+   * REE "peak values being reached between 50 and 60 min post-drink"; "the lower thermic effect of
+   * glucose (6·9 %)", over 150 min, by when it was "more than 90 % completed".
+   */
+  charriere2016: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'food effect of 60 g glucose: 6.9 % of its energy, peak at 50–60 min (hold-out)',
+    url: 'https://doi.org/10.1017/jns.2015.41',
+    citation:
+      'Charrière N, Montani JP, Dulloo AG. Postprandial thermogenesis and respiratory quotient in response to galactose: comparison with glucose and fructose in healthy young adults. J Nutr Sci 2016;5:e4.',
+  },
+  /**
+   * Checked 2026-10-14 (E-3b-eng, abstract via Europe PMC, PMID 8561055): 131 six-hour tests; "Of the
+   * total 6-h TEF, 60% of the total had been measured after 3 h. 78% after 4 h, and 91% after 5 h."
+   */
+  reed1996: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'timing of the food effect: 60 % of the 6 h total by 3 h, 91 % by 5 h',
+    url: 'https://doi.org/10.1093/ajcn/63.2.164',
+    citation: 'Reed GW, Hill JO. Measuring the thermic effect of food. Am J Clin Nutr 1996;63:164–169.',
+  },
   // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
@@ -254,6 +306,24 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'energy.atwaterKcalPerG.carbs': { sources: ['fao2003'], basis: 'measured' },
   'energy.atwaterKcalPerG.protein': { sources: ['fao2003'], basis: 'measured' },
   'energy.atwaterKcalPerG.fat': { sources: ['fao2003'], basis: 'measured' },
+
+  // Food effect: Westerterp 2004's per-nutrient ranges (middle values); the lag is calibrated on
+  // Reed & Hill 1996 (60 % of the 6 h effect by 3 h). Charrière 2016 is the hold-out.
+  'energy.foodEffect.carbs': { sources: ['westerterp2004'], basis: 'measured' },
+  'energy.foodEffect.protein': { sources: ['westerterp2004'], basis: 'measured' },
+  'energy.foodEffect.fat': { sources: ['westerterp2004'], basis: 'measured' },
+  'energy.foodEffect.tauMin': { sources: ['reed1996'], basis: 'calibrated' },
+
+  // Activity: the 2024 Compendium's MET definition, conversion and rows (V-0 item 1, V-0b).
+  'activity.restO2MlPerKgMin': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.kcalPerLO2': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.walk': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.walkBrisk': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.run': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.sitClass': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.football': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.cricket': { sources: ['herrmann2024'], basis: 'measured' },
+  'activity.met.badminton': { sources: ['herrmann2024'], basis: 'measured' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

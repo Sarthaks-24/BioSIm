@@ -124,7 +124,23 @@ The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 
 
 - Energy coming in uses the standard factors, so the total can differ a little from the food label. Fibre's small energy (gut bacteria ferment part of it) is left out.
 - The Atwater factors already allow for the part of each nutrient the body does not absorb (FAO 2003). Applying them to absorbed grams counts that loss twice, so energy in reads a few per cent low.
-- Energy used is a formula for one resting adult, not a measurement. It leaves out digesting the meal and any movement, and it does not change with the meal.
+- Energy used is a formula for one resting adult, not a measurement. It does not change with the meal; moving and digesting are separate lines (next section).
+
+## Moving and digesting (model version 3)
+
+Two more ways the body uses energy, both status *assumption* ("Model estimate"). Neither changes digestion, blood sugar or energy coming in: in this version moving has no arrow into the gut or blood sugar.
+
+**Energy used by moving** (`energy.activityRate`, `energy.activityTotal`). A run can carry activity bouts (walk, brisk walk, run; `core/activity.ts`). A MET is an activity's energy cost as a multiple of 3.5 mL O2 per kg per minute, and 1 L O2 ≈ 5 kcal, so the Compendium's cost is MET × 3.5 × kg / 200 kcal/min (Herrmann 2024; pacompendium.com). The model keeps its own resting use and adds only the cost above rest:
+
+    moving (kcal/min) = (MET − 1) × 3.5 × 65 / 200
+
+Walk 3.8 (17190), brisk walk 4.8 (17200), run 9.3 (12050), from the 2024 Adult Compendium; MET 1 adds exactly 0, so a resting run is unchanged to the byte. A 20-min walk adds 63.7 kcal.
+
+**Energy used to digest** (`energy.foodEffectRate`, the thermic effect of food). Digesting and storing what was absorbed costs a share of its energy: 7.5 % of carbohydrate, 25 % of protein, 2 % of fat, the middle of Westerterp 2004's ranges. It follows absorption through a 20-min lag, calibrated so the consensus test meal gives 59 % of its 6 h effect in the first 3 h (Reed & Hill 1996: 60 %). The plan's first guess, 60 min, gave 44 %: the gut model already spreads absorption over about 3 h.
+
+**Golden tests** (`test/activity.test.ts`): the Compendium rows; gross O2 use in a walk and a run within ±5 % of MET × 3.5 × kg; a mixed meal's 6 h food effect 5–15 % of its energy (Westerterp 2004); 60 g glucose 4–10 % over 150 min (Charrière 2016: 6.9 %, a hold-out); 50–75 % of the 6 h effect in 3 h (Reed & Hill 1996).
+
+**Limits.** METs are averages for a 65 kg adult; the extra energy used after stopping is left out. Two known limits are marked in the tests: 60 g glucose peaks at about 115 min, not 50–60 min (the stomach lets the drink through at a steady rate, so absorption is flat for 2 h), and roti or idli with dal gives under half of its 6 h effect by 3 h (solids leave the stomach slowly in this model).
 
 ## Signals
 
@@ -192,6 +208,10 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 17. FAO. *Food energy – methods of analysis and conversion factors.* FAO Food and Nutrition Paper 77. Rome, 2003.
 18. Merrill AL, Watt BK. *Energy value of foods: basis and derivation.* Agriculture Handbook No. 74. US Department of Agriculture, Washington DC, 1955.
 19. FAO/WHO. *Carbohydrates in human nutrition.* Report of a Joint FAO/WHO Expert Consultation. FAO Food and Nutrition Paper 66. Rome, 1998.
+20. Herrmann SD, et al. 2024 Adult Compendium of Physical Activities: a third update of the energy costs of human activities. *J Sport Health Sci* 2024;13:6–12.
+21. Westerterp KR. Diet induced thermogenesis. *Nutr Metab (Lond)* 2004;1:5.
+22. Charrière N, Montani JP, Dulloo AG. Postprandial thermogenesis and respiratory quotient in response to galactose: comparison with glucose and fructose in healthy young adults. *J Nutr Sci* 2016;5:e4.
+23. Reed GW, Hill JO. Measuring the thermic effect of food. *Am J Clin Nutr* 1996;63:164–169.
 
 The food data comes from:
 

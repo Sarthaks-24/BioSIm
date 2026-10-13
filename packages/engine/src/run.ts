@@ -5,8 +5,10 @@
 // coverage) are imported by the tests from their own files, and anything the screen needs without
 // running belongs in the main entry.
 export { simulate, HUMAN_MODEL, ORGANISM_MODELS, type SimOptions } from './simulate.ts'
-export { HUMAN_MODULES, HUMAN_PROVIDES, PROVIDES, gutModule, energyModule, bloodSugarModule } from './modules/index.ts'
-export { CARBS_OUT, LEFTOVERS_IN_COLON, stomachArrivalMin } from './modules/gut.ts'
+export { HUMAN_MODULES, HUMAN_PROVIDES, PROVIDES, activityModule, gutModule, energyModule, bloodSugarModule } from './modules/index.ts'
+export { ABSORB_RATE_ID, CARBS_OUT, LEFTOVERS_IN_COLON, LEFT_WATER, stomachArrivalMin } from './modules/gut.ts'
+export { ACTIVITY_MET } from './modules/activity.ts'
+export { ENERGY_TOTAL } from './modules/energy.ts'
 export { runModules } from './core/module.ts'
 export { buildMoments, buildSignalTable } from './core/table.ts'
 export { computeEvents } from './events.ts'

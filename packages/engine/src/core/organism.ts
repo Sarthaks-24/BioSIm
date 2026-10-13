@@ -4,6 +4,7 @@
  * The profile data live in `core/profile.ts`. Plan: plans/v2 plan-organisms.md.
  */
 import type { MealItem } from '../meal.ts'
+import type { ActivityBout } from './activity.ts'
 import type { ActiveSignalId } from './catalog.ts'
 import type { ModelModule } from './module.ts'
 
@@ -26,6 +27,8 @@ export interface HumanInput {
   items: MealItem[]
   /** Absent ⇒ DEFAULT_PROFILE.human. Sets energy.usedRate (core/profile.ts). */
   profile?: ProfileId
+  /** Activity bouts (core/activity.ts). Absent or empty ⇒ resting all the time: the same run as before E-3b. */
+  activity?: readonly ActivityBout[]
 }
 /**
  * One organism's model: its version, clock, parameter set and modules. `simulate()` puts `params` into
