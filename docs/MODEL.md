@@ -102,7 +102,7 @@ Two lines on one kcal/h axis: the food energy from this meal **coming in**, and 
 
 The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 2003, §3.5.1; `PARAMS.energy.atwaterKcalPerG`). They are applied to the grams the absorption model has taken into the body, so the line rises as the meal is absorbed. The rate is the change per minute, × 60 (kcal/h).
 
-**Energy used at rest** (`energy.usedRate`, `energy.usedTotal`): status *assumption* ("Best guess").
+**Energy used at rest** (`energy.usedRate`, `energy.usedTotal`): status *assumption* ("Model estimate").
 
     resting use (kcal/day) = (15.057 × 65 + 692.2) × 0.9 = 1503.8 kcal/day ≈ 62.7 kcal/h
 
@@ -128,7 +128,7 @@ The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
 
-"Status" is what the screen says: *simulated* = "Calculated from studies", *assumption* = "Best guess".
+"Status" is what the screen says: *simulated* = "Calculated from studies", *assumption* = "Model estimate".
 
 | ID | Unit | Status | Built from | Checked by golden tests against |
 |---|---|---|---|---|

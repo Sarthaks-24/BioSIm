@@ -18,7 +18,7 @@ import { golden, pinned } from './golden.ts'
 
 /**
  * Energy in vs used (WP-06, M5). "In" is calculated from studies: the Atwater factors applied to
- * the absorbed grams. "Used" is a best guess: a resting-energy formula for the stated person,
+ * the absorbed grams. "Used" is a model estimate: a resting-energy formula for the stated person,
  * the same for every meal. The published figures are in the test titles; docs/MODEL.md has the
  * references.
  */

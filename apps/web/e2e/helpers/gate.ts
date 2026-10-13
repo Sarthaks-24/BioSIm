@@ -590,8 +590,8 @@ export const RED_LIST: Record<string, Mode> = {
   B20: 'report',
   B21: 'report',
   B22: 'report',
-  B23: 'report',
-  B24: 'report',
+  B23: 'enforce',
+  B24: 'enforce',
   B25: 'report',
 }
 

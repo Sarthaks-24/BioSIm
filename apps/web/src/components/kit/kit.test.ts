@@ -22,7 +22,7 @@ void i18n.use(initReactI18next).init({
         ...en,
         status: {
           simulated: { label: 'Calculated from studies', help: 'Worked out by the model.' },
-          assumption: { label: 'Best guess', help: 'A formula or estimate.' },
+          assumption: { label: 'Model estimate', help: 'Worked out by the maths, not measured.' },
           illustration: { label: 'Drawing only', help: 'A picture to show the idea.' },
         },
         profiles: { 'adult-ref': { tag: 'Typical adult', desc: 'ICMR-NIN 2020 reference adult man.' } },
@@ -86,7 +86,7 @@ describe('component kit', () => {
     const shapes = new Set<string>()
     for (const [status, word] of [
       ['simulated', 'Calculated from studies'],
-      ['assumption', 'Best guess'],
+      ['assumption', 'Model estimate'],
       ['illustration', 'Drawing only'],
     ] as const) {
       const html = render(h(StatusTag, { status }))

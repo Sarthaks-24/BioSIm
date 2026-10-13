@@ -16,13 +16,21 @@ const now = async (page: Page) => Number(await page.getByRole('slider', { name: 
 const front = (page: Page, name: string) => page.getByRole('group', { name: 'Graphs' }).getByRole('button', { name, pressed: true })
 
 test('every lesson-plan step names a control the stage has', async ({ page }) => {
-  // Step 2: open cola with burger + fries kept (the first ready lesson) and press Play.
+  // Step 2: open cola with burger + fries kept (the first ready lesson). It opens at 35 min; Home
+  // goes back to eating, then press Play (B23).
   await page.goto('/teach')
   await expect(page.getByRole('heading', { name: 'A 40-minute lesson plan' })).toBeVisible()
-  await expect(page.getByRole('listitem').filter({ hasText: /^Open cola with burger \+ fries kept/ })).toBeVisible()
-  await page.goto(presetHref(LESSONS[0]!).replace(/&t=\d+/, ''))
+  await expect(
+    page
+      .getByRole('listitem')
+      .filter({ hasText: new RegExp(`^Open cola with burger \\+ fries kept.*opens at ${LESSONS[0]!.t} min; press Home`) }),
+  ).toBeVisible()
+  await page.goto(presetHref(LESSONS[0]!))
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+  expect(await now(page)).toBe(LESSONS[0]!.t)
   await expect(page.locator('[data-line="kept"]').filter({ visible: true }).first()).toBeVisible()
+  await page.locator('body').press('Home')
+  await expect.poll(() => now(page)).toBe(0)
   await page.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Pause', exact: true }).click()
