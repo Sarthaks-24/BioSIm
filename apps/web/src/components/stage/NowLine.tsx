@@ -7,8 +7,8 @@ import { isDrinkOnly } from '../../lib/summary.ts'
 import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } from '../../lib/nowWhere.ts'
 import { useClock } from '../../state/clock.ts'
 import { useRunStore } from '../../state/run.ts'
-import { LineSwatch } from './KeptTag.tsx'
-import { shortMealNames } from './mealText.ts'
+import { LineSwatch, UnkeepButton } from './KeptTag.tsx'
+import { mealNames, shortMealNames } from './mealText.ts'
 
 /**
  * The organ the body lights (activeStage), for the full stage text ("More").
@@ -142,7 +142,8 @@ function WhereRow({ w, open, onToggle, pillRef, panelId, drink }: PillProps) {
  * gut has finished with the meal the pill says "Done" (review 14-17: never "Stomach" at 30 h).
  *
  * Every row keeps the height of its longest version (invisible copies in the same grid cell), so
- * the body above never jumps while playing.
+ * the body never jumps while playing. On a phone the kept row also stands in for the meal bar's
+ * kept tag (styles.css): it names the kept meal and has its ✕ (WP-18).
  */
 export function NowLine({
   run,
@@ -211,16 +212,15 @@ export function NowLine({
           <span className="grid">
             {keptVersions.map((v) => (
               <span key={v} aria-hidden="true" className={`invisible ${cell}`}>
-                <span className="max-lg:hidden">{keptName} </span>
-                <span className="font-semibold">{v}</span>
+                {keptName} <span className="font-semibold">{v}</span>
               </span>
             ))}
             <span className={cell}>
-              {/* On a phone the meal bar right above names the kept meal, by the same dashed sample. */}
-              <span className="max-lg:sr-only">{keptName} </span>
-              <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
+              {keptName} <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
             </span>
           </span>
+          {/* On a phone this row stands in for the meal bar's kept tag (styles.css), so it has its ✕. */}
+          <UnkeepButton meal={mealNames(keptItems, i18n.language)} className="-my-2.5 ml-auto self-center rounded-control lg:hidden" />
         </p>
       )}
     </div>

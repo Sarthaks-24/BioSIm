@@ -1,6 +1,6 @@
 /**
  * The stated person (binding 8): who the run is about. UI word for humans: "person"; on-screen tag
- * for 'adult-ref': "Adult model", and "How we know" says it is the ICMR-NIN 2020 reference man.
+ * for 'adult-ref': "Typical adult" (council SHOULD 12; was "Adult model"), and "How we know" says it is the ICMR-NIN 2020 reference man.
  * Only the energy signals read the profile in v2.0; digestion and glucose use adult data for everyone.
  * Plan: plans/v2 04-CATALOG-DRAFT §4.
  */

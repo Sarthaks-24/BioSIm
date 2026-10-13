@@ -17,40 +17,47 @@ interface Props {
 /**
  * One food in the meal bar: picture, name, servings, then a separate remove button. Flat (Sunk
  * fill, 6 px corners, no border, no pill), and the two halves are split by a 2 px gap of page
- * colour so each has its own clear target. The name never wraps; the meal bar scrolls instead.
+ * colour so each has its own clear target. The name never wraps; the meal bar scrolls instead,
+ * and a chip wider than the whole row shortens its name ("Roti / chap…") before its servings or
+ * ✕ would be cut off (council MUST 9).
  */
 export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRemove }: Props) {
   const { t } = useTranslation()
   const body = (
     <>
-      <span aria-hidden="true">{emoji}</span>
-      <span className="font-semibold">{name}</span>
-      <span className="tabular text-ink-2">×{servings}</span>
+      <span aria-hidden="true" className="shrink-0">
+        {emoji}
+      </span>
+      {/* The name gives way first (it is in the button's name in full), never the servings or ✕. */}
+      <span data-may-shorten="" className="min-w-8 truncate font-semibold">
+        {name}
+      </span>
+      <span className="tabular shrink-0 text-ink-2">×{servings}</span>
     </>
   )
   const part = 'flex min-h-11 items-center gap-1.5 bg-sunk2 lg:min-h-9'
   return (
-    <span className="inline-flex shrink-0 items-stretch gap-0.5 text-control whitespace-nowrap text-ink">
+    <span className="inline-flex max-w-full shrink-0 items-stretch gap-0.5 text-control whitespace-nowrap text-ink">
       {onEdit ? (
         <button
           type="button"
           onClick={onEdit}
           aria-expanded={expanded}
           aria-label={`${name}, ${t('sim.servings')} ${servings}`}
-          className={`${part} rounded-l-control pr-1.5 pl-2.5 hover:bg-sunk2-hover`}
+          className={`${part} min-w-0 rounded-l-control pr-1.5 pl-2.5 hover:bg-sunk2-hover`}
         >
           {body}
           <ChevronDownIcon />
         </button>
       ) : (
-        <span className={`${part} rounded-l-control pr-2 pl-2.5`}>{body}</span>
+        <span className={`${part} min-w-0 rounded-l-control pr-2 pl-2.5`}>{body}</span>
       )}
       <button
         type="button"
         onClick={onRemove}
         aria-label={t('sim.remove', { name })}
         title={t('sim.remove', { name })}
-        className={`${part} w-11 justify-center rounded-r-control text-ink-2 hover:bg-sunk2-hover hover:text-ink lg:w-9`}
+        className={`${part} w-11 shrink-0 justify-center rounded-r-control text-ink-2 hover:bg-sunk2-hover hover:text-ink lg:w-9`}
       >
         <CloseIcon />
       </button>

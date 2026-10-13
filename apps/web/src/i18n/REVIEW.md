@@ -2,8 +2,15 @@
 
 Every Hindi string a native reviewer must check before it ships (00 gate 3.1). One row per
 string: its key in `hi.json`, the English, the Hindi, and its status (`draft` until a reviewer
-marks it `reviewed`). Later work packages add their new strings here (WP-18 replaces this list
-with an export script).
+marks it `reviewed by <initials> <date>`).
+
+Nobody keeps this list by hand (WP-18). After adding or changing a string in `en.json` and
+`hi.json`, run `node apps/web/scripts/hi-review.mjs --write`: new keys get a `draft` row (under
+"New strings", to move under a better heading if you like), the English and Hindi columns follow
+the JSON files, a reviewed row whose Hindi changed goes back to `draft`, and rows of deleted keys
+go. `i18n.test.ts` fails while this file is out of date. `node apps/web/scripts/hi-review.mjs`
+writes `apps/web/hi-review.csv` (key, English, Hindi, status) for the reviewer and lists every key
+not yet reviewed. Only the reviewer changes a status.
 
 Rules for the reviewer:
 
@@ -205,7 +212,7 @@ in later work packages). Notes for the reviewer:
 | `signals.energy.inTotal.desc` | Food energy from this meal that has entered the body so far. | इस भोजन से अब तक शरीर में पहुँची कुल ऊर्जा। | draft |
 | `signals.energy.usedRate.name` | Energy used at rest | आराम में खर्च होने वाली ऊर्जा | draft |
 | `signals.energy.usedRate.short` | Used | खर्च | draft |
-| `signals.energy.usedRate.desc` | Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the adult model. | वयस्क मॉडल में, आराम की हालत में शरीर को ज़िंदा रखने (साँस, धड़कन, गर्म रहना) के लिए हर घंटे खर्च होने वाली ऊर्जा। | draft |
+| `signals.energy.usedRate.desc` | Energy the body uses each hour just to stay alive at rest (breathing, heartbeat, keeping warm), for the typical adult. | सामान्य वयस्क में, आराम की हालत में शरीर को ज़िंदा रखने (साँस, धड़कन, गर्म रहना) के लिए हर घंटे खर्च होने वाली ऊर्जा। | draft |
 | `signals.energy.usedTotal.name` | Energy used so far | अब तक खर्च हुई ऊर्जा | draft |
 | `signals.energy.usedTotal.short` | Used so far | अब तक खर्च | draft |
 | `signals.energy.usedTotal.desc` | Energy the resting body has used since the meal started. It is the same for every meal. | भोजन शुरू होने के बाद से आराम करते शरीर ने जितनी ऊर्जा खर्च की है। यह हर भोजन के लिए एक जैसी है। | draft |
@@ -221,7 +228,7 @@ in later work packages). Notes for the reviewer:
 | `limits.energyInAtwater` | Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted. | हर ग्राम कार्बोहाइड्रेट या प्रोटीन को 4 किलो कैलोरी और हर ग्राम वसा को 9 किलो कैलोरी गिना जाता है, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मानक संख्याएँ पहले से मानकर चलती हैं कि भोजन का थोड़ा भाग शरीर के अंदर नहीं जा पाता। मॉडल भी केवल उतना ही गिनता है जितना शरीर के अंदर गया, इसलिए वह भाग दो बार छूट जाता है और आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे में मौजूद थोड़ी-सी ऊर्जा नहीं गिनी गई है। | draft |
 | `limits.energyUsedResting` | This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal. | यह आराम करते एक वयस्क (ICMR-NIN 2020 का संदर्भ वयस्क, 65 किलो) के लिए एक सूत्र है, कोई माप नहीं। यह भोजन के साथ नहीं बदलता। | draft |
 | `limits.backToBase` | "Back near the before-meal level" means within 5 mg/dL of it. | "खाने से पहले के स्तर के पास" का अर्थ है उससे 5 mg/dL के भीतर। | draft |
-| `profiles.adult-ref.tag` | Adult model | वयस्क मॉडल | draft |
+| `profiles.adult-ref.tag` | Typical adult | सामान्य वयस्क | draft |
 | `profiles.adult-ref.desc` | Based on the ICMR-NIN 2020 reference adult man (65 kg), at rest. Digestion times come from studies of adults. | ICMR-NIN 2020 के संदर्भ वयस्क पुरुष (65 किलो) पर आधारित, आराम की अवस्था में। पाचन के समय वयस्कों पर हुए अध्ययनों से लिए गए हैं। | draft |
 | `organisms.human.name` | Human | मनुष्य | draft |
 | `systems.digestion.name` | Digestion | पाचन | draft |
@@ -293,7 +300,7 @@ The new one-screen simulator. "Keep to compare" is the plan's proposal for "Pin 
 | `stage.thisMeal` | This meal | यह भोजन | draft |
 | `stage.keptMeal` | The kept meal | रखा गया भोजन | draft |
 | `keep.button` | Keep to compare | तुलना के लिए रखें | draft |
-| `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | इस भोजन को ग्राफ़ पर टूटी रेखा के रूप में रखता है। फिर भोजन बदलें और तुलना करें। | draft |
+| `keep.help` | Keeps this meal as a dashed line on the graphs. Then change the meal and compare. | यह भोजन ग्राफ़ पर टूटी रेखा के रूप में रखा जाता है। फिर भोजन बदलें और तुलना करें। | draft |
 | `keep.already` | This meal is the one kept | यही भोजन रखा गया है | draft |
 | `keep.tag` | Kept: {{meal}} | रखा गया: {{meal}} | draft |
 | `keep.remove` | Stop comparing with {{meal}} | {{meal}} से तुलना बंद करें | draft |
@@ -359,7 +366,7 @@ back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `home.headline` | Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours. | कोला के एक कैन का आधा भाग लगभग आधे घंटे में आमाशय से निकल जाता है। फ्राइज़ के साथ बर्गर के आधे भाग को चार घंटे से ज़्यादा लगते हैं। | draft |
+| `home.headline` | Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours. | कोला के एक कैन का आधा भाग लगभग आधे घंटे में आमाशय से निकल जाता है। फ़्राइज़ के साथ बर्गर के आधे भाग को चार घंटे से ज़्यादा लगते हैं। | draft |
 | `home.example.appleJuice` | Apple vs orange juice | सेब बनाम संतरे का रस | draft |
 | `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
 | `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
@@ -381,15 +388,15 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `now.label` | Where the meal is now | भोजन अभी कहाँ है | draft |
-| `now.more` | More | और | draft |
-| `now.moreAbout` | {{stage}}: more about this stage | {{stage}}: इस चरण के बारे में और | draft |
+| `now.more` | More | और जानें | draft |
+| `now.moreAbout` | {{stage}}: more about this stage | {{stage}}: इस चरण के बारे में और जानें | draft |
 | `now.chemistry` | Chemistry | रासायनिक क्रिया | draft |
 | `now.absorbed` | Absorbed here | यहाँ अवशोषित | draft |
 | `now.stages.mouth` | teeth grind food and saliva starts on starch | दाँत भोजन पीसते हैं, लार मंड को तोड़ना शुरू करती है | draft |
-| `now.stages.esophagus` | muscle waves push each swallow down to the stomach | पेशियों की लहरें हर निवाले को नीचे धकेलती हैं | draft |
-| `now.stages.stomach` | acid and churning turn food into chyme | अम्ल और मथना भोजन को काइम में बदलते हैं | draft |
+| `now.stages.esophagus` | muscle waves push each swallow down to the stomach | पेशियों की लहरें हर निवाले को नीचे आमाशय तक धकेलती हैं | draft |
+| `now.stages.stomach` | acid and churning turn food into chyme | अम्ल और मंथन से भोजन काइम बन जाता है | draft |
 | `now.stages.smallIntestine` | nutrients are absorbed into the body | पोषक तत्व शरीर में अवशोषित होते हैं | draft |
-| `now.stages.largeIntestine` | water is taken back from the leftovers | बचे हुए भाग से पानी वापस लिया जाता है | draft |
+| `now.stages.largeIntestine` | water is taken back from the leftovers | बचे हुए भाग से पानी वापस सोखा जाता है | draft |
 | `summary.label` | Summary | सारांश | draft |
 | `summary.single` | Half of the food energy in {{meal}} has left the stomach after {{time}}. | {{meal}} की आधी ऊर्जा {{time}} बाद आमाशय से निकल चुकी है। | draft |
 | `summary.singleWater` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
@@ -442,7 +449,7 @@ Key names (Space, Page Down, Shift …) stay in English on purpose: they are pri
 | `keys.strips` | Show the Stomach, Blood sugar or Energy graph | आमाशय, रक्त शर्करा या ऊर्जा का ग्राफ़ दिखाएँ | draft |
 | `keys.help` | This list | यह सूची | draft |
 | `keys.letters` | Letter keys | अक्षर कुंजियाँ | draft |
-| `keys.lettersHelp` | Space, K, P, T, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work. | Space, K, P, T, S, B, E और ? शॉर्टकट के रूप में। अगर ये स्क्रीन रीडर या आवाज़ से चलाने में बाधा डालें, तो इन्हें बंद करें। तीर और Page Up / Down फिर भी काम करते हैं। | draft |
+| `keys.lettersHelp` | Space, K, P, T, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work. | Space, K, P, T, S, B, E और ? शॉर्टकट का काम करते हैं। अगर ये स्क्रीन रीडर या आवाज़ से चलाने में बाधा डालें, तो इन्हें बंद करें। तीर और Page Up / Down फिर भी काम करते हैं। | draft |
 | `keys.motion` | Reduce motion | कम हलचल | draft |
 | `keys.motionHelp` | The food pieces in the body stop tumbling. The clock still moves when you press Play. | शरीर में भोजन के कण घूमना बंद कर देते हैं। चलाएँ दबाने पर घड़ी फिर भी चलती है। | draft |
 | `keys.motionDevice` | Until you choose here, this follows the device’s own setting. | जब तक आप यहाँ न चुनें, यह डिवाइस की अपनी सेटिंग के अनुसार रहता है। | draft |
@@ -491,6 +498,200 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `graph.highestOf` | {{meal}}: highest {{value}} | {{meal}}: सबसे अधिक {{value}} | draft |
 | `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
 | `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
+
+## Older strings (v1 screen and site pages, listed by WP-18)
+
+Strings from before this list existed (the v1 simulator, Home, Teach, Science). Many go with v1 in
+WP-20; until then they ship and need the same check.
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `nav.simulator` | Simulator | सिम्युलेटर | draft |
+| `nav.teach` | For teachers | शिक्षकों के लिए | draft |
+| `nav.science` | Science & sources | विज्ञान और स्रोत | draft |
+| `nav.language` | भाषा: हिन्दी | Language: English | draft |
+| `nav.languageLabel` | Switch to Hindi | अंग्रेज़ी में बदलें | draft |
+| `nav.projector` | Projector mode | प्रोजेक्टर मोड | draft |
+| `nav.skip` | Skip to content | मुख्य सामग्री पर जाएँ | draft |
+| `home.cta` | Compare two meals | दो भोजनों की तुलना करें | draft |
+| `home.hours` | hours after eating | खाने के बाद घंटे | draft |
+| `home.how.title` | How it works | यह कैसे काम करता है | draft |
+| `home.how.computed` | Nothing is typed in by hand | कुछ भी हाथ से नहीं भरा गया | draft |
+| `home.how.computedBody` | Each food is described by its nutrients and glycemic index, taken from published tables. The model works out how fast it leaves the stomach and how blood sugar responds. | हर खाद्य पदार्थ को उसके पोषक तत्वों और ग्लाइसेमिक इंडेक्स से दर्शाया गया है, जो प्रकाशित तालिकाओं से लिए गए हैं। मॉडल गणना करता है कि वह आमाशय से कितनी जल्दी निकलता है और रक्त शर्करा कैसे बदलती है। | draft |
+| `home.how.honest` | Ranges, not fake precision | सीमाएँ दिखाते हैं, नकली सटीकता नहीं | draft |
+| `home.how.honestBody` | People differ. Times in the intestines and blood sugar are shown as typical ranges for healthy adults, with the source for every input. | हर व्यक्ति अलग होता है। आँतों में लगने वाला समय और रक्त शर्करा स्वस्थ वयस्कों की सामान्य सीमा के रूप में दिखाए गए हैं, और हर इनपुट का स्रोत दिया गया है। | draft |
+| `home.how.class` | Made for the classroom | कक्षा के लिए बनाया गया | draft |
+| `home.how.classBody` | Projector mode, English and Hindi, a step-by-step text view, works offline once loaded, and a link that reopens the exact same comparison. | प्रोजेक्टर मोड, अंग्रेज़ी और हिन्दी, चरण-दर-चरण पाठ दृश्य, एक बार लोड होने के बाद बिना इंटरनेट के चलता है, और एक लिंक जो ठीक वही तुलना दोबारा खोलता है। | draft |
+| `home.examples` | Try a comparison | कोई तुलना आज़माएँ | draft |
+| `home.example.colaBurger` | Cola vs burger and fries | कोला बनाम बर्गर और फ़्राइज़ | draft |
+| `home.example.rotiRice` | Roti and dal vs white rice | रोटी और दाल बनाम सफ़ेद चावल | draft |
+| `home.example.waterMilk` | Water vs milk | पानी बनाम दूध | draft |
+| `sim.title` | Simulator | सिम्युलेटर | draft |
+| `sim.mealA` | Meal A | भोजन A | draft |
+| `sim.mealB` | Meal B | भोजन B | draft |
+| `sim.addFood` | Add food | खाद्य पदार्थ जोड़ें | draft |
+| `sim.servings` | Servings | मात्रा (सर्विंग) | draft |
+| `sim.remove` | Remove {{name}} | {{name}} हटाएँ | draft |
+| `sim.emptyMeal` | Add a food to start. | शुरू करने के लिए कोई खाद्य पदार्थ जोड़ें। | draft |
+| `sim.pickBoth` | Add a food to Meal B to compare. | तुलना के लिए भोजन B में कोई खाद्य पदार्थ जोड़ें। | draft |
+| `sim.play` | Play | चलाएँ | draft |
+| `sim.pause` | Pause | रोकें | draft |
+| `sim.restart` | Back to the start | शुरुआत पर वापस जाएँ | draft |
+| `sim.speed` | Speed | गति | draft |
+| `sim.timeline` | Timeline | समयरेखा | draft |
+| `sim.share` | Copy link | लिंक कॉपी करें | draft |
+| `sim.shareCopied` | Link copied | लिंक कॉपी हो गया | draft |
+| `sim.views` | View | दृश्य | draft |
+| `sim.view3d` | Body | शरीर | draft |
+| `sim.viewLesson` | Step by step | चरण-दर-चरण | draft |
+| `sim.reportError` | Report a mistake | गलती बताएँ | draft |
+| `sim.noWebgl` | Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same. | आपका डिवाइस यहाँ 3D नहीं दिखा सकता, इसलिए आप सपाट चित्र देख रहे हैं। बाकी सब कुछ पहले जैसा ही काम करता है। | draft |
+| `sim.oldLink` | This link was made with an older version of the model, so some numbers may differ from when it was shared. | यह लिंक मॉडल के पुराने संस्करण से बना था, इसलिए कुछ संख्याएँ साझा करते समय की संख्याओं से अलग हो सकती हैं। | draft |
+| `sim.keyboardHint` | Keys: Space play/pause, ← → move 10 minutes, Shift + ← → move 1 hour | कुंजियाँ: Space चलाएँ/रोकें, ← → 10 मिनट आगे-पीछे, Shift + ← → 1 घंटा आगे-पीछे | draft |
+| `sim.afterEating` | after eating | खाने के बाद | draft |
+| `sim.paceValue` | Play 2 days in {{duration}} | 2 दिन {{duration}} में चलाएँ | draft |
+| `sim.scaleBreak` | after {{after}}: faster | {{after}} के बाद: तेज़ | draft |
+| `sim.markerKey` | {{meal}}: key moments (tap to jump) | {{meal}}: मुख्य पल (जाने के लिए टैप करें) | draft |
+| `sim.isHere` | {{meal}} is here | {{meal}} यहाँ है | draft |
+| `sim.mealIsIn` | {{meal}} is in: {{stage}} | {{meal}} यहाँ है: {{stage}} | draft |
+| `sim.more` | More about this stage | इस चरण के बारे में और जानें | draft |
+| `sim.shareManual` | Copy this link | यह लिंक कॉपी करें | draft |
+| `sim.capReached` | That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big. | इससे भोजन {{kcal}} किलो कैलोरी से बड़ा हो जाएगा। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है। | draft |
+| `sim.unknownFoods` | Some foods in this link no longer exist and were left out ({{count}}). | इस लिंक के कुछ खाद्य पदार्थ अब मौजूद नहीं हैं, इसलिए उन्हें छोड़ दिया गया ({{count}})। | draft |
+| `sim.overCap` | {{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough. | {{meal}} {{kcal}} किलो कैलोरी से बड़ा है। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है, इसलिए इसके समय को केवल अनुमान मानें। | draft |
+| `stages.mouth.name` | Mouth | मुख | draft |
+| `stages.mouth.what` | Teeth cut and grind food while the tongue mixes it with saliva into a soft ball called a bolus. | दाँत भोजन को काटते और पीसते हैं, जबकि जीभ उसे लार के साथ मिलाकर एक नरम गोला बनाती है जिसे बोलस कहते हैं। | draft |
+| `stages.mouth.chemistry` | Salivary amylase starts breaking starch into smaller sugars. Lingual lipase begins on fat, but very little happens yet. | लार में मौजूद एंजाइम लार एमाइलेज मंड (स्टार्च) को छोटी शर्कराओं में तोड़ना शुरू करता है। लिंगुअल लाइपेज वसा पर काम शुरू करता है, पर अभी बहुत कम पाचन होता है। | draft |
+| `stages.mouth.absorbed` | Almost nothing is absorbed here. | यहाँ लगभग कुछ भी अवशोषित नहीं होता। | draft |
+| `stages.mouth.fact` | Your salivary glands make roughly 1 to 1.5 litres of saliva a day. | आपकी लार ग्रंथियाँ एक दिन में लगभग 1 से 1.5 लीटर लार बनाती हैं। | draft |
+| `stages.mouth.short` | Mouth | मुख | draft |
+| `stages.esophagus.name` | Food pipe (oesophagus) | भोजन नली (ग्रसिका) | draft |
+| `stages.esophagus.what` | Waves of muscle contraction, called peristalsis, push each swallow down to the stomach in a few seconds. | पेशियों के संकुचन की लहरें, जिन्हें क्रमाकुंचन (peristalsis) कहते हैं, हर निवाले को कुछ ही सेकंड में आमाशय तक धकेल देती हैं। | draft |
+| `stages.esophagus.chemistry` | No digestion happens here. Mucus helps the bolus slide. | यहाँ कोई पाचन नहीं होता। श्लेष्मा (म्यूकस) बोलस को फिसलने में मदद करता है। | draft |
+| `stages.esophagus.absorbed` | Nothing is absorbed. | कुछ भी अवशोषित नहीं होता। | draft |
+| `stages.esophagus.fact` | Peristalsis works even upside down — astronauts can swallow in space. | क्रमाकुंचन उलटे होने पर भी काम करता है — अंतरिक्ष यात्री अंतरिक्ष में भी निगल सकते हैं। | draft |
+| `stages.esophagus.short` | Food pipe | भोजन नली | draft |
+| `stages.stomach.name` | Stomach | आमाशय | draft |
+| `stages.stomach.what` | The stomach stores the meal, churns it with acid into a thick liquid called chyme, and lets it out a little at a time through the pyloric sphincter. | आमाशय भोजन को जमा करता है, उसे अम्ल के साथ मथकर एक गाढ़े द्रव में बदलता है जिसे काइम कहते हैं, और उसे जठरनिर्गम अवरोधिनी (pyloric sphincter) से थोड़ा-थोड़ा करके आगे भेजता है। | draft |
+| `stages.stomach.chemistry` | Hydrochloric acid unfolds proteins and kills many microbes. Pepsin starts cutting proteins into shorter chains. Liquids leave first; solids must be ground to tiny pieces before they can leave. | हाइड्रोक्लोरिक अम्ल प्रोटीन को खोलता है और कई सूक्ष्मजीवों को मार देता है। पेप्सिन प्रोटीन को छोटी शृंखलाओं में काटना शुरू करता है। द्रव पहले निकलते हैं; ठोस भोजन को निकलने से पहले बहुत छोटे टुकड़ों में पीसा जाना ज़रूरी है। | draft |
+| `stages.stomach.absorbed` | Very little — some water, alcohol and a few drugs. | बहुत कम — कुछ पानी, अल्कोहल और कुछ दवाइयाँ। | draft |
+| `stages.stomach.fact` | The more calories a meal has, the more slowly it leaves: the small intestine signals the stomach to deliver only a few calories per minute. | भोजन में जितनी अधिक कैलोरी होती है, वह उतनी ही धीरे निकलता है: छोटी आँत आमाशय को संकेत देती है कि हर मिनट केवल कुछ ही कैलोरी आगे भेजे। | draft |
+| `stages.stomach.short` | Stomach | आमाशय | draft |
+| `stages.smallIntestine.name` | Small intestine | छोटी आँत | draft |
+| `stages.smallIntestine.chemistry` | Bile from the liver breaks fat into tiny droplets. Pancreatic enzymes — amylase, lipase, trypsin — and enzymes on the villi finish breaking food into sugars, amino acids, fatty acids and glycerol. | यकृत से आने वाला पित्त वसा को छोटी-छोटी बूँदों में तोड़ता है। अग्न्याशय के एंजाइम — एमाइलेज, लाइपेज, ट्रिप्सिन — और दीर्घरोम पर मौजूद एंजाइम भोजन को शर्करा, अमीनो अम्ल, वसा अम्ल और ग्लिसरॉल में तोड़ने का काम पूरा करते हैं। | draft |
+| `stages.smallIntestine.absorbed` | Most nutrients and most of the water are absorbed here into the blood and lymph. | अधिकांश पोषक तत्व और अधिकांश पानी यहीं रक्त और लसीका में अवशोषित होते हैं। | draft |
+| `stages.smallIntestine.fact` | The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court. | दीर्घरोम और सूक्ष्म-दीर्घरोम छोटी आँत को लगभग 30 वर्ग मीटर का सतही क्षेत्र देते हैं — लगभग आधे बैडमिंटन कोर्ट जितना। | draft |
+| `stages.smallIntestine.short` | Small intestine | छोटी आँत | draft |
+| `stages.largeIntestine.name` | Large intestine | बड़ी आँत | draft |
+| `stages.largeIntestine.what` | What could not be digested — mainly fibre — moves slowly through the colon and is stored until it leaves the body. | जो पच नहीं सका — मुख्य रूप से रेशा — वह बृहदांत्र (कोलन) से होकर धीरे-धीरे आगे बढ़ता है और शरीर से बाहर निकलने तक जमा रहता है। | draft |
+| `stages.largeIntestine.chemistry` | Gut bacteria ferment fibre, making gases and short-chain fatty acids that feed the colon’s own cells. Some vitamins, such as vitamin K, are made by bacteria here. | आँत के जीवाणु रेशे का किण्वन करते हैं, जिससे गैसें और छोटी शृंखला वाले वसा अम्ल बनते हैं जो कोलन की अपनी कोशिकाओं को पोषण देते हैं। कुछ विटामिन, जैसे विटामिन K, यहाँ जीवाणुओं द्वारा बनाए जाते हैं। | draft |
+| `stages.largeIntestine.absorbed` | Most of the remaining water and salts. | बचा हुआ अधिकांश पानी और लवण। | draft |
+| `stages.largeIntestine.fact` | This is the slowest part of the journey: commonly a day or more. | यह यात्रा का सबसे धीमा भाग है: आमतौर पर एक दिन या उससे अधिक। | draft |
+| `stages.largeIntestine.short` | Large intestine | बड़ी आँत | draft |
+| `nutrients.carbs` | Carbohydrate | कार्बोहाइड्रेट | draft |
+| `nutrients.protein` | Protein | प्रोटीन | draft |
+| `nutrients.fat` | Fat | वसा | draft |
+| `nutrients.fiber` | Fibre | रेशा | draft |
+| `nutrients.water` | Water | पानी | draft |
+| `charts.stomach` | Food left in the stomach | आमाशय में बचा भोजन | draft |
+| `charts.stomachDesc` | Share of the meal still in the stomach (by its food energy; for water, by weight) | भोजन का कितना भाग अभी आमाशय में है (उसकी ऊर्जा के अनुसार; पानी के लिए वज़न के अनुसार) | draft |
+| `charts.glucose` | Blood sugar | रक्त शर्करा | draft |
+| `charts.glucoseDesc` | Typical rise above the normal (fasting) level for a healthy adult. The shaded band shows how much people differ. | एक स्वस्थ वयस्क में सामान्य (खाली पेट) स्तर से ऊपर होने वाली आम वृद्धि। छायांकित पट्टी दिखाती है कि लोगों में कितना अंतर होता है। | draft |
+| `charts.where` | Where the meal has gone | भोजन कहाँ पहुँचा | draft |
+| `charts.whereDesc` | Of everything eaten (by weight), how much is in each place or already absorbed | खाए गए कुल भोजन (भार के अनुसार) में से कितना हर स्थान पर है या अवशोषित हो चुका है | draft |
+| `charts.absorbed` | Absorbed into the body | शरीर में अवशोषित | draft |
+| `charts.hoursAxis` | Hours after eating | खाने के बाद घंटे | draft |
+| `charts.mgdlAxis` | mg/dL above normal | सामान्य से ऊपर mg/dL | draft |
+| `charts.leftBody` | Left the body | शरीर से बाहर निकला | draft |
+| `charts.glucoseTail` | After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner. | बड़े, वसायुक्त भोजन के बाद मॉडल रक्त शर्करा में एक छोटी, धीमी पूँछ दिखाता है; असली शरीर में यह आमतौर पर कुछ जल्दी सामान्य हो जाती है। | draft |
+| `events.title` | Key moments | मुख्य पल | draft |
+| `events.half` | Half has left the stomach | आधा भोजन आमाशय से निकल गया | draft |
+| `events.colon` | Fibre (the leftovers) reaches the large intestine — half of it by | रेशा (बचा हुआ भाग) बड़ी आँत तक पहुँचता है — आधा इतने समय तक | draft |
+| `events.absorbed` | Nutrients mostly absorbed by | पोषक तत्व ज़्यादातर अवशोषित होने का समय | draft |
+| `events.exit` | Leftovers start leaving the body | अवशेष शरीर से बाहर निकलने लगे | draft |
+| `events.peak` | Blood sugar rise (above normal) | रक्त शर्करा में वृद्धि (सामान्य से ऊपर) | draft |
+| `events.peakValue` | +{{low}} to +{{high}} mg/dL | +{{low}} से +{{high}} mg/dL | draft |
+| `events.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
+| `events.none` | No real rise | कोई खास वृद्धि नहीं | draft |
+| `events.usually` | usually {{low}}–{{high}} | आमतौर पर {{low}}–{{high}} | draft |
+| `events.peakHint` | mg/dL is how sugar in blood is measured; normal before eating is about 70–100. | mg/dL वह इकाई है जिसमें रक्त में शर्करा मापी जाती है; खाने से पहले सामान्य स्तर लगभग 70–100 होता है। | draft |
+| `events.peakAt` | highest after {{time}} | {{time}} बाद सबसे अधिक | draft |
+| `events.noNutrients` | Nothing to absorb (no calories) | अवशोषित करने के लिए कुछ नहीं (कोई कैलोरी नहीं) | draft |
+| `events.exitHint` | Depends mostly on the person, not the meal | यह भोजन पर नहीं, मुख्य रूप से व्यक्ति पर निर्भर करता है | draft |
+| `events.noLeftovers` | Almost no fibre, so almost nothing left over | लगभग कोई रेशा नहीं, इसलिए लगभग कुछ नहीं बचता | draft |
+| `lesson.title` | Step by step | चरण-दर-चरण | draft |
+| `lesson.intro` | The same simulation as text. Good for printing, screen readers and slow devices. | वही सिमुलेशन, पाठ के रूप में। प्रिंट करने, स्क्रीन रीडर और धीमे डिवाइस के लिए उपयोगी। | draft |
+| `lesson.stage` | Stage | चरण | draft |
+| `lesson.when` | When | कब | draft |
+| `lesson.happens` | What happens | क्या होता है | draft |
+| `lesson.print` | Print | प्रिंट करें | draft |
+| `lesson.meal` | Meal | भोजन | draft |
+| `lesson.per` | Total | कुल | draft |
+| `lesson.chemistry` | Chemistry | रासायनिक क्रिया | draft |
+| `lesson.fewSeconds` | a few seconds | कुछ सेकंड | draft |
+| `feedback.title` | Report a mistake | गलती बताएँ | draft |
+| `feedback.intro` | Spotted a wrong number or explanation? Tell us — we check every report against published sources. | कोई गलत संख्या या व्याख्या दिखी? हमें बताएँ — हम हर रिपोर्ट को प्रकाशित स्रोतों से जाँचते हैं। | draft |
+| `feedback.where` | Where is the mistake? | गलती कहाँ है? | draft |
+| `feedback.message` | What’s wrong, and what should it say? | क्या गलत है, और सही क्या होना चाहिए? | draft |
+| `feedback.source` | Source, if you have one (book, paper, link) | स्रोत, अगर आपके पास है (किताब, शोध पत्र, लिंक) | draft |
+| `feedback.send` | Send report | रिपोर्ट भेजें | draft |
+| `feedback.sent` | Thanks — report sent. | धन्यवाद — रिपोर्ट भेज दी गई। | draft |
+| `feedback.close` | Close | बंद करें | draft |
+| `feedback.openIssue` | Send it as a GitHub issue instead | इसके बजाय GitHub issue के रूप में भेजें | draft |
+| `teach.plan` | A simple lesson plan | एक सरल पाठ योजना | draft |
+| `teach.steps[0]` | Ask the class to predict: which leaves the stomach first — a can of cola or a burger with fries? Which raises blood sugar more? | कक्षा से अनुमान लगाने को कहें: आमाशय से पहले क्या निकलेगा — कोला का एक कैन या फ़्राइज़ के साथ बर्गर? रक्त शर्करा किससे ज़्यादा बढ़ेगी? | draft |
+| `teach.steps[1]` | Open the cola vs burger comparison and press Play. Pause when the cola is mostly out of the stomach and ask why. | कोला बनाम बर्गर की तुलना खोलें और ‘चलाएँ’ दबाएँ। जब कोला ज़्यादातर आमाशय से निकल जाए तो रोकें और पूछें कि ऐसा क्यों हुआ। | draft |
+| `teach.steps[2]` | Switch to Step by step and read the stomach stage together. Link the result to calories and fat. | ‘चरण-दर-चरण’ पर जाएँ और आमाशय वाला चरण साथ मिलकर पढ़ें। परिणाम को कैलोरी और वसा से जोड़ें। | draft |
+| `teach.steps[3]` | Let groups build their own comparisons on their phones (no login needed) and share the link with you. | समूहों को अपने फ़ोन पर अपनी तुलनाएँ बनाने दें (लॉगिन की ज़रूरत नहीं) और लिंक आपके साथ साझा करने दें। | draft |
+| `teach.steps[4]` | Close with the blood sugar chart: why does adding fat or protein flatten the curve? | रक्त शर्करा चार्ट के साथ समाप्त करें: वसा या प्रोटीन जोड़ने से वक्र चपटा क्यों हो जाता है? | draft |
+| `teach.questionsTitle` | Questions to ask | पूछने के लिए प्रश्न | draft |
+| `teach.questions[0]` | Why do drinks leave the stomach before solid food? | पेय पदार्थ ठोस भोजन से पहले आमाशय से क्यों निकल जाते हैं? | draft |
+| `teach.questions[1]` | Fibre is never absorbed. Where does it end up, and what eats it? | रेशा कभी अवशोषित नहीं होता। वह अंत में कहाँ जाता है, और उसे कौन खाता है? | draft |
+| `teach.questions[2]` | Why is blood sugar shown as a band instead of one number? | रक्त शर्करा को एक संख्या के बजाय एक पट्टी के रूप में क्यों दिखाया गया है? | draft |
+| `teach.questions[3]` | Roti and dal versus white rice: which gives a gentler blood sugar curve? Look at each food’s glycemic index on the Science page. | रोटी और दाल बनाम सफ़ेद चावल: किससे रक्त शर्करा का वक्र धीरे-धीरे बढ़ता है? ‘विज्ञान’ पेज पर हर खाद्य पदार्थ का ग्लाइसेमिक इंडेक्स देखें। | draft |
+| `teach.tipsTitle` | Practical tips | उपयोगी सुझाव | draft |
+| `teach.tips[0]` | Turn on Projector mode for stronger contrast in a bright room. | तेज़ रोशनी वाले कमरे में बेहतर कंट्रास्ट के लिए प्रोजेक्टर मोड चालू करें। | draft |
+| `teach.tips[1]` | Open the app once on Wi-Fi; after that it works offline. | ऐप को एक बार वाई-फ़ाई पर खोलें; उसके बाद यह बिना इंटरनेट के भी चलता है। | draft |
+| `teach.tips[2]` | Every comparison has its own link — save it in your notes to reopen the exact setup. | हर तुलना का अपना लिंक होता है — ठीक वही सेटअप दोबारा खोलने के लिए इसे अपने नोट्स में सहेज लें। | draft |
+| `teach.tips[3]` | Use the Step by step view for students using screen readers or old phones. | स्क्रीन रीडर या पुराने फ़ोन इस्तेमाल करने वाले विद्यार्थियों के लिए ‘चरण-दर-चरण’ दृश्य का उपयोग करें। | draft |
+| `teach.presetsTitle` | Ready-made comparisons | तैयार तुलनाएँ | draft |
+| `science.title` | Science and sources | विज्ञान और स्रोत | draft |
+| `science.lead` | What the model computes, what it assumes, and where every number comes from. | मॉडल क्या गणना करता है, क्या मानकर चलता है, और हर संख्या कहाँ से आती है। | draft |
+| `science.modelTitle` | What is computed | क्या गणना की जाती है | draft |
+| `science.modelBody` | Stomach emptying is computed from the meal. Drinks start leaving straight away — water within minutes, drinks with calories at about 2 kcal per minute. Solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal per minute, so meals with more calories take longer. (In the model a bigger meal empties at the same rate; real stomachs speed up a little for big meals.) Blood sugar is computed from the carbohydrate being absorbed, its glycemic index, and the slowing effect of fat and protein. | आमाशय का खाली होना भोजन से गणना किया जाता है। पेय तुरंत निकलने लगते हैं — पानी कुछ ही मिनटों में, कैलोरी वाले पेय लगभग 2 किलो कैलोरी प्रति मिनट की दर से। ठोस भोजन पहले लगभग 20 मिनट तक पीसा जाता है, फिर लगभग 1.4 किलो कैलोरी प्रति मिनट की दर से निकलता है, इसलिए अधिक कैलोरी वाले भोजन में अधिक समय लगता है। (मॉडल में बड़ा भोजन भी उसी दर से खाली होता है; असली आमाशय बड़े भोजन के लिए थोड़ा तेज़ हो जाता है।) रक्त शर्करा अवशोषित हो रहे कार्बोहाइड्रेट, उसके ग्लाइसेमिक इंडेक्स, और वसा व प्रोटीन के धीमा करने वाले प्रभाव से गणना की जाती है। | draft |
+| `science.fixedTitle` | What is fixed | क्या तय है | draft |
+| `science.limitsTitle` | Limits | सीमाएँ | draft |
+| `science.limits[1]` | Blood sugar is a typical shape, not a prediction for any one person. | रक्त शर्करा एक सामान्य आकार दिखाती है, किसी एक व्यक्ति के लिए भविष्यवाणी नहीं। | draft |
+| `science.limits[2]` | Exercise, sleep, stress and drinks with the meal all change real results. | व्यायाम, नींद, तनाव और भोजन के साथ लिए गए पेय — ये सब वास्तविक परिणाम बदल देते हैं। | draft |
+| `science.limits[3]` | Glycemic index values for mixed and home-cooked dishes vary between studies. | मिले-जुले और घर में बने व्यंजनों के ग्लाइसेमिक इंडेक्स मान अलग-अलग अध्ययनों में अलग होते हैं। | draft |
+| `science.limits[4]` | Fibre isn't modelled on its own: its slowing effect on blood sugar shows up through each food's glycemic index. | रेशे को अलग से मॉडल नहीं किया गया है: रक्त शर्करा पर उसका धीमा करने वाला प्रभाव हर खाद्य पदार्थ के ग्लाइसेमिक इंडेक्स में दिखता है। | draft |
+| `science.version` | Model version {{version}} | मॉडल संस्करण {{version}} | draft |
+| `science.foodsTitle` | Food data | खाद्य आँकड़े | draft |
+| `science.references` | References | संदर्भ | draft |
+| `science.nutrientsPerServing` | Per serving | प्रति सर्विंग | draft |
+| `science.gi` | Glycemic index | ग्लाइसेमिक इंडेक्स | draft |
+| `science.noGi` | not applicable (almost no carbohydrate) | लागू नहीं (लगभग कोई कार्बोहाइड्रेट नहीं) | draft |
+| `notFound.title` | Page not found | पेज नहीं मिला | draft |
+| `notFound.body` | That page doesn’t exist. Go back to the simulator. | यह पेज मौजूद नहीं है। सिम्युलेटर पर वापस जाएँ। | draft |
+| `notFound.cta` | Open the simulator | सिम्युलेटर खोलें | draft |
+| `units.min` | {{n}} min | {{n}} मिनट | draft |
+| `units.h` | {{n}} h | {{n}} घंटे | draft |
+| `units.hm` | {{h}} h {{m}} min | {{h}} घंटे {{m}} मिनट | draft |
+| `units.minutes` | {{n}} min | {{n}} मिनट | draft |
+| `units.seconds` | {{n}} s | {{n}} सेकंड | draft |
+| `units.hShort` | {{n}}h | {{n}} घं | draft |
+| `units.kcal` | {{n}} kcal | {{n}} किलो कैलोरी | draft |
+| `anatomy.liver` | Liver | यकृत | draft |
+| `anatomy.pancreas` | Pancreas | अग्न्याशय | draft |
+| `verdict.single` | Half of {{meal}} has left the stomach after {{time}}. | {{meal}} का आधा भाग {{time}} बाद आमाशय से निकल चुका है। | draft |
+| `verdict.similar` | Both meals leave the stomach at about the same speed. | दोनों भोजन लगभग एक ही गति से आमाशय से निकलते हैं। | draft |
+| `verdict.faster` | {{fast}} leaves the stomach about {{x}}× faster than {{slow}}. | {{fast}}, {{slow}} की तुलना में लगभग {{x}} गुना तेज़ी से आमाशय से निकलता है। | draft |
+| `verdict.times` | Half of each meal has left the stomach after: Meal A {{a}}, Meal B {{b}}. | हर भोजन का आधा भाग इतने समय बाद आमाशय से निकल चुका है: भोजन A — {{a}}, भोजन B — {{b}}। | draft |
+| `verdict.reasonDrink` | {{fast}} is only a drink: drinks start leaving straight away, at about 2 kcal a minute, while solid food is first ground for about 20 minutes and then leaves at about 1.4 kcal a minute. | {{fast}} केवल एक पेय है: पेय तुरंत निकलने लगते हैं, लगभग 2 किलो कैलोरी प्रति मिनट की दर से, जबकि ठोस भोजन पहले लगभग 20 मिनट तक पीसा जाता है और फिर लगभग 1.4 किलो कैलोरी प्रति मिनट की दर से निकलता है। | draft |
+| `verdict.reasonCalories` | {{slow}} has more calories ({{kcalSlow}} vs {{kcalFast}} kcal), and the stomach only lets food through slowly — about 2 kcal a minute for drinks and 1.4 for solid food. | {{slow}} में अधिक कैलोरी है ({{kcalSlow}} बनाम {{kcalFast}} किलो कैलोरी), और आमाशय भोजन को धीरे-धीरे ही आगे जाने देता है — पेय के लिए लगभग 2 किलो कैलोरी प्रति मिनट और ठोस भोजन के लिए 1.4। | draft |
+| `verdict.rates` | Drinks leave at about 2 kcal a minute; solid food is first ground for about 20 minutes, then leaves at about 1.4 kcal a minute. | पेय लगभग 2 किलो कैलोरी प्रति मिनट की दर से निकलते हैं; ठोस भोजन पहले लगभग 20 मिनट तक पीसा जाता है, फिर लगभग 1.4 किलो कैलोरी प्रति मिनट की दर से निकलता है। | draft |
+| `error.title` | Something didn’t load | कुछ लोड नहीं हुआ | draft |
+| `error.reload` | Reload | दोबारा लोड करें | draft |
 
 ## Sign-off
 

@@ -43,10 +43,14 @@ export const GATE_ROUTES = {
     { url: V1_SIM, plan: 'report' },
     { url: '/next', plan: 'enforce' },
   ],
-  /** No clipped text in Hindi (WP-18 adds the +40 % pseudo-locale). */
+  /**
+   * No clipped text, in Hindi and in the +40 % pseudo-locale (WP-18; hindi.spec.ts runs /next in
+   * English, Hindi and the pseudo-locale, with and without a kept meal, at 390, 1280, 1440 and on
+   * the projector).
+   */
   clippedText: [
     { url: `${V1_SIM}&lang=hi`, plan: 'report' },
-    { url: '/next?lang=hi', plan: 'pending:WP-18' },
+    { url: '/next', plan: 'enforce' },
   ],
   /**
    * Reduced motion: no auto-play, and a paused page draws no frames (project reduced).
@@ -169,7 +173,9 @@ export async function expectInFirstScreen(page: Page, targets: Record<string, Lo
 /**
  * No text is cut off: an element that hides its overflow (or ends in an ellipsis, or is
  * line-clamped) while its content is wider or taller than it. Visually hidden helpers (sr-only:
- * 1 px, clipped) are skipped, since they clip on purpose.
+ * 1 px, clipped) are skipped, since they clip on purpose, and so is a text marked
+ * `data-may-shorten` whose whole text is in the name of the control around it (a meal chip's
+ * food name gives way before its servings and ✕, council MUST 9).
  */
 export async function expectNoClippedText(page: Page, { mode = 'enforce' }: { mode?: Mode } = {}) {
   const problems = await page.evaluate(() => {
@@ -184,6 +190,7 @@ export async function expectNoClippedText(page: Page, { mode = 'enforce' }: { mo
       const sideways = (hides(cs.overflowX) || cs.textOverflow === 'ellipsis') && el.scrollWidth > el.clientWidth + 1
       const clamped = cs.webkitLineClamp !== 'none' && el.scrollHeight > el.clientHeight + 1
       if (!sideways && !clamped) continue
+      if (el.hasAttribute('data-may-shorten') && el.closest('[aria-label]')?.getAttribute('aria-label')?.includes(text)) continue
       const name = el.tagName.toLowerCase() + (el.getAttribute('aria-label') ? `[aria-label="${el.getAttribute('aria-label')}"]` : '')
       found.push(`${name} "${text.slice(0, 40)}" (${el.scrollWidth}×${el.scrollHeight} in ${el.clientWidth}×${el.clientHeight})`)
     }

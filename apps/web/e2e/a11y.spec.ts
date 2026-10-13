@@ -65,16 +65,16 @@ test('a "How we know" panel takes focus at its top, and Esc or tabbing out gives
   await expect(button).toBeFocused()
 })
 
-test('the stage’s small panels take focus, and Esc gives it back to their button (Adult model, servings)', async ({ page }) => {
+test('the stage’s small panels take focus, and Esc gives it back to their button (Typical adult, servings)', async ({ page }) => {
   onlyIn('desktop', 'phone')
   await page.goto('/next?v=2&a=cola:1')
   for (const [button, panel] of [
     [
       page
-        .getByRole('button', { name: /Adult model/ })
+        .getByRole('button', { name: /Typical adult/ })
         .filter({ has: page.locator('svg') })
         .first(),
-      /^Adult model/,
+      /^Typical adult/,
     ],
     [page.getByRole('button', { name: /^Cola/ }).first(), /^Servings: Cola/],
   ] as const) {

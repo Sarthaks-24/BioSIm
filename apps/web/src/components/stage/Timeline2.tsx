@@ -64,6 +64,7 @@ interface Marker {
 export default function Timeline2({ run, kept }: { run: Simulation; kept: Simulation | null }) {
   const { t } = useTranslation()
   const track = useRef<HTMLDivElement>(null)
+  const kneeLabel = useRef<HTMLSpanElement>(null)
   const width = useTrackWidth(track)
   // Phones get finger-sized targets, so moments merge sooner there.
   const gap = useMinWidth('64rem') ? GAP_WIDE : GAP_PHONE
@@ -171,25 +172,36 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
 
   const knee = `${KNEE_FRACTION * 100}%`
   const lane = (which: Marker['lane']) => markers.filter((m) => m.lane === which)
+  const kneeLeft = useKneeSide(kneeLabel, width)
   return (
     // The top padding holds "6 h → 48 h squeezed" (from 640 px up); the bottom one the hour ticks,
-    // and with a kept meal its hollow markers first. A size container: which hour labels fit
-    // depends on the track's own width in rem, so projector mode and Hindi drop labels sooner.
-    <div className={`@container relative pt-2 select-none sm:pt-5 ${kept ? 'pb-9' : 'pb-5'}`}>
+    // and with a kept meal its hollow markers first. The ticks' room is their own text size plus
+    // the thumb's overhang, so no tick ("0 h", "0 घं") ever sits under the thumb, in any language
+    // or on the projector (WP-18). A size container: which hour labels fit depends on the track's
+    // own width in rem, so projector mode and Hindi drop labels sooner.
+    <div
+      className={`@container relative pt-2 select-none sm:pt-5 ${kept ? 'pb-[calc(1.375rem_+_var(--text-caption))]' : 'pb-[calc(0.75rem_+_var(--text-caption))]'}`}
+    >
       {/*
-       * "6 h → 48 h squeezed", over the squeezed part of the bar: it starts just right of the dotted
-       * line and, when it is longer than that part (Hindi, projector), grows to the left from the
-       * bar's end instead of running off it.
+       * "6 h → 48 h squeezed", over the squeezed part of the bar, starting just right of the dotted
+       * line. When it is longer than that part (Hindi, the projector) it ends just left of the line
+       * instead, so it never runs across the line or off the bar (WP-18).
        */}
       <span
+        ref={kneeLabel}
         aria-hidden="true"
         data-knee=""
-        className="absolute top-0 right-0 bg-shelf text-caption whitespace-nowrap text-ink-2 max-sm:hidden"
-        style={{ minWidth: `calc(${(1 - KNEE_FRACTION) * 100}% - 0.5rem)` }}
+        className="absolute top-0 text-caption whitespace-nowrap text-ink-2 max-sm:hidden"
+        style={kneeLeft ? { right: `calc(${(1 - KNEE_FRACTION) * 100}% + 0.375rem)` } : { left: `calc(${knee} + 0.375rem)` }}
       >
         {t('dock.squeezed', { from: formatDuration(KNEE_MIN, t), to: formatDuration(HORIZON_MIN, t) })}
       </span>
-      <span aria-hidden="true" className="absolute top-1 bottom-4 border-l-2 border-dotted border-ink-2/60" style={{ left: knee }} />
+      <span
+        aria-hidden="true"
+        data-knee-line=""
+        className="absolute top-1 bottom-4 border-l-2 border-dotted border-ink-2/60"
+        style={{ left: knee }}
+      />
       {/* The bar's row: the slider, with the moments laid over it (they are its siblings: a slider's children are not read out). */}
       <div className="relative" style={{ '--track-w': `${width}px` } as CSSProperties}>
         <div
@@ -227,7 +239,8 @@ export default function Timeline2({ run, kept }: { run: Simulation; kept: Simula
         <span
           key={m}
           aria-hidden="true"
-          className={`tabular absolute bottom-0 text-caption whitespace-nowrap text-ink-2 ${
+          data-tick=""
+          className={`tabular absolute bottom-0 text-caption leading-none whitespace-nowrap text-ink-2 ${
             m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
           } ${TICK_FITS[m] ?? ''}`}
           style={{ left: `${timeToPos(m) * 100}%` }}
@@ -254,6 +267,27 @@ function useTrackWidth(ref: React.RefObject<HTMLDivElement | null>) {
     return () => ro.disconnect()
   }, [ref])
   return width
+}
+
+/**
+ * True when the knee's label is too long for the squeezed part of the bar, so it goes left of the
+ * dotted line. Measured again when the bar or the label changes size (language, projector, fonts).
+ */
+function useKneeSide(ref: React.RefObject<HTMLSpanElement | null>, width: number) {
+  const [left, setLeft] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => {
+      const gap = 0.75 * parseFloat(getComputedStyle(el).fontSize)
+      setLeft(el.offsetWidth + gap > (1 - KNEE_FRACTION) * width)
+    }
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    check()
+    return () => ro.disconnect()
+  }, [ref, width])
+  return left
 }
 
 /** One meal's moments (sorted by time) as markers: moments closer than `gap` px along the bar share one. */

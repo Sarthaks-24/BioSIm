@@ -322,7 +322,7 @@ export default function SignalStrip({
 
       <div className="grid min-h-0 flex-1 grid-cols-[var(--plot-gutter)_minmax(0,1fr)]">
         {/* y labels: top, before eating (or middle), bottom. Text, so it never stretches. */}
-        <div aria-hidden="true" data-axis="y" className="tabular relative border-r-2 border-ink-2/70 text-caption text-ink-2">
+        <div aria-hidden="true" data-axis="y" className="tabular relative border-r-2 border-ink-2/70 text-caption whitespace-nowrap text-ink-2">
           {ticks.map((v, i) => {
             const fromTop = (domain[1] - v) / (domain[1] - domain[0])
             // The middle label only when a short graph (projector, phone) leaves room between the others.

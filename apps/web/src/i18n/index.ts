@@ -3,12 +3,20 @@ import { initReactI18next } from 'react-i18next'
 // en.json without the texts of the pages that bring their own (scripts/i18n-sections.mjs).
 import en from 'virtual:lifepeek-en/core'
 import { readPref, writePref } from '../lib/prefs.ts'
+import { PSEUDO_LANG, pseudoBundle, pseudoText } from './pseudo.ts'
 
 export const LANGUAGES = ['en', 'hi'] as const
 export type Language = (typeof LANGUAGES)[number]
 
+/**
+ * The +40 % pseudo-locale (i18n/pseudo.ts), for the layout tests only: a build without
+ * `VITE_PSEUDO=1` (every real one) has no trace of it.
+ */
+const PSEUDO = import.meta.env.VITE_PSEUDO === '1'
+
 function initialLanguage(): Language {
   const saved = readPref('lang')
+  if (PSEUDO && (saved === PSEUDO_LANG || new URLSearchParams(location.search).get('lang') === 'pseudo')) return PSEUDO_LANG as Language
   if (saved === 'en' || saved === 'hi') return saved
   return navigator.language?.toLowerCase().startsWith('hi') ? 'hi' : 'en'
 }
@@ -28,6 +36,7 @@ const locales: BackendModule = {
         (m) => done(null, m.default),
         (e: Error) => done(e, false),
       )
+    else if (PSEUDO && lng === PSEUDO_LANG) done(null, pseudoBundle(en))
     else done(null, lng === 'en' ? en : {})
   },
 }
@@ -58,12 +67,16 @@ i18n.on('languageChanged', (lng) => {
  * loads, before it draws. Hindi needs no such step: hi.json is fetched whole.
  */
 export function addEnglish(...texts: Record<string, unknown>[]) {
-  for (const text of texts) i18n.addResourceBundle('en', 'translation', text, true, true)
+  for (const text of texts) {
+    i18n.addResourceBundle('en', 'translation', text, true, true)
+    if (PSEUDO) i18n.addResourceBundle(PSEUDO_LANG, 'translation', pseudoBundle(text), true, true)
+  }
 }
 
 /** Pick the user's language from a food file's { en, hi? } text. */
 export function localized(text: { en: string; hi?: string | undefined } | undefined, lang: string): string {
   if (!text) return ''
+  if (PSEUDO && lang === PSEUDO_LANG) return pseudoText(text.en)
   return lang === 'hi' && text.hi ? text.hi : text.en
 }
 

@@ -21,7 +21,7 @@ function triggerOf(anchor: HTMLElement | null): HTMLElement | null {
 }
 
 /**
- * A small panel under a button (servings, "Adult model" info, "How we know"). Fixed to the window,
+ * A small panel under a button (servings, "Typical adult" info, "How we know"). Fixed to the window,
  * so the meal bar's sideways scroll can't clip it; kept inside the window at any width.
  *
  * Keyboard and screen readers: the panel itself takes focus once it is placed, so its name and

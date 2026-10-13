@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * Whose body the model is: "Adult model ⓘ" in the meal bar (`profiles.<id>.tag`; the longer
+ * Whose body the model is: "Typical adult ⓘ" in the meal bar (`profiles.<id>.tag`; the longer
  * `.desc` is its tooltip). Quiet ink-2 text, so it informs without competing with the meal.
  */
 export default function PersonTag({ profile, onInfo, expanded }: Props) {

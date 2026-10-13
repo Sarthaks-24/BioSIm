@@ -25,7 +25,7 @@ void i18n.use(initReactI18next).init({
           assumption: { label: 'Best guess', help: 'A formula or estimate.' },
           illustration: { label: 'Drawing only', help: 'A picture to show the idea.' },
         },
-        profiles: { 'adult-ref': { tag: 'Adult model', desc: 'ICMR-NIN 2020 reference adult man.' } },
+        profiles: { 'adult-ref': { tag: 'Typical adult', desc: 'ICMR-NIN 2020 reference adult man.' } },
       },
     },
   },
@@ -98,7 +98,7 @@ describe('component kit', () => {
   })
 
   it('PersonTag is text, or a button when it can open "How we know"', () => {
-    expect(render(h(PersonTag, { profile: 'adult-ref' }))).toMatch(/^<span[^>]*>Adult model<\/span>$/)
+    expect(render(h(PersonTag, { profile: 'adult-ref' }))).toMatch(/^<span[^>]*>Typical adult<\/span>$/)
     const button = render(h(PersonTag, { profile: 'adult-ref', onInfo: noop }))
     expect(button).toMatch(/^<button type="button"/)
     expect(button).toContain('title="ICMR-NIN 2020 reference adult man."')
@@ -125,7 +125,12 @@ describe('kit source rules', () => {
   })
 
   it('never clips or clamps a label (Hindi needs the room)', () => {
-    for (const [f, src] of sources) expect(src, f).not.toMatch(/\b(truncate|line-clamp-\d|text-ellipsis)\b/)
+    // The one exception (council MUST 9): a meal chip wider than the whole meal bar shortens its
+    // food name, marked data-may-shorten, before its servings or ✕ would be cut off; the full
+    // name is in the button's name, and the e2e clipped-text check knows the mark.
+    const shortens = /data-may-shorten="" className="[^"]*"/g
+    for (const [f, src] of sources) expect(src.replace(shortens, ''), f).not.toMatch(/\b(truncate|line-clamp-\d|text-ellipsis)\b/)
+    expect(sources.filter(([, src]) => src.match(shortens)).map(([f]) => f)).toEqual(['FoodChip.tsx'])
   })
 
   it('uses only the v2 colour tokens, never the v1 names or raw hex', () => {

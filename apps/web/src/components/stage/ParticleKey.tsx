@@ -6,7 +6,8 @@ import NutrientGlyph from '../NutrientGlyph.tsx'
 /**
  * The key to the food pieces in the body (council round 2): one line, "● Carbohydrate ■ Protein
  * ◆ Fat", only for what this meal has. Same shapes and colours as the 3D and flat particles, so
- * colour is never the only cue. It lies over the bottom of the body, where the legs are.
+ * colour is never the only cue. Where it goes is the stage's choice (BodyPane): over the legs, or on
+ * a phone a line of its own.
  */
 export default function ParticleKey({ run, className = '' }: { run: Simulation; className?: string }) {
   const { t } = useTranslation()
@@ -16,10 +17,10 @@ export default function ParticleKey({ run, className = '' }: { run: Simulation; 
     <ul
       aria-label={t('stage.particles')}
       data-particle-key=""
-      className={`pointer-events-none flex flex-wrap gap-x-3 gap-y-0.5 text-caption text-ink-2 ${className}`}
+      className={`flex gap-x-3 gap-y-0.5 text-caption text-ink-2 ${className}`}
     >
       {kinds.map((k) => (
-        <li key={k} className="flex items-center gap-1">
+        <li key={k} className="flex shrink-0 items-center gap-1">
           <NutrientGlyph kind={k} size={11} />
           {t(`nutrients.${k}`)}
         </li>

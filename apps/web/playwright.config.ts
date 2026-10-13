@@ -32,7 +32,7 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'projector',
-    testMatch: ['gate.spec.ts', 'stage.spec.ts', 'graphs.spec.ts', 'now.spec.ts', 'projector.spec.ts', 'keyboard.spec.ts', 'a11y.spec.ts'],
+    testMatch: ['gate.spec.ts', 'hindi.spec.ts', 'stage.spec.ts', 'graphs.spec.ts', 'now.spec.ts', 'projector.spec.ts', 'keyboard.spec.ts', 'a11y.spec.ts'],
     use: {
       viewport: { width: 1280, height: 800 },
       launchOptions: webgl,
@@ -83,6 +83,8 @@ export default defineConfig({
     : {
         command: 'npm run build && npm run preview -- --port 4173 --strictPort',
         url: 'http://localhost:4173',
+        // The +40 % pseudo-locale for hindi.spec.ts (i18n/pseudo.ts). Only this build has it; Vercel never sets it.
+        env: { VITE_PSEUDO: '1' },
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
       },
