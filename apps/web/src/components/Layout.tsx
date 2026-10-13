@@ -82,9 +82,10 @@ function useMenu() {
 /** Route `handle` flags the Layout reads. */
 export interface RouteHandle {
   /**
-   * The page is one screen (the stage at /sim): from 1024 px up the header, page and footer
-   * share the window exactly, so nothing scrolls on a laptop or a projector. On phones the page
-   * fills the first screen and the footer sits just below it.
+   * The page is one screen (the stage at /sim): from 1024 px up, and on a tablet (640 px wide and
+   * 700 px tall: the `fit` variant, styles.css), the header, page and footer share the window
+   * exactly, so nothing scrolls. On phones the page fills at least the first screen and the footer
+   * sits just below it; a phone under 700 px tall may scroll, so the body keeps its size (FP-1).
    */
   fit?: boolean
 }
@@ -181,11 +182,11 @@ export default function Layout() {
   )
 
   return (
-    // One-screen pages: the outer box is exactly the window from 1024 px up. Below that, the inner
-    // box is (header + page = the first screen) and the footer follows; at lg it is `contents`, so
-    // header, page and footer are all rows of the outer box.
-    <div className={fit ? 'flex flex-col lg:h-dvh' : 'flex min-h-dvh flex-col'}>
-      <div className={fit ? 'flex h-dvh shrink-0 flex-col lg:contents' : 'contents'}>
+    // One-screen pages: the outer box is exactly the window where it fits (`fit`). Elsewhere the
+    // inner box is (header + page = at least the first screen) and the footer follows; where it fits
+    // it is `contents`, so header, page and footer are all rows of the outer box.
+    <div className={fit ? 'flex flex-col fit:h-dvh' : 'flex min-h-dvh flex-col'}>
+      <div className={fit ? 'flex min-h-dvh shrink-0 flex-col fit:contents' : 'contents'}>
         <a href="#main" className="sr-only z-50 rounded bg-ink px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
           {t('nav.skip')}
         </a>
@@ -242,7 +243,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main id="main" className={fit ? 'min-h-0 flex-1' : 'flex-1'}>
+        <main id="main" className={fit ? 'flex min-h-0 flex-1 flex-col' : 'flex-1'}>
           <Outlet />
         </main>
       </div>

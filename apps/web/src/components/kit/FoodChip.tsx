@@ -2,11 +2,14 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDownIcon, CloseIcon } from './icons.tsx'
 
 interface Props {
-  /** The food's picture (the emoji in data/foods.ts). */
+  /** A food of the meal, or (v3, E-3b-ui) an activity bout: the same chip, the bout without servings. */
+  kind?: 'food' | 'bout'
+  /** The food's picture (the emoji in data/foods.ts), or the activity's. */
   emoji: string
-  /** Already in the reader's language. */
+  /** Already in the reader's language. A bout's is its whole text ("Walk 20 min, from 2:00"). */
   name: string
-  servings: number
+  /** A food's servings; a bout has none (and no chip shows kcal, ui-ux §2.1). */
+  servings?: number
   /** Opens the servings picker. Without it the food part is plain text. */
   onEdit?: () => void
   /** Whether the picker `onEdit` opens is showing. */
@@ -15,13 +18,14 @@ interface Props {
 }
 
 /**
- * One food in the meal bar: picture, name, servings, then a separate remove button. Flat (Sunk
+ * One chip of the plan strip (FP-1, ui-ux §2.1): a food (picture, name, servings) or an activity
+ * bout (picture, its words), then a separate remove button. Flat (Sunk
  * fill, 6 px corners, no border, no pill), and the two halves are split by a 2 px gap of page
  * colour so each has its own clear target. The name never wraps; the meal bar scrolls instead,
  * and a chip wider than the whole row shortens its name ("Roti / chap…") before its servings or
  * ✕ would be cut off (council MUST 9).
  */
-export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRemove }: Props) {
+export default function FoodChip({ kind = 'food', emoji, name, servings, onEdit, expanded, onRemove }: Props) {
   const { t } = useTranslation()
   const body = (
     <>
@@ -32,12 +36,12 @@ export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRe
       <span data-may-shorten="" className="min-w-8 truncate font-semibold">
         {name}
       </span>
-      <span className="tabular shrink-0 text-ink-muted">×{servings}</span>
+      {servings != null && <span className="tabular shrink-0 text-ink-muted">×{servings}</span>}
     </>
   )
   const part = 'flex min-h-11 items-center gap-1.5 bg-surface-sunk lg:min-h-9'
   return (
-    <span className="inline-flex max-w-full shrink-0 items-stretch gap-0.5 text-control whitespace-nowrap text-ink">
+    <span data-chip={kind} className="inline-flex max-w-full shrink-0 items-stretch gap-0.5 text-control whitespace-nowrap text-ink">
       {onEdit ? (
         <button
           type="button"
@@ -47,7 +51,10 @@ export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRe
           className={`${part} min-w-0 rounded-l-control pr-1.5 pl-2.5 hover:bg-surface-sunk-hover`}
         >
           {body}
-          <ChevronDownIcon />
+          {/* Under 360 px wide the chip needs the room for its servings (FP-1). */}
+          <span className="contents max-[22.5rem]:hidden">
+            <ChevronDownIcon />
+          </span>
         </button>
       ) : (
         <span className={`${part} min-w-0 rounded-l-control pr-2 pl-2.5`}>{body}</span>

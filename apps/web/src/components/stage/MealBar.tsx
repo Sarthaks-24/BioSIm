@@ -1,66 +1,64 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PARAMS, SERVING_STEPS, type MealItem } from '@lifepeek/engine'
+import { PARAMS, SERVING_STEPS, type MealItem, type ProfileId } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { useRunStore } from '../../state/run.ts'
-import { LoadBoundary, LoadFailedPanel, lazyWithRetry } from '../LoadBoundary.tsx'
-import { FlagIcon, FoodChip, IconButton, LinkIcon, PersonTag } from '../kit/index.ts'
+import { LoadBoundary, LoadFailed, LoadFailedPanel, lazyWithRetry } from '../LoadBoundary.tsx'
+import { FlagIcon, FoodChip, IconButton, MoreIcon } from '../kit/index.ts'
 import AddFoodSheet from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
 import KeptTag, { LineSwatch } from './KeptTag.tsx'
 import Popover from './Popover.tsx'
 import { mealKcalRounded } from './mealText.ts'
 
+/**
+ * The meal bar's other actions (Typical adult, Copy link, Report a mistake; Keep on a phone) are
+ * downloaded the first time "⋯" opens: not part of the first paint (FP-1, size budget).
+ */
+const mealActions = lazyWithRetry<{ profile: ProfileId; keep: ReactNode; report: ReactNode }>(() => import('./MealActions.tsx'))
+
 /** The report form is downloaded on the first click: it is not part of the first paint (size budget). */
 const feedbackDialog = lazyWithRetry(() => import('../FeedbackDialog.tsx'))
 
 /**
- * The meal bar (UI-13 + UI-3 + UI-10): the meal as flat chips, "+ Add food", its kcal, whose body
- * it is, then the kept run, "Keep to compare", "Copy link" and "Report a mistake". One line from 1024 px up (the chips scroll
- * sideways if they don't fit); on a phone the chips get their own row. The solid and dashed line
- * samples are the key for the graphs: this meal, and the kept one.
+ * The e2e build's stand-in for v3's activity bouts (`&fixture=bouts`, only where VITE_PSEUDO=1):
+ * the three longest bout chips, so the one-row rule is tested with them before they exist (FP-1,
+ * B15). The flag is written out, so a real build drops this.
+ */
+const fixtureBouts = (): Chip[] =>
+  import.meta.env.VITE_PSEUDO === '1' && location.search.includes('fixture=bouts')
+    ? ['Brisk walking 120 min, from 11:30', 'Skipping rope 105 min, from 10:45', 'Playing football 90 min, from 12:00'].map(
+        (text) => () => <FoodChip kind="bout" emoji="🚶" name={text} onRemove={() => {}} />,
+      )
+    : []
+
+/** One chip of the plan strip, drawn on the strip or (`inline`) in the "+n" list. */
+type Chip = (inline?: boolean) => ReactNode
+
+/**
+ * The meal bar (UI-13 + UI-3 + UI-10; FP-1's plan strip): the meal as flat chips, "+ Add food" and
+ * its kcal, then the kept run, "Keep to compare" and "⋯", on one row at every width (bugs B2, B15):
+ * chips that don't fit fold into a "+n" chip (PlanStrip). "⋯" holds whose body it is, "Copy link"
+ * and "Report a mistake" (and on a phone, where it has no room on the row, Keep), as a panel under
+ * the bar. From 1024 px up the kept run counts as 14 rem, its words wrapping before the line does.
+ * The solid and dashed line samples are the key for the graphs: this meal, and the kept one.
  */
 export default function MealBar() {
   const { t } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const profile = useRunStore((s) => s.profile)
   const kept = useRunStore((s) => s.kept)
+  const [bouts] = useState(fixtureBouts)
+  // "⋯": a panel under it (Popover: Esc, a press elsewhere or Tab out closes it, focus comes back).
+  const [more, setMore] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  const button = useRef<HTMLButtonElement>(null)
 
   return (
     <section aria-labelledby="meal-bar-title" className="border-b border-border bg-surface-page">
-      {/*
-       * Phone rows: the meal (chips, add, kcal) / the person and Keep / the kept run, if any. From
-       * 1024 px up one line while it fits: the meal counts as 20 rem (its name, a chip, + and kcal;
-       * more chips scroll, and a chip's name shortens before its servings or ✕) and grows up to its
-       * whole length; the kept run likewise counts as 14 rem, its words wrap before the line does.
-       * "Copy link" and "Report a mistake" keep
-       * their words only on a bar at least 88 rem wide (rem: Hindi's larger type needs a wider
-       * screen). Only when the rest still does not fit (a long translation) does the line wrap,
-       * instead of squeezing the chips to nothing or running off the page (WP-18).
-       */}
-      <div className="@container/bar flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:gap-x-4 lg:px-4">
-        <div className="flex min-w-0 basis-full items-center gap-2 lg:max-w-max lg:flex-[1_1_20rem]">
-          <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-muted max-lg:sr-only">
-            <LineSwatch />
-            {t('stage.meal')}
-          </h2>
-          <ChipStrip>
-            {meal.map((item) => (
-              <li key={item.foodId} className="max-w-full shrink-0">
-                <MealChip item={item} />
-              </li>
-            ))}
-          </ChipStrip>
-          <AddFoodSheet compact={meal.length > 0} />
-          {meal.length > 0 && (
-            <span className="tabular ml-1 shrink-0 text-control font-semibold whitespace-nowrap max-lg:ml-auto">
-              {t('units.kcal', { n: mealKcalRounded(meal) })}
-            </span>
-          )}
-        </div>
-        <PersonInfo profile={profile} />
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:gap-x-4 lg:px-4">
+        <PlanStrip meal={meal} bouts={bouts} />
         {kept && (
           // On a phone the Now line names the kept meal, with its ✕, right under the meal bar: this
           // row gives way to it while it shows (styles.css), so the body keeps the height (WP-18).
@@ -68,55 +66,164 @@ export default function MealBar() {
             <KeptTag />
           </div>
         )}
-        {/* From 1024 px up the kept run and Keep sit at the right end. */}
-        <div className={`flex shrink-0 items-center gap-1 max-lg:ml-auto ${kept ? '' : 'lg:ml-auto'}`}>
-          {/* Their words stay after keeping (council SHOULD 11): from 1280 px up, as before. */}
-          <KeepButton />
-          <CopyLink />
-          <ReportMistake />
+        <div className={`flex shrink-0 items-center gap-1 ${kept ? '' : 'lg:ml-auto'}`}>
+          {/* Its words stay after keeping (council SHOULD 11). */}
+          <span className="max-lg:hidden">
+            <KeepButton />
+          </span>
+          <IconButton
+            ref={button}
+            icon={<MoreIcon />}
+            label={t('stage.actions')}
+            iconOnly
+            aria-expanded={more}
+            onClick={() => setMore(!more)}
+          />
         </div>
       </div>
+      {more && (
+        // The report form (a <dialog>) opens inside the panel, so the panel stays while it shows.
+        <Popover
+          anchor={button}
+          onClose={() => setMore(false)}
+          label={t('stage.actions')}
+          className="flex w-[20rem] flex-col items-start gap-1 p-1.5"
+        >
+          <LoadBoundary
+            key={attempt}
+            onFail={mealActions.reset}
+            fallback={<LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />}
+          >
+            <Suspense fallback={null}>
+              <mealActions.Component profile={profile} keep={<KeepButton />} report={<ReportMistake />} />
+            </Suspense>
+          </LoadBoundary>
+        </Popover>
+      )}
     </section>
   )
 }
 
 /**
- * The meal's chips, scrolling sideways when they don't fit. A soft fade at an edge says there is
- * more to scroll to (no scrollbar on most phones).
+ * The plan strip (FP-1, ui-ux §2.1): the chips (foods, and from v3 activity bouts: one chip with a
+ * `kind`), "+ Add food" and the meal's kcal, on one line at any width. Chips that don't fit fold
+ * into one "+n" chip that lists them (bug B15), whatever the width; the first chip always shows,
+ * its name shortening before its servings or ✕ (council MUST 9). To fit, every chip is laid out
+ * once and measured, and the ones past the room are hidden, before the browser paints.
  */
-function ChipStrip({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLUListElement>(null)
-  const [more, setMore] = useState({ before: false, after: false })
+function PlanStrip({ meal, bouts }: { meal: readonly MealItem[]; bouts: readonly Chip[] }) {
+  const { t, i18n } = useTranslation()
+  const strip = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLUListElement>(null)
+  const plus = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const kcal = useRef<HTMLSpanElement>(null)
+  // How many chips show, and whether the kcal does; null while everything is laid out to be measured.
+  const [fit, setFit] = useState<{ shown: number; kcal: boolean } | null>(null)
+  const chips = [...meal.map((item) => (inline?: boolean) => <MealChip item={item} inline={inline} />), ...bouts]
+  const n = chips.length
+  const hidden = fit ? n - fit.shown : 0
+  const total = meal.length > 0 && t('units.kcal', { n: mealKcalRounded(meal) })
+
+  useLayoutEffect(() => setFit(null), [meal, bouts, i18n.language])
+  useLayoutEffect(() => {
+    if (fit) return
+    const box = strip.current!
+    const items = [...(list.current?.children ?? [])] as HTMLElement[]
+    const gap = (el: Element) => parseFloat(getComputedStyle(el).columnGap) || 0
+    // The room for the chips: the strip less what else is on it ("Meal", +, kcal) and their gaps.
+    let room = box.clientWidth
+    for (const el of box.children as HTMLCollectionOf<HTMLElement>)
+      if (el !== list.current && el !== plus.current && el.offsetWidth && getComputedStyle(el).position !== 'absolute')
+        room -= el.offsetWidth + gap(box)
+    const width = (k: number) =>
+      items.slice(0, k).reduce((sum, el, i) => sum + el.offsetWidth + (i ? gap(list.current!) : 0), 0) +
+      (k < n ? gap(box) + plus.current!.offsetWidth : 0)
+    // A narrow phone: the kcal gives way (the "+n" list says it) before the first chip, its name
+    // shortened as far as it goes, would lose its servings.
+    const name = items[0]?.querySelector<HTMLElement>('[data-may-shorten]')
+    const shortest = name ? width(1) - name.offsetWidth + Math.min(name.offsetWidth, parseFloat(getComputedStyle(name).minWidth)) : 0
+    const kcalFits = !kcal.current || shortest <= room
+    if (!kcalFits) room += kcal.current!.offsetWidth + gap(box)
+    let k = n
+    while (k > 1 && width(k) > room + 0.5) k--
+    setFit({ shown: k, kcal: kcalFits })
+  })
+  // Again when the strip's width changes, and when a web font arrives (chips change width).
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const update = () => setMore({ before: el.scrollLeft > 1, after: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 })
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    for (const child of el.children) ro.observe(child)
-    el.addEventListener('scroll', update, { passive: true })
+    let width = 0
+    const again = () => setFit(null)
+    const ro = new ResizeObserver(() => {
+      if (strip.current && strip.current.clientWidth !== width) {
+        width = strip.current.clientWidth
+        again()
+      }
+    })
+    ro.observe(strip.current!)
+    document.fonts?.addEventListener('loadingdone', again)
     return () => {
       ro.disconnect()
-      el.removeEventListener('scroll', update)
+      document.fonts?.removeEventListener('loadingdone', again)
     }
-  }, [children])
-  const stops = [more.before ? 'transparent, black 1.5rem' : 'black', more.after ? 'black calc(100% - 1.5rem), transparent' : 'black']
-  const mask = more.before || more.after ? `linear-gradient(to right, ${stops.join(', ')})` : undefined
+  }, [])
+
   return (
-    // The padding gives focus outlines room inside the scroll box.
-    <ul
-      ref={ref}
-      style={{ maskImage: mask, WebkitMaskImage: mask }}
-      className="-m-1 flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none]"
-    >
-      {children}
-    </ul>
+    <div ref={strip} className="flex min-w-0 flex-1 items-center gap-1.5 lg:max-w-max lg:flex-[1_1_20rem] lg:gap-2">
+      <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-muted max-lg:sr-only">
+        <LineSwatch />
+        {t('stage.meal')}
+      </h2>
+      {n > 0 && (
+        <ul ref={list} className="flex min-w-0 items-center gap-1.5">
+          {chips.map((chip, i) => (
+            // Measured at its own width; once fitted, the first chip may shorten its name (FoodChip).
+            <li key={i} hidden={i >= n - hidden} className={`shrink-0 ${fit ? 'max-w-full' : ''}`}>
+              {chip()}
+            </li>
+          ))}
+        </ul>
+      )}
+      {n > 1 && (
+        <button
+          ref={plus}
+          type="button"
+          hidden={!!fit && !hidden}
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className="min-h-11 min-w-11 shrink-0 rounded-control bg-surface-sunk px-1.5 text-control font-semibold hover:bg-surface-sunk-hover lg:min-h-9 lg:min-w-9"
+        >
+          <span className="tabular">+{hidden}</span>
+          <span className="sr-only"> {t('stage.moreChips')}</span>
+        </button>
+      )}
+      {open && hidden > 0 && (
+        <Popover anchor={plus} onClose={() => setOpen(false)} label={t('stage.meal')} className="w-[20rem]">
+          {fit?.kcal === false && <p className="tabular mb-2 text-control font-semibold">{total}</p>}
+          <ul className="flex flex-col items-start gap-1.5">
+            {chips.slice(n - hidden).map((chip, i) => (
+              <li key={i} className="max-w-full">
+                {chip(true)}
+              </li>
+            ))}
+          </ul>
+        </Popover>
+      )}
+      <AddFoodSheet compact={meal.length > 0} />
+      {total && (
+        <span
+          ref={kcal}
+          hidden={fit?.kcal === false}
+          className="tabular shrink-0 text-control font-semibold whitespace-nowrap max-lg:ml-auto"
+        >
+          {total}
+        </span>
+      )}
+    </div>
   )
 }
 
-/** One food: the chip, and the servings picker it opens. */
-function MealChip({ item }: { item: MealItem }) {
+/** One food: the chip, and the servings picker it opens (`inline`: under the chip, in the "+n" list). */
+function MealChip({ item, inline = false }: { item: MealItem; inline?: boolean }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const [open, setOpen] = useState(false)
@@ -126,6 +233,8 @@ function MealChip({ item }: { item: MealItem }) {
   if (!food) return null
   const name = localized(food.name, lang)
   const steps = [...new Set<number>([...SERVING_STEPS, item.servings])].sort((x, y) => x - y)
+  // In the "+n" list (itself a popover) the picker opens under the chip, not as a second popover.
+  const Panel = inline ? InlinePanel : Popover
   return (
     <>
       <span ref={anchor} className="inline-flex max-w-full">
@@ -142,7 +251,7 @@ function MealChip({ item }: { item: MealItem }) {
         />
       </span>
       {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} label={`${t('sim.servings')}: ${name}`} className="w-[17rem]">
+        <Panel anchor={anchor} onClose={() => setOpen(false)} label={`${t('sim.servings')}: ${name}`} className="w-[17rem]">
           <p className="text-control font-semibold">
             {name} <span className="font-normal text-ink-muted">({localized(food.serving.label, lang)})</span>
           </p>
@@ -168,117 +277,18 @@ function MealChip({ item }: { item: MealItem }) {
               {t('sim.capReached', { kcal: PARAMS.maxMealKcal })}
             </p>
           )}
-        </Popover>
+        </Panel>
       )}
     </>
   )
 }
 
-/** "Typical adult ⓘ": the ⓘ opens who the model is, with a link to the sources. */
-function PersonInfo({ profile }: { profile: Parameters<typeof PersonTag>[0]['profile'] }) {
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const anchor = useRef<HTMLSpanElement>(null)
-  return (
-    <>
-      <span ref={anchor} className="inline-flex shrink-0">
-        <PersonTag profile={profile} onInfo={() => setOpen((o) => !o)} expanded={open} />
-      </span>
-      {open && (
-        <Popover anchor={anchor} onClose={() => setOpen(false)} label={t(`profiles.${profile}.tag`)} className="w-[20rem]">
-          <p className="text-control font-semibold">{t(`profiles.${profile}.tag`)}</p>
-          <p className="mt-1 text-control text-ink-muted">{t(`profiles.${profile}.desc`)}</p>
-          <Link to="/science" className="mt-2 inline-block text-control font-semibold underline underline-offset-2">
-            {t('nav.science')}
-          </Link>
-        </Popover>
-      )}
-    </>
-  )
-}
-
-/**
- * Copy the address: the link sync keeps it equal to this exact run. If copying is blocked (some
- * school browsers), the link is shown to copy by hand. On a touch screen with a share sheet it
- * opens the sheet instead, as v1's share button did.
- */
-function CopyLink() {
-  const { t } = useTranslation()
-  const [status, setStatus] = useState<'idle' | 'copied' | 'manual'>('idle')
-  const anchor = useRef<HTMLButtonElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const refill = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current)
-      clearTimeout(refill.current)
-    },
-    [],
-  )
-
-  const copy = () => {
-    // A touch screen with a share sheet (a tablet) shares the link with the summary sentence, in
-    // the language on screen, so the message says what the link shows (council round 3). Read
-    // from the sentence itself (SummaryLine): it is the stage's answer, already worded.
-    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-      const text = document.querySelector('[data-summary-headline]')?.textContent ?? undefined
-      navigator.share({ title: 'LifePeek', text, url: window.location.href }).catch(() => undefined)
-      return
-    }
-    const done = navigator.clipboard?.writeText(window.location.href)
-    if (!done) return setStatus('manual')
-    done.then(
-      () => {
-        // A second copy while "Link copied" still shows must be said again (review 14-17, LOW 9):
-        // empty the status region first, then fill it 80 ms later (one frame apart, some screen
-        // readers merge the two changes and say nothing: FIX-C review, item 7).
-        setStatus('idle')
-        clearTimeout(refill.current)
-        clearTimeout(timer.current)
-        refill.current = setTimeout(() => {
-          setStatus('copied')
-          timer.current = setTimeout(() => setStatus('idle'), 2500)
-        }, 80)
-      },
-      () => setStatus('manual'),
-    )
-  }
-  return (
-    // Not on phones (plan-ui-ux §3.5) nor on the projector (§3.4). Words on a wide bar (see MealBar).
-    <span className="max-lg:hidden in-data-[contrast=high]:hidden">
-      <IconButton
-        ref={anchor}
-        icon={<LinkIcon />}
-        label={status === 'copied' ? t('sim.shareCopied') : t('sim.share')}
-        title={t('sim.share')}
-        onClick={copy}
-        className="@max-[88rem]/bar:w-9 @max-[88rem]/bar:justify-center @max-[88rem]/bar:px-0 @max-[88rem]/bar:[&>span]:sr-only"
-      />
-      {/* Said once by screen readers when the link is copied (verify-1 A5): a status region of its own. */}
-      <span role="status" className="sr-only">
-        {status === 'copied' ? t('sim.shareCopied') : ''}
-      </span>
-      {status === 'manual' && (
-        <Popover anchor={anchor} onClose={() => setStatus('idle')} label={t('sim.shareManual')} className="w-[22rem]">
-          <label className="block text-caption text-ink-muted">
-            {t('sim.shareManual')}
-            <input
-              readOnly
-              value={window.location.href}
-              onFocus={(e) => e.target.select()}
-              className="mt-1 block w-full rounded-control bg-surface-sunk px-2 py-1.5 text-control text-ink"
-            />
-          </label>
-        </Popover>
-      )}
-    </span>
-  )
-}
+/** A servings picker inside the "+n" list: the same contents, in the flow under its chip. */
+const InlinePanel = ({ children }: { children: ReactNode }) => <div className="mt-2">{children}</div>
 
 /**
  * "Report a mistake" (D-FEED): the same form as v1. Without an API it opens the pre-filled GitHub
- * issue in a new tab and sends nothing; the report carries this run's link. Words on a wide bar
- * (see MealBar); the flag alone on a phone. Not on the projector, like
+ * issue in a new tab and sends nothing; the report carries this run's link. Not on the projector, like
  * "Copy link" (a teacher reports from their own screen).
  */
 function ReportMistake() {
@@ -294,7 +304,6 @@ function ReportMistake() {
       onClick={onClick}
       // The loaded form's own button replaces this one: it takes the focus back, so closing the form returns there.
       autoFocus={loaded}
-      className="@max-[88rem]/bar:w-11 @max-[88rem]/bar:justify-center @max-[88rem]/bar:px-0 lg:@max-[88rem]/bar:w-9 @max-[88rem]/bar:[&>span]:sr-only"
     />
   )
   return (

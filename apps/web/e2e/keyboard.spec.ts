@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { onlyIn } from './helpers/gate.ts'
+import { onlyIn, openMealActions } from './helpers/gate.ts'
 
 // WP-15 on /sim: everything works without a mouse (G8, UI-6). The key map and its off-switch,
 // the graphs as tables, their summaries for screen readers, and the timeline's key moments
@@ -290,6 +290,8 @@ test.describe('the timeline’s key moments (council round 2)', () => {
 test('after keeping, the meal bar’s buttons keep their words (council SHOULD 11)', async ({ page }) => {
   onlyIn('desktop')
   await page.goto(COLA_KEPT_BURGER)
+  // Copy link and Report are in "⋯" (FP-1), with their words.
+  await openMealActions(page)
   for (const name of ['Keep to compare', 'Copy link', 'Report a mistake']) {
     await expect(page.getByRole('button', { name }).getByText(name, { exact: true })).toBeVisible()
   }

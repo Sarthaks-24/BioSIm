@@ -7,6 +7,7 @@ import {
   interactiveOverlaps,
   linkRoundTripProblems,
   measureBody,
+  openMealActions,
   overlayProblems,
   redCheck,
   returningVisitor,
@@ -85,9 +86,9 @@ test.describe('Android 360×640', () => {
     })
   })
 
-  test('B2 the meal bar is one row below 390 px', async ({ page }) => {
+  test('B2 the meal bar is one row at 320–390 px', async ({ page }) => {
     await red('B2', async (problems) => {
-      for (const w of [320, 360, 375]) {
+      for (const w of [320, 360, 375, 390]) {
         await page.setViewportSize({ width: w, height: 640 })
         await page.goto('/sim')
         await stageReady(page)
@@ -101,7 +102,7 @@ test.describe('Android 360×640', () => {
         const height = await page
           .locator('section[aria-labelledby="meal-bar-title"]')
           .evaluate((e) => Math.round(e.getBoundingClientRect().height))
-        if (rows > 2) problems.push(`${w} px: the meal bar has ${rows} rows of controls, ${height} px tall`)
+        if (rows > 1) problems.push(`${w} px: the meal bar has ${rows} rows of controls, ${height} px tall`)
       }
     })
   })
@@ -121,8 +122,16 @@ test.describe('Android 360×640', () => {
     })
   })
 
-  test('B7 the Hindi header is one row (≤ 56 px) at 360 and 320', async ({ page }) => {
+  test('B7 the header is one row (≤ 56 px) at 360 and 320, in the pseudo-locale and in Hindi', async ({ page }) => {
     await red('B7', async (problems) => {
+      // The +40 % pseudo-locale stands in for Hindi while it is paused (R47); only the e2e build has it.
+      for (const w of [360, 320]) {
+        await page.setViewportSize({ width: w, height: 640 })
+        await page.goto('/sim?lang=pseudo')
+        await stageReady(page)
+        const h = await page.locator('header').evaluate((e) => Math.round(e.getBoundingClientRect().height))
+        if (h > 56) problems.push(`${w} px pseudo-locale: header ${h} px tall`)
+      }
       for (const w of [360, 320]) {
         await page.setViewportSize({ width: w, height: 640 })
         await page.goto('/sim?lang=hi')
@@ -304,26 +313,43 @@ test.describe('projector', () => {
 test.describe('desktop', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
-  test('B15 with 6 foods every chip is visible or counted', async ({ page }) => {
+  test('B15 with 6 foods (and 3 bouts) every chip is visible or counted, on one row', async ({ page }) => {
     await red('B15', async (problems) => {
-      for (const w of [1440, 360]) {
-        await page.setViewportSize({ width: w, height: w > 400 ? 900 : 640 })
-        await page.goto(SIX_FOODS)
-        await stageReady(page)
-        const chips = await page.locator('section[aria-labelledby="meal-bar-title"] ul > li').evaluateAll((els) => {
-          const strip = els[0]?.parentElement?.getBoundingClientRect()
-          return els.map((e) => {
-            const r = e.getBoundingClientRect()
-            return !!strip && r.left >= strip.left - 1 && r.right <= strip.right + 1
+      // `fixture=bouts`: the e2e build's three longest activity-bout chips (MealBar), as v3 will add them.
+      for (const [url, count] of [
+        [SIX_FOODS, 6],
+        [`${SIX_FOODS}&fixture=bouts`, 9],
+      ] as const) {
+        for (const w of [1440, 360, 320]) {
+          await page.setViewportSize({ width: w, height: w > 400 ? 900 : 640 })
+          await page.goto(url)
+          await stageReady(page)
+          const bar = page.locator('section[aria-labelledby="meal-bar-title"]')
+          const chips = await bar.locator('ul > li').evaluateAll((els) => {
+            const strip = els[0]?.parentElement?.getBoundingClientRect()
+            return els.map((e) => {
+              const r = e.getBoundingClientRect()
+              const servings = e.querySelector('.tabular')
+              return {
+                shown: !!strip && r.width > 0 && r.left >= strip.left - 1 && r.right <= strip.right + 1,
+                top: Math.round(r.top),
+                // A shown food chip keeps its "×1" whole (the name shortens first).
+                servings: !servings || servings.getBoundingClientRect().right <= r.right + 1,
+              }
+            })
           })
-        })
-        const shown = chips.filter(Boolean).length
-        const counted = await page
-          .locator('section[aria-labelledby="meal-bar-title"]')
-          .getByText(/^\+\d+$/)
-          .count()
-        if (chips.length !== 6) problems.push(`${w} px: ${chips.length} chips for 6 foods`)
-        else if (shown < 6 && !counted) problems.push(`${w} px: ${shown} of 6 chips wholly visible, no "+n" count`)
+          const shown = chips.filter((c) => c.shown)
+          const plus = await bar
+            .getByText(/^\+\d+$/)
+            .filter({ visible: true })
+            .allTextContents()
+          const counted = plus.length ? Number(plus[0]!.slice(1)) : 0
+          const where = `${w} px${count === 9 ? ' with 3 bouts' : ''}`
+          if (chips.length !== count) problems.push(`${where}: ${chips.length} chips for ${count}`)
+          else if (shown.length + counted !== count) problems.push(`${where}: ${shown.length} chips shown + "+${counted}" for ${count}`)
+          if (new Set(shown.map((c) => c.top)).size > 1) problems.push(`${where}: the chips are on more than one row`)
+          if (shown.some((c) => !c.servings)) problems.push(`${where}: a chip's servings are cut`)
+        }
       }
     })
   })
@@ -469,8 +495,10 @@ test.describe('desktop', () => {
     await red('B24', async (problems) => {
       await page.goto('/sim')
       await stageReady(page)
+      await openMealActions(page)
       await page.getByRole('button', { name: 'Report a mistake' }).filter({ visible: true }).first().click()
-      const dialog = page.getByRole('dialog').filter({ hasText: /public/i })
+      // By name: the form opens inside the "⋯" panel, itself a dialog (FP-1).
+      const dialog = page.getByRole('dialog', { name: 'Report a mistake' })
       await expect(dialog).toBeVisible()
       const warnings = await dialog.getByText(/\bpublic\b/i).count()
       if (warnings > 1) problems.push(`${warnings} privacy warnings in the report form`)
