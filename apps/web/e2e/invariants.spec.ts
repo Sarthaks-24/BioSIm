@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { PSEUDO_LANG, pseudoText } from '../src/i18n/pseudo.ts'
 import {
   checkBody,
   expectInFirstScreen,
@@ -9,7 +11,7 @@ import {
   onlyIn,
   overlayProblems,
   returningVisitor,
-  skipWithoutHindi,
+  tryStep,
   verdict,
   watchConsole,
   type BodyLimits,
@@ -75,7 +77,27 @@ const isPhone = (project: string) => /^phone-|^webkit-phone$/.test(project)
 /** Projects whose stage must not scroll (phones may, below 700 px tall, after FP-1). */
 const noScroll = (project: string) => ['tablet-portrait', 'landscape', 'projector-sizes'].includes(project)
 
-const lang = (url: string, l: 'en' | 'hi') => (l === 'hi' ? `${url}${url.includes('?') ? '&' : '?'}lang=hi` : url)
+/**
+ * English, and the +40 % pseudo-locale (i18n/pseudo.ts) standing in for Hindi's longer words while
+ * Hindi is paused (R47: the layout checks run on both, so layouts stay Hindi-ready). `?lang=pseudo`
+ * works with storage blocked too; only a VITE_PSEUDO=1 build (the e2e one) has it.
+ */
+type Lang = 'en' | 'pseudo'
+const lang = (url: string, l: Lang) => (l === 'pseudo' ? `${url}${url.includes('?') ? '&' : '?'}lang=pseudo` : url)
+const PLAY: string = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8')).sim.play
+const playName = (l: Lang) => (l === 'pseudo' ? pseudoText(PLAY) : PLAY)
+
+/** Skips the running test on a build without the pseudo-locale (a deployed site). Call after opening a pseudo page. */
+async function skipWithoutPseudo(page: Page) {
+  const pseudo = await page
+    .waitForFunction((code) => document.documentElement.lang === code, PSEUDO_LANG, { timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false)
+  test.skip(!pseudo, 'this build has no pseudo-locale (VITE_PSEUDO=1 only)')
+}
+
+// A step that cannot finish fails in seconds, as a problem of its check, not at the test's timeout.
+test.use({ actionTimeout: 15_000, navigationTimeout: 30_000 })
 
 test.beforeEach(async ({ page }) => {
   const project = test.info().project.name
@@ -94,33 +116,44 @@ test.beforeEach(async ({ page }) => {
   }
 })
 
-async function open(page: Page, url: string, firstVisit = false) {
+/**
+ * Opens a stage URL and waits for it to settle. Returns null, or why it could not open as a problem
+ * for the caller's verdict: a stage that does not draw is a finding, not a crashed test.
+ */
+async function open(page: Page, url: string, firstVisit = false): Promise<string | null> {
   if (!firstVisit && test.info().project.name !== 'storage-blocked') await returningVisitor(page)
-  await page.goto(url)
-  await page.locator('[data-stage]').waitFor()
-  await page.waitForLoadState('networkidle')
-  // The body picture (none in the empty state, before FP-1); 3D replaces the flat one once loaded.
-  await page.waitForTimeout(300)
-  await page.evaluate(() => document.fonts.ready)
+  const problem = await tryStep(async () => {
+    await page.goto(url)
+    await page.locator('[data-stage]').waitFor()
+    await page.waitForLoadState('networkidle')
+    // The body picture (none in the empty state, before FP-1); 3D replaces the flat one once loaded.
+    await page.waitForTimeout(300)
+    await page.evaluate(() => document.fonts.ready)
+  })
+  return problem && `${url} did not open: ${problem}`
 }
 
-for (const l of ['en', 'hi'] as const) {
+for (const l of ['en', 'pseudo'] as const) {
   for (const [state, { url, firstVisit }] of Object.entries(STATES)) {
     test(`body visible, ${state}, ${l}`, async ({ page }) => {
       const project = test.info().project.name
       const mode = INVARIANTS[project]!
       for (const [w, h] of SIZES[project] ?? [[0, 0]]) {
         if (w) await page.setViewportSize({ width: w, height: h })
-        await open(page, lang(url, l), firstVisit)
-        if (l === 'hi') await skipWithoutHindi(page)
         const size = page.viewportSize()!
         const where = `${size.width}×${size.height} ${state} ${l}`
+        const failed = await open(page, lang(url, l), firstVisit)
+        if (failed) {
+          verdict(`body visible (${where})`, mode, [failed])
+          continue
+        }
+        if (l === 'pseudo') await skipWithoutPseudo(page)
         await checkBody(page, limitsFor(project), { mode, label: where })
         if (isPhone(project)) {
           await expectInFirstScreen(
             page,
             {
-              Play: page.getByRole('button', { name: /^(Play|चलाएँ)$/ }),
+              Play: page.getByRole('button', { name: playName(l), exact: true }),
               body: page.locator('[data-body]'),
               'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
             },
@@ -135,15 +168,16 @@ for (const l of ['en', 'hi'] as const) {
 
 test('no overlapping controls', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
-  for (const url of ['/sim', lang(KEPT, 'hi')]) {
-    await open(page, url)
-    verdict(`no overlapping controls ${url}`, mode, await interactiveOverlaps(page))
+  for (const url of ['/sim', lang(KEPT, 'pseudo')]) {
+    const failed = await open(page, url)
+    verdict(`no overlapping controls ${url}`, mode, failed ? [failed] : await interactiveOverlaps(page))
   }
 })
 
 test('overlays stay on screen, below the header, with a Close button; Esc closes them', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
-  await open(page, KEPT)
+  const failed = await open(page, KEPT)
+  if (failed) return verdict('overlays', mode, [failed])
   const overlays = [
     {
       name: 'How we know',
@@ -179,8 +213,9 @@ test('overlays stay on screen, below the header, with a Close button; Esc closes
 test('Back closes a sheet and keeps the meal', async ({ page }) => {
   onlyIn('phone-small', 'webkit-phone')
   const mode = INVARIANTS[test.info().project.name]!
-  await open(page, '/sim')
   await gateSteps('Back keeps the meal', mode, async () => {
+    const failed = await open(page, '/sim')
+    if (failed) throw new Error(failed)
     await page.getByRole('button', { name: 'Add food' }).click()
     const sheet = page.getByRole('dialog', { name: 'Add food' })
     await expect(sheet).toBeVisible()
@@ -197,7 +232,8 @@ test('Back closes a sheet and keeps the meal', async ({ page }) => {
 test('no console errors or warnings', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
   const console = watchConsole(page)
-  await open(page, KEPT)
+  const failed = await open(page, KEPT)
+  if (failed) return verdict('console', mode, [failed, ...new Set(console.problems())])
   await page
     .getByRole('button', { name: 'Play' })
     .click({ timeout: 5_000 })
@@ -208,8 +244,9 @@ test('no console errors or warnings', async ({ page }) => {
 
 test('the stage plays', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
-  await open(page, '/sim')
   await gateSteps('plays', mode, async () => {
+    const failed = await open(page, '/sim')
+    if (failed) throw new Error(failed)
     await page.getByRole('button', { name: 'Play' }).click({ timeout: 5_000 })
     await expect(page.getByRole('slider').first()).not.toHaveAttribute('aria-valuenow', '0')
   })
@@ -219,24 +256,34 @@ test('links survive a load (round trip)', async ({ page }) => {
   onlyIn('phone-small', 'storage-blocked')
   const mode = INVARIANTS[test.info().project.name]!
   await returningVisitor(page)
-  const problems: string[] = []
-  for (const link of [
+  const roundTrip = async (links: string[]) => {
+    const problems: string[] = []
+    for (const link of links) {
+      const thrown = await tryStep(async () => {
+        const changed = await linkRoundTripProblems(page, link)
+        const notes = await page.locator('[data-stage] [role="note"]').count()
+        for (const c of changed)
+          if (c.startsWith('lang=') || !notes) problems.push(`${link}: ${c}${c.startsWith('lang=') ? '' : ' (no note)'}`)
+      })
+      if (thrown) problems.push(`${link} did not open: ${thrown}`)
+    }
+    return problems
+  }
+  const links = [
     '/sim?v=2&a=cola:1',
     '/sim?v=2&a=roti:2,dal:1,milk:1&b=cheeseburger:1,fries:1&t=90',
-    '/sim?v=2&a=cola:1&lang=hi',
     '/sim?v=2&a=cola:999',
     '/sim?v=2&a=cola:1&t=99999',
-  ]) {
-    const changed = await linkRoundTripProblems(page, link)
-    const notes = await page.locator('[data-stage] [role="note"]').count()
-    for (const c of changed) if (c.startsWith('lang=') || !notes) problems.push(`${link}: ${c}${c.startsWith('lang=') ? '' : ' (no note)'}`)
-  }
-  verdict('link round trip', mode, problems)
+  ]
+  verdict('link round trip', mode, await roundTrip(links))
+  // A Hindi link (R47: Hindi is paused; it opens in English, with a note): report only, whatever the project's mode.
+  verdict('link round trip (lang=hi)', 'report', await roundTrip(['/sim?v=2&a=cola:1&lang=hi']))
 })
 
 test('every dvh has a vh fallback before it', async ({ page }) => {
   onlyIn('phone-small')
-  await page.goto('/')
+  const thrown = await tryStep(async () => void (await page.goto('/')))
+  if (thrown) return verdict('dvh fallback', 'report', [`/ did not open: ${thrown}`])
   const hrefs = await page.locator('link[rel="stylesheet"]').evaluateAll((els) => els.map((e) => (e as HTMLLinkElement).href))
   const problems: string[] = []
   for (const href of hrefs) {
