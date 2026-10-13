@@ -1,4 +1,4 @@
-| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
+# Hindi strings for review
 
 Every Hindi string a native reviewer must check before it ships (00 gate 3.1). One row per
 string: its key in `hi.json`, the English, the Hindi, and its status (`draft` until a reviewer
@@ -490,6 +490,7 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `graph.halfLeftOf` | {{meal}}: half has left the stomach | {{meal}}: आधा भोजन आमाशय से निकल गया | draft |
 | `graph.highestOf` | {{meal}}: highest {{value}} | {{meal}}: सबसे अधिक {{value}} | draft |
 | `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
+| `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
 ## Sign-off
 

@@ -174,6 +174,10 @@ export function NowLine({
   // above never jumps while playing, and no taller than this meal needs.
   const versions = useMemo(() => nowKeysOf(run).map(parseNowKey), [run])
   const jobs = useMemo(() => [...new Set(versions.map((v) => v.stage))], [versions])
+  // The kept meal's row holds its longest version the same way (it goes from "being eaten" to
+  // "the gut is finished with it", and may wrap differently in Hindi or on the projector).
+  const keptName = keptItems ? t('now.kept', { meal: shortMealNames(keptItems, i18n.language) }) : ''
+  const keptVersions = useMemo(() => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []), [kept, keptDrink, t])
   const cell = 'col-start-1 row-start-1'
   return (
     <div data-now={w.stage} className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>
@@ -204,10 +208,18 @@ export function NowLine({
           <span className="relative -top-[0.2em] shrink-0">
             <LineSwatch kept />
           </span>
-          <span>
-            {/* On a phone the meal bar right above names the kept meal, by the same dashed sample. */}
-            <span className="max-lg:sr-only">{t('now.kept', { meal: shortMealNames(keptItems, i18n.language) })} </span>
-            <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
+          <span className="grid">
+            {keptVersions.map((v) => (
+              <span key={v} aria-hidden="true" className={`invisible ${cell}`}>
+                <span className="max-lg:hidden">{keptName} </span>
+                <span className="font-semibold">{v}</span>
+              </span>
+            ))}
+            <span className={cell}>
+              {/* On a phone the meal bar right above names the kept meal, by the same dashed sample. */}
+              <span className="max-lg:sr-only">{keptName} </span>
+              <span className="font-semibold text-ink">{keptText(keptWhere, keptDrink, t)}</span>
+            </span>
           </span>
         </p>
       )}
