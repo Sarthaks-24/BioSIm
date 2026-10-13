@@ -280,7 +280,7 @@ test('no words on a graph touch a line, and the legend names both meals (1280 an
             })
           expect(clashes, where).toEqual([])
           // The legend says which line is which meal: never a bare "Kept" or a word at a line's end.
-          const kept = lang === 'en' ? /^Kept: / : /^रखा गया: /
+          const kept = lang === 'en' ? /^Kept: / : /^रखा गया भोजन: /
           await expect(page.locator('figure figcaption').filter({ visible: true }).first().getByText(kept)).toBeVisible()
         }
       }

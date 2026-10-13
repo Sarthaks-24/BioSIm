@@ -107,7 +107,7 @@ test.describe('the Now line', () => {
     await expect(words).toBeVisible()
     await page.goto(`${COLA_KEPT_BURGER}&t=40&lang=hi`)
     await expect(words.locator('.font-semibold')).toHaveText('लगभग सारा भाग आमाशय में')
-    await expect(words).toContainText('चीज़बर्गर + फ़्रेंच फ़्राइज़ (रखा गया):')
+    await expect(words).toContainText('रखा गया भोजन (चीज़बर्गर + फ़्रेंच फ़्राइज़):')
   })
 
   test('once the gut has finished with the meal it says "Done", never "Stomach" (cheeseburger at 30 h)', async ({ page }) => {

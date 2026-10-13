@@ -87,8 +87,15 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
  * A meal's name inside a sentence: its short food names ("Cola", "Roti ×2 + Dal"). A meal of more
  * than two foods, or two meals with the same name (Cola ×1 kept, Cola ×1 + water now), are
  * "this meal" and "the kept meal" instead, so the sentence never says "Cola is faster than Cola".
+ *
+ * `oblique`: the name goes before a postposition in Hindi ("इस भोजन की", never "यह भोजन की"; FIX-F).
+ * English is the same either way. The Hindi templates never make a verb or adjective agree with a
+ * food name, since some foods are feminine (इडली, दाल) and some masculine (केला); i18n/agreement.test.ts
+ * holds them to it, and to the case each name is passed in below.
  */
-function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: string): Record<RunKey, string> {
+function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: string, oblique = false): Record<RunKey, string> {
+  const thisMeal = t(oblique ? 'summary.oblique.thisMeal' : 'summary.thisMeal')
+  const keptMeal = t(oblique ? 'summary.oblique.keptMeal' : 'summary.keptMeal')
   const short = (s: Simulation) =>
     s.meal.items.length <= 2
       ? shortMealNames(
@@ -97,16 +104,16 @@ function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: str
         )
       : ''
   const n = { run: short(run), kept: kept ? short(kept) : '' }
-  if (!kept) return { run: n.run || t('summary.thisMeal'), kept: '' }
+  if (!kept) return { run: n.run || thisMeal, kept: '' }
   const clash = !n.run || !n.kept || n.run === n.kept
-  return clash ? { run: t('summary.thisMeal'), kept: t('summary.keptMeal') } : n
+  return clash ? { run: thisMeal, kept: keptMeal } : n
 }
 
 /** One meal: "Half of the food energy in Cola has left the stomach after 30 min." */
 export function singleSummary(run: Simulation, t: TFunction, lang: string): Summary | null {
   const d = summaryData(run, null)
   if (d.kind !== 'single') return null
-  const meal = names(run, null, t, lang).run
+  const meal = names(run, null, t, lang, true).run
   const time = formatDuration(d.halfMin, t)
   const key = d.byWeight ? (d.open ? 'summary.singleWaterMore' : 'summary.singleWater') : d.open ? 'summary.singleMore' : 'summary.single'
   return { headline: sentence(t(key, { meal, time })), key: { text: time, line: 'run' } }
@@ -116,10 +123,13 @@ export function singleSummary(run: Simulation, t: TFunction, lang: string): Summ
 export function compareSummary(run: Simulation, kept: Simulation, t: TFunction, lang: string): Summary | null {
   const d = summaryData(run, kept)
   if (d.kind !== 'pair') return d.kind === 'single' ? singleSummary(run, t, lang) : null
+  // The fast meal is the subject ("इडली आमाशय से निकलने में … तेज़ है"); the slow one, and both in
+  // "similar", come before a postposition in Hindi.
   const n = names(run, kept, t, lang)
+  const o = names(run, kept, t, lang, true)
   const fast = n[d.fast]
-  const slow = n[d.slow]
-  if (d.similar) return { headline: sentence(t('summary.similar', { a: n.run, b: n.kept })) }
+  const slow = o[d.slow]
+  if (d.similar) return { headline: sentence(t('summary.similar', { a: o.run, b: o.kept })) }
   const x = t('summary.times', { n: times(d.ratio) })
   const headline = sentence(t(d.open ? 'summary.fasterMore' : 'summary.faster', { fast, slow, x }))
   const key = { text: x, line: d.fast }
