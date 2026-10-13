@@ -19,8 +19,14 @@ import { mealNames, shortFoodName } from './mealText.ts'
 /** The full stage text is downloaded when "More" is first opened (size budget). If it doesn't load, its panel says so. */
 const stageMore = lazyWithRetry(() => import('./StageMore.tsx'))
 
-/** Where "More" sits: beside the body from 1024 px up, over it on a phone. */
-const MORE_BOX = 'absolute inset-0 lg:inset-y-auto lg:top-14 lg:bottom-3 lg:left-4 lg:w-[min(25rem,46%)] lg:rounded-frame'
+/**
+ * "More" (StageMore): from 1024 px up a column at the pane's right, and the body moves left to make
+ * room for it (FP-5, U4: it covered the body, its labels and the food pieces' key). If its text
+ * doesn't load, the box that says so takes the same place (on a phone, the body's lower edge).
+ */
+const MORE_ROOM = 'lg:right-[min(25rem,46%)]'
+const MORE_FAILED =
+  'absolute inset-x-0 bottom-0 z-20 border-t border-border bg-surface-raised p-4 lg:inset-y-0 lg:left-auto lg:w-[min(25rem,46%)] lg:border-t-0 lg:border-l'
 
 /** Foods offered when the meal is empty: a drink, an Indian staple, a fruit. */
 const EXAMPLES = ['cola', 'roti', 'apple'] as const
@@ -64,6 +70,7 @@ export default function BodyPane({
   // Bumped by "Try again" when the stage text didn't load: a new boundary asks for it again.
   const [attempt, setAttempt] = useState(0)
   const moreButton = useRef<HTMLButtonElement>(null)
+  const bodyBox = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const closeMore = () => {
     setMore(false)
@@ -84,42 +91,42 @@ export default function BodyPane({
         <LayerBar className="pointer-events-auto w-fit" />
       </div>
       {/* The body fills whatever height the stage leaves it (absolute, so the canvas can't push the row taller). */}
-      <div className="relative min-h-40 flex-1 lg:min-h-0">
-        <div className="absolute inset-0">
+      <div ref={bodyBox} className="relative min-h-40 flex-1 lg:min-h-0">
+        {/* With "More" open from 1024 px up, the body and its key move left of it (MORE_ROOM). */}
+        <div className={`absolute inset-0 ${open ? MORE_ROOM : ''}`}>
           {/* With no food yet the body still shows, resting (R23): the picks are a card under it. */}
           <BodyClockContext value={MEAL_BODY_CLOCK}>
             <BodyView sim={run} label={hasMeal ? t('stage.bodyLabel', { meal: mealNames(meal, i18n.language) }) : t('stage.bodyResting')} />
           </BodyClockContext>
+          {/*
+           * From 1024 px up, a band over the legs, out of the organs' way: what the food pieces are
+           * (council round 2). While the clock stands at the start nothing has moved yet, so what to do
+           * first takes its place, as on a phone. Not while "More" is open.
+           */}
+          {hasMeal && (
+            <div className="pointer-events-none absolute inset-x-4 bottom-1.5 grid items-end justify-items-start max-lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
+              <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />
+              {!open && (
+                <PlayPrompt
+                  meal={meal}
+                  className="-ml-1.5 max-w-full rounded-[1.125rem] bg-surface-raised/90 px-3 py-1 text-control leading-6 shadow-[0_1px_3px_rgb(20_33_61/0.18)]"
+                />
+              )}
+            </div>
+          )}
         </div>
-        {/*
-         * From 1024 px up, a band over the legs, out of the organs' way: what the food pieces are
-         * (council round 2). While the clock stands at the start nothing has moved yet, so what to do
-         * first takes its place, as on a phone. Not while "More" covers the body.
-         */}
-        {hasMeal && (
-          <div className="pointer-events-none absolute inset-x-4 bottom-1.5 grid items-end justify-items-start max-lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
-            <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />
-            {!open && (
-              <PlayPrompt
-                meal={meal}
-                className="-ml-1.5 max-w-full rounded-[1.125rem] bg-surface-raised/90 px-3 py-1 text-control leading-6 shadow-[0_1px_3px_rgb(20_33_61/0.18)]"
-              />
-            )}
-          </div>
-        )}
         {open && (
-          // Beside the body from 1024 px up (the lit organ stays in view); over it on a phone.
           <LoadBoundary
             key={attempt}
             onFail={stageMore.reset}
             fallback={
-              <section id={panelId} aria-label={t('now.more')} className={`${MORE_BOX} z-20 border border-border bg-surface-raised p-4`}>
+              <section id={panelId} aria-label={t('now.more')} className={MORE_FAILED}>
                 <LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />
               </section>
             }
           >
             <Suspense fallback={null}>
-              <StageMore run={run} id={panelId} onClose={closeMore} className={MORE_BOX} />
+              <StageMore run={run} id={panelId} anchor={moreButton} body={bodyBox} onClose={closeMore} />
             </Suspense>
           </LoadBoundary>
         )}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { ProfileId } from '@lifepeek/engine'
@@ -40,23 +40,27 @@ function shareLink(toSheet: boolean): Promise<'shared' | 'copied' | 'manual'> {
  * with a link to the sources. Downloaded the first time "⋯" opens (MealBar). Keep and Report
  * come from the bar as elements, so this file shares no module with the stage's own code (nothing
  * is split out). `manual`: the bar's "Copy link" could not copy, so the link shows here to copy by hand.
+ * It is a menu (FP-5): each action closes it (Overlay `menu`); "Copy link" closes it once it has
+ * copied (`onCopied`: the bar says "Link copied"), and stays open with the link if copying is blocked.
  */
 export default function MealActions({
   profile,
   keep,
   report,
   manual,
+  onCopied,
 }: {
   profile: ProfileId
   keep: ReactNode
   report: ReactNode
   manual: boolean
+  onCopied: (copied: boolean) => void
 }) {
   const { t } = useTranslation()
   return (
     <>
       <span className="lg:hidden">{keep}</span>
-      <CopyLink manual={manual} />
+      <CopyLink manual={manual} onCopied={onCopied} />
       {report}
       <div className="mt-1 w-full border-t border-border px-2.5 pt-1.5 pb-1">
         <p className="text-control font-semibold">{t(`profiles.${profile}.tag`)}</p>
@@ -74,53 +78,30 @@ export default function MealActions({
 /**
  * Copy the address (shareLink). If copying is blocked (some school browsers), the link is shown
  * under the button, selected, to copy by hand. On a touch screen with a share sheet (`toSheet`) it
- * is "Share" and opens the sheet, as v1's share button did.
+ * is "Share" and opens the sheet, as v1's share button did. Copied or shared, the menu closes
+ * (`onCopied`: the bar says "Link copied" after a copy); the button is `data-stay`, so the menu waits for that.
  */
-function CopyLink({ manual }: { manual: boolean }) {
+function CopyLink({ manual, onCopied }: { manual: boolean; onCopied: (copied: boolean) => void }) {
   const { t } = useTranslation()
   const toSheet = !!navigator.share && matchMedia('(pointer: coarse)').matches
-  const [status, setStatus] = useState<'idle' | 'copied' | 'manual'>(manual ? 'manual' : 'idle')
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const refill = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current)
-      clearTimeout(refill.current)
-    },
-    [],
-  )
-
+  const [shown, setShown] = useState(manual)
   const copy = () =>
     void shareLink(toSheet).then((done) => {
-      if (done === 'manual') return setStatus('manual')
-      if (done === 'shared') return
-      // A second copy while "Link copied" still shows must be said again (review 14-17, LOW 9):
-      // empty the status region first, then fill it 80 ms later (one frame apart, some screen
-      // readers merge the two changes and say nothing: FIX-C review, item 7).
-      setStatus('idle')
-      clearTimeout(refill.current)
-      clearTimeout(timer.current)
-      refill.current = setTimeout(() => {
-        setStatus('copied')
-        timer.current = setTimeout(() => setStatus('idle'), 2500)
-      }, 80)
+      if (done === 'manual') setShown(true)
+      else onCopied(done === 'copied')
     })
   return (
     // Not on the projector (§3.4). From 1024 px up it is on the bar, and shows here only with the
     // link to copy by hand.
-    <span className={`in-data-[contrast=high]:hidden ${manual ? '' : 'lg:hidden'}`}>
+    <span data-stay="" className={`in-data-[contrast=high]:hidden ${manual ? '' : 'lg:hidden'}`}>
       <IconButton
         icon={<LinkIcon />}
-        label={t(status === 'copied' ? 'sim.shareCopied' : toSheet ? 'link.shareTo' : 'sim.share')}
+        label={t(toSheet ? 'link.shareTo' : 'sim.share')}
         title={t(toSheet ? 'link.shareTo' : 'sim.share')}
         onClick={copy}
       />
-      {/* Said once by screen readers when the link is copied (verify-1 A5): a status region of its own. */}
-      <span role="status" className="sr-only">
-        {status === 'copied' ? t('sim.shareCopied') : ''}
-      </span>
       {/* Copying blocked: the link to copy by hand, under the button, in the "⋯" panel. */}
-      {status === 'manual' && (
+      {shown && (
         <label className="block w-full px-2.5 pb-1 text-caption text-ink-muted">
           {t('link.shareManual')}
           <input

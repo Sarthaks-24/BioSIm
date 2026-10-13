@@ -8,7 +8,7 @@ import limitsText from 'virtual:lifepeek-en/limits'
 import signalsText from 'virtual:lifepeek-en/signals'
 import { unitInWords } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
-import Popover from '../stage/Popover.tsx'
+import Overlay from '../Overlay.tsx'
 import { Section } from './HowWeKnow.tsx'
 
 // The known limits' and the signals' long English come with the panel, the only place that shows them.
@@ -47,8 +47,8 @@ export interface PanelProps {
  * we are, the known limits, whose body it is, and the sources (each linked to its entry on the
  * Science page). Long caveats live here instead of under the graph.
  *
- * Loaded the first time a panel opens (HowWeKnow.tsx), with the source list: nobody needs it to
- * see the graphs, and it keeps the simulator's first download inside its budget.
+ * Loaded the first time a panel opens (HowWeKnow.tsx), with the source list and the panel frame
+ * (Overlay): nobody needs it to see the graphs, and it keeps the simulator's first download inside its budget.
  */
 export default function HowWeKnowPanel({
   meta,
@@ -65,64 +65,68 @@ export default function HowWeKnowPanel({
   const foods = sourceIds.filter((id) => id.startsWith('food:'))
 
   return (
-    <Popover anchor={anchor} onClose={onClose} label={label} className="w-[26rem] max-h-[min(34rem,75dvh)] overflow-y-auto">
-      <div className="flex flex-col gap-3 text-caption leading-relaxed text-ink-muted">
-        <h3 className="text-control font-semibold text-ink">{label}</h3>
-        <p className="text-ink">{t(`${meta.i18nKey}.desc`)}</p>
-        <Section title={t('graph.unit')}>{t('graph.unitIs', { unit: meta.unit, words: unitInWords(meta.unit, t) })}</Section>
-        <Section title={t('graph.howSure')}>
+    // Its title ("How we know: Blood sugar") is the panel's top row, beside "Close" (Overlay).
+    <Overlay
+      anchor={anchor}
+      onClose={onClose}
+      label={label}
+      width="w-[26rem]"
+      className="flex flex-col gap-3 text-caption leading-relaxed text-ink-muted"
+    >
+      <p className="text-ink">{t(`${meta.i18nKey}.desc`)}</p>
+      <Section title={t('graph.unit')}>{t('graph.unitIs', { unit: meta.unit, words: unitInWords(meta.unit, t) })}</Section>
+      <Section title={t('graph.howSure')}>
+        <span className="flex flex-col gap-1">
+          <StatusTag status={meta.status} />
+          {t(`status.${meta.status}.help`)}
+        </span>
+      </Section>
+      {meta.band && (
+        <Section title={t(`${meta.band.i18nKey}.name`)}>
           <span className="flex flex-col gap-1">
-            <StatusTag status={meta.status} />
-            {t(`status.${meta.status}.help`)}
+            <StatusTag status={meta.band.status} />
+            {/* Blood sugar's band is the only one so far. */}
+            {t('limits.glucoseBand')}
           </span>
         </Section>
-        {meta.band && (
-          <Section title={t(`${meta.band.i18nKey}.name`)}>
-            <span className="flex flex-col gap-1">
-              <StatusTag status={meta.band.status} />
-              {/* Blood sugar's band is the only one so far. */}
-              {t('limits.glucoseBand')}
-            </span>
-          </Section>
-        )}
-        {(meta.limitKey || limits.length > 0) && (
-          <Section title={t('graph.limits')}>
-            <span className="flex flex-col gap-1">
-              {meta.limitKey && <span>{t(meta.limitKey)}</span>}
-              {limits.map((l) => (
-                <span key={l}>{t(l)}</span>
-              ))}
-            </span>
-          </Section>
-        )}
-        {/* After this line's own limits, so they are not read as the limits of a second line in the notes (energy used at rest). */}
-        {notes}
-        <Section title={t(`profiles.${profile}.tag`)}>{t(`profiles.${profile}.desc`)}</Section>
-        <Section title={t('graph.sources')}>
-          <ul className="flex flex-wrap gap-x-3 gap-y-1">
-            {papers.map((id) => (
-              <li key={id}>
+      )}
+      {(meta.limitKey || limits.length > 0) && (
+        <Section title={t('graph.limits')}>
+          <span className="flex flex-col gap-1">
+            {meta.limitKey && <span>{t(meta.limitKey)}</span>}
+            {limits.map((l) => (
+              <span key={l}>{t(l)}</span>
+            ))}
+          </span>
+        </Section>
+      )}
+      {/* After this line's own limits, so they are not read as the limits of a second line in the notes (energy used at rest). */}
+      {notes}
+      <Section title={t(`profiles.${profile}.tag`)}>{t(`profiles.${profile}.desc`)}</Section>
+      <Section title={t('graph.sources')}>
+        <ul className="flex flex-wrap gap-x-3 gap-y-1">
+          {papers.map((id) => (
+            <li key={id}>
+              <Link to={sourceHref(id)} className="text-ink underline underline-offset-2">
+                {sourceLabel(id, i18n.language)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        {foods.length > 0 && (
+          <p className="mt-1">
+            {t('graph.foodData')}{' '}
+            {foods.map((id, i) => (
+              <span key={id}>
+                {i > 0 && ', '}
                 <Link to={sourceHref(id)} className="text-ink underline underline-offset-2">
                   {sourceLabel(id, i18n.language)}
                 </Link>
-              </li>
+              </span>
             ))}
-          </ul>
-          {foods.length > 0 && (
-            <p className="mt-1">
-              {t('graph.foodData')}{' '}
-              {foods.map((id, i) => (
-                <span key={id}>
-                  {i > 0 && ', '}
-                  <Link to={sourceHref(id)} className="text-ink underline underline-offset-2">
-                    {sourceLabel(id, i18n.language)}
-                  </Link>
-                </span>
-              ))}
-            </p>
-          )}
-        </Section>
-      </div>
-    </Popover>
+          </p>
+        )}
+      </Section>
+    </Overlay>
   )
 }

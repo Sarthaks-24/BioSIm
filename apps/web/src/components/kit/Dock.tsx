@@ -37,6 +37,8 @@ export default function Dock({ label, play, clock, pace, tools, children }: Prop
   return (
     <section
       aria-label={label}
+      // The "new version" note keeps clear of it (UpdateToast.tsx).
+      data-dock=""
       className="grid grid-cols-[auto_minmax(0,1fr)] grid-rows-[44px_auto] gap-x-3 border-t border-border bg-surface-raised px-3 pb-[env(safe-area-inset-bottom)] [--lane:34px] lg:col-span-2 lg:grid-cols-subgrid lg:grid-rows-1 lg:gap-x-0 lg:p-0 [@media(pointer:coarse)_and_(height>=680px)]:[--lane:44px]"
     >
       <div className="contents lg:flex lg:min-h-18 lg:items-center lg:gap-4 lg:px-4">

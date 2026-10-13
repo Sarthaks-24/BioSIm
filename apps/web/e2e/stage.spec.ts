@@ -159,8 +159,10 @@ test.describe('/sim stage', () => {
     // The meal bar's tag comes first; the graphs label their dashed line the same way.
     await expect(page.getByText('Kept: Cola', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await expect.poll(() => params(page).get('b')).toBe('cola:1')
-    // The same meal can't be kept twice.
+    // The same meal can't be kept twice. (On a phone Keep is in "⋯", which closed when it was used: FP-5.)
+    await openMealActions(page)
     await expect(page.getByRole('button', { name: 'Keep to compare' })).toBeDisabled()
+    await page.keyboard.press('Escape')
 
     await page.getByRole('button', { name: 'Stop comparing with Cola' }).click()
     await expect(page.getByText('Kept: Cola', { exact: true })).toHaveCount(0)
@@ -171,7 +173,12 @@ test.describe('/sim stage', () => {
     await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1')
     await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&lang=hi')
-    await expect(page.getByText(/^रखा गया भोजन: .+ \+ .+$/).filter({ visible: true }).first()).toBeVisible()
+    await expect(
+      page
+        .getByText(/^रखा गया भोजन: .+ \+ .+$/)
+        .filter({ visible: true })
+        .first(),
+    ).toBeVisible()
   })
 
   test('adding a food updates the link', async ({ page }) => {

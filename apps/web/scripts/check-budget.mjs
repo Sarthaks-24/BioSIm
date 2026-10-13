@@ -107,6 +107,10 @@
 //   chunk loaded after Home's first paint (components/HomeRace.tsx), which takes its code out of the
 //   entry every page shares: /sim 189.09 → 188.64 KB on main 647a379 (−0.45; ledger row −0.45,
 //   planned 0), Home 144.5 KB.
+//   T4 / FP-5 (2026-10-14): one lazy Overlay (components/Overlay.tsx: popover from 1024 px, sheet
+//   below, Close, Esc + Back) replaces the first-paint Popover; "Report a mistake" leaves the bar's
+//   code (it opens from "⋯"); the no-WebGL note is a Notes line; the phone menu gets a dimmed page:
+//   /sim 188.636 → 188.396 KB on main bef54b1 (−0.24; ledger row planned +0.1), Home +0.18.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
