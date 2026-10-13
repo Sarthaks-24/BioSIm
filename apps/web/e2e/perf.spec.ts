@@ -76,6 +76,7 @@ test('first run after the engine loads, 4× CPU (report)', async ({ browser }) =
   const LOADS = 5
   const firstRun: number[] = []
   const toStage: number[] = []
+  const download: number[] = []
   await gateSteps('first run', 'report', async () => {
     for (let i = 0; i < LOADS; i++) {
       // A new context each time: nothing cached, no service worker yet (a first visit).
@@ -95,16 +96,25 @@ test('first run after the engine loads, 4× CPU (report)', async ({ browser }) =
       await page.goto('/sim?v=2&a=cola:1')
       await bodySettled(page)
       const t = await page.evaluate(() => {
-        const engine = performance.getEntriesByType('resource').find((e) => /\/run-[\w-]+\.js$/.test(e.name))
-        return { engineAt: engine?.startTime ?? NaN, stageAt: (window as { __stageAt?: number }).__stageAt ?? NaN }
+        const engine = (performance.getEntriesByType('resource') as PerformanceResourceTiming[]).find((e) =>
+          /\/run-[\w-]+\.js$/.test(e.name),
+        )
+        return {
+          engineAt: engine?.startTime ?? NaN,
+          engineIn: engine?.responseEnd ?? NaN,
+          stageAt: (window as { __stageAt?: number }).__stageAt ?? NaN,
+        }
       })
       firstRun.push(t.stageAt - t.engineAt)
       toStage.push(t.stageAt)
+      download.push(t.engineIn - t.engineAt)
       await context.close()
     }
   })
   const p50 = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!
   const ms = (xs: number[]) => xs.map((x) => Math.round(x)).join(', ')
-  const label = `first run p50 ${Math.round(p50(firstRun))} ms from the engine request (${ms(firstRun)}); page start → stage p50 ${Math.round(p50(toStage))} ms (${ms(toStage)}); 4× CPU`
+  const label =
+    `first run p50 ${Math.round(p50(firstRun))} ms from the engine request (${ms(firstRun)}; of which the file p50 ` +
+    `${Math.round(p50(download))} ms); page start → stage p50 ${Math.round(p50(toStage))} ms (${ms(toStage)}); 4× CPU`
   verdict(label, 'report', firstRun.length === LOADS && p50(firstRun) <= 400 ? [] : ['over 400 ms (or not measured)'])
 })
