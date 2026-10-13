@@ -46,6 +46,14 @@ for (const lang of ['en', 'hi'] as const) {
     await expect(readout).toHaveText(/\d/)
     expect(px(await readout.evaluate((el) => getComputedStyle(el).fontSize)), 'readout').toBeGreaterThanOrEqual(24)
     for (const size of await styles(page, '[data-callout]', 'font-size')) expect(px(size), 'organ label').toBeGreaterThanOrEqual(18)
+    // Their leaders 2 px, the active organ's 3 px (a data attribute, not :has(): review 15, LOW 6).
+    const leaders = await page
+      .locator('[data-leader]')
+      .evaluateAll((els) =>
+        els.map((g) => [g.getAttribute('data-leader'), getComputedStyle(g.querySelector('line')!).strokeWidth] as const),
+      )
+    expect(leaders.length).toBeGreaterThan(0)
+    for (const [tone, width] of leaders) expect(px(width), `${tone} leader`).toBe(tone === 'active' ? 3 : 2)
 
     // G9: 4 px lines, a 1.5 px grid, the band at 0.28 with an edge line.
     expect(px((await styles(page, 'figure [data-line="run"]', 'stroke-width'))[0]!), 'line').toBe(4)

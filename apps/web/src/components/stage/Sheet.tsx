@@ -12,6 +12,7 @@ import { CloseIcon } from '../kit/index.ts'
 export default function Sheet({ title, children, wide = false }: { title: string; children: ReactNode; wide?: boolean }) {
   const { t } = useTranslation()
   const dialog = useRef<HTMLDialogElement>(null)
+  const pressedOutside = useRef(false)
   const titleId = useId()
   useEffect(() => {
     const d = dialog.current
@@ -22,8 +23,10 @@ export default function Sheet({ title, children, wide = false }: { title: string
       ref={dialog}
       aria-labelledby={titleId}
       onClose={() => useSheet.getState().close()}
-      // A press on the backdrop (the dialog element itself, outside its box) closes it.
-      onClick={(e) => e.target === e.currentTarget && dialog.current?.close()}
+      // A press on the backdrop (the dialog element itself, outside its box) closes it; a drag
+      // that starts inside (selecting text) and ends outside does not (review 15).
+      onPointerDown={(e) => (pressedOutside.current = e.target === e.currentTarget)}
+      onClick={(e) => pressedOutside.current && e.target === e.currentTarget && dialog.current?.close()}
       className={`flex-col overflow-hidden border-rule2 bg-shelf p-0 text-ink backdrop:bg-ink/30 open:flex max-lg:inset-x-0 max-lg:top-auto max-lg:bottom-0 max-lg:m-0 max-lg:max-h-[85dvh] max-lg:w-full max-lg:max-w-none max-lg:rounded-t-frame max-lg:border-t max-lg:pb-[env(safe-area-inset-bottom)] lg:m-auto lg:max-h-[min(44rem,calc(100dvh-3rem))] lg:rounded-frame lg:border ${wide ? 'lg:w-[44rem]' : 'lg:w-[32rem]'}`}
     >
       <div className="flex items-center gap-2 border-b border-rule2 py-1.5 pr-1.5 pl-4">

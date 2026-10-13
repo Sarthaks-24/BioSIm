@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION, PARAMS } from '@lifepeek/engine'
-import { useSim, mealLabel, shareQuery, MEAL_KEYS, type MealKey, type Sims } from '../state/sim.ts'
+import { useSim, mealLabel, shareQuery, MEAL_KEYS, V1_BODY_CLOCK, type MealKey, type Sims } from '../state/sim.ts'
+import { BodyClockContext } from '../hooks/useBodyClock.ts'
 import { useClock } from '../hooks/useClock.ts'
 import { useUrlSync } from '../hooks/useUrlSync.ts'
 import { useSimulation } from '../hooks/useSimulation.ts'
@@ -122,7 +123,9 @@ export default function Simulator() {
                       {k.toUpperCase()}
                     </span>
                     {sims[k].meal.items.length > 0 ? (
-                      <BodyView sim={sims[k]} label={describe(k)} />
+                      <BodyClockContext value={V1_BODY_CLOCK}>
+                        <BodyView sim={sims[k]} label={describe(k)} />
+                      </BodyClockContext>
                     ) : (
                       <p className="grid h-full place-items-center p-6 text-center text-ink-2">
                         {t(k === 'b' ? 'sim.pickBoth' : 'sim.emptyMeal')}

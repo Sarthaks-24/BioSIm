@@ -138,6 +138,8 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
               leaders.current[spec.key] = el
             }}
             visibility="hidden"
+            // The projector draws leaders heavier, the active one heaviest (styles.css).
+            data-leader={spec.tone}
             className={spec.tone === 'active' ? 'text-ink' : 'text-ink-2'}
           >
             <line

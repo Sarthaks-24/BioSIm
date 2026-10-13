@@ -1,5 +1,6 @@
-import { Component, lazy, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
+import { Component, lazy, useState, type ComponentType, type CSSProperties, type LazyExoticComponent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CloseIcon } from './kit/index.ts'
 
 /**
  * Code that loads on first use ("How we know", "More", the report form) can fail to arrive:
@@ -89,6 +90,48 @@ export function LoadFailed({ onRetry, attempt = 0 }: { onRetry: () => void; atte
         )}
       </span>
     </>
+  )
+}
+
+/**
+ * For a sheet or a search that did not load (the table, keys and settings, the food search): a
+ * small box where it would have opened, with "Try again" and ✕. Not a dialog: the stage behind
+ * still works. `style` places it (under its button); without it, low in the middle of the window.
+ */
+export function LoadFailedBox({
+  onRetry,
+  onClose,
+  attempt,
+  style,
+}: {
+  onRetry: () => void
+  onClose: () => void
+  attempt: number
+  style?: CSSProperties
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      data-load-failed=""
+      style={style}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      className={`fixed z-40 flex w-[20rem] max-w-[calc(100vw-1rem)] items-start gap-2 rounded-control border border-rule2 bg-shelf p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)] ${
+        style ? '' : 'bottom-24 left-1/2 -translate-x-1/2'
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <LoadFailed onRetry={onRetry} attempt={attempt} />
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={t('stage.close')}
+        title={t('stage.close')}
+        className="-mt-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:size-9"
+      >
+        <CloseIcon />
+      </button>
+    </div>
   )
 }
 
