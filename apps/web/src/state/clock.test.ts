@@ -1,28 +1,23 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { MAX_GAP_SEC, startMealClock, useClock, type FrameSource, type VisibilitySource } from './clock.ts'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MAX_GAP_SEC, startMealClock, useClock, type FrameSource } from './clock.ts'
 import { DEFAULT_PACE, HORIZON_MIN, KNEE_MIN, timeToPos } from '../lib/time.ts'
 
 const initial = useClock.getState()
-beforeEach(() => useClock.setState(initial, true))
+/** The page's `document` (only what the clock reads): shown, until a test hides it. */
+let page: EventTarget & { hidden: boolean }
+beforeEach(() => {
+  useClock.setState(initial, true)
+  page = Object.assign(new EventTarget(), { hidden: false })
+  vi.stubGlobal('document', page)
+})
+afterEach(() => vi.unstubAllGlobals())
 
 const clock = () => useClock.getState()
 
-/** A page that can be hidden and shown again by hand (visibilitychange). */
-function fakePage() {
-  let hidden = false
-  const listeners = new Set<() => void>()
-  const source: VisibilitySource = {
-    hidden: () => hidden,
-    watch: (cb) => {
-      listeners.add(cb)
-      return () => void listeners.delete(cb)
-    },
-  }
-  const set = (h: boolean) => {
-    hidden = h
-    for (const cb of listeners) cb()
-  }
-  return { source, hide: () => set(true), show: () => set(false) }
+/** Hides or shows the page, as the browser does (visibilitychange). */
+function setHidden(hidden: boolean) {
+  page.hidden = hidden
+  page.dispatchEvent(new Event('visibilitychange'))
 }
 
 /** A hand-cranked requestAnimationFrame: frames run only when the test calls `frame(ms)`. */
@@ -230,21 +225,20 @@ describe('meal clock: playback loop', () => {
 
   it('a hidden page asks for no frames and does not move; shown again it goes on without a jump', () => {
     const frames = fakeFrames()
-    const page = fakePage()
-    const stop = startMealClock(frames.source, page.source)
+    const stop = startMealClock(frames.source)
     clock().play()
     frames.frame()
     for (let i = 0; i < 10; i++) frames.frame(100)
     const at = clock().simMin
     expect(at).toBeGreaterThan(0)
 
-    page.hide()
+    setHidden(true)
     expect(frames.waiting).toBe(0)
     // 10 s hidden: nothing asked for, nothing moved, still playing.
     for (let i = 0; i < 100; i++) frames.frame(100)
     expect(clock()).toMatchObject({ simMin: at, playing: true })
 
-    page.show()
+    setHidden(false)
     expect(frames.waiting).toBe(1)
     // The first frame back only notes the time (the 10 s are not played).
     frames.frame(10_000)
@@ -256,17 +250,16 @@ describe('meal clock: playback loop', () => {
 
   it('Play on a hidden page waits for it to be shown', () => {
     const frames = fakeFrames()
-    const page = fakePage()
-    page.hide()
-    const stop = startMealClock(frames.source, page.source)
+    setHidden(true)
+    const stop = startMealClock(frames.source)
     clock().play()
     expect(frames.waiting).toBe(0)
-    page.show()
+    setHidden(false)
     expect(frames.waiting).toBe(1)
     // Paused while hidden: shown again, still no frames.
     clock().pause()
-    page.hide()
-    page.show()
+    setHidden(true)
+    setHidden(false)
     expect(frames.waiting).toBe(0)
     stop()
   })

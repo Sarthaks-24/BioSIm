@@ -98,26 +98,9 @@ export interface FrameSource {
   cancel: (id: number) => void
 }
 
-/** Whether the page is hidden (another tab, a minimised window), and a way to hear when that changes. */
-export interface VisibilitySource {
-  hidden: () => boolean
-  /** Calls `cb` when the page is hidden or shown again; returns a function that stops listening. */
-  watch: (cb: () => void) => () => void
-}
-
 const browserFrames: FrameSource = {
   request: (cb) => requestAnimationFrame(cb),
   cancel: (id) => cancelAnimationFrame(id),
-}
-
-// (No document outside a browser, as in the unit tests: always shown.)
-const browserVisibility: VisibilitySource = {
-  hidden: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
-  watch: (cb) => {
-    if (typeof document === 'undefined') return () => undefined
-    document.addEventListener('visibilitychange', cb)
-    return () => document.removeEventListener('visibilitychange', cb)
-  },
 }
 
 /**
@@ -125,9 +108,9 @@ const browserVisibility: VisibilitySource = {
  * the page is shown, and asks for no frames at all while paused. Each frame advances the clock by
  * the real time since the one before (B18). A hidden page stops the loop and keeps `playing`:
  * shown again, it goes on from where it was, without a jump. Returns a function that stops it.
- * Outside React so it can be tested with fake frames and visibility.
+ * Outside React so it can be tested with fake frames (and a fake `document`).
  */
-export function startMealClock(frames: FrameSource = browserFrames, page: VisibilitySource = browserVisibility): () => void {
+export function startMealClock(frames: FrameSource = browserFrames): () => void {
   let id: number | null = null
   let last = 0
 
@@ -138,7 +121,7 @@ export function startMealClock(frames: FrameSource = browserFrames, page: Visibi
     id = useClock.getState().playing ? frames.request(tick) : null
   }
   const start = () => {
-    if (id !== null || page.hidden()) return
+    if (id !== null || document.hidden) return
     // The first frame only sets the start time (advances 0), so Play never jumps.
     id = frames.request((now) => {
       last = now
@@ -156,10 +139,11 @@ export function startMealClock(frames: FrameSource = browserFrames, page: Visibi
     (s) => s.playing,
     (playing) => (playing ? start() : stop()),
   )
-  const unwatch = page.watch(() => (page.hidden() || !useClock.getState().playing ? stop() : start()))
+  const shown = () => (document.hidden || !useClock.getState().playing ? stop() : start())
+  document.addEventListener('visibilitychange', shown)
   return () => {
     unsubscribe()
-    unwatch()
+    document.removeEventListener('visibilitychange', shown)
     stop()
   }
 }
