@@ -118,14 +118,15 @@
 //   core/catalog/core.ts, which only the engine chunk imports (a pack brings its own rows file), and
 //   the stage no longer checks a slot's row at run time (registry.test does). The sheets get the
 //   system's words from the stage, so they split no stage code into new chunks: /sim 185.979 →
-//   185.129 KB on v3 b0cc009 (−0.85: rows −1.08, registry +0.24), engine chunk 5.7 → 6.6 KB.
+//   185.129 KB on v3 b0cc009 (−0.85: rows −1.08, registry +0.24); merged with v3 3924ecb (T4, S-2):
+//   185.397 → 184.557 KB (−0.84), engine chunk 7.4 KB.
 //   /sim's cap 190 → 194 KB, signed by the council as the LAST raise (R42): if a v3 step would pass
 //   194, the engine worker (W-2) lands first; the cap never moves again. Load on demand (R71):
 //   pack-manifest.json (scripts/pack-manifest.mjs) puts the engine and digestion's pack in the
 //   precache tier and the 3D body, the other packs and Hindi in the lazy tier, which the service
 //   worker keeps on first use ("lp-lazy", scripts/cache-policy.mjs: one policy object, as main's
-//   T12d). The 3D body left the precache: 1751.0 → 783.3 KB raw; the cap 2600 → 1300 KB (a
-//   ratchet). Tier checks and each pack ≤ 20 / 70 KB are enforced; the lazy total is a report.
+//   T12d). The 3D body left the precache: 1791.0 → 823.3 KB raw on v3 3924ecb; the cap 2600 →
+//   1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are enforced; the lazy total is a report.
 //   "reactsToMeal" (a catalog row's field) joins the engine-not-in-/sim guard.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
