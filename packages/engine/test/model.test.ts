@@ -11,7 +11,6 @@ import {
   indexAt,
   mealLocation,
   simulate,
-  stageWindow,
   stomachFraction,
   STAGES,
   findFirst,
@@ -401,12 +400,6 @@ describe('stages and particles', () => {
       }
       expect(activeStage(sim, sim.horizonMin), id).toBe('largeIntestine')
     }
-  })
-
-  it('stage windows start in order', () => {
-    const sim = run('standard-meal')
-    const starts = STAGES.map((s) => stageWindow(sim, s)?.start ?? Infinity)
-    for (let i = 1; i < starts.length; i++) expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1]!)
   })
 
   it('particles are deterministic and follow the curves', () => {

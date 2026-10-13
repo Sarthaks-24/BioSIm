@@ -251,7 +251,7 @@ export function indexAt(sim: Simulation, tMin: number): number {
 }
 
 /**
- * Share (0–1) of the meal still in the stomach at minute index i (by food energy; by weight for water). Every chart and the verdict use this.
+ * Share (0–1) of the meal still in the stomach at minute index i (by food energy; by weight for water). Home's race and core/derive.ts use this.
  * @deprecated New code uses `shareOfMealInStomach` (core/derive.ts), which takes minutes.
  */
 export function stomachFraction(sim: Simulation, i: number): number {
@@ -313,26 +313,4 @@ export function activeStage(sim: Simulation, tMin: number): StageId {
   if (loc.stomach >= loc.smallIntestine && loc.stomach >= loc.largeIntestine) return 'stomach'
   if (loc.smallIntestine >= loc.largeIntestine) return 'smallIntestine'
   return 'largeIntestine'
-}
-
-/** When each stage is busy with this meal (minutes), for the step-by-step text. Null = not reached. */
-export function stageWindow(sim: Simulation, stage: StageId): { start: number; end: number } | null {
-  const e = sim.events
-  const siTypicalMin = HUMAN_MODEL.params.smallIntestine.typicalMin
-  if (sim.meal.items.length === 0) return null
-  switch (stage) {
-    case 'mouth':
-      return { start: 0, end: e.eatingEndMin }
-    case 'esophagus':
-      return { start: e.eatingEndMin, end: sim.stomachArrivalMin }
-    case 'stomach':
-      return { start: sim.stomachArrivalMin, end: e.stomach90EmptyMin ?? sim.horizonMin }
-    case 'smallIntestine':
-      return {
-        start: sim.stomachArrivalMin,
-        end: Math.max(e.absorptionMostlyDoneMin ?? 0, (e.stomach90EmptyMin ?? 0) + siTypicalMin),
-      }
-    case 'largeIntestine':
-      return e.halfLeftoversInColon ? { start: e.halfLeftoversInColon.typical, end: e.firstExit?.typical ?? sim.horizonMin } : null
-  }
 }
