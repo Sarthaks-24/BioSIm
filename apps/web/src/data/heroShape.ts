@@ -1,6 +1,6 @@
 /**
- * The shape of `hero.json`, the picture on Home: what Home reads. Kept apart from `hero.ts`, which
- * runs the model to write it, so Home never imports the model, whatever the bundler keeps.
+ * The shape of `hero.json`, the race on Home: what components/HomeRace.tsx reads. Kept apart from
+ * `hero.ts`, which runs the model to write it, so Home never imports the model, whatever the bundler keeps.
  */
 export const HERO_STEP_MIN = 3
 export const HERO_END_MIN = 360
