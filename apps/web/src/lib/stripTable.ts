@@ -4,9 +4,11 @@ import { runMoments, type Moment } from './moments.ts'
 /**
  * The numbers behind "Show as table" (G8), apart from the words so they can be tested.
  * Rows at the times a teacher would read off the graph: every 15 min in the first hour, then
- * 1.5, 2, 3, 4 and 6 h, then 12, 24 and 48 h (the squeezed part of the axis).
+ * 1.5, 2, 3, 4 and 6 h, then 12 and 24 h (the squeezed part of the axis), and the run's last
+ * minute (48 h today). From the run's own clock, so a longer or shorter run needs no change here.
  */
-export const TABLE_TIMES = [0, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440, 2880] as const
+const READ_AT = [0, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440]
+export const tableTimes = (horizonMin: number): number[] => [...READ_AT.filter((m) => m < horizonMin), horizonMin]
 
 export interface TableColumn {
   /** Which line: this meal's signal, the between-people range of it, or the kept meal's. */

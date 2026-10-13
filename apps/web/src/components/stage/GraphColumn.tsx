@@ -90,8 +90,6 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
   const [column, tabbed] = useTabbed()
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
   const visible = useMemo(() => (tabbed ? slots.filter((s) => s.id === shown) : slots), [tabbed, slots, shown])
-  // What the live region reads out when the clock stops: the lines on the graphs in view.
-  const spoken = useMemo(() => visible.flatMap((s) => s.signals), [visible])
   // The legend names both meals (council 2026-10-13): "— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g".
   const runName = shortMealNames(meal, i18n.language)
   const keptName = keptItems ? shortMealNames(keptItems, i18n.language) : ''
@@ -138,7 +136,8 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
           )
         })}
       </StripStack>
-      <StripAnnouncer signals={spoken} run={run} kept={kept} />
+      {/* What the live region reads out when the clock stops: the lines on the graphs in view. */}
+      <StripAnnouncer slots={slots} shown={visible} run={run} kept={kept} />
     </section>
   )
 }

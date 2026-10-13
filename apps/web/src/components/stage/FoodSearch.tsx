@@ -19,6 +19,7 @@ export default function FoodSearch({ anchor, onClose }: { anchor: { top: number;
   const meal = useRunStore((s) => s.meal)
   const capBlocked = useRunStore((s) => s.capBlocked)
   const dialog = useRef<HTMLDialogElement>(null)
+  const pressedOutside = useRef(false)
   const input = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -52,8 +53,10 @@ export default function FoodSearch({ anchor, onClose }: { anchor: { top: number;
       ref={dialog}
       aria-labelledby={titleId}
       onClose={onClose}
-      // A press on the backdrop (the dialog element itself, outside its box) closes it.
-      onClick={(e) => e.target === e.currentTarget && close()}
+      // A press on the backdrop (the dialog element itself, outside its box) closes it; a drag
+      // that starts inside (selecting text) and ends outside does not (review 15).
+      onPointerDown={(e) => (pressedOutside.current = e.target === e.currentTarget)}
+      onClick={(e) => pressedOutside.current && e.target === e.currentTarget && close()}
       style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
       className="m-0 flex-col overflow-hidden border-rule2 bg-shelf p-0 text-ink backdrop:bg-ink/25 open:flex max-lg:inset-x-0 max-lg:top-auto! max-lg:bottom-0 max-lg:left-0! max-lg:max-h-[80dvh] max-lg:w-full max-lg:max-w-none max-lg:rounded-t-frame max-lg:border-t max-lg:pb-[env(safe-area-inset-bottom)] lg:max-h-[min(32rem,calc(100dvh-2rem))] lg:w-[24rem] lg:rounded-control lg:border lg:backdrop:bg-transparent"
     >

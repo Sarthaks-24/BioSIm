@@ -32,6 +32,7 @@ import {
 } from './colorCheck.ts'
 import { ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PARTICLE_EDGE } from '../anatomy/tones.ts'
 import { outlineInk } from '../three/look.ts'
+import { FLAT_LOOK, css as flatCss, outlineOf, rgb } from '../flat/look.ts'
 
 /** colors.ts copies some CSS tokens for WebGL/canvas. This keeps the two copies identical. */
 const css = readFileSync(fileURLToPath(new URL('../styles.css', import.meta.url)), 'utf8')
@@ -238,6 +239,31 @@ describe('body colours', () => {
         if (cvd < CVD_MIN && edge < LINE_MIN) failing.push(`${kind} in ${organ}: CVD ${fmt(cvd)}, edge ${fmt(edge)}:1`)
       }
     for (const name of THEMES) expect(contrast(PARTICLE_EDGE, THEME[name].paper2), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(failing).toEqual([])
+  })
+
+  // The flat diagram (no WebGL) shades in sRGB with its own numbers, so it is checked on its own
+  // (review 15, LOW 8): the same two rules as the 3D outline.
+  const flatInk = (hex: string, look: keyof typeof FLAT_LOOK) => {
+    const [r, g, b] = outlineOf(rgb(hex), FLAT_LOOK[look]).map(Math.round) as [number, number, number]
+    return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
+  }
+  it.each(['normal', 'projector'] as const)(`the flat diagram's %s outline is at least ${LINE_MIN}:1 on the page`, (look) => {
+    const page = look === 'projector' ? THEME.projector.paper2 : THEME.normal.paper2
+    const failing = Object.entries(TONE_BY_NAME)
+      .map(([name, hex]) => [name, contrast(flatInk(hex, look), page)] as const)
+      .filter(([, c]) => c < LINE_MIN)
+      .map(([name, c]) => `${name} ${fmt(c)}:1`)
+    expect(failing).toEqual([])
+    expect(flatCss(outlineOf(rgb('#ffffff'), FLAT_LOOK[look]))).toMatch(/^rgb\(\d+,\d+,\d+\)$/)
+  })
+
+  it(`on the projector the flat diagram's line between two organs that touch is at least ${LINE_MIN}:1 on the lighter one`, () => {
+    const failing = NEIGHBOURS.flatMap(([a, b]) => {
+      const [light] = [tone(a), tone(b)].sort((x, y) => luminance(y) - luminance(x)) as [string, string]
+      const worst = Math.min(contrast(flatInk(tone(a), 'projector'), light), contrast(flatInk(tone(b), 'projector'), light))
+      return worst < LINE_MIN ? [`${a}/${b} ${fmt(worst)}:1`] : []
+    })
     expect(failing).toEqual([])
   })
 

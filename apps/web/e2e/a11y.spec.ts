@@ -132,6 +132,53 @@ test.describe('"More" and the report form when their code does not load', () => 
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('dialog', { name: 'Report a mistake' }).getByText('This opens a public page on GitHub.')).toBeVisible()
   })
+
+  // Review 15, MED 2: the sheets (table, keys) and the food search come in one file.
+  test('the table sheet: a box says so (not the error page); after a second failure it offers Reload', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    let online = false
+    await page.route(/\/Sheets-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
+    await page.goto('/next?v=2&a=cola:1')
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await page.locator('body').press('t')
+    await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
+    await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Reload' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible()
+    online = true
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+  })
+
+  test('the food search: a box under "Add food" says so; ✕ closes it and gives the focus back', async ({ page }) => {
+    onlyIn('desktop', 'phone')
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    await page.route(/\/Sheets-[\w-]+\.js$/, (route) => route.abort())
+    await page.goto('/next?v=2&a=cola:1')
+    const add = page.getByRole('button', { name: 'Add food' })
+    await add.click()
+    const alert = page.getByRole('alert').filter({ hasText: 'This didn’t load' })
+    await expect(alert).toBeVisible()
+    await page.locator('[data-load-failed]').getByRole('button', { name: 'Close' }).click()
+    await expect(alert).toBeHidden()
+    await expect(add).toBeFocused()
+  })
+
+  // FIX-C review, item 5: a bug in a part is not "check the connection" (Try again could never work).
+  test('a part whose code fails when it runs goes to the error page, not "this didn’t load"', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    await page.route(/\/Sheets-[\w-]+\.js$/, (route) =>
+      route.fulfill({ contentType: 'text/javascript', body: 'throw new Error("a bug in the sheet")' }),
+    )
+    await page.goto('/next?v=2&a=cola:1')
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await page.locator('body').press('t')
+    await expect(page.getByRole('heading', { level: 1, name: 'Something didn’t load' })).toBeVisible()
+    await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toHaveCount(0)
+  })
 })
 
 test.describe('a "How we know" panel whose code does not load', () => {

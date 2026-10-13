@@ -23,6 +23,8 @@ import { useCalloutSpecs, useCallouts, type Project } from '../anatomy/CalloutOv
 import { FADE_TONE, ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PARTICLE_EDGE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { quality } from '../three/quality.ts'
+import { useProjector } from '../hooks/useProjector.ts'
+import { FLAT_LOOK, css, mix, outlineOf, rgb, scale, type FlatLook, type Rgb } from './look.ts'
 
 /**
  * Flat diagram for devices without WebGL. Uses the same anatomy curves, colours, labels and
@@ -56,6 +58,7 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
   const moving = useRef<HTMLCanvasElement>(null)
   const clock = useBodyClock()
   const reduced = useMotion((s) => s.reduced)
+  const projector = useProjector()
   const [stage, setStage] = useState<StageId>(() => activeStage(sim, clock.now()))
   const [size, setSize] = useState({ w: 0, h: 0 })
   const { w, h } = size
@@ -82,9 +85,9 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
     const stillCtx = setup(a, rectOf(VIEW, w, h))
     const movingCtx = setup(b, rectOf(GUT, w, h))
     if (!stillCtx || !movingCtx) return
-    // The projector look, read when the picture is set up: switching projector mode changes the
-    // root size, so the picture is resized and this runs again (no subscription to download).
-    flat = document.documentElement.dataset.contrast === 'high' ? PROJECTOR : NORMAL
+    // The projector look: switching projector mode sets the picture up again (review 15, LOW 8:
+    // not only when the switch happens to resize it).
+    flat = projector ? FLAT_LOOK.projector : FLAT_LOOK.normal
     let drawn = ''
     let shownStage = stage
     const draw = () => {
@@ -102,7 +105,7 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
     }
     draw()
     return clock.subscribe(draw)
-  }, [sim, clock, reduced, w, h]) // eslint-disable-line react-hooks/exhaustive-deps -- `stage` is only the starting value
+  }, [sim, clock, reduced, projector, w, h]) // eslint-disable-line react-hooks/exhaustive-deps -- `stage` is only the starting value
 
   return (
     <div
@@ -167,29 +170,15 @@ function setup(canvas: HTMLCanvasElement, rect: Rect) {
   return ctx
 }
 
-/**
- * The flat look: how far an empty organ fades, the outline's shade of the organ colour and its
- * width in CSS px (0.75 px more on the active organ). On the projector (3D-5) empty organs fade
- * less and the outline is near-black and 2 px, like the 3D body's (three/look.ts).
- */
-const NORMAL = { fade: 0.55, ink: 0.42, line: 1.25 }
-const PROJECTOR = { fade: 0.33, ink: 0.2, line: 2 }
-let flat = NORMAL
+let flat: FlatLook = FLAT_LOOK.normal
 
 /** The flat organ colours: the 3D tones, faded when empty, and a deep shade for the outline. */
 const tone = (organ: LitOrgan, faded = false): Rgb => {
   const c = rgb(ORGAN_TONE[organ])
   return faded ? mix(c, rgb(FADE_TONE), flat.fade) : c
 }
-const ink = (c: Rgb, faded = false) => css(faded ? scale(mix(c, rgb(FADE_TONE), 0.2), 0.72) : scale(c, flat.ink))
+const ink = (c: Rgb, faded = false) => css(faded ? scale(mix(c, rgb(FADE_TONE), 0.2), 0.72) : outlineOf(c, flat))
 const WHITE: Rgb = [255, 255, 255]
-
-/** sRGB colour maths small enough for the flat body (three's Color would add to the page's download). */
-type Rgb = [number, number, number]
-const rgb = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => a.map((v, i) => v + (b[i]! - v) * t) as Rgb
-const scale = (a: Rgb, k: number): Rgb => a.map((v) => v * k) as Rgb
-const css = (c: Rgb) => `rgb(${c.map((v) => Math.round(v)).join(',')})`
 
 /** What moves: the stomach's fill and the food. Drawn every frame the clock moves. */
 function paintMoving(

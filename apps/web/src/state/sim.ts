@@ -13,6 +13,7 @@ import {
 } from '@lifepeek/engine'
 import { HORIZON_MIN, DEFAULT_PACE, type Pace } from '../lib/time.ts'
 import { lookupFood } from '../data/foods.ts'
+import type { BodyClock } from '../hooks/useBodyClock.ts'
 
 export type MealKey = 'a' | 'b'
 export const MEAL_KEYS: MealKey[] = ['a', 'b']
@@ -137,4 +138,11 @@ export function shareQuery(state: Pick<SimState, 'a' | 'b' | 'time'>, lang?: str
     t: state.time,
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
   }).toString()
+}
+
+/** The bodies on v1 `/sim` follow this store's time (hooks/useBodyClock.ts; the stage's is the default). */
+export const V1_BODY_CLOCK: BodyClock = {
+  now: () => useSim.getState().time,
+  subscribe: (onChange) => useSim.subscribe((s, prev) => s.time !== prev.time && onChange()),
+  useMinute: () => useSim((s) => Math.round(s.time)),
 }

@@ -10,7 +10,8 @@
  * - `fade`: how far an empty organ goes towards FADE_TONE (0…1).
  * - `outlineShade`, `outlineLift`: outline = organ colour × shade + lift, in linear RGB (outlineInk).
  * - `outlineWidth`: the 3D outline's width as a share of the distance to the camera.
- * The flat diagram has its own plain numbers for the same idea (FLAT in flat/FlatBody.tsx).
+ * The flat diagram has its own plain numbers for the same idea (FLAT_LOOK in flat/look.ts), audited
+ * on their own in colors.test.ts.
  */
 export const BODY_LOOK = {
   normal: { fade: 0.5, outlineShade: 0.3, outlineLift: [0.012, 0.016, 0.03], outlineWidth: 0.0016 },
@@ -25,7 +26,7 @@ const toSrgb = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.
 export const linearRgb = (hex: string): [number, number, number] =>
   [1, 3, 5].map((i) => toLinear(parseInt(hex.slice(i, i + 2), 16) / 255)) as [number, number, number]
 
-/** The outline colour of an organ of colour `hex`, as the shader and the flat diagram draw it. */
+/** The outline colour of an organ of colour `hex`, as the 3D shader draws it (the flat diagram: flat/look.ts). */
 export function outlineInk(hex: string, look: BodyLook): string {
   const { outlineShade, outlineLift } = BODY_LOOK[look]
   return `#${linearRgb(hex)

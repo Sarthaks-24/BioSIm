@@ -208,8 +208,15 @@ function CopyLink() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<'idle' | 'copied' | 'manual'>('idle')
   const anchor = useRef<HTMLButtonElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), [])
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const refill = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current)
+      clearTimeout(refill.current)
+    },
+    [],
+  )
 
   const copy = () => {
     const done = navigator.clipboard?.writeText(window.location.href)
@@ -217,11 +224,15 @@ function CopyLink() {
     done.then(
       () => {
         // A second copy while "Link copied" still shows must be said again (review 14-17, LOW 9):
-        // empty the status region first, then fill it on the next frame, so it changes.
+        // empty the status region first, then fill it 80 ms later (one frame apart, some screen
+        // readers merge the two changes and say nothing: FIX-C review, item 7).
         setStatus('idle')
-        requestAnimationFrame(() => setStatus('copied'))
-        if (timer.current) clearTimeout(timer.current)
-        timer.current = setTimeout(() => setStatus('idle'), 2500)
+        clearTimeout(refill.current)
+        clearTimeout(timer.current)
+        refill.current = setTimeout(() => {
+          setStatus('copied')
+          timer.current = setTimeout(() => setStatus('idle'), 2500)
+        }, 80)
       },
       () => setStatus('manual'),
     )
@@ -287,7 +298,7 @@ function ReportMistake() {
         <LoadBoundary
           key={attempt}
           onFail={feedbackDialog.reset}
-          fallback={<LoadFailedPanel trigger={button} onRetry={() => setAttempt((a) => a + 1)} />}
+          fallback={<LoadFailedPanel trigger={button} onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />}
         >
           <Suspense fallback={button(() => {})}>
             <feedbackDialog.Component context={() => window.location.search.replace(/^\?/, '')} openOnMount trigger={button} />

@@ -13,8 +13,15 @@ import { readPref, writePref } from './prefs.ts'
  * - ?: this list, with the switches.
  *
  * Keys typed into a text box, a list or a dialog are never taken, nor keys a focused control
- * uses itself (Space on a button, arrows on a slider or in a group of choices). Ctrl, Alt and Cmd
- * combinations are the browser's.
+ * uses itself (Space on a button, arrows on a slider or in a group of choices), nor the scrolling
+ * keys in a box of text that scrolls (`data-scroll`). Ctrl, Alt and Cmd combinations are the
+ * browser's. ↑ and ↓ are never the stage's: they scroll the page where it scrolls (a phone, or a
+ * laptop zoomed in).
+ *
+ * B is Blood sugar, although many presentation clickers send B (or .) for "blank the screen". It
+ * only picks which graph shows, never changes the meal or the clock, and pressing it again does
+ * nothing more, so a teacher who meant "blank" loses nothing (the tabs, S or E pick another). A
+ * screen reader hears the graph's values (Stage.tsx), so the change is never silent. "." is free.
  *
  * WCAG 2.1.4: shortcuts made of one character (letters, ?, Space) can be switched off. The choice
  * is saved on the device as `lifepeek:keysOff` ('1'). Arrows, Page Up/Down, Home and End are not
@@ -85,10 +92,19 @@ const ARROWS = '[role="slider"], [role="radiogroup"], [role="tablist"], [role="m
 /** Controls that Space (and Enter) press. */
 const PRESSABLE = 'button, a[href], summary, [role="button"], [role="checkbox"], [role="switch"], [role="tab"]'
 
+/** Keys that scroll a box of text (Space, Page Up / Down, Home / End, ↑ ↓). */
+const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'])
+
 /** True when the focused element should get this key, not the stage. */
 export function keyBelongsToTarget(target: Element | null, key: string): boolean {
   if (!target || !target.closest) return false
   if (target.closest(TYPING)) return true
+  // Focus in a box of text that scrolls ("More", marked `data-scroll`): its scrolling keys scroll
+  // it (review 15, LOW 4). If all its text fits, they stay the stage's (a clicker still works).
+  if (SCROLL_KEYS.has(key)) {
+    const box = target.closest('[data-scroll]')
+    if (box && box.scrollHeight > box.clientHeight + 1) return true
+  }
   if (key.startsWith('Arrow') || key === 'Home' || key === 'End') return !!target.closest(ARROWS)
   if (key === ' ' || key === 'Enter') return !!target.closest(PRESSABLE)
   return false

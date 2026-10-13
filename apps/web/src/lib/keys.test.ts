@@ -64,6 +64,20 @@ describe('keys that belong to the focused control', () => {
     expect(keyBelongsToTarget(el('button', '[role="toolbar"]'), 'Home')).toBe(true)
   })
 
+  it('in a box of text that scrolls, its scrolling keys scroll it; if it all fits, they stay the stage’s', () => {
+    const inBox = (scrolls: boolean) =>
+      ({
+        closest: (sel: string) => (sel === '[data-scroll]' ? { scrollHeight: scrolls ? 400 : 200, clientHeight: 200 } : null),
+      }) as unknown as Element
+    for (const key of [' ', 'PageDown', 'PageUp', 'Home', 'End']) {
+      expect(keyBelongsToTarget(inBox(true), key), key).toBe(true)
+      expect(keyBelongsToTarget(inBox(false), key), key).toBe(false)
+    }
+    // ← → still move the clock, letters are still shortcuts.
+    expect(keyBelongsToTarget(inBox(true), 'ArrowRight')).toBe(false)
+    expect(keyBelongsToTarget(inBox(true), 'p')).toBe(false)
+  })
+
   it('Page Down / Up and letters on a button still reach the stage (a clicker, a shortcut)', () => {
     expect(keyBelongsToTarget(el('button', '[role="toolbar"]'), 'PageDown')).toBe(false)
     expect(keyBelongsToTarget(el('button'), 'p')).toBe(false)

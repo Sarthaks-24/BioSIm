@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
-import { useMomentsOnClock, useRun } from '../hooks/useRun.ts'
+import { runKey, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
 import { useClock, useMealClock } from '../state/clock.ts'
@@ -14,9 +15,34 @@ import GraphColumn, { useSlots } from '../components/stage/GraphColumn.tsx'
 import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
 import Timeline2 from '../components/stage/Timeline2.tsx'
+import { mealNames } from '../components/stage/mealText.ts'
+import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
+import { LoadBoundary, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
 
-/** The sheets (table, keys) are downloaded the first time one is opened: they are not part of the first paint (size budget). */
-const Sheets = lazy(() => import('../components/stage/Sheets.tsx'))
+/**
+ * The sheets (table, keys) are downloaded the first time one is opened: they are not part of the
+ * first paint (size budget). If they don't arrive, a small box says so (review 15, MED 2).
+ */
+const sheets = lazyWithRetry(() => import('../components/stage/Sheets.tsx'))
+
+/**
+ * P keeps the meal, and says what happened (the button shows it; a screen reader hears it): the
+ * meal kept, or why nothing was (no food yet, or this meal is already the one kept).
+ */
+function keep() {
+  const { meal, profile, kept } = useRunStore.getState()
+  const t = i18n.t.bind(i18n)
+  if (!meal.length) return announce(t('stage.empty'))
+  if (kept && runKey(kept.items, kept.profile) === runKey(meal, profile)) return announce(t('keep.already'))
+  useRunStore.getState().keep()
+  announce(t('keep.tag', { meal: mealNames(meal, i18n.language) }))
+}
+
+/** S, B, E: show that graph (where they show one at a time) and read its values out. */
+const showStrip = (slot: string) => () => {
+  useStripTab.getState().show(slot)
+  readOutSlot(slot)
+}
 
 /** What each key of the map (lib/keys.ts) does on the stage. */
 const ACTIONS: Record<KeyAction, () => void> = {
@@ -29,12 +55,12 @@ const ACTIONS: Record<KeyAction, () => void> = {
   nextMoment: () => useClock.getState().stepToMoment(1),
   prevMoment: () => useClock.getState().stepToMoment(-1),
   play: () => useClock.getState().toggle(),
-  keep: () => useRunStore.getState().keep(),
+  keep,
   table: () => useSheet.getState().open({ kind: 'table', slot: useStripTab.getState().tab }),
   help: () => useSheet.getState().open({ kind: 'help' }),
-  stripGut: () => useStripTab.getState().show('gut'),
-  stripBlood: () => useStripTab.getState().show('blood'),
-  stripEnergy: () => useStripTab.getState().show('energy'),
+  stripGut: showStrip('gut'),
+  stripBlood: showStrip('blood'),
+  stripEnergy: showStrip('energy'),
 }
 
 /**
@@ -68,10 +94,16 @@ export default function Stage() {
       ACTIONS[action]()
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      // A sheet left open (the browser's Back while it showed) must not open again on the next
+      // visit to the stage (review 15, MED 1).
+      useSheet.setState({ sheet: null, from: null })
+    }
   }, [])
   const sheet = useSheet((s) => s.sheet)
   const slots = useSlots(run)
+  const [attempt, setAttempt] = useState(0)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
@@ -103,9 +135,17 @@ export default function Stage() {
         </Dock>
       </div>
       {sheet && (
-        <Suspense fallback={null}>
-          <Sheets sheet={sheet} run={run} kept={kept} slots={slots} />
-        </Suspense>
+        <LoadBoundary
+          key={attempt}
+          onFail={sheets.reset}
+          fallback={
+            <LoadFailedBox attempt={attempt} onRetry={() => setAttempt((a) => a + 1)} onClose={() => useSheet.getState().close()} />
+          }
+        >
+          <Suspense fallback={null}>
+            <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} />
+          </Suspense>
+        </LoadBoundary>
       )}
     </div>
   )
