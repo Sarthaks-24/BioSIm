@@ -53,6 +53,10 @@
 //   data/hero.json instead of running the model, and fetches that file after its first paint, so
 //   no page's first download carries it: /sim 190.03 → 189.5 KB, Home 154.0 → 145.5 KB. The e2e
 //   build (pseudo-locale) now goes to dist-e2e, and this script refuses a dist that has it.
+//   WP-20 (2026-10-13): v1 deleted; the stage is pages/Simulator.tsx. v1's code had already left
+//   the bundle with WP-19 (no route imported it), so what went now is what Tailwind still found in
+//   v1's files (CSS), v1's texts (hi.json) and the registry's unused body loaders: /sim 189.5 →
+//   187.5 KB, Home 145.5 → 144.6 KB, precache 1942.7 → 1929.0 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
