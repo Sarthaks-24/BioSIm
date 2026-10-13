@@ -20,6 +20,7 @@
  */
 import type { SourceId } from './sources.ts'
 import type { BreathingSignalId } from './catalog/breathing.ts'
+import type { EffortSignalId } from './catalog/effort.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
@@ -42,6 +43,7 @@ export type Unit =
   // Model version 3 (model ACTIVATION_LOG "New units").
   | 'mL'
   | 'ratio'
+  | 'mL/h'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
 /** Which release produces the signal: 'v2.0' and 'v3.0' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
@@ -106,7 +108,7 @@ export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
  * knows every row (core/catalog/rows.ts). lungs.breathRate left the reserved list for the
  * breathing pack (S-2, model ACTIVATION_LOG), unit kept.
  */
-export type PackSignalId = BreathingSignalId
+export type PackSignalId = BreathingSignalId | EffortSignalId
 /** Every signal a run produces: the lean catalog's rows and the packs' rows. */
 export type RunSignalId = ActiveSignalId | PackSignalId
 export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId

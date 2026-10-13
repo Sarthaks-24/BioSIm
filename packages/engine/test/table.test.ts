@@ -21,7 +21,7 @@ import {
   windowOf,
   type RunResult,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
+import { BREATHING_SIGNAL_IDS, EFFORT_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
 
 /**
  * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
@@ -67,7 +67,7 @@ describe('signal table', () => {
   it('every series is a Float32 copy of the array its module wrote, and its band of the band', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
     const out = modulesOf(sim)
-    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS])
+    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!
       expect(s.meta.id).toBe(id)

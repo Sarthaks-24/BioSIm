@@ -78,7 +78,7 @@ describe.each(entries)('registry: %s', (id, { organism, systems, organs }) => {
   })
 
   it('has a unit text for every signal it provides', () => {
-    // Lean rows only: a pack's lazy rows (lungs.*, gas.*) bring their unit texts with the pack (W-1, U-2).
+    // Lean rows only: a pack's lazy rows (lungs.*, gas.*, muscle.*, skin.*) bring their unit texts with the pack (W-1, U-n).
     for (const sig of PROVIDES[id].filter(isActiveSignal)) {
       const key = UNIT_KEYS[SIGNALS[sig].unit]
       expect(key, `${sig} (${SIGNALS[sig].unit})`).toBeDefined()
