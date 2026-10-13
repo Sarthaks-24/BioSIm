@@ -205,6 +205,11 @@ html[data-contrast='high'] {
   & [data-total] {
     font-size: var(--text-micro);
   }
+  /* The kept moments' lane's "Kept:" a step down too: it sits in the dock's gutter, left of the
+     timeline, and at 18 px a longer word (the +40 % pseudo-locale) crossed the column rule (R64, T10). */
+  & [data-kept-lane] {
+    font-size: var(--text-micro);
+  }
   & [data-callout] {
     font-size: 1rem;
   }
@@ -437,5 +442,27 @@ html[data-motion='reduce'] .race-reveal {
   }
   html {
     background: white;
+  }
+}
+
+/* Projector mode on a phone (under 640 px): the projector's contrast and line weights, but the
+   phone's type. At the projector's 18 px a 360–390 px stage had no room: the rings' labels sat on
+   the lines, the blood-sugar note on the plot, the readouts on the status (R62, T10). CSS only. */
+@media (width < 40rem) {
+  html[data-contrast='high'],
+  html[data-contrast='high']:not([data-fit]) {
+    font-size: 100%;
+    --text-caption: 0.8125rem;
+    --text-micro: 0.75rem;
+  }
+  html[data-contrast='high']:lang(hi),
+  html[data-contrast='high']:lang(hi):not([data-fit]) {
+    font-size: 106.25%;
+    --text-caption: 0.875rem;
+    --text-micro: 0.875rem;
+  }
+  html[data-contrast='high'] [data-readout] {
+    font-size: inherit;
+    line-height: inherit;
   }
 }

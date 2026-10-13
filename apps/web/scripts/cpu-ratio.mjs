@@ -13,7 +13,7 @@
 //        [--base-path /sim?...] [--pr-path /sim?...] [--enforce] [--json out.json]
 //
 // Report-only by default (T0): it prints the verdict and exits 0, also when it cannot measure. With
-// --enforce it exits 1 when the gate fails or the run does (the CI job flips to it in T10, FP-9).
+// --enforce it exits 1 when the gate fails or the run does (the CI job passes it since T10, FP-9).
 import fs from 'node:fs'
 import { chromium } from '@playwright/test'
 import { CPU_PATH, cpuPerFrame, median, ratioGate } from './cpu-frame.mjs'

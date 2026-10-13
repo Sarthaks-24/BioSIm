@@ -31,6 +31,12 @@ jobs:
       - run: npm ci
       - name: Validate food files
         run: npm run validate
+      # Prettier (T10, FP-9): `npm run format` fixes what this finds.
+      - name: Formatting
+        run: npm run format:check
+      # Exports, components and store actions the app never uses (T10, B25).
+      - name: Dead code
+        run: npm run lint:dead
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -40,9 +46,10 @@ jobs:
           grep -q "SIL OPEN FONT LICENSE" apps/web/dist/THIRD_PARTY_NOTICES.txt
           grep -q "three" apps/web/dist/THIRD_PARTY_NOTICES.txt
           node apps/web/scripts/check-shipped-notices.mjs
+      # Enforces /sim ≤ 190 KB, the Home ratchet (147 KB), Track A ≤ +1.0 KB (R66) and the precache of every lazy chunk.
       - name: Size budgets (and the Track A ledger)
         run: npm run budget -w @lifepeek/web
-      # Report-only until T9a/T10 fix B20 (the project email): then add --enforce.
+      # Report-only until the user gives the project email (B20, §4 gate): then add --enforce.
       - name: Placeholders in shipped text (report)
         run: npm run lint:placeholders -w @lifepeek/web
 
@@ -89,12 +96,11 @@ jobs:
 
   # The CPU regression gate (qa-fixes §3.4): the PR build against its base (the head of the branch
   # it merges into), interleaved, medians of main-thread time per frame. Gate: PR ≤ 1.10 × base +
-  # 0.2 ms. Report-only until T10 (FP-9) adds --enforce and drops continue-on-error (a base that
-  # does not build, a runner that fails, must not fail the PR before then).
+  # 0.2 ms. Enforced since T10 (FP-9, B26): a PR over the gate, or a run that cannot measure,
+  # fails the job.
   perf-ab:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,7 +124,7 @@ jobs:
           (cd ../base/apps/web && npx vite preview --port 4391 --strictPort &)
           (cd apps/web && npx vite preview --port 4392 --strictPort &)
           for i in $(seq 60); do curl -sf http://localhost:4391 >/dev/null && curl -sf http://localhost:4392 >/dev/null && break; sleep 1; done
-          npm run cpu-ratio -w @lifepeek/web -- --base http://localhost:4391 --pr http://localhost:4392 --rounds 6 --ms 3000
+          npm run cpu-ratio -w @lifepeek/web -- --base http://localhost:4391 --pr http://localhost:4392 --rounds 6 --ms 3000 --enforce
 
   # WebKit and Firefox (qa-fixes §3.1): on main and nightly, report-only for their first week.
   engines:

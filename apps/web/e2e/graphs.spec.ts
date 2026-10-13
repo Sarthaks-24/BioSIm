@@ -287,6 +287,8 @@ for (const size of [
   for (const lang of ['en', 'hi']) {
     test(`no words on a graph touch a line, and the legend names both meals (${size.width}, ${lang})`, async ({ page }) => {
       onlyIn('desktop')
+      // 5 meals × up to 3 tabs, each polled until its labels settle: 90 s under a loaded machine (R63).
+      test.setTimeout(90_000)
       await page.setViewportSize(size)
       const meals = [
         'cola:1&b=cheeseburger:1,fries:1',
@@ -376,6 +378,29 @@ test('projector mode on a 390 px phone: every graph tab shows whole', async ({ p
     return g.scrollWidth > g.clientWidth + 1 ? [...out, `the row scrolls (${g.scrollWidth} > ${g.clientWidth})`] : out
   })
   expect(clipped).toEqual([])
+})
+
+// R62 (T10): projector mode on a 360–390 px phone wrote at the projector's 18 px: the rings' labels
+// sat on the lines, the blood-sugar note on the plot. Under 640 px it keeps the phone's type
+// (styles.css), and no word touches a line, with the same kept meals as above.
+test('projector mode on a 360 and 390 px phone: no words on a graph touch a line', async ({ page }) => {
+  onlyIn('projector')
+  test.setTimeout(90_000)
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 800 })
+    for (const meal of ['cola:1&b=cheeseburger:1,fries:1', 'cheeseburger:1,fries:1&b=cola:1', 'roti:2,dal:1&b=white-rice:1', 'cola:4&b=cola:1']) {
+      await page.goto(`/sim?v=2&a=${meal}`)
+      await page.locator('figure [data-line="run"]').first().waitFor()
+      await page.evaluate(() => document.fonts.ready)
+      const tabs = page.getByRole('group', { name: 'Graphs' })
+      for (const tab of await tabs.getByRole('button').allTextContents()) {
+        await tabs.getByRole('button', { name: tab, exact: true }).click()
+        await expect
+          .poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), { message: `${width}px, ${meal}, ${tab}` })
+          .toEqual([])
+      }
+    }
+  }
 })
 
 // R60: with 6 foods at 360 × 640 the stomach scale stretches; its note gets one row of its own,

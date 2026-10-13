@@ -144,3 +144,26 @@ test('a ready lesson opens with nothing over its graph: marker names show only w
   await page.mouse.move(5, 5)
   await expect(tip).toHaveCount(0)
 })
+
+// WP-19 review LOW 4 (T10): a lesson opened elsewhere (Ctrl/Cmd-click: a new tab) leaves this tab
+// as it is, projector mode off; a question opened after a lesson starts on the first graph, not on
+// the lesson's (which would point at the answer).
+test('a lesson opened in a new tab changes nothing here; a question after a lesson starts on the first graph', async ({ page, context }) => {
+  onlyIn('projector')
+  await page.addInitScript(() => localStorage.removeItem('lifepeek:projector'))
+  await page.goto('/teach')
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'normal')
+  const lesson = page.getByRole('link', { name: /^Which raises blood sugar more gently\?/ })
+  const [opened] = await Promise.all([context.waitForEvent('page'), lesson.click({ modifiers: ['ControlOrMeta'] })])
+  await opened.close()
+  await expect(page).toHaveURL(/\/teach$/)
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'normal')
+
+  // In this tab: the lesson opens on blood sugar; back on Teach, a question opens on the first graph.
+  await lesson.click()
+  await expect(front(page, 'Blood sugar')).toBeVisible()
+  await page.goBack()
+  await page.getByRole('list').filter({ hasText: 'When has half of it left the stomach?' }).getByRole('link').first().click()
+  await expect(page).toHaveURL(/\/sim\?/)
+  await expect(front(page, 'Stomach')).toBeVisible()
+})

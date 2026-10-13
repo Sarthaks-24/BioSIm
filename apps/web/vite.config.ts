@@ -102,6 +102,11 @@ export default defineConfig({
     proxy: { '/api': 'http://localhost:8787' },
   },
   build: {
+    // Vite warns about any chunk over 500 kB (minified, not gzipped). The one over it is the lazy 3D
+    // body (three.js and @react-three, about 970 kB, 260 kB gzipped), downloaded only by a device
+    // with WebGL after the stage has drawn; its gzipped size has its own budget in
+    // scripts/check-budget.mjs (270 KB). So the warning is set just above it: a new big chunk still warns.
+    chunkSizeWarningLimit: 1000,
     // For scripts/check-budget.mjs (route sizes). Under dist/.vite/, which the service worker does not precache.
     manifest: true,
     // A lazy chunk's preload list named the entry chunk (index-*.js) too. The page loaded it with a

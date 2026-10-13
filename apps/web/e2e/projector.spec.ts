@@ -205,3 +205,28 @@ test.describe('while the stage loads', () => {
     expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('19px')
   })
 })
+
+// R64 (T10): the kept moments' lane's "Kept:" sits in the dock's gutter, left of the timeline. At
+// the projector's 18 px the +40 % pseudo-locale's word ended 5 px from the rule between the dock's
+// columns (its bracket on it); now 12 px.
+test('projector: the timeline\'s "Kept:" stays right of the dock\'s column rule (EN, pseudo-locale, Hindi)', async ({ page }) => {
+  onlyIn('projector')
+  for (const size of [
+    { width: 1024, height: 768 },
+    { width: 1280, height: 800 },
+    { width: 1366, height: 768 },
+  ]) {
+    await page.setViewportSize(size)
+    for (const lang of ['en', 'pseudo', 'hi']) {
+      await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=${lang}`)
+      const label = page.locator('[data-kept-lane]')
+      await expect(label).toBeVisible()
+      await page.evaluate(() => document.fonts.ready)
+      const gap = await label.evaluate((el) => {
+        const column = el.closest('section')!.querySelector(':scope > .col-start-2')!
+        return el.getBoundingClientRect().left - column.getBoundingClientRect().left
+      })
+      expect(gap, `${size.width}×${size.height} ${lang}: "Kept:" starts ${gap.toFixed(1)} px right of the rule`).toBeGreaterThanOrEqual(8)
+    }
+  }
+})

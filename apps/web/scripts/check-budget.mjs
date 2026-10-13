@@ -96,8 +96,14 @@
 //   links in its menu, a one-line footer), the summary under the graph on a small projector window
 //   (a portal), the kept tag on one line, room over the head: /sim 188.447 → 188.797 KB on main
 //   edcebce, measured on one machine (+0.35; ledger row planned +0.1).
-//   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
-//   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
+//   T10 / FP-9 (2026-10-14): dead code out (the store's swapKept and setPace, PersonTag, FirstRunNote)
+//   and cold English loaded with its part: the "How we know" panel's own words, the rings' notes,
+//   the units in words and whose body it is with the panel (whose body: the "⋯" panel too), the long
+//   disclaimer with Science (scripts/i18n-sections.mjs): /sim 188.729 → 188.257 KB on main 466a989
+//   (−0.47), Home 144.70 → 144.23 KB. This script now enforces the Home ratchet (147 KB, B26), the
+//   Track A total (R66: ≤ +1.0 KB over eee16c9, no slack) and that every lazy chunk is precached.
+//   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
+//   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -107,7 +113,9 @@ const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'd
 const KB = 1000
 
 const BUDGETS = [
+  // 120 KB is the goal (report); 147 KB is the ratchet it may never pass again (B26, plan qa-fixes §0).
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
+  { name: 'Home ratchet', roots: ['index.html'], max: 147 * KB, mode: 'enforce' },
   // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
   { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'enforce' },
   // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
@@ -186,7 +194,9 @@ for (const r of rows) {
 }
 
 // Track A ledger (T0; plan qa-fixes §0): one row per FP, planned gross, claw-back and net, and the
-// net its T-step measured. Report only: the Track A total must stay ≤ +0.5 KB over eee16c9's /sim.
+// net its T-step measured. Enforced since T10: /sim must stay ≤ netLimitKB over eee16c9's /sim
+// (R66: +1.0 KB; it was +0.5 with 0.05 of slack), measured to the byte, no slack.
+let trackAOver = false
 {
   const ledger = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'budget-ledger.json'), 'utf8'))
   const sim = rows.find((r) => r.name.startsWith('/sim'))
@@ -201,25 +211,27 @@ for (const r of rows) {
   const planned = ledger.rows.reduce((s, r) => s + r.plannedNetKB, 0)
   const measured = ledger.rows.filter((r) => r.measuredNetKB != null).reduce((s, r) => s + r.measuredNetKB, 0)
   const now = sim.bytes / KB - ledger.base.simKB
-  const over = now > ledger.netLimitKB + 0.05
+  trackAOver = now > ledger.netLimitKB
   console.log(
-    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${kb(sim.bytes)} = ${sign(now)} KB over the base: ${over ? 'over (report only)' : 'ok'}`,
+    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${(sim.bytes / KB).toFixed(3)} KB = ${now > 0 ? '+' : ''}${now.toFixed(3)} KB over the base: ${trackAOver ? 'OVER (fails)' : 'ok'}`,
   )
 }
 
 // Every lazy chunk is precached (plan qa-fixes §3.2), so a part loaded on first use works offline.
-// Report only until T10 (FP-9) enforces it.
+// Enforced since T10 (FP-9).
+let unprecached = 0
 {
   const precached = new Set(precacheFiles())
   const lazy = new Set()
   for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
   const missing = [...lazy].filter((f) => !precached.has(f))
+  unprecached = missing.length
   console.log(
-    `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (report only; missing: ${missing.join(', ')})` : ' ok'}`,
+    `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; missing: ${missing.join(', ')})` : ' ok'}`,
   )
 }
 
-if (rows.some((r) => r.failed)) {
+if (rows.some((r) => r.failed) || trackAOver || unprecached) {
   console.error('\nAn enforced size budget is over. See apps/web/scripts/check-budget.mjs.')
   process.exit(1)
 }

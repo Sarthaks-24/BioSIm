@@ -562,6 +562,23 @@ export const CONSOLE_ALLOW: RegExp[] = [
   /Service Worker registration blocked by Playwright/,
 ]
 
+/**
+ * Firefox under Playwright now and then fails a navigation with NS_ERROR_FAILURE (or
+ * NS_BINDING_ABORTED), before the app's code runs (R59): not the app's fault. Those two are
+ * allowed once: the navigation is tried again. Any other error, or a second one, fails as before.
+ */
+export const NAVIGATION_RETRY = /NS_ERROR_FAILURE|NS_BINDING_ABORTED/
+
+/** `page.goto`, tried once more after a Firefox navigation flake (NAVIGATION_RETRY). */
+export async function goto(page: Page, url: string, options?: Parameters<Page['goto']>[1]) {
+  try {
+    return await page.goto(url, options)
+  } catch (e) {
+    if (!NAVIGATION_RETRY.test(String(e))) throw e
+    return page.goto(url, options)
+  }
+}
+
 /** Collects console errors and warnings and page errors; `problems()` lists those not allowed. */
 export function watchConsole(page: Page, allow: RegExp[] = CONSOLE_ALLOW) {
   const seen: string[] = []
@@ -577,7 +594,7 @@ export function watchConsole(page: Page, allow: RegExp[] = CONSOLE_ALLOW) {
  * kept meal, time, person and layer as the link opened, and no `lang` the link did not have.
  */
 export async function linkRoundTripProblems(page: Page, path: string): Promise<string[]> {
-  await page.goto(path)
+  await goto(page, path)
   await page.locator('[data-stage]').waitFor()
   // Link-sync writes the meal at once; the time is debounced. The notes about a link load on use (FP-6).
   await page.waitForTimeout(800)
@@ -603,7 +620,8 @@ export const RED_LIST: Record<string, Mode> = {
   // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15. T5 (FP-3) enforces B4; B13 is Hindi, so it
   // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
   // T3 (FP-2) enforces the short, wide stage and the projector: B3, B12.
-  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22.
+  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22. T10 (FP-9) enforces B25 (and
+  // `npm run lint:dead` finds any dead export, component or store action, in npm run check and CI).
   B1: 'enforce',
   B2: 'enforce',
   B3: 'enforce',
@@ -625,7 +643,7 @@ export const RED_LIST: Record<string, Mode> = {
   B22: 'enforce',
   B23: 'enforce',
   B24: 'enforce',
-  B25: 'report',
+  B25: 'enforce',
 }
 
 /**
