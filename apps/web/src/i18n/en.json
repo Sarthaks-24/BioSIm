@@ -642,8 +642,7 @@
   },
   "dock": {
     "squeezed": "{{from}} → {{to}} squeezed",
-    "moments": "Key moments of this meal",
-    "keptMoments": "Key moments of the kept meal",
+    "moments": "Key moments",
     "marker": "{{name}}, {{time}}",
     "keptMarker": "Kept: {{name}}, {{time}}",
     "usually": "{{time}} (usually {{low}} to {{high}})"
@@ -683,8 +682,8 @@
     "keptValue": "kept meal {{value}}"
   },
   "keys": {
-    "button": "Keys and settings",
-    "title": "Keys and settings",
+    "button": "Settings",
+    "title": "Settings",
     "settings": "Settings",
     "list": "Keys",
     "play": "Play or pause",

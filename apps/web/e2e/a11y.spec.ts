@@ -28,7 +28,7 @@ test('axe on /sim with a kept meal, the table and the keys sheet open: 0 serious
     await expect(page.locator('dialog[open] table').first()).toBeVisible()
     await checkAxe(page, { mode: 'enforce' })
     await page.keyboard.press('Escape')
-    await page.getByRole('button', { name: /^(Keys and settings|कुंजियाँ और सेटिंग)$/ }).click()
+    await page.getByRole('button', { name: /^(Settings|सेटिंग)$/ }).click()
     await expect(page.locator('dialog[open] [role="switch"]').first()).toBeVisible()
     await checkAxe(page, { mode: 'enforce' })
     await page.keyboard.press('Escape')

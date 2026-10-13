@@ -421,8 +421,7 @@ about carbohydrate, protein and fat only, and the stomach graph's summary no lon
 | `summary.thisMeal` | this meal | यह भोजन | draft |
 | `summary.keptMeal` | the kept meal | रखा गया भोजन | draft |
 | `dock.squeezed` | {{from}} → {{to}} squeezed | {{from}} → {{to}} सिकोड़ा गया | draft |
-| `dock.moments` | Key moments of this meal | इस भोजन के मुख्य पल | draft |
-| `dock.keptMoments` | Key moments of the kept meal | रखे गए भोजन के मुख्य पल | draft |
+| `dock.moments` | Key moments | मुख्य पल | draft |
 | `dock.marker` | {{name}}, {{time}} | {{name}}, {{time}} | draft |
 | `dock.keptMarker` | Kept: {{name}}, {{time}} | रखा गया भोजन: {{name}}, {{time}} | draft |
 | `dock.usually` | {{time}} (usually {{low}} to {{high}}) | {{time}} (आमतौर पर {{low}} से {{high}}) | draft |
@@ -449,8 +448,8 @@ Key names (Space, Page Down, Shift …) stay in English on purpose: they are pri
 | `table.moments` | Key moments | मुख्य पल | draft |
 | `table.moment` | Moment | पल | draft |
 | `table.keptValue` | kept meal {{value}} | रखा गया भोजन {{value}} | draft |
-| `keys.button` | Keys and settings | कुंजियाँ और सेटिंग | draft |
-| `keys.title` | Keys and settings | कुंजियाँ और सेटिंग | draft |
+| `keys.button` | Settings | सेटिंग | draft |
+| `keys.title` | Settings | सेटिंग | draft |
 | `keys.settings` | Settings | सेटिंग | draft |
 | `keys.list` | Keys | कुंजियाँ | draft |
 | `keys.play` | Play or pause | चलाएँ या रोकें | draft |
