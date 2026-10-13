@@ -7,6 +7,7 @@ import hi from './hi.json'
 import { catalogKeys, registryKeys } from '../registry/i18nKeys.ts'
 import { UNIT_KEY } from '../lib/formatSignal.ts'
 import { REVIEW_FILE, STATUS, reviewRows, syncReview } from '../../scripts/hi-review.mjs'
+import { ENGLISH_ONLY } from '../../scripts/i18n-sections.mjs'
 
 /** Flatten to "a.b.c" → value, with arrays as a single entry holding their length. */
 function flatten(obj: unknown, prefix = ''): Map<string, unknown> {
@@ -49,7 +50,8 @@ describe('translations', () => {
 
   // While Hindi is paused (R47) a new key may be English only (i18next falls back to English), so
   // Hindi's keys are a subset of English's, never more. Still to translate when Hindi comes back:
-  // the English keys missing from hi.json (sim.hindiLater and stats.englishOnly show only without Hindi).
+  // the English keys missing from hi.json, listed by `node apps/web/scripts/hi-new-keys.mjs` (the
+  // English-only texts, sim.hindiLater, stats.englishOnly and ENGLISH_ONLY's, show only without Hindi).
   it('every Hindi key exists in English', () => {
     expect([...fh.keys()].filter((k) => !fe.has(k))).toEqual([])
   })
@@ -67,7 +69,9 @@ describe('translations', () => {
   const registry = registryKeys()
   // formatSignal builds `units.${key}` and `units.words.${key}` from its own table: those keys exactly, not all of units.*.
   const units = Object.values(UNIT_KEY).flatMap((k) => [`units.${k}`, `units.words.${k}`])
-  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional, ...units])
+  // The English-only texts a build without Hindi swaps in (scripts/i18n-sections.mjs).
+  const englishOnly = Object.values(ENGLISH_ONLY)
+  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional, ...units, ...englishOnly])
 
   it('every catalog and registry key exists as text', () => {
     const missing = [...catalog.required, ...registry.required].filter((k) => typeof fe.get(k) !== 'string')

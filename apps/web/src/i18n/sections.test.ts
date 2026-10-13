@@ -3,7 +3,7 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import en from './en.json'
-import { PAGE_SECTIONS, coreText } from '../../scripts/i18n-sections.mjs'
+import { ENGLISH_ONLY, PAGE_SECTIONS, coreText, englishFor } from '../../scripts/i18n-sections.mjs'
 
 /**
  * The English split (scripts/i18n-sections.mjs, review 15 LOW 5): a key of a page section that is
@@ -77,5 +77,29 @@ describe('the English split', () => {
       }
     }
     expect(wrong).toEqual([])
+  })
+})
+
+// R47: while Hindi is paused no English text promises it. A build without Hindi ships the
+// English-only version of each text that names Hindi; one with Hindi ships the text as it is.
+describe('English without Hindi', () => {
+  const at = (o: unknown, key: string) => key.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown>)?.[k], o)
+
+  it('a build without Hindi swaps in the English-only texts, which name no Hindi', () => {
+    const shipped = englishFor(en, false)
+    for (const [key, englishOnly] of Object.entries(ENGLISH_ONLY)) {
+      expect(at(en, key), key).toMatch(/Hindi/)
+      expect(at(shipped, key), key).toBe(at(en, englishOnly))
+      expect(at(shipped, key), key).not.toMatch(/Hindi/)
+      expect(at(shipped, englishOnly), englishOnly).toBeUndefined()
+    }
+  })
+
+  it('a Hindi build ships the texts as they are, without the English-only ones', () => {
+    const shipped = englishFor(en, true)
+    for (const [key, englishOnly] of Object.entries(ENGLISH_ONLY)) {
+      expect(at(shipped, key), key).toBe(at(en, key))
+      expect(at(shipped, englishOnly), englishOnly).toBeUndefined()
+    }
   })
 })
