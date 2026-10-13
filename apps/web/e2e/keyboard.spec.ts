@@ -1,0 +1,283 @@
+import { expect, test, type Locator, type Page } from '@playwright/test'
+import { onlyIn } from './helpers/gate.ts'
+
+// WP-15 on /next: everything works without a mouse (G8, UI-6). The key map and its off-switch,
+// the graphs as tables, their summaries for screen readers, and the timeline's key moments
+// (merged where they nearly coincide, council round 2). Projects desktop (1440), projector (1280,
+// projector mode) and phone (390, where it checks the targets and the sheets).
+
+const COLA_KEPT_BURGER = '/next?v=2&a=cola:1&b=cheeseburger:1,fries:1'
+const params = (page: Page) => new URL(page.url()).searchParams
+const now = (page: Page) => page.getByRole('slider', { name: 'Timeline' }).getAttribute('aria-valuenow').then(Number)
+
+test.beforeEach(async ({ page }) => {
+  // A returning visitor: the first-run medical note is closed.
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+})
+
+/** Presses Tab until `target` has the focus (a real keyboard user's way there). */
+async function tabTo(page: Page, target: Locator, max = 60) {
+  for (let i = 0; i < max; i++) {
+    if (await target.evaluate((el) => el === document.activeElement).catch(() => false)) return
+    await page.keyboard.press('Tab')
+  }
+  throw new Error(`Tab never reached ${target}`)
+}
+
+test('a whole lesson with the keyboard only: add a food, play, step through the moments, keep, table, Esc', async ({ page }) => {
+  onlyIn('desktop', 'projector')
+  await page.goto('/next?v=2&a=cola:1')
+  await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+
+  // Add an apple from the food search, typing its name; the letters typed are not shortcuts.
+  const add = page.getByRole('button', { name: 'Add food' })
+  await tabTo(page, add)
+  await page.keyboard.press('Enter')
+  const sheet = page.getByRole('dialog', { name: 'Add food' })
+  await expect(sheet.getByRole('combobox')).toBeFocused()
+  await page.keyboard.type('apple')
+  await page.keyboard.press('Enter')
+  await expect(sheet).toBeHidden()
+  await expect(add).toBeFocused()
+  await expect(page.getByRole('img', { name: 'The body, digesting Cola + Apple' })).toBeVisible()
+  expect(params(page).has('b'), 'typing "p" in the search kept nothing').toBe(false)
+
+  // K plays and pauses (Space is the focused button's own).
+  await page.keyboard.press('k')
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await page.keyboard.press('k')
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible()
+
+  // Home, then Page Down through the key moments (a clicker's button), each later than the last.
+  await page.keyboard.press('Home')
+  expect(await now(page)).toBe(0)
+  const seen: number[] = []
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press('PageDown')
+    await expect.poll(() => now(page)).not.toBe(seen.at(-1) ?? 0)
+    seen.push(await now(page))
+  }
+  expect(seen).toEqual([...seen].sort((a, b) => a - b))
+  // Paused on a moment: its name shows over the bar, and screen readers hear the graphs' values.
+  await expect(page.locator('[data-marker-tip]')).toBeVisible()
+  await expect(page.locator('[data-announcer]')).toHaveText(/after eating: .+ \d+/)
+  await page.keyboard.press('PageUp')
+  await expect.poll(() => now(page)).toBe(seen[1])
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => now(page)).toBe(seen[1]! + 10)
+  await page.keyboard.press('Shift+ArrowLeft')
+  await expect.poll(() => now(page)).toBe(seen[1]! - 50)
+
+  // P keeps the meal to compare; then "Keep to compare" is off, and says why.
+  await page.keyboard.press('p')
+  await expect(page.getByText('Kept: Cola + Apple', { exact: true }).first()).toBeVisible()
+  await expect.poll(() => params(page).get('b')).toBe('cola:1,apple:1')
+  const keep = page.getByRole('button', { name: 'Keep to compare' })
+  await expect(keep).toHaveAttribute('aria-disabled', 'true')
+  await expect(keep).toHaveAccessibleDescription('This meal is the one kept')
+
+  // T opens the graphs as a table; Esc closes it and gives the focus back.
+  const before = await page.evaluate(() => document.activeElement?.outerHTML)
+  await page.keyboard.press('t')
+  const table = page.getByRole('dialog', { name: 'The graphs as a table' })
+  await expect(table).toBeVisible()
+  await expect(table.locator('[data-strip-table] tbody tr')).toHaveCount(13)
+  await page.keyboard.press('Escape')
+  await expect(table).toBeHidden()
+  expect(await page.evaluate(() => document.activeElement?.outerHTML)).toBe(before)
+
+  // S, B and E pick a graph where they show one at a time (the projector).
+  if (test.info().project.name === 'projector') {
+    await page.keyboard.press('b')
+    await expect(page.getByRole('button', { name: 'Blood sugar', pressed: true })).toBeVisible()
+    await page.keyboard.press('e')
+    await expect(page.getByRole('button', { name: 'Energy', pressed: true })).toBeVisible()
+    await page.keyboard.press('s')
+    await expect(page.getByRole('button', { name: 'Stomach', pressed: true })).toBeVisible()
+  }
+})
+
+test('? lists the keys; the letter keys can be switched off (WCAG 2.1.4), and the clicker keys still work', async ({ page }) => {
+  onlyIn('desktop', 'projector')
+  await page.goto('/next?v=2&a=cola:1')
+  await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+  await page.keyboard.press('?')
+  const help = page.getByRole('dialog', { name: 'Keys and settings' })
+  await expect(help).toBeVisible()
+  await expect(help.getByText('Next or previous key moment (a clicker’s two buttons)')).toBeVisible()
+  const letters = help.getByRole('switch', { name: 'Letter keys' })
+  await expect(letters).toHaveAttribute('aria-checked', 'true')
+  await tabTo(page, letters)
+  await page.keyboard.press('Space')
+  await expect(letters).toHaveAttribute('aria-checked', 'false')
+  expect(await page.evaluate(() => localStorage.getItem('lifepeek:keysOff'))).toBe('1')
+  await page.keyboard.press('Escape')
+  await expect(help).toBeHidden()
+
+  // Off: T and ? do nothing, Page Down still steps.
+  await page.locator('body').press('t')
+  await page.locator('body').press('?')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.keyboard.press('PageDown')
+  await expect.poll(() => now(page)).toBeGreaterThan(0)
+
+  // Saved: still off after a reload; the settings button opens the sheet to switch them back.
+  await page.reload()
+  await page.getByRole('button', { name: 'Keys and settings' }).click()
+  await expect(help.getByRole('switch', { name: 'Letter keys' })).toHaveAttribute('aria-checked', 'false')
+})
+
+test('"Reduce motion" can be chosen on screen and is saved; it can follow the device again', async ({ page }) => {
+  onlyIn('desktop', 'phone')
+  await page.goto('/next?v=2&a=cola:1')
+  await page.getByRole('button', { name: 'Keys and settings' }).click()
+  const help = page.getByRole('dialog', { name: 'Keys and settings' })
+  const motion = help.getByRole('switch', { name: 'Reduce motion' })
+  await expect(motion).toHaveAttribute('aria-checked', 'false')
+  await motion.click()
+  await expect(motion).toHaveAttribute('aria-checked', 'true')
+  expect(await page.evaluate(() => localStorage.getItem('lifepeek:reduceMotion'))).toBe('1')
+  await expect(page.locator('[data-particles]').first()).toHaveAttribute('data-particles', 'still')
+  await help.getByRole('button', { name: 'Follow the device’s setting again' }).click()
+  expect(await page.evaluate(() => localStorage.getItem('lifepeek:reduceMotion'))).toBeNull()
+  await expect(motion).toHaveAttribute('aria-checked', 'false')
+})
+
+test('every graph has a summary for screen readers and a working table', async ({ page }) => {
+  onlyIn('desktop', 'projector', 'phone')
+  await page.goto(COLA_KEPT_BURGER)
+  const expected: Record<string, RegExp> = {
+    Stomach:
+      /^The stomach holds \d+ g at the start\. Half of the meal's food energy has left by \d+ min\. Kept: Cheeseburger \+ French fries\. /,
+    'Blood sugar': /^Blood sugar starts at about \d+ mg\/dL, is highest at about \d+ mg\/dL after \d+ min/,
+    Energy: /^In the first 6 h, about \d+ kcal from this meal entered the body/,
+  }
+  for (const [strip, summary] of Object.entries(expected)) {
+    // One graph at a time on a phone and the projector: pick it first.
+    const tab = page.getByRole('button', { name: strip, exact: true })
+    if (await tab.isVisible()) await tab.click()
+    const name = strip === 'Stomach' ? 'Food in the stomach' : strip
+    const figure = page.getByRole('figure', { name })
+    await expect(figure).toHaveAccessibleDescription(summary)
+    await figure.getByRole('button', { name: `Show as table: ${name}` }).click()
+    const sheet = page.getByRole('dialog', { name: 'The graphs as a table' })
+    await expect(sheet.locator('[data-strip-table] caption > span').last()).toHaveText(summary)
+    await expect(sheet.locator('[data-strip-table] tbody tr')).toHaveCount(13)
+    await expect(sheet.locator('[data-strip-table] thead th')).toContainText([/After eating/, /Kept: Cheeseburger/])
+    // The key moments of both meals; "mostly absorbed" by its own name, not as one nutrient's (S6).
+    const moments = sheet.locator('[data-moments-table]')
+    await expect(moments.getByRole('rowheader', { name: 'Carbs, protein and fat mostly absorbed' })).toBeVisible()
+    await expect(moments.getByRole('rowheader', { name: 'Half the energy has left the stomach' })).toBeVisible()
+    await sheet.getByRole('button', { name: 'Close' }).click()
+    await expect(sheet).toBeHidden()
+  }
+})
+
+test.describe('the timeline’s key moments (council round 2)', () => {
+  test('moments that nearly coincide are one marker naming them all; no two targets overlap; each is at least 24 px', async ({ page }) => {
+    onlyIn('projector', 'phone')
+    for (const url of [COLA_KEPT_BURGER, `${COLA_KEPT_BURGER}&lang=hi`, '/next?v=2&a=roti:2,dal:1&b=water:1']) {
+      await page.goto(url)
+      const markers = page.locator('[data-marker]')
+      await expect(markers.first()).toBeVisible()
+      const boxes = await markers.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return { x: r.x, y: r.y, w: r.width, h: r.height, name: el.getAttribute('aria-label') ?? '' }
+        }),
+      )
+      for (const [i, a] of boxes.entries()) {
+        expect(a.w, `${url}: ${a.name} width`).toBeGreaterThanOrEqual(23.5)
+        expect(a.h, `${url}: ${a.name} height`).toBeGreaterThanOrEqual(23.5)
+        for (const b of boxes.slice(i + 1)) {
+          const overlap = a.x < b.x + b.w - 0.5 && b.x < a.x + a.w - 0.5 && a.y < b.y + b.h - 0.5 && b.y < a.y + a.h - 0.5
+          expect(overlap, `${url}: "${a.name}" overlaps "${b.name}"`).toBe(false)
+        }
+      }
+    }
+    // Cola's first hour (half has left, highest) is one marker that names both.
+    await page.goto('/next?v=2&a=cola:1&lang=en')
+    await expect(page.locator('[data-marker="run"]').first()).toHaveAttribute(
+      'aria-label',
+      /^Half the energy has left the stomach, .+; Blood sugar highest, /,
+    )
+  })
+
+  test('a meal with one moment gets a full-size target, its dot in the middle (verify: 12 px button)', async ({ page }) => {
+    onlyIn('projector', 'phone')
+    await page.goto('/next?v=2&a=water:1')
+    const marker = page.locator('[data-marker="run"]')
+    await expect(marker).toHaveCount(1)
+    const box = (await marker.boundingBox())!
+    const dot = (await marker.locator('[data-dot]').boundingBox())!
+    expect(box.width).toBeGreaterThanOrEqual(23.5)
+    expect(Math.abs(dot.x + dot.width / 2 - (box.x + box.width / 2))).toBeLessThan(1.5)
+  })
+
+  test('each meal’s markers are one Tab stop; arrows move between them, Enter jumps there', async ({ page }) => {
+    onlyIn('desktop', 'projector')
+    await page.goto(COLA_KEPT_BURGER)
+    const lane = page.getByRole('toolbar', { name: 'Key moments of this meal' })
+    const markers = lane.getByRole('button')
+    await expect(markers.nth(1)).toBeAttached()
+    await tabTo(page, markers.first())
+    await page.keyboard.press('ArrowRight')
+    await expect(markers.nth(1)).toBeFocused()
+    await expect(markers.nth(1)).toHaveAttribute('tabindex', '0')
+    await expect(markers.first()).toHaveAttribute('tabindex', '-1')
+    await page.keyboard.press('Enter')
+    await expect.poll(() => now(page)).toBeGreaterThan(30)
+    // The kept meal's markers are their own stop, and also named.
+    await expect(page.getByRole('toolbar', { name: 'Key moments of the kept meal' }).getByRole('button').first()).toHaveAttribute(
+      'aria-label',
+      /^Kept: /,
+    )
+  })
+
+  test('paused where moments coincide, all are named, the kept meal’s too; Page Down visits the kept meal’s moments', async ({ page }) => {
+    onlyIn('desktop')
+    // Cola kept and cola + water now: cola's "half has left" and "highest" share a minute, in both meals.
+    await page.goto('/next?v=2&a=cola:1,water:1&b=cola:1')
+    await expect(page.locator('[data-marker="kept"]').first()).toBeAttached()
+    await page.locator('body').press('Home')
+    await page.locator('body').press('PageDown')
+    await expect(page.locator('[data-marker-tip] > span')).toHaveText([
+      /^Half the energy has left the stomach, \d+ min$/,
+      /^Blood sugar highest, \d+ min$/,
+      /^Kept: Half the energy has left the stomach, \d+ min$/,
+      /^Kept: Blood sugar highest, \d+ min$/,
+    ])
+    // Burger + fries kept: its "half has left" (hours after cola's) is a stop for Page Down.
+    await page.goto(COLA_KEPT_BURGER)
+    const keptHalf = page.locator('[data-marker="kept"][data-moment~="event.stomachHalfEmpty"]')
+    await expect(keptHalf).toBeAttached()
+    await page.locator('body').press('Home')
+    for (let i = 0; i < 8; i++) {
+      await page.locator('body').press('PageDown')
+      if (
+        await page
+          .locator('[data-marker-tip]')
+          .getByText(/^Kept: Half the energy has left the stomach/)
+          .count()
+      )
+        return
+    }
+    throw new Error('Page Down never stopped at the kept meal’s "half has left"')
+  })
+})
+
+test('after keeping, the meal bar’s buttons keep their words (council SHOULD 11)', async ({ page }) => {
+  onlyIn('desktop')
+  await page.goto(COLA_KEPT_BURGER)
+  for (const name of ['Keep to compare', 'Copy link', 'Report a mistake']) {
+    await expect(page.getByRole('button', { name }).getByText(name, { exact: true })).toBeVisible()
+  }
+})
+
+test('the food pieces in the body have a key, only for what the meal has', async ({ page }) => {
+  onlyIn('desktop', 'phone')
+  await page.goto('/next?v=2&a=cola:1')
+  const key = page.getByRole('list', { name: 'Food pieces in the body' })
+  await expect(key).toBeVisible()
+  await expect(key.getByRole('listitem')).toHaveText(['Carbohydrate', 'Water'])
+})

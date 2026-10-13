@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HAS_API, feedbackIssueUrl, sendFeedback, type FeedbackInput } from '../lib/api.ts'
+import { addEnglish } from '../i18n/index.ts'
+import feedbackText from 'virtual:lifepeek-en/feedback'
+
+// This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
+addEnglish(feedbackText)
 
 /**
  * "Report a mistake" — the credibility loop. No email or other personal data is asked for.

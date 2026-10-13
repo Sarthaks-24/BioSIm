@@ -1,0 +1,128 @@
+import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useKeys } from '../../lib/keys.ts'
+import { useMotion } from '../../state/motion.ts'
+import Sheet from './Sheet.tsx'
+
+/** The key map's rows, in the order of lib/keys.ts, each with what it does. */
+const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }[] = [
+  { keys: ['Space', 'K'], what: 'keys.play', letter: true },
+  { keys: ['←', '→'], what: 'keys.move' },
+  { keys: ['Shift + ←', 'Shift + →'], what: 'keys.moveHour' },
+  { keys: ['Page Down', 'Page Up'], what: 'keys.moments' },
+  { keys: ['Home', 'End'], what: 'keys.ends' },
+  { keys: ['P'], what: 'keys.keep', letter: true },
+  { keys: ['T'], what: 'keys.table', letter: true },
+  { keys: ['S', 'B', 'E'], what: 'keys.strips', letter: true },
+  { keys: ['?'], what: 'keys.help', letter: true },
+]
+
+/**
+ * Keys and settings (G8 + UI-6, UI-7): the stage's keys, and two switches saved on this device.
+ * - Letter keys (WCAG 2.1.4): one-character shortcuts can get in the way of a screen reader or
+ *   voice control, so they can be switched off (`lifepeek:keysOff`). Arrows, Page Up / Down, Home
+ *   and End keep working: a clicker needs them.
+ * - Reduce motion (`lifepeek:reduceMotion`, state/motion.ts): follows the device until chosen
+ *   here, since school computers rarely let pupils change the system setting.
+ * Opened with ? or the dock's settings button; downloaded the first time (Stage.tsx).
+ */
+export default function KeysHelp() {
+  const { t } = useTranslation()
+  const keysOff = useKeys((s) => s.off)
+  const reduced = useMotion((s) => s.reduced)
+  const choice = useMotion((s) => s.choice)
+  return (
+    <Sheet title={t('keys.title')}>
+      <section aria-labelledby="keys-settings" className="flex flex-col gap-3">
+        <h3 id="keys-settings" className="sr-only">
+          {t('keys.settings')}
+        </h3>
+        <Switch
+          on={reduced}
+          onChange={(on) => useMotion.getState().setChoice(on)}
+          label={t('keys.motion')}
+          help={choice === null ? `${t('keys.motionHelp')} ${t('keys.motionDevice')}` : t('keys.motionHelp')}
+        />
+        {choice !== null && (
+          <button
+            type="button"
+            onClick={() => useMotion.getState().setChoice(null)}
+            className="-mt-1 self-start rounded-control px-1 text-caption font-semibold text-ink underline underline-offset-4 hover:bg-sunk2"
+          >
+            {t('keys.motionReset')}
+          </button>
+        )}
+        <Switch on={!keysOff} onChange={(on) => useKeys.getState().setOff(!on)} label={t('keys.letters')} help={t('keys.lettersHelp')} />
+      </section>
+      <section aria-labelledby="keys-list" className="mt-4 border-t border-rule2 pt-3">
+        <h3 id="keys-list" className="font-semibold">
+          {t('keys.list')}
+        </h3>
+        <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2">
+          {ROWS.map((row) => (
+            <div key={row.what} className={`contents ${row.letter && keysOff ? '[&>*]:opacity-55' : ''}`}>
+              <dt className="flex flex-wrap items-center gap-1">
+                {row.keys.map((k) => (
+                  <kbd
+                    key={k}
+                    translate="no"
+                    className="tabular rounded-[4px] border border-rule2 border-b-2 bg-paper2 px-1.5 py-px font-sans text-caption font-semibold whitespace-nowrap text-ink"
+                  >
+                    {k}
+                  </kbd>
+                ))}
+              </dt>
+              <dd className="self-center">
+                {t(row.what)}
+                {row.letter && keysOff && <span className="text-ink-2"> ({t('keys.offNote')})</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-caption text-ink-2">{t('keys.typing')}</p>
+      </section>
+    </Sheet>
+  )
+}
+
+/** An on/off switch: its name, a line saying what it does, and the state in words and shape. */
+function Switch({ on, onChange, label, help }: { on: boolean; onChange: (on: boolean) => void; label: string; help: string }) {
+  const { t } = useTranslation()
+  const id = useId()
+  const helpId = `${id}-help`
+  return (
+    <div className="flex items-start gap-3">
+      <div className="min-w-0 flex-1">
+        <p id={id} className="font-semibold">
+          {label}
+        </p>
+        <p id={helpId} className="text-caption text-ink-2">
+          {help}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby={id}
+        aria-describedby={helpId}
+        onClick={() => onChange(!on)}
+        className="flex min-h-11 shrink-0 items-center gap-2 rounded-control px-2 font-semibold hover:bg-sunk2 lg:min-h-9"
+      >
+        {/* The state in words for the eye; screen readers hear it from aria-checked. */}
+        <span aria-hidden="true" className="min-w-[3ch] text-right text-caption">
+          {on ? t('keys.on') : t('keys.off')}
+        </span>
+        {/* The track: filled ink when on, an outline when off; the knob moves too (never colour alone). */}
+        <span
+          aria-hidden="true"
+          className={`relative h-6 w-10 rounded-full border-2 border-ink transition-colors motion-reduce:transition-none ${on ? 'bg-ink' : 'bg-shelf'}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform motion-reduce:transition-none ${on ? 'translate-x-4 bg-shelf' : 'bg-ink'}`}
+          />
+        </span>
+      </button>
+    </div>
+  )
+}
