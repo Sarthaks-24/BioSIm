@@ -226,6 +226,105 @@ export const SOURCES = {
     url: 'https://doi.org/10.1093/ajcn/63.2.164',
     citation: 'Reed GW, Hill JO. Measuring the thermic effect of food. Am J Clin Nutr 1996;63:164–169.',
   },
+  // ── New in model version 3 (S-2: breathing; read in V-2, 2026-10-14) ──
+  /**
+   * Checked 2026-10-14 (V-2, full text, Europe PMC PMC6358081): Eq 1, Weir's "EE = VO2 (3.941 +
+   * 1.106 (RQ)) (1 + 0.082 P)"; "when RQ equals 0.7, each liter of VO2 represents ~4.7 kcal, but
+   * when RQ equals 1.0 the value is ~5 kcal".
+   */
+  kaiyala2019: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'Weir equation (3.941 + 1.106·RQ kcal per L O2); ~4.7 kcal/L at RQ 0.7, ~5 at 1.0',
+    url: 'https://doi.org/10.1371/journal.pone.0211585',
+    citation:
+      'Kaiyala KJ, Wisse BE, Lighton JRB. Validation of an equation for energy expenditure that does not require the respiratory quotient. PLoS One 2019;14:e0211585.',
+  },
+  /**
+   * Checked 2026-10-13/14 (V-0 extra, V-2; abstract via Europe PMC, PMID 15831804): 769 adults,
+   * resting VO2 "2.6 +/- 0.4 ml O2 x kg(-1) x min(-1)"; 3.5 "overestimates the actual resting VO2
+   * value on average by 35%".
+   */
+  byrne2005: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'resting O2 use 2.6 ± 0.4 mL/kg/min (lower edge of the resting golden)',
+    url: 'https://doi.org/10.1152/japplphysiol.00023.2004',
+    citation:
+      'Byrne NM, Hills AP, Hunter GR, Weinsier RL, Schutz Y. Metabolic equivalent: one size does not fit all. J Appl Physiol 2005;99:1112–1119.',
+  },
+  /** Checked 2026-10-14 (V-2, abstract via Europe PMC, PMID 2204507): one MET "is equal to 3.5 ml O2 per kg body weight x min". */
+  jette1990: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'resting O2 use convention 3.5 mL/kg/min (upper edge of the resting golden)',
+    url: 'https://doi.org/10.1002/clc.4960130809',
+    citation:
+      'Jetté M, Sidney K, Blümchen G. Metabolic equivalents (METS) in exercise testing, exercise prescription, and evaluation of functional capacity. Clin Cardiol 1990;13:555–565.',
+  },
+  /**
+   * Checked 2026-10-14 (V-2, full text, Europe PMC PMC4923235): RER "from the baseline value of
+   * ~0.83 to predominantly carbohydrates utilization with RER = 0.91", plateau "approximately two
+   * hours"; shakes (Table 2) high-CHO 548 kcal, 123 g CHO, 3 g fat, 7 g protein; high-fat 519 kcal,
+   * 12 g CHO, 51 g fat, 7 g protein; postprandial "RER slope (0.0049 … vs. 0.0033 …)" HC vs HF.
+   */
+  gribok2016: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'fasting RQ ~0.83; carbohydrate shake RQ rise 0.83 → 0.91; a fat shake rises more slowly',
+    url: 'https://doi.org/10.14814/phy2.12835',
+    citation:
+      'Gribok A, Leger JL, Stevens M, Hoyt R, Buller M, Rumpler W. Measuring the short-term substrate utilization response to high-carbohydrate and high-fat meals in the whole-body indirect calorimeter. Physiol Rep 2016;4:e12835.',
+  },
+  /**
+   * Checked 2026-10-14 (V-2, openstax.org): §22.3 "By adolescence, the normal respiratory rate is
+   * similar to that of adults, 12 to 18 breaths per minute"; tidal volume "is about 500
+   * milliliters". §22.4: CO2 "partial pressure in the alveoli is about 40 mm Hg" (Table 22.3).
+   */
+  'openstax-ap2e-22': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'adult resting breaths 12–18/min, tidal volume about 500 mL (§22.3); alveolar CO2 40 mm Hg (§22.4)',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/22-3-the-process-of-breathing',
+    citation: 'Betts JG, et al. Anatomy and Physiology 2e, ch. 22 The Respiratory System. OpenStax, Houston TX, 2022.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0b item 5, gssiweb.org): Romijn 1993's fuel shift in words only: at 25 %
+   * VO2max "FFA the dominant fuel", at 65 % fat and carbohydrate "about 50/50". The exercise RQ
+   * floor rests on this direction; its numbers are a calibration (R51; Romijn's tables not read).
+   */
+  spriet2020: {
+    kind: 'report',
+    check: 'checked',
+    usedFor: 'exercise fuel shift toward carbohydrate (direction of the RQ floor)',
+    url: 'https://www.gssiweb.org/en/sports-science-exchange/Article/regulation-of-fat-metabolism-during-exercise',
+    citation:
+      'Spriet LL, Randell R. Regulation of fat metabolism during exercise. Sports Science Exchange 2020;29(205):1–6. Gatorade Sports Science Institute.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0b items 2 and 5, abstract via Europe PMC, PMID 2289500): sub-elite
+   * runners, treadmill marathon at 68–76 % VO2max, "RER (0.96, SD 0.07 vs 0.91, SD 0.04)".
+   */
+  bosch1990: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'running RER 0.91–0.96 (cross-check of the exercise RQ floor, R57)',
+    url: 'https://doi.org/10.1007/bf00236696',
+    citation:
+      'Bosch AN, Goslin BR, Noakes TD, Dennis SC. Physiological differences between black and white runners during a treadmill marathon. Eur J Appl Physiol 1990;61:68–72.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0, ncert.nic.in gesc106.pdf, Reprint 2024-25): "an adult human being at
+   * rest breathes in and out 15-18 times in a minute"; exhaled air "16.4% oxygen", "4.4% carbon
+   * dioxide" (R54). Shown as "Older NCERT Class 7 book (2024-25) says" (R29).
+   */
+  'ncert-c7-2024': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'book values: resting breaths 15–18/min; exhaled air 16.4 % O2, 4.4 % CO2 (todo golden)',
+    url: 'https://ncert.nic.in/textbook/pdf/gesc106.pdf',
+    citation: 'NCERT. Science, Textbook for Class VII, ch. 6 Respiration in Organisms. NCERT, New Delhi, reprint 2024-25.',
+  },
   // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
@@ -324,6 +423,25 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'activity.met.football': { sources: ['herrmann2024'], basis: 'measured' },
   'activity.met.cricket': { sources: ['herrmann2024'], basis: 'measured' },
   'activity.met.badminton': { sources: ['herrmann2024'], basis: 'measured' },
+
+  // Breathing (S-2, V-2). Weir via Kaiyala 2019; fasting RQ from Charrière 2016 (0.78–0.81) and
+  // Gribok 2016 (~0.83); kRQ calibrated on Gribok's carbohydrate shake (rise ~0.08); the exercise
+  // floor is a calibration on the fuel shift's direction (R51); alveolar CO2 40 mm Hg from OpenStax
+  // §22.4. The breath rate/depth split and the dead space are hand-picked (model §2.2 Limits).
+  'gas.weirO2': { sources: ['kaiyala2019'], basis: 'measured' },
+  'gas.weirCo2': { sources: ['kaiyala2019'], basis: 'measured' },
+  'gas.rqFasting': { sources: ['charriere2016', 'gribok2016'], basis: 'measured' },
+  'gas.rqPerMgDl': { sources: ['gribok2016'], basis: 'calibrated' },
+  'gas.rqFloorBase': { sources: ['spriet2020'], basis: 'calibrated' },
+  'gas.rqFloorPerMet': { sources: ['spriet2020'], basis: 'calibrated' },
+  'gas.rqMin': { sources: ['kaiyala2019'], basis: 'assumption' },
+  'gas.rqMax': { sources: ['kaiyala2019'], basis: 'assumption' },
+  'gas.alveolarCo2MmHg': { sources: ['openstax-ap2e-22'], basis: 'measured' },
+  'gas.alveolarK': { sources: [], basis: 'assumption' },
+  'gas.restBreathsPerMin': { sources: ['openstax-ap2e-22', 'ncert-c7-2024'], basis: 'assumption' },
+  'gas.breathRateExponent': { sources: [], basis: 'assumption' },
+  'gas.deadSpaceMl': { sources: [], basis: 'assumption' },
+  'gas.tidalMaxMl': { sources: [], basis: 'assumption' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

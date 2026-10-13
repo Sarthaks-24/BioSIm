@@ -5,6 +5,7 @@
  * ID, only add. test/catalog.test.ts checks that the two files cover the same IDs.
  */
 import { SIGNALS, type EventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { BREATHING_SIGNALS } from './catalog/breathing.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -84,17 +85,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     reactsToMeal: false,
     shipsIn: 'alwaysRunning',
   },
-  'lungs.breathRate': {
-    id: 'lungs.breathRate',
-    unit: 'breaths/min',
-    status: 'illustration',
-    clock: 'real',
-    kind: 'rhythm',
-    sourceIds: [],
-    i18nKey: k('lungs.breathRate'),
-    reactsToMeal: false,
-    shipsIn: 'alwaysRunning',
-  },
   'kidney.filtrationRate': {
     id: 'kidney.filtrationRate',
     unit: 'mL/min',
@@ -108,7 +98,7 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
   },
 }
 
-/** Definition and retired names of every signal row (active and reserved). */
+/** Definition and retired names of every signal row (active, pack and reserved). */
 export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
   'gut.stomach.contentG': {
     definition: 'Grams of the meal still in the stomach, counted as food and drink as eaten (liquid + solid).',
@@ -231,9 +221,28 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Resting heart rate of the profile, shown as a real-time beat. Never graphed.',
     retired: ['heart.rateBpm', 'vitals.heartRate', 'rhythm.heart'],
   },
+  // The breathing pack's rows (core/catalog/breathing.ts, S-2). lungs.breathRate was reserved as a
+  // real-clock rhythm; it activated as a sim-clock level with its unit kept (ACTIVATION_LOG).
+  'gas.o2UseRate': {
+    definition: 'Oxygen the whole body uses per minute (mL/min, dry gas at 0 °C), from the energy used through Weir’s equation.',
+    retired: ['body.oxygenUse', 'lungs.oxygenUse', 'gas.vo2'],
+  },
+  'gas.co2OutRate': {
+    definition: 'Carbon dioxide the whole body makes and breathes out per minute (mL/min): the exchange ratio times the oxygen used.',
+    retired: ['gas.vco2', 'lungs.co2Out'],
+  },
+  'gas.exchangeRatio': {
+    definition: 'Carbon dioxide made per oxygen used (RQ), steady state: higher when more carbohydrate is burned, lower with more fat.',
+    retired: ['gas.rq', 'body.rq'],
+  },
   'lungs.breathRate': {
-    definition: 'Resting breathing rate of the profile, shown as a real-time breath. Never graphed.',
+    definition:
+      'Breaths a minute, from the alveolar air needed to carry the carbon dioxide away (15 at rest). Graphed; the drawn breath follows it.',
     retired: ['lungs.breathsPerMin', 'vitals.breathRate', 'rhythm.breath'],
+  },
+  'lungs.tidalVolume': {
+    definition: 'Air per breath (mL): the alveolar air per breath plus 150 mL of airway dead space, at most 2.5 L.',
+    retired: ['lungs.vt', 'lungs.breathDepth'],
   },
   'kidney.filtrationRate': {
     definition: 'Plasma filtered by both kidneys per minute (GFR), shown as a caption. Never graphed.',
@@ -278,5 +287,5 @@ export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
   },
 }
 
-/** Every signal row, active and reserved (tests and docs). */
-export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = { ...SIGNALS, ...RESERVED_SIGNALS }
+/** Every signal row: active, the packs' lazy rows, and reserved (tests and docs). */
+export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = { ...SIGNALS, ...BREATHING_SIGNALS, ...RESERVED_SIGNALS }

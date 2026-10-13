@@ -78,7 +78,8 @@ describe.each(entries)('registry: %s', (id, { organism, systems, organs }) => {
   })
 
   it('has a unit text for every signal it provides', () => {
-    for (const sig of PROVIDES[id]) {
+    // Lean rows only: a pack's lazy rows (lungs.*, gas.*) bring their unit texts with the pack (W-1, U-2).
+    for (const sig of PROVIDES[id].filter(isActiveSignal)) {
       const key = UNIT_KEYS[SIGNALS[sig].unit]
       expect(key, `${sig} (${SIGNALS[sig].unit})`).toBeDefined()
       for (const json of [en, hi]) expect(text(json, key!), key).toMatch(/\{\{n\}\}/)

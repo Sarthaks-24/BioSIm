@@ -142,6 +142,24 @@ Walk 3.8 (17190), brisk walk 4.8 (17200), run 9.3 (12050), from the 2024 Adult C
 
 **Limits.** METs are averages for a 65 kg adult; the extra energy used after stopping is left out. Two known limits are marked in the tests: 60 g glucose peaks at about 115 min, not 50–60 min (the stomach lets the drink through at a steady rate, so absorption is flat for 2 h), and roti or idli with dal gives under half of its 6 h effect by 3 h (solids leave the stomach slowly in this model).
 
+## Breathing (model version 3, S-2)
+
+The gas module turns the energy used into oxygen used, carbon dioxide made and breathing. Every output is status *assumption* ("Model estimate"): it reads the energy used, whose resting part is one, and the split into breaths and depth is hand-picked. Sources were read in step V-2.
+
+- **RQ** (`gas.exchangeRatio`) = 0.82 + 0.0025 × (glucose − 90), and in a bout at least 0.80 + 0.0127 × MET, kept within 0.70–1.00. Fasting 0.82 sits in the measured baselines (Charrière 2016: 0.78–0.81; Gribok 2016: ~0.83). The 0.0025 is calibrated so Gribok's 123 g carbohydrate shake raises RQ by 0.05–0.11 (they measured 0.83 → 0.91). The exercise floor is a calibration on the direction of the fuel shift (more carbohydrate at higher effort; Spriet 2020); Romijn 1993's own numbers could not be read. A run gives 0.918, inside the 0.91–0.96 measured in runners (Bosch 1990).
+- **Oxygen and carbon dioxide** (`gas.o2UseRate`, `gas.co2OutRate`): Weir's equation without protein, energy = 3.941 × VO2 + 1.106 × VCO2 (Kaiyala 2019), so VO2 = energy ÷ (3.941 + 1.106 × RQ) and VCO2 = RQ × VO2. A litre of oxygen is 4.7 kcal at RQ 0.7 and 5.0 at RQ 1.0.
+- **Breathing** (`lungs.breathRate`, `lungs.tidalVolume`): the lungs carry the CO2 away with alveolar CO2 held at 40 mm Hg (OpenStax §22.4), so alveolar air = 0.863 × VCO2 / 40 L/min. Breaths a minute = 15 × (alveolar air ÷ resting alveolar air)^(1/3); air per breath = alveolar air ÷ breaths + 150 mL of dead space, at most 2.5 L.
+
+| | O2 used | CO2 made | Breaths/min | Air per breath |
+|---|---|---|---|---|
+| Rest | 215 mL/min | 177 mL/min | 15 | 404 mL |
+| Walk (3.8 MET) | 867 mL/min | 735 mL/min | 24 | 808 mL |
+| Run (9.3 MET) | 2116 mL/min | 1942 mL/min | 33 | 1.41 L |
+
+**Tests** (`test/gas.test.ts`): Weir as an identity every minute; 4.7 / 5.0 kcal per litre (Kaiyala 2019); resting O2 use 2.2–3.6 mL/kg/min (Byrne 2005: 2.6 ± 0.4; Jetté 1990: 3.5); fasting RQ 0.78–0.86; Gribok's fat shake raises RQ less than the carbohydrate one (hold-out); resting breaths 12–18 and 400–600 mL a breath (OpenStax §22.3). Design guards: a meal changes breaths by at most 3 a minute; a run gives 25–45 breaths and 1–2.5 L a breath. A `todo`: exhaled air at rest should be the older NCERT Class 7 book's 16.4 % oxygen and 4.4 % carbon dioxide; the model gives about 17.4 % and 2.9 %, so no model value is shown for it.
+
+**Limits.** Alveolar CO2 is held at 40 mm Hg (no feedback from blood gases); no ventilatory threshold, so hard running is under-breathed (trained runners reach 47–56 breaths, above the 45 guard); sea level; Weir without protein (about 1–2 %); blood fat does not move RQ, so a fatty meal hardly moves it (Gribok's fat shake did, more slowly); breathing changes only during a bout.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -161,6 +179,9 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `blood.glucose` | mg/dL | simulated (band: assumption) | typical curve; band 0.65×–1.45× | Freckmann 2007, Bergman 1979, Brouns 2005, Atkinson 2008, Moghaddam 2006 |
 | `energy.inRate`, `energy.inTotal` | kcal/h, kcal | simulated | 4·carbs + 4·protein + 9·fat of the absorbed grams | FAO 2003, OpenStax |
 | `energy.usedRate`, `energy.usedTotal` | kcal/h, kcal | assumption | resting use of the run's person ÷ 24 (adult model: 62.7 kcal/h), same for every meal | FAO/WHO/UNU 2004, ICMR-NIN 2020 |
+| `gas.o2UseRate`, `gas.co2OutRate` | mL/min | assumption | energy used through Weir's equation; CO2 = RQ × O2 (breathing pack row) | Kaiyala 2019, Byrne 2005, Jetté 1990 |
+| `gas.exchangeRatio` | ratio | assumption | RQ from glucose, with an exercise floor (breathing pack row) | Charrière 2016, Gribok 2016, Bosch 1990 (cross-check) |
+| `lungs.breathRate`, `lungs.tidalVolume` | breaths/min, mL | assumption | breaths and depth that carry the CO2 away at 40 mm Hg (breathing pack row) | OpenStax §22.3 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -212,6 +233,12 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 21. Westerterp KR. Diet induced thermogenesis. *Nutr Metab (Lond)* 2004;1:5.
 22. Charrière N, Montani JP, Dulloo AG. Postprandial thermogenesis and respiratory quotient in response to galactose: comparison with glucose and fructose in healthy young adults. *J Nutr Sci* 2016;5:e4.
 23. Reed GW, Hill JO. Measuring the thermic effect of food. *Am J Clin Nutr* 1996;63:164–169.
+24. Kaiyala KJ, Wisse BE, Lighton JRB. Validation of an equation for energy expenditure that does not require the respiratory quotient. *PLoS One* 2019;14:e0211585.
+25. Byrne NM, Hills AP, Hunter GR, Weinsier RL, Schutz Y. Metabolic equivalent: one size does not fit all. *J Appl Physiol* 2005;99:1112–1119.
+26. Jetté M, Sidney K, Blümchen G. Metabolic equivalents (METS) in exercise testing, exercise prescription, and evaluation of functional capacity. *Clin Cardiol* 1990;13:555–565.
+27. Gribok A, Leger JL, Stevens M, Hoyt R, Buller M, Rumpler W. Measuring the short-term substrate utilization response to high-carbohydrate and high-fat meals in the whole-body indirect calorimeter. *Physiol Rep* 2016;4:e12835.
+28. Spriet LL, Randell R. Regulation of fat metabolism during exercise. *Sports Science Exchange* 2020;29(205). Gatorade Sports Science Institute.
+29. Bosch AN, Goslin BR, Noakes TD, Dennis SC. Physiological differences between black and white runners during a treadmill marathon. *Eur J Appl Physiol* 1990;61:68–72.
 
 The food data comes from:
 

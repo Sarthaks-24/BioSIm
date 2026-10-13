@@ -93,5 +93,21 @@ export const glucose60 = food({
   glycemicIndex: { value: 100, reference: 'glucose' },
 })
 
-export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60]
+/**
+ * Gribok et al. 2016's lunch shakes (Table 2), drunk in under 15 min: high-carbohydrate 548 kcal
+ * (123 g carbohydrate, 3 g fat, 7 g protein) and high-fat 519 kcal (12 g, 51 g, 7 g). The paper
+ * gives no GI or volume: GI 70 and 400 g are fixture choices (the RQ goldens also try GI 50 and 100).
+ */
+export function gribokShake(kind: 'carb' | 'fat', gi = 70): Food {
+  const n = kind === 'carb' ? { energyKcal: 548, carbsG: 123, fatG: 3 } : { energyKcal: 519, carbsG: 12, fatG: 51 }
+  return food({
+    id: `gribok-${kind}-${gi}`,
+    phase: 'liquid',
+    grams: 400,
+    nutrients: { ...n, sugarsG: 0, fiberG: 0, proteinG: 7, waterG: 400 - n.carbsG - n.fatG - 7 },
+    glycemicIndex: { value: gi, reference: 'glucose' },
+  })
+}
+
+export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60, gribokShake('carb'), gribokShake('fat')]
 export const lookup = (id: string) => all.find((f) => f.id === id)
