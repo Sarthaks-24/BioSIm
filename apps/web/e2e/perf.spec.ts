@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { CPU_PATH, cpuPerFrame, median } from '../scripts/cpu-frame.mjs'
 import { GATE_ROUTES, gateSteps, measureFps, modeFor, verdict } from './helpers/gate.ts'
 
 // 30 fps gate (roadmap A9): the CPU is slowed 6× (a cheap phone), the body is flat (project perf
@@ -41,3 +42,27 @@ for (const route of GATE_ROUTES.fps) {
     verdict(label, mode, median >= 30 ? [] : ['below 30 fps'])
   })
 }
+
+// Main-thread CPU per frame while playing (plan qa-fixes §3.4; the probe cache/perf/abcpu.mjs),
+// flat body, no throttle. Reported only, never gated: CI runners differ. The gate is the ratio
+// against the base build (scripts/cpu-ratio.mjs, the CI job "perf-ab").
+test('CPU per frame while playing (report)', async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto(CPU_PATH)
+  await page.waitForLoadState('networkidle')
+  const runs: { main: number; renderer: number }[] = []
+  await gateSteps('CPU per frame', 'report', async () => {
+    await expect(page.getByRole('button', { name: 'Play' })).toBeVisible()
+    const cdp = await page.context().newCDPSession(page)
+    for (let round = 0; round < 3; round++) runs.push(await cpuPerFrame(page, cdp, { ms: 3000, round }))
+  })
+  if (runs.length < 3) return
+  const main = median(runs.map((r) => r.main))
+  const renderer = median(runs.map((r) => r.renderer))
+  verdict(
+    `CPU median main ${main.toFixed(2)} ms/frame, renderer ${renderer.toFixed(2)} ms/frame (flat, 1440×900, no throttle)`,
+    'report',
+    [],
+  )
+})
