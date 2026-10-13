@@ -85,7 +85,9 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
     const items: CalloutInput[] = []
     for (const spec of specs) {
       const box = sizes.current.get(spec.key)
-      if (spec.hidden || !box) continue
+      // A short picture (a phone's, under 200 px) labels only the active organ (FP-1); the narrow
+      // one (useCalloutSpecs) did already, so a phone shows at most the active organ and 3 more.
+      if (spec.hidden || !box || (height < 200 && spec.tone !== 'active')) continue
       const c = CALLOUTS[spec.key]
       const a = project(c.anchor)
       const l = project(c.at)

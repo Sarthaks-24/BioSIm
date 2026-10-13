@@ -523,7 +523,7 @@ v1 and the keys only it used; the ones left here all ship and need the same chec
 | `nav.simulator` | Simulator | सिम्युलेटर | draft |
 | `nav.teach` | For teachers | शिक्षकों के लिए | draft |
 | `nav.science` | Science & sources | विज्ञान और स्रोत | draft |
-| `nav.language` | भाषा: हिन्दी | Language: English | draft |
+| `nav.language` | हिंदी | English | draft |
 | `nav.languageLabel` | Switch to Hindi | अंग्रेज़ी में बदलें | draft |
 | `nav.projector` | Projector mode | प्रोजेक्टर मोड | draft |
 | `nav.skip` | Skip to content | मुख्य सामग्री पर जाएँ | draft |

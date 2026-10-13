@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { V1_LINKS } from '../src/lib/v1-links.fixture.ts'
-import { SIM_BODY } from './helpers/gate.ts'
+import { SIM_BODY, showChip } from './helpers/gate.ts'
 
 // Smoke tests of the site around the stage (rewritten for the swap, WP-19): Home leads to /sim,
 // every link v1 ever shared still opens there, /next redirects, and the pages every visitor sees
@@ -83,7 +83,8 @@ test('adding a food updates the link, and leaving and coming back keeps the meal
   await page.getByRole('link', { name: 'For teachers' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Using LifePeek in class')
   await page.getByRole('link', { name: 'Simulator' }).click()
-  await expect(page.getByRole('button', { name: /^Apple, Servings 1$/ })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('img', { name: /^The body, digesting Water/ })).toBeVisible({ timeout: 20_000 })
+  await showChip(page, /^Apple, Servings 1$/)
   await expect.poll(() => params(page).get('a')).toBe('water:1,apple:1')
   expect(params(page).get('b')).toBe('milk:1')
 })

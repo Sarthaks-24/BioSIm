@@ -14,6 +14,7 @@ import BodyPane from '../components/stage/BodyPane.tsx'
 import GraphColumn, { useSlots } from '../components/stage/GraphColumn.tsx'
 import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
+import SummaryLine from '../components/stage/SummaryLine.tsx'
 import Timeline from '../components/stage/Timeline.tsx'
 import { mealNames } from '../components/stage/mealText.ts'
 import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
@@ -72,7 +73,10 @@ const ACTIONS: Record<KeyAction, () => void> = {
  * `minmax(0,1.4fr) minmax(22rem,1fr)` and the grid is exactly the space the Layout leaves it, so
  * nothing scrolls on a laptop or a projector; the body takes what the other zones don't need.
  * On a phone the zones stack (plan-ui-ux §3.5): the body shares the first screen with one graph
- * and the dock, which is a grid row of its own, so it can never cover the body.
+ * and the dock, which is a grid row of its own, so it can never cover the body. The body's row
+ * is `1fr` with the body pane's own minimum (its words and a 10 rem picture), so on a short phone
+ * the stage grows past the screen instead of squeezing the body to nothing (FP-1, bug B1).
+ * The phone's rows are in styles.css.
  * The graphs and the dock's timeline share one x scale and one left and right edge (WP-12), so
  * the playhead on every graph stands straight above the timeline's thumb, like a chart recorder.
  */
@@ -105,51 +109,76 @@ export default function Simulator() {
   const sheet = useSheet((s) => s.sheet)
   const slots = useSlots(run)
   const [attempt, setAttempt] = useState(0)
+  const short = useMedia(SHORT_PHONE)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
     // dock's timeline (on a phone the Play button and its gap), so graphs and timeline share x.
-    <div
-      data-stage=""
-      className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-surface-page [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
-    >
-      <h1 className="sr-only">{t('sim.title')}</h1>
-      <div className="lg:col-span-2">
-        <MealBar />
+    // A phone under 680 px tall: the stage is the first screen less the header (3 rem + its rule),
+    // and the summary follows it.
+    <>
+      <div
+        data-stage=""
+        className="grid flex-1 grid-cols-[minmax(0,1fr)] bg-surface-page max-lg:[@media(height<42.5rem)]:min-h-[calc(100dvh-3rem-1px)] [--plot-gutter:3.75rem] lg:min-h-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
+      >
+        <h1 className="sr-only">{t('sim.title')}</h1>
+        <div className="lg:col-span-2">
+          <MealBar />
+        </div>
+        <div className="lg:col-span-2">
+          <Notes run={run} kept={kept} />
+        </div>
+        <BodyPane run={run} kept={kept} summary={!short} />
+        {/*
+         * On a phone the graph row has one height for every tab (so the body never jumps when the
+         * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
+         * first screen, never less than its own minimum: under that the page scrolls (FP-1).
+         */}
+        <div className="flex min-h-0 [&>section]:flex-1">
+          <GraphColumn run={run} kept={kept} />
+        </div>
+        {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
+        <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
+          <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
+            <Timeline run={run} kept={kept} />
+          </Dock>
+        </div>
+        {sheet && (
+          <LoadBoundary
+            key={attempt}
+            onFail={sheets.reset}
+            fallback={
+              <LoadFailedBox attempt={attempt} onRetry={() => setAttempt((a) => a + 1)} onClose={() => useSheet.getState().close()} />
+            }
+          >
+            <Suspense fallback={null}>
+              <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} />
+            </Suspense>
+          </LoadBoundary>
+        )}
       </div>
-      <div className="lg:col-span-2">
-        <Notes run={run} kept={kept} />
-      </div>
-      <BodyPane run={run} kept={kept} />
       {/*
-       * On a phone the graph row has a fixed height, the same for every tab (so the body never
-       * jumps when the tab changes), sized for the tallest: blood sugar with its medical note.
-       * The body gets the rest of the first screen.
+       * A phone under 680 px tall: the summary sentence moves under the stage, just past the first
+       * screen, which keeps the body, a graph and Play (FP-1). BodyPane leaves its own out then.
        */}
-      <div className="flex min-h-0 max-lg:h-[15rem] [&>section]:flex-1">
-        <GraphColumn run={run} kept={kept} />
-      </div>
-      {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
-      <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
-        <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
-          <Timeline run={run} kept={kept} />
-        </Dock>
-      </div>
-      {sheet && (
-        <LoadBoundary
-          key={attempt}
-          onFail={sheets.reset}
-          fallback={
-            <LoadFailedBox attempt={attempt} onRetry={() => setAttempt((a) => a + 1)} onClose={() => useSheet.getState().close()} />
-          }
-        >
-          <Suspense fallback={null}>
-            <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} />
-          </Suspense>
-        </LoadBoundary>
-      )}
-    </div>
+      {short && run.meal.items.length > 0 && <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />}
+    </>
   )
+}
+
+/** A phone under 680 px tall (FP-1): its stage is the first screen, the summary sentence past it. */
+const SHORT_PHONE = '(max-width: 63.99rem) and (max-height: 42.49rem)'
+
+/** Whether a media query matches; re-renders when that changes. */
+function useMedia(query: string) {
+  const [match, setMatch] = useState(() => matchMedia(query).matches)
+  useEffect(() => {
+    const mq = matchMedia(query)
+    const update = () => setMatch(mq.matches)
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [query])
+  return match
 }
 
 /** "Keys and settings": the key list, and the switches for letter keys and motion (KeysHelp). */

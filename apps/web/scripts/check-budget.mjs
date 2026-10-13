@@ -74,6 +74,11 @@
 //   ink-muted for ink-2) and PageShell, which the not-found page in the entry chunk uses:
 //   /sim 187.955 → 188.045 KB on main with FIX-H (+0.09; ledger row +0.1 against a planned −0.1),
 //   Home 144.55 → 144.62 KB.
+//   T2 / FP-1 (2026-10-14): the phone stage (rows, fit variant), the one-row plan strip with its
+//   measured "+n" fold, the resting body in the empty state. "⋯" took Typical adult, Copy link and
+//   Report off the bar: its panel (components/stage/MealActions.tsx) loads on first use, and gets
+//   Keep and Report as elements so it shares no module with the stage (a shared one is split into
+//   a chunk of its own). /sim 188.172 → 188.466 KB on main with T9a and T7 (+0.29; ledger row +0.3).
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

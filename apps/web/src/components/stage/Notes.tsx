@@ -49,7 +49,8 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
               <span>
                 <strong className="font-semibold">{t('disclaimer.firstRun.title')}</strong>{' '}
                 <span className="text-ink-muted max-lg:sr-only">{t('disclaimer.firstRun.body')}</span>{' '}
-                <Link to={MEDICAL_HREF} className="font-semibold whitespace-nowrap underline underline-offset-2">
+                {/* A phone keeps the card to one line (FP-1): the footer links the full note too. */}
+                <Link to={MEDICAL_HREF} className="font-semibold whitespace-nowrap underline underline-offset-2 max-sm:hidden">
                   {t('disclaimer.more')}
                 </Link>
               </span>
@@ -60,7 +61,8 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
                 writePref('medicalNoteSeen', '1')
                 setFirstRun(false)
               }}
-              className="ml-auto min-h-11 shrink-0 rounded-control bg-ink px-4 text-control font-semibold text-white lg:min-h-9"
+              // Quiet (FP-1): Play stays the strongest thing on the first screen.
+              className="ml-auto min-h-11 shrink-0 rounded-control bg-surface-sunk px-4 text-control font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
             >
               {t('disclaimer.firstRun.ok')}
             </button>

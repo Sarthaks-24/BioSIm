@@ -57,6 +57,13 @@ export const PlusIcon = () => (
   </Icon>
 )
 
+/** "⋯": more actions. Three dots, each a round cap on a zero-length line. */
+export const MoreIcon = () => (
+  <Icon strokeWidth="3">
+    <path d="M4.5 10h0m5.5 0h0m5.5 0h0" />
+  </Icon>
+)
+
 export const InfoIcon = () => (
   <Icon width="18" height="18" strokeWidth="1.75">
     <circle cx="10" cy="10" r="7.25" />
