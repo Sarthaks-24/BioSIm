@@ -51,7 +51,7 @@ const LIVER_OUTLINE: [number, number][] = [
   [-0.72, 0.6],
 ]
 // The `torso` framing; 0.2 over the head (at 3.25), so it never touches the meal bar (FP-2).
-const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.45 }
+export const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.45 }
 
 /**
  * `final`: this is the body the stage shows (no WebGL, or it failed), not the stand-in while the 3D
@@ -130,7 +130,7 @@ export default function FlatBody({ sim, label, final = false }: { sim: Simulatio
 }
 
 /** Scene units → CSS pixels, front-on, fitting VIEW into the picture. */
-function frame(w: number, h: number) {
+export function frame(w: number, h: number) {
   const scale = Math.min(w / (VIEW.maxX - VIEW.minX), h / (VIEW.maxY - VIEW.minY))
   const ox = w / 2
   const oy = h / 2 + ((VIEW.maxY + VIEW.minY) / 2) * scale
@@ -252,7 +252,7 @@ function tubeOutline(curve: Spline3, radius: (u: number) => number, n: number): 
 let armShape: [number, number][] | null = null
 
 /** Everything that only changes when the meal reaches another organ. */
-function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: BodyState) {
+export function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: BodyState) {
   ctx.clearRect(0, 0, w, h)
   const { scale, X, Y } = frame(w, h)
   const poly = (pts: readonly (readonly [number, number])[], mirror = false) => {
@@ -352,7 +352,13 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
 const PYLORUS = rgb(PYLORUS_TONE)
 
 /** The stomach, stretched by how full it is now (same rule as the 3D shader: ends pinned). */
-function paintStomach(ctx: CanvasRenderingContext2D, X: (x: number) => number, Y: (y: number) => number, scale: number, s: BodyState) {
+export function paintStomach(
+  ctx: CanvasRenderingContext2D,
+  X: (x: number) => number,
+  Y: (y: number) => number,
+  scale: number,
+  s: BodyState,
+) {
   const { active, faded } = look('stomach', s)
   ctx.beginPath()
   tubeOutline(STOMACH, (u) => stomachFillRadius(u, s.stomachFill), 40).forEach(([x, y], i) =>

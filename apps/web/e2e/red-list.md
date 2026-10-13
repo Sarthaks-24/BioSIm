@@ -28,7 +28,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 | B6 | Back with the Add food sheet open goes to `about:blank` | FP-6 | T8 |
 | B7 | Hindi header 82 px tall at 360 and 320 (limit 56) | FP-1 | T2 |
 | B8 | Home chart: all 10 labels under 12 px at 360 (smallest 8 px) | FP-8 | T9b |
-| B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b |
+| B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b (Hindi reports, R47; EN + pseudo-locale enforced) |
 | B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (T6 done) |
 | B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
 | B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 (enforced, EN and HI; + body visible and no scroll on `projector-sizes`, 3 sizes × 5 states, EN + pseudo-locale) |
