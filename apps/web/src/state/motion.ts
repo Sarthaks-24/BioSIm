@@ -21,6 +21,7 @@ export interface MotionState {
   setChoice: (choice: boolean | null) => void
 }
 
+/** The saved choice's key. main.tsx reads it too, by name (motion.test.ts checks the two agree). */
 export const REDUCE_MOTION_PREF = 'reduceMotion'
 const QUERY = '(prefers-reduced-motion: reduce)'
 
@@ -63,3 +64,15 @@ const browserEnv: MotionEnv = {
 
 /** `useMotion((s) => s.reduced)` in components; `useMotion.getState().reduced` per frame. */
 export const useMotion = createMotionStore(browserEnv)
+
+/**
+ * The flag reaches CSS too (review 15, MED 3): `html[data-motion]` is 'reduce' or 'full', so the
+ * stylesheet's reduced-motion rule and the `motion-reduce:` variant (styles.css) follow the in-app
+ * choice, not only the device. main.tsx sets it from the saved choice before the first draw (Home
+ * does not load this file); from here on it follows the store.
+ */
+if (typeof document !== 'undefined') {
+  const mirror = (reduced: boolean) => (document.documentElement.dataset.motion = reduced ? 'reduce' : 'full')
+  mirror(useMotion.getState().reduced)
+  useMotion.subscribe((s) => mirror(s.reduced))
+}

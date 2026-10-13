@@ -4,7 +4,7 @@ import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
 import en from '../i18n/en.json'
 import { lookupFood } from '../data/foods.ts'
 import { stripDescription, stripSummary } from './stripSummary.ts'
-import { TABLE_TIMES, cellValue, momentRows, tableColumns } from './stripTable.ts'
+import { cellValue, momentRows, tableColumns, tableTimes } from './stripTable.ts'
 
 /**
  * The graphs' text alternatives (G8): what a screen reader hears after each graph's name, and the
@@ -60,15 +60,16 @@ describe('each graph in a sentence', () => {
 })
 
 describe('"Show as table"', () => {
-  it('reads every row at 0, 15, 30, 45 min, 1, 1.5, 2, 3, 4, 6, 12, 24 and 48 h', () => {
-    expect([...TABLE_TIMES]).toEqual([0, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440, 2880])
+  it('reads every row at 0, 15, 30, 45 min, 1, 1.5, 2, 3, 4, 6, 12, 24 and 48 h: the last row is the run’s own end', () => {
+    expect(tableTimes(sim('cola:1').horizonMin)).toEqual([0, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440, 2880])
+    expect(tableTimes(600)).toEqual([0, 15, 30, 45, 60, 90, 120, 180, 240, 360, 600])
   })
 
   it('blood sugar: this meal, how much people differ (low ≤ value ≤ high), then the kept meal', () => {
     const run = sim('cola:1')
     const cols = tableColumns(['blood.glucose'], run, sim('apple:1'))
     expect(cols.map((c) => c.kind)).toEqual(['run', 'range', 'kept'])
-    for (const min of TABLE_TIMES) {
+    for (const min of tableTimes(run.horizonMin)) {
       const v = cellValue(cols[0]!, min, run.stepMin) as number
       const [low, high] = cellValue(cols[1]!, min, run.stepMin) as [number, number]
       expect(low).toBeLessThanOrEqual(v + 1e-6)

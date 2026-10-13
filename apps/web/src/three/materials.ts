@@ -146,7 +146,7 @@ export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
       varying float vFaded;
       void main() {
         // A deep shade of the organ's own colour: soft, and still 3:1 on the paper; near-black on
-        // the projector (outlineInk in anatomy/tones.ts is the same sum, for the colour audit).
+        // the projector (outlineInk in three/look.ts is the same sum, for the colour audit).
         vec3 ink = vInk * uShade + uLift;
         gl_FragColor = vec4(mix(ink, uFade * 0.62, vFaded * 0.75), 1.0);
         #include <colorspace_fragment>

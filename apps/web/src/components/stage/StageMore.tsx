@@ -64,7 +64,8 @@ export default function StageMore({
           <CloseIcon />
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-4 text-control text-ink">
+      {/* Reachable with Tab, so its text can be scrolled with keys (the stage leaves them to it: lib/keys.ts). */}
+      <div data-scroll="" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-4 text-control text-ink">
         <p className="max-w-[60ch]">{t(`stages.${stage}.what`)}</p>
         <dl className="mt-3 flex max-w-[60ch] flex-col gap-3">
           <div>

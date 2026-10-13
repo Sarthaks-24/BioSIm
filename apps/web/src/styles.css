@@ -151,12 +151,14 @@ html[data-contrast='high']:lang(hi) {
 /*
  * Only the stage is fitted to the 1280×800 box. Every other page (v1 /sim until WP-20, Home, About)
  * scrolls, so it keeps the projector size it had before WP-17 (118.75 %, Hindi 125 %) and is not
- * shrunk by the stage's fit (review 14-17, MED 5).
+ * shrunk by the stage's fit (review 14-17, MED 5). `html[data-fit]` is set by the Layout as soon
+ * as a one-screen route is matched, before its code has loaded (no size jump while it loads,
+ * and no :has() for old browsers: FIX-C review, item 6).
  */
-html[data-contrast='high']:not(:has([data-stage])) {
+html[data-contrast='high']:not([data-fit]) {
   font-size: 118.75%;
 }
-html[data-contrast='high']:lang(hi):not(:has([data-stage])) {
+html[data-contrast='high']:lang(hi):not([data-fit]) {
   font-size: 125%;
 }
 
@@ -211,8 +213,12 @@ html[data-contrast='high'] {
   & [data-callout] {
     font-size: 1rem;
   }
-  & svg:has(~ [data-callout]) line {
+  /* Organ label leaders 2 px, the active organ's 3 px (it is 1.5× the others off the projector too). */
+  & [data-leader] line {
     stroke-width: 2px;
+  }
+  & [data-leader='active'] line {
+    stroke-width: 3px;
   }
 }
 /* The projector's graph column is wider (the body has room to spare): one big graph, its header
@@ -280,13 +286,41 @@ body {
   }
 }
 
+/*
+ * Reduced motion: the device setting (prefers-reduced-motion) unless the in-app switch has chosen
+ * (state/motion.ts mirrors it to html[data-motion] = 'reduce' | 'full'; school PCs rarely let pupils
+ * change the system setting). The `motion-reduce:` variant follows the same rule.
+ */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    &:where(html:not([data-motion='full']) *) {
+      @slot;
+    }
+  }
+  &:where(html[data-motion='reduce'] *) {
+    @slot;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html:not([data-motion='full']) *,
+  html:not([data-motion='full']) *::before,
+  html:not([data-motion='full']) *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  html:not([data-motion='full']) .race-reveal {
+    animation: none;
+  }
+}
+html[data-motion='reduce'] *,
+html[data-motion='reduce'] *::before,
+html[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+/* Home's reveal is shown whole at once (not after its 0.2 s delay). */
+html[data-motion='reduce'] .race-reveal {
+  animation: none;
 }
 
 @media print {

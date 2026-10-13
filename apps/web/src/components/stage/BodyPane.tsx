@@ -110,7 +110,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             onFail={stageMore.reset}
             fallback={
               <section id={panelId} aria-label={t('now.more')} className={`${MORE_BOX} z-20 border border-rule2 bg-shelf p-4`}>
-                <LoadFailed onRetry={() => setAttempt((a) => a + 1)} />
+                <LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />
               </section>
             }
           >

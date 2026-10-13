@@ -281,3 +281,126 @@ test('the food pieces in the body have a key, only for what the meal has', async
   await expect(key).toBeVisible()
   await expect(key.getByRole('listitem')).toHaveText(['Carbohydrate', 'Water'])
 })
+
+test.describe('review 15 (FIX-D)', () => {
+  // The network, not the service worker's cache, so a test can hold or fail a file.
+  test.use({ serviceWorkers: 'block' })
+
+  test('P, S, B and E say what they did; the kept value is said once per graph', async ({ page }) => {
+    onlyIn('desktop', 'projector')
+    await page.goto('/next?v=2&a=cola:1&t=60')
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    const said = page.locator('[data-announcer]')
+    await page.locator('body').press('p')
+    await expect(said).toHaveText('Kept: Cola')
+    // P again on the kept meal: nothing to keep, and it says why.
+    await page.locator('body').press('p')
+    await expect(said).toHaveText('This meal is the one kept')
+    await page.locator('body').press('b')
+    await expect(said).toHaveText(/^1 h after eating: Blood sugar \d+ mg\/dL, kept meal \d+ mg\/dL\.$/)
+    // Energy: two lines, the kept value only for the first (energy used at rest is the same for every meal).
+    await page.locator('body').press('e')
+    await expect(said).toHaveText(/^1 h after eating: Energy coming in .+, kept meal .+; Energy used at rest [^;]+\.$/)
+    expect((await said.textContent())!.match(/kept meal/g)).toHaveLength(1)
+  })
+
+  test('a sheet open when leaving the stage is not open on the next visit', async ({ page }) => {
+    onlyIn('desktop')
+    await page.goto('/')
+    // Into the stage inside the app (as a link would), so its state outlives the visit.
+    await page.evaluate(() => {
+      history.pushState(null, '', '/next?v=2&a=cola:1')
+      dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await page.locator('body').press('t')
+    await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+    await page.goBack()
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeHidden()
+    await page.goForward()
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+  })
+
+  test('dragging a selection out of a sheet does not close it; a press outside does', async ({ page }) => {
+    onlyIn('desktop')
+    await page.goto('/next?v=2&a=cola:1')
+    await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
+    await page.locator('body').press('t')
+    const sheet = page.getByRole('dialog', { name: 'The graphs as a table' })
+    await expect(sheet).toBeVisible()
+    const caption = sheet.locator('[data-strip-table] caption > span').last()
+    const from = (await caption.boundingBox())!
+    const box = (await sheet.boundingBox())!
+    await page.mouse.move(from.x + 4, from.y + from.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(box.x - 40, box.y + box.height / 2, { steps: 5 })
+    await page.mouse.up()
+    await expect(sheet).toBeVisible()
+    await page.mouse.click(box.x - 40, box.y + box.height / 2)
+    await expect(sheet).toBeHidden()
+  })
+
+  test('in "More", the scrolling keys scroll its text, not the clock', async ({ page }) => {
+    onlyIn('desktop')
+    // A short window, so the stage text is taller than its box.
+    await page.setViewportSize({ width: 1440, height: 560 })
+    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
+    const text = page.locator('[data-stage-more] [data-scroll]')
+    await expect(text).toContainText('Hydrochloric acid')
+    expect(await text.evaluate((el) => el.scrollHeight > el.clientHeight), 'the text scrolls').toBe(true)
+    await text.focus()
+    const before = await now(page)
+    await page.keyboard.press('PageDown')
+    await expect.poll(() => text.evaluate((el) => el.scrollTop)).toBeGreaterThan(0)
+    await page.keyboard.press('Space')
+    await expect(page.getByRole('button', { name: 'Play' })).toBeVisible()
+    expect(await now(page)).toBe(before)
+    // Left and right still move the clock from there.
+    await page.keyboard.press('ArrowRight')
+    await expect.poll(() => now(page)).toBe(before + 10)
+  })
+
+  test('the in-app Reduce motion switch reaches CSS: the reveal on Home and the transitions do not run', async ({ page }) => {
+    onlyIn('desktop')
+    // The device does not ask for reduced motion (project desktop): only the switch does.
+    await page.goto('/next?v=2&a=cola:1')
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'full')
+    await page.getByRole('button', { name: 'Keys and settings' }).click()
+    const help = page.getByRole('dialog', { name: 'Keys and settings' })
+    const motion = help.getByRole('switch', { name: 'Reduce motion' })
+    await motion.click()
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce')
+    // The switch's own knob: no transition (the motion-reduce: variant follows the switch).
+    const knob = motion.locator('span > span')
+    expect(await knob.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe('none')
+    // Every other transition is instant (a probe with a 1 s transition of its own).
+    const probe = await page.evaluate(() => {
+      const el = document.body.appendChild(document.createElement('div'))
+      el.style.transition = 'opacity 1s'
+      const s = parseFloat(getComputedStyle(el).transitionDuration)
+      el.remove()
+      return s
+    })
+    expect(probe).toBeLessThan(0.001)
+
+    // Home, in a new page load: set before the first draw, the reveal is not animated.
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce')
+    const reveal = page.locator('.race-reveal').first()
+    await expect(reveal).toBeAttached()
+    expect(await reveal.evaluate((el) => getComputedStyle(el).animationName)).toBe('none')
+
+    // Back to full motion, the reveal runs again.
+    await page.evaluate(() => localStorage.setItem('lifepeek:reduceMotion', '0'))
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'full')
+    expect(
+      await page
+        .locator('.race-reveal')
+        .first()
+        .evaluate((el) => getComputedStyle(el).animationName),
+    ).toBe('race-reveal')
+  })
+})

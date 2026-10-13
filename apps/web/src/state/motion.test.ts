@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { REDUCE_MOTION_PREF, createMotionStore, type MotionEnv } from './motion.ts'
 
@@ -64,5 +65,12 @@ describe('reduced-motion flag', () => {
   it('works without matchMedia (old browsers, tests)', () => {
     const { env } = fakeEnv(false)
     expect(createMotionStore({ ...env, matchMedia: undefined }).getState().reduced).toBe(false)
+  })
+})
+
+describe('the in-app choice in CSS', () => {
+  it('main.tsx reads the same saved choice, so html[data-motion] is right before the first draw', () => {
+    const main = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8')
+    expect(main).toContain(`readPref('${REDUCE_MOTION_PREF}')`)
   })
 })

@@ -4,7 +4,7 @@ import type { ActiveSignalId, Simulation } from '@lifepeek/engine'
 import { formatBand, formatSignal } from '../../lib/formatSignal.ts'
 import { momentNameKey } from '../../lib/moments.ts'
 import { stripDescription } from '../../lib/stripSummary.ts'
-import { TABLE_TIMES, cellValue, momentRows, tableColumns, type TableColumn } from '../../lib/stripTable.ts'
+import { cellValue, momentRows, tableColumns, type TableColumn, tableTimes } from '../../lib/stripTable.ts'
 import { formatDuration } from '../../lib/time.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
@@ -111,7 +111,7 @@ export default function StripTable({
               </tr>
             </thead>
             <tbody>
-              {TABLE_TIMES.map((min) => (
+              {tableTimes(run.horizonMin).map((min) => (
                 <tr key={min} className="border-b border-rule2/60 last:border-0">
                   <th scope="row" className={`${td} text-left font-semibold`}>
                     {formatDuration(min, t)}
