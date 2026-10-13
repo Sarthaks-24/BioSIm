@@ -16,6 +16,13 @@ const PREFIX = 'virtual:lifepeek-en/'
 /**
  * Sections only their own pages read, and the keys of them that every page needs (the footer's).
  * The v1 simulator's own texts (verdict, charts, events, lesson) go with it until WP-20 deletes it.
+ * A kept key `*.leaf` keeps that leaf of every entry (`stages.<stage>.short`); `**!leaf` keeps
+ * everything but that leaf, at any depth (`signals.<…>.desc`).
+ *
+ * The stage's own parts that load on first use bring their text too (FIX-C, size budget): the
+ * "How we know" panel its known limits, "More" (and v1) the full stage texts (the stage keeps
+ * only the organs' names), the tables and keys sheet theirs (the stage keeps the buttons' names
+ * and the announcer's kept value), and the panel the signals' long descriptions.
  */
 export const PAGE_SECTIONS = {
   privacy: [],
@@ -28,13 +35,66 @@ export const PAGE_SECTIONS = {
   charts: [],
   events: [],
   lesson: [],
+  limits: [],
+  stages: ['*.name', '*.short'],
+  keys: ['button'],
+  table: ['showFor', 'keptValue'],
+  signals: ['**!desc'],
+  // v1's simulator keeps its own texts; the stage keeps the ones it shares (until WP-20).
+  sim: [
+    'title',
+    'addFood',
+    'servings',
+    'remove',
+    'play',
+    'pause',
+    'timeline',
+    'share',
+    'shareCopied',
+    'shareManual',
+    'reportError',
+    'noWebgl',
+    'oldLink',
+    'newerLink',
+    'afterEating',
+    'capReached',
+    'unknownFoods',
+    'overCap',
+  ],
+}
+
+/** The kept keys of one section (`*.leaf`: that leaf of every entry). */
+function pick(section, keep) {
+  const out = {}
+  for (const k of keep) {
+    if (k.startsWith('**!')) {
+      const leaf = k.slice(3)
+      const without = (o) =>
+        Object.fromEntries(
+          Object.entries(o)
+            .filter(([key, v]) => key !== leaf || typeof v === 'object')
+            .map(([key, v]) => [key, v && typeof v === 'object' ? without(v) : v]),
+        )
+      Object.assign(out, without(section))
+      continue
+    }
+    if (!k.startsWith('*.')) {
+      out[k] = section[k]
+      continue
+    }
+    const leaf = k.slice(2)
+    for (const [entry, value] of Object.entries(section)) {
+      if (value && typeof value === 'object' && leaf in value) (out[entry] ??= {})[leaf] = value[leaf]
+    }
+  }
+  return out
 }
 
 /** The core text: en.json without the page sections (but with the keys they share). */
 export function coreText(en) {
   const core = { ...en }
   for (const [name, keep] of Object.entries(PAGE_SECTIONS)) {
-    if (keep.length) core[name] = Object.fromEntries(keep.map((k) => [k, en[name][k]]))
+    if (keep.length) core[name] = pick(en[name], keep)
     else delete core[name]
   }
   return core

@@ -23,9 +23,11 @@ import verdictText from 'virtual:lifepeek-en/verdict'
 import chartsText from 'virtual:lifepeek-en/charts'
 import eventsText from 'virtual:lifepeek-en/events'
 import lessonText from 'virtual:lifepeek-en/lesson'
+import stagesText from 'virtual:lifepeek-en/stages'
+import simText from 'virtual:lifepeek-en/sim'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
-addEnglish(verdictText, chartsText, eventsText, lessonText)
+addEnglish(verdictText, chartsText, eventsText, lessonText, stagesText, simText)
 
 type View = 'body' | 'lesson'
 

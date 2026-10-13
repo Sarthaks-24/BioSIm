@@ -2,7 +2,12 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Simulation } from '@lifepeek/engine'
 import { CloseIcon } from '../kit/index.ts'
+import { addEnglish } from '../../i18n/index.ts'
+import stagesText from 'virtual:lifepeek-en/stages'
 import { toneOf, useNowStage } from './NowLine.tsx'
+
+// The full stage texts come with "More" (the stage itself keeps only the organs' names).
+addEnglish(stagesText)
 
 /**
  * "More": the full text for the stage the food is in now (v1's step-by-step tab): what happens,

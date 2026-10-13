@@ -203,7 +203,10 @@ function CopyLink() {
     if (!done) return setStatus('manual')
     done.then(
       () => {
-        setStatus('copied')
+        // A second copy while "Link copied" still shows must be said again (review 14-17, LOW 9):
+        // empty the status region first, then fill it on the next frame, so it changes.
+        setStatus('idle')
+        requestAnimationFrame(() => setStatus('copied'))
         if (timer.current) clearTimeout(timer.current)
         timer.current = setTimeout(() => setStatus('idle'), 2500)
       },

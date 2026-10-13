@@ -216,5 +216,16 @@ test.describe('report a mistake on the stage', () => {
     await page.getByRole('button', { name: 'Copy link' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Link copied' })).toBeAttached()
     await expect(page.locator('button[aria-live]')).toHaveCount(0)
+    // A second copy is said again: the status region empties, then says it once more (review 14-17, LOW 9).
+    const status = page.getByRole('status').filter({ hasText: 'Link copied' })
+    await status.evaluate((el) => {
+      const w = window as unknown as { saidCopied: number }
+      w.saidCopied = 0
+      new MutationObserver(() => {
+        if (el.textContent === 'Link copied') w.saidCopied++
+      }).observe(el, { childList: true, characterData: true, subtree: true })
+    })
+    await page.getByRole('button', { name: 'Link copied' }).click()
+    await expect.poll(() => page.evaluate(() => (window as unknown as { saidCopied: number }).saidCopied)).toBeGreaterThanOrEqual(1)
   })
 })

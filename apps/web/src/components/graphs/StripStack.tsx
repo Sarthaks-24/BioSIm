@@ -7,7 +7,7 @@ import { stripDescription, stripSummary } from '../../lib/stripSummary.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { StatusTag, TableIcon } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
-import HowWeKnow, { Section } from './HowWeKnow.tsx'
+import HowWeKnow, { Say, Section } from './HowWeKnow.tsx'
 import SignalStrip from './SignalStrip.tsx'
 import { stripMarker } from './marks.ts'
 
@@ -49,6 +49,10 @@ interface RunStripProps {
   tabbed?: boolean
   className?: string
 }
+
+/** "How we know" limits beyond each signal's own, as keys: their text loads with the panel. */
+const LIMITS = ['limits.steadyEmptying'] as const
+const GLUCOSE_LIMITS = ['limits.glucoseSameHighest', ...LIMITS] as const
 
 /** A ring's label when it must name its meal (a kept meal is drawn too). */
 const RING_OF = {
@@ -111,7 +115,9 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
   const notes = glucose ? (
     <>
       <Section title={t('graph.highestTitle')}>{t('graph.highestNote')}</Section>
-      <Section title={t('signals.event.glucoseBackToBase.name')}>{t('limits.backToBase')}</Section>
+      <Section title={t('signals.event.glucoseBackToBase.name')}>
+        <Say k="limits.backToBase" />
+      </Section>
     </>
   ) : id === 'gut.stomach.contentG' ? (
     <Section title={t('graph.halfTitle')}>{t('graph.halfNote')}</Section>
@@ -121,7 +127,7 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
       <Section title={t(`${second.meta.i18nKey}.name`)}>
         <span className="flex flex-col gap-1">
           <StatusTag status={second.meta.status} />
-          {t(`${second.meta.i18nKey}.desc`)} {second.meta.limitKey && t(second.meta.limitKey)}
+          <Say k={`${second.meta.i18nKey}.desc`} /> {second.meta.limitKey && <Say k={second.meta.limitKey} />}
         </span>
       </Section>
     </>
@@ -154,7 +160,7 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
             // More of the same food stays up longer at the same highest point (capped release). Every
             // graph: the steady emptying's level-then-fall, which the squeezed axis makes look like a
             // cliff at 6 h (council round 2, C2).
-            limits={glucose ? [t('limits.glucoseSameHighest'), t('limits.steadyEmptying')] : [t('limits.steadyEmptying')]}
+            limits={glucose ? GLUCOSE_LIMITS : LIMITS}
           />
         </span>
       }

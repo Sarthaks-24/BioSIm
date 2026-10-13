@@ -101,6 +101,8 @@ test('the header names its menu and the language button by the words it shows (W
 // report form. A failed file says so in its own place, never as the error page.
 test.describe('"More" and the report form when their code does not load', () => {
   test.use({ serviceWorkers: 'block' })
+  // A returning visitor: on a phone the first-run medical note takes the Now line's place.
+  test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
 
   test('"More": the panel says so, and "Try again" loads the stage text', async ({ page }) => {
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
@@ -117,6 +119,8 @@ test.describe('"More" and the report form when their code does not load', () => 
   })
 
   test('"Report a mistake": the button stays, says so under it, and "Try again" opens the form', async ({ page }) => {
+    // Not on the projector: a teacher reports from their own screen (MealBar).
+    onlyIn('desktop', 'phone')
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     let online = false
     await page.route(/FeedbackDialog-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))

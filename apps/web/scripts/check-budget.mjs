@@ -29,7 +29,13 @@
 //   page imports only its own section, and Stats, the report form and v1's simulator texts leave
 //   the first download too. /next 186.6 (main) → 188.6 KB with WP-15 (the named-import cut gave
 //   190.1 KB with WP-15), /sim 177.8 → 179.2 KB, Home 154.0 → 153.4 KB.
-//   FIX-C (2026-10-13): placeholder
+//   FIX-C (2026-10-13): the Now line from the model (how much is where, the kept meal, "done"), the
+//   louder summary, the squeezed-axis tint and the load boundaries took /next to 191.1 KB merged
+//   with WP-15. Text only lazy parts show now loads with them (scripts/i18n-sections.mjs): the
+//   known limits and the signals' long descriptions with "How we know", the full stage texts with
+//   "More", the table and keys texts with the sheets, v1's own simulator texts with v1:
+//   /next 191.1 → 188.9 KB, /sim 179.4 → 179.0 KB. Little room is left: anything new on the stage
+//   that is not first paint must load on use.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'
