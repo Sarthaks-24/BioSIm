@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { Meal, Simulation } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, ORGANISM_MODELS, valueAt, type Meal, type Simulation } from '@lifepeek/engine'
 import { shortMealNames } from '../components/stage/mealText.ts'
 import { formatDuration } from './time.ts'
 
@@ -11,7 +11,9 @@ import { formatDuration } from './time.ts'
  *   for water, by weight);
  * - a kept meal too: which leaves the stomach faster and about how many times, or "about the same
  *   speed" when the times are within 15 %; plus a reason, but only when that reason really
- *   explains the result (a drink against solid food, or clearly fewer calories).
+ *   explains the result (a drink against solid food, or clearly fewer calories);
+ * - the same foods in another amount: how much longer blood sugar stays raised (`bloodData`,
+ *   council round 3), the meals named by amount ("4 servings of cola").
  * The decision (`summaryData`) is kept apart from the wording, so tests can check it is TRUE for
  * every lesson. The aria wiring and the per-graph summaries are WP-15's.
  */
@@ -69,6 +71,68 @@ export function summaryData(run: Simulation, kept: Simulation | null): SummaryDa
   return { kind: 'pair', fast, slow, ratio, similar: similar && !open, reason, half, open, kcal }
 }
 
+/** The same foods, at least one in another amount ("one cola or four"). */
+export function sameFoods(a: Meal, b: Meal): boolean {
+  if (a.items.length === 0 || a.items.length !== b.items.length) return false
+  const servings = new Map(b.items.map((i) => [i.food.id, i.servings]))
+  return a.items.every((i) => servings.has(i.food.id)) && a.items.some((i) => servings.get(i.food.id) !== i.servings)
+}
+
+/** Below this (minutes) "stays raised longer" is not worth a sentence: the stomach's one is used. */
+const BLOOD_LONGER_MIN = 15
+/** Peaks closer than this (mg/dL) are "the same highest point". */
+const SAME_PEAK_MGDL = 1
+
+export interface BloodData {
+  /** The meal that keeps blood sugar raised longer, and the other one. */
+  more: RunKey
+  less: RunKey
+  /** How much longer (minutes) until blood sugar is back near the before-meal level (decision 4). */
+  longerMin: number
+  /** Both runs' highest blood sugar, rounded as the graph's "Highest: 121" (the larger one). */
+  peak: number
+  samePeak: boolean
+}
+
+/**
+ * The highest blood sugar (the graph's "Highest: 121", graphs/marks.ts) and when it is back near
+ * the before-meal level, for a run whose blood sugar really left that level (the graphs' and the
+ * timeline's rule, marks.ts glucoseLeftBase). Worked out here, not imported from marks.ts: that
+ * import split the stage's first download into one more file (size budget).
+ */
+function bloodOf(run: Simulation): { peak: number; backMin: number } | null {
+  const g = run.signals.get('blood.glucose')
+  const peakMin = run.moments.get('event.glucosePeak')?.atMin
+  const backMin = run.moments.get('event.glucoseBackToBase')?.atMin
+  if (!g || peakMin == null || backMin == null) return null
+  const peak = valueAt(g, peakMin, run.stepMin)
+  return peak - g.values[0]! > ORGANISM_MODELS[DEFAULT_ORGANISM].params.glucose.backToBaseMgDl ? { peak, backMin } : null
+}
+
+/**
+ * The same foods in two amounts (the "One cola or four" lesson, council round 3): the stomach's
+ * "4× faster" is true but misses the point, and a class seeing both lines peak at 121 mg/dL may
+ * conclude four colas are no worse. In this model the stomach lets sugar through at a capped rate,
+ * so more of a food keeps blood sugar raised for LONGER, not higher (engine content.test.ts). So
+ * the sentence is about blood sugar: how much longer it stays raised, and, when the highest points
+ * match, why. Null when it does not apply (other foods, no rise, or under 15 min apart).
+ */
+export function bloodData(run: Simulation, kept: Simulation): BloodData | null {
+  if (!sameFoods(run.meal, kept.meal)) return null
+  const blood = { run: bloodOf(run), kept: bloodOf(kept) }
+  if (!blood.run || !blood.kept) return null
+  const [more, less] = blood.run.backMin >= blood.kept.backMin ? (['run', 'kept'] as const) : (['kept', 'run'] as const)
+  const longerMin = blood[more]!.backMin - blood[less]!.backMin
+  if (longerMin < BLOOD_LONGER_MIN) return null
+  return {
+    more,
+    less,
+    longerMin,
+    peak: Math.round(Math.max(blood.run.peak, blood.kept.peak)),
+    samePeak: Math.abs(blood.run.peak - blood.kept.peak) < SAME_PEAK_MGDL,
+  }
+}
+
 /** The summary as words: a headline and, when one is true, the reason. */
 export interface Summary {
   headline: string
@@ -87,6 +151,7 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
  * A meal's name inside a sentence: its short food names ("Cola", "Roti ×2 + Dal"). A meal of more
  * than two foods, or two meals with the same name (Cola ×1 kept, Cola ×1 + water now), are
  * "this meal" and "the kept meal" instead, so the sentence never says "Cola is faster than Cola".
+ * The same foods in other amounts are named by amount: "1 serving of cola", "कोला के 4 हिस्से".
  *
  * `oblique`: the name goes before a postposition in Hindi ("इस भोजन की", never "यह भोजन की"; FIX-F).
  * English is the same either way. The Hindi templates never make a verb or adjective agree with a
@@ -96,13 +161,24 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 function names(run: Simulation, kept: Simulation | null, t: TFunction, lang: string, oblique = false): Record<RunKey, string> {
   const thisMeal = t(oblique ? 'summary.oblique.thisMeal' : 'summary.thisMeal')
   const keptMeal = t(oblique ? 'summary.oblique.keptMeal' : 'summary.keptMeal')
+  // The same foods in other amounts are named by amount, "1 serving of cola" and "4 servings of
+  // cola" (council round 3): "Cola … faster than Cola ×4" read as a food compared with itself.
+  const byAmount = kept != null && sameFoods(run.meal, kept.meal)
+  const amount = (food: string, count: number) =>
+    t(oblique ? 'sameFood.oblique.amount' : 'sameFood.amount', {
+      count,
+      // English names go mid-sentence in lower case ("servings of cola"); Hindi has no case.
+      food: lang.startsWith('en') ? food.toLowerCase() : food,
+    })
   const short = (s: Simulation) =>
-    s.meal.items.length <= 2
-      ? shortMealNames(
-          s.meal.items.map((i) => ({ foodId: i.food.id, servings: i.servings })),
-          lang,
-        )
-      : ''
+    s.meal.items.length > 2
+      ? ''
+      : byAmount
+        ? s.meal.items.map((i) => amount(shortMealNames([{ foodId: i.food.id, servings: 1 }], lang), i.servings)).join(' + ')
+        : shortMealNames(
+            s.meal.items.map((i) => ({ foodId: i.food.id, servings: i.servings })),
+            lang,
+          )
   const n = { run: short(run), kept: kept ? short(kept) : '' }
   if (!kept) return { run: n.run || thisMeal, kept: '' }
   const clash = !n.run || !n.kept || n.run === n.kept
@@ -121,6 +197,15 @@ export function singleSummary(run: Simulation, t: TFunction, lang: string): Summ
 
 /** This meal against the kept one: "Cola leaves the stomach about 9× faster than Cheeseburger + French fries." */
 export function compareSummary(run: Simulation, kept: Simulation, t: TFunction, lang: string): Summary | null {
+  const b = bloodData(run, kept)
+  if (b) {
+    // Both names stand before a postposition in Hindi ("… के बाद").
+    const o = names(run, kept, t, lang, true)
+    const time = formatDuration(b.longerMin, t)
+    const headline = sentence(t('sameFood.bloodLonger', { more: o[b.more], less: o[b.less], time }))
+    const key = { text: time, line: b.more }
+    return b.samePeak ? { headline, key, reason: sentence(t('sameFood.reasonSamePeak', { peak: b.peak })) } : { headline, key }
+  }
   const d = summaryData(run, kept)
   if (d.kind !== 'pair') return d.kind === 'single' ? singleSummary(run, t, lang) : null
   // The fast meal is the subject ("इडली आमाशय से निकलने में … तेज़ है"); the slow one, and both in

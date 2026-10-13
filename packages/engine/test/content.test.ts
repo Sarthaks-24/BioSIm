@@ -24,7 +24,9 @@ describe('real foods', () => {
     }
   })
 
-  it('home page claim: half a can of cola leaves the stomach in about half an hour; half a burger + fries takes over four hours', () => {
+  it('home page claim: half the food energy in a can of cola leaves the stomach in about half an hour; for a burger + fries, over four hours', () => {
+    // Half by food energy (stomach.ts stomachShare), as the headline says since "half a burger"
+    // read as eating half of one (council round 3).
     const cola = run('cola:1').events.stomachHalfEmptyMin!
     const burger = run('cheeseburger:1,fries:1').events.stomachHalfEmptyMin!
     expect(cola).toBeGreaterThanOrEqual(20)

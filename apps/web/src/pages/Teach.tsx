@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { LESSONS, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { LESSONS, QR_PATH, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
 import { SITE_URL } from '../lib/site.ts'
 import { setProjector } from '../hooks/useProjector.ts'
 import { useStripTab } from '../state/stripTab.ts'
@@ -84,8 +84,14 @@ export default function Teach() {
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
                 <span className="block text-ink-2">
-                  {meals(l)} · {t('teach.opensAt', { time: t('units.min', { n: l.t }), graph: t(`stage.strips.${l.strip}`) })}
+                  {meals(l)} ·{' '}
+                  {t('teach.opensAt', {
+                    time: l.t % 60 === 0 ? t('units.h', { n: l.t / 60 }) : t('units.min', { n: l.t }),
+                    graph: t(`stage.strips.${l.strip}`),
+                  })}
                 </span>
+                {/* What the class should see, where the graph alone could mislead (council round 3). */}
+                {l.key === 'colaFour' && <span className="mt-1 block text-ink-2">{t('teach.lessonNotes.colaFour')}</span>}
               </span>
               <Chevron />
             </Link>
@@ -128,7 +134,10 @@ export default function Teach() {
       <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-rule pt-10 sm:flex-row sm:items-center">
         <figure className="shrink-0">
           <img src={qrCode} alt={t('teach.qrAlt')} width={240} height={240} className="size-60 rounded-lg bg-white" />
-          <figcaption className="tabular mt-2 text-center font-semibold">{SITE_URL.replace(/^https:\/\//, '')}</figcaption>
+          {/* The address it opens (questions 1 to 3 start there), to type if a camera can't read the code. */}
+          <figcaption className="tabular mt-2 text-center text-sm font-semibold" style={{ width: 240, overflowWrap: 'anywhere' }}>
+            {SITE_URL.replace(/^https:\/\//, '') + QR_PATH}
+          </figcaption>
         </figure>
         <div>
           <h2 id="teach-qr" className="mb-2 text-2xl font-extrabold">

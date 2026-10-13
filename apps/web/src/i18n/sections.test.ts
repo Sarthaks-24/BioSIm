@@ -31,6 +31,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
   feedback: ['components/FeedbackDialog.tsx', 'pages/About.tsx'],
+  update: ['components/UpdateToast.tsx'],
   verdict: V1,
   charts: V1,
   events: V1,
