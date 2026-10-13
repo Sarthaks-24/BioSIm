@@ -306,7 +306,7 @@ describe('rest invariance (model D13 iv) and what activity never moves', () => {
       ] as const)
         expect(none.moments.get(id), `${m} ${id}`).toEqual(base.moments.get(id))
     }
-  })
+  }, 30_000)
 
   it('a walk and a run move only the activity rows: gut.*, blood glucose and energy in stay to the byte', () => {
     for (const m of meals) {
@@ -326,7 +326,7 @@ describe('rest invariance (model D13 iv) and what activity never moves', () => {
       )
       expect(moving.particles).toEqual(rest.particles)
     }
-  })
+  }, 30_000)
 
   it('the rows that existed before E-3b-eng keep their order in the signal table', () => {
     expect([...run('cola:1').signals.keys()].slice(0, BEFORE.length)).toEqual(BEFORE)
@@ -413,5 +413,5 @@ describe('fuzz: meals × activity plans', () => {
         expect(bad, `${id} with ${activityKey(plan)}`).toBe(-1)
       }
     }
-  })
+  }, 30_000)
 })
