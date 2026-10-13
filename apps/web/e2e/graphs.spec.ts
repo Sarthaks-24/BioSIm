@@ -364,7 +364,7 @@ test('graphs under tabs write their unit at the top of the y axis', async ({ pag
 test('projector mode on a 390 px phone: every graph tab shows whole', async ({ page }) => {
   onlyIn('projector')
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  await page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1')
   const group = page.getByRole('group', { name: 'Graphs' })
   await expect(group.getByRole('button')).toHaveCount(3)
   await page.evaluate(() => document.fonts.ready)
@@ -384,7 +384,7 @@ test('a stretched scale’s note on a 360 × 640 phone is one line, and the plot
   onlyIn('desktop')
   await page.setViewportSize({ width: 360, height: 640 })
   for (const lang of ['en', 'pseudo']) {
-    await page.goto(`/sim?v=2&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&lang=${lang}`)
+    await page.goto(`/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&lang=${lang}`)
     await page.locator('figure [data-line="run"]').first().waitFor()
     await page.evaluate(() => document.fonts.ready)
     const figure = page.locator('figure').filter({ visible: true })
