@@ -82,7 +82,7 @@
 //   E-2 (2026-10-14, branch v3): the engine is a lazy chunk (`@lifepeek/engine/run`, loaded by
 //   hooks/useRun.ts when /sim mounts); the main thread keeps the lean catalog (its definitions,
 //   retired names and reserved rows moved to catalog-docs.ts), the codec and the view helpers
-//   (view.ts): /sim 188.781 → 183.897 KB on v3 with T7 (−4.9), engine chunk 4.7 KB. The
+//   (view.ts): /sim 189.087 → 184.183 KB on v3 with T2 (−4.9), engine chunk 4.7 KB. The
 //   "engine in /sim" guard below is enforced from here on.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
