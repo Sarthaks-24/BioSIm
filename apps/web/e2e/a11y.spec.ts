@@ -97,6 +97,43 @@ test('the header names its menu and the language button by the words it shows (W
   await expect(language.locator('[lang="hi"]')).toHaveText('भाषा: हिन्दी')
 })
 
+// The other parts that load on first use (review 14-17, HIGH 2): the stage text ("More") and the
+// report form. A failed file says so in its own place, never as the error page.
+test.describe('"More" and the report form when their code does not load', () => {
+  test.use({ serviceWorkers: 'block' })
+  // A returning visitor: on a phone the first-run medical note takes the Now line's place.
+  test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
+
+  test('"More": the panel says so, and "Try again" loads the stage text', async ({ page }) => {
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    let online = false
+    await page.route(/StageMore-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
+    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
+    const failed = page.getByRole('region', { name: 'More' })
+    await expect(failed.getByRole('alert')).toHaveText('This didn’t load. Check the internet connection and try again.')
+    await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
+    online = true
+    await failed.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('region', { name: 'Stomach' })).toContainText('Hydrochloric acid')
+  })
+
+  test('"Report a mistake": the button stays, says so under it, and "Try again" opens the form', async ({ page }) => {
+    // Not on the projector: a teacher reports from their own screen (MealBar).
+    onlyIn('desktop', 'phone')
+    await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
+    let online = false
+    await page.route(/FeedbackDialog-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
+    await page.goto('/next?v=2&a=cola:1')
+    await page.getByRole('button', { name: 'Report a mistake' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
+    await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
+    online = true
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('dialog', { name: 'Report a mistake' }).getByText('This opens a public page on GitHub.')).toBeVisible()
+  })
+})
+
 test.describe('a "How we know" panel whose code does not load', () => {
   // The service worker would serve the file from its cache; the test needs the network to fail.
   test.use({ serviceWorkers: 'block' })

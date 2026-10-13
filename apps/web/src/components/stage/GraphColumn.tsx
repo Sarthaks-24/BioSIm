@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_ORGANISM, SIGNALS, isChartable, type ActiveSignalId, type ChartableSeries, type Simulation } from '@lifepeek/engine'
+import { useProjector } from '../../hooks/useProjector.ts'
 import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
@@ -55,21 +56,18 @@ const STACK_MIN_REM = 37.5
  */
 function useTabbed() {
   const ref = useRef<HTMLElement>(null)
-  const [tabbed, setTabbed] = useState(true)
+  const projector = useProjector()
+  const [short, setShort] = useState(true)
   useLayoutEffect(() => {
     const el = ref.current!
     const html = document.documentElement
     const ro = new ResizeObserver(() =>
-      setTabbed(
-        innerWidth < 1024 ||
-          html.dataset.contrast === 'high' ||
-          el.clientHeight < STACK_MIN_REM * parseFloat(getComputedStyle(html).fontSize),
-      ),
+      setShort(innerWidth < 1024 || el.clientHeight < STACK_MIN_REM * parseFloat(getComputedStyle(html).fontSize)),
     )
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  return [ref, tabbed] as const
+  return [ref, projector || short] as const
 }
 
 /**

@@ -20,7 +20,8 @@ export type RunKey = 'run' | 'kept'
 
 export type SummaryData =
   | { kind: 'empty' }
-  | { kind: 'single'; halfMin: number; byWeight: boolean }
+  /** `open`: half never left within the run, so `halfMin` is the run's end and the sentence says "more than". */
+  | { kind: 'single'; halfMin: number; byWeight: boolean; open: boolean }
   | {
       kind: 'pair'
       fast: RunKey
@@ -30,6 +31,8 @@ export type SummaryData =
       similar: boolean
       reason: SummaryReason
       half: Record<RunKey, number>
+      /** The slow meal never half-emptied within the run: `ratio` is only a lower bound ("more than 9×"). */
+      open: boolean
       kcal: Record<RunKey, number>
     }
 
@@ -41,10 +44,15 @@ export const SIMILAR_RATIO = 1.15
 
 /** When half of the meal has left the stomach (event.stomachHalfEmpty); the end of the run if never. */
 const halfMin = (run: Simulation) => run.moments.get('event.stomachHalfEmpty')?.atMin ?? run.horizonMin
+/** True when half of the meal never left the stomach within the run (review 14-17, LOW 6). */
+const neverHalf = (run: Simulation) => run.moments.get('event.stomachHalfEmpty')?.atMin == null
 
 export function summaryData(run: Simulation, kept: Simulation | null): SummaryData {
   if (run.meal.items.length === 0) return { kind: 'empty' }
-  if (!kept || kept.meal.items.length === 0) return { kind: 'single', halfMin: halfMin(run), byWeight: run.events.noNutrients }
+  const single = { kind: 'single', halfMin: halfMin(run), byWeight: run.events.noNutrients, open: neverHalf(run) } as const
+  if (!kept || kept.meal.items.length === 0) return single
+  // Neither half-empties within the run: no comparison can be claimed, only this meal's own sentence.
+  if (neverHalf(run) && neverHalf(kept)) return single
 
   const half = { run: halfMin(run), kept: halfMin(kept) }
   const kcal = { run: Math.round(run.meal.total.energyKcal), kept: Math.round(kept.meal.total.energyKcal) }
@@ -57,12 +65,15 @@ export function summaryData(run: Simulation, kept: Simulation | null): SummaryDa
     if (isDrinkOnly(meals[fast]) && !isDrinkOnly(meals[slow])) reason = 'drink'
     else if (kcal[fast] < kcal[slow] * 0.9) reason = 'calories'
   }
-  return { kind: 'pair', fast, slow, ratio, similar, reason, half, kcal }
+  const open = neverHalf(slow === 'run' ? run : kept)
+  return { kind: 'pair', fast, slow, ratio, similar: similar && !open, reason, half, open, kcal }
 }
 
 /** The summary as words: a headline and, when one is true, the reason. */
 export interface Summary {
   headline: string
+  /** The headline's key number ("8×", "35 min"), drawn in the colour of the line it is about. */
+  key?: { text: string; line: RunKey }
   reason?: string
 }
 
@@ -96,7 +107,9 @@ export function singleSummary(run: Simulation, t: TFunction, lang: string): Summ
   const d = summaryData(run, null)
   if (d.kind !== 'single') return null
   const meal = names(run, null, t, lang).run
-  return { headline: sentence(t(d.byWeight ? 'summary.singleWater' : 'summary.single', { meal, time: formatDuration(d.halfMin, t) })) }
+  const time = formatDuration(d.halfMin, t)
+  const key = d.byWeight ? (d.open ? 'summary.singleWaterMore' : 'summary.singleWater') : d.open ? 'summary.singleMore' : 'summary.single'
+  return { headline: sentence(t(key, { meal, time })), key: { text: time, line: 'run' } }
 }
 
 /** This meal against the kept one: "Cola leaves the stomach about 9× faster than Cheeseburger + French fries." */
@@ -107,9 +120,11 @@ export function compareSummary(run: Simulation, kept: Simulation, t: TFunction, 
   const fast = n[d.fast]
   const slow = n[d.slow]
   if (d.similar) return { headline: sentence(t('summary.similar', { a: n.run, b: n.kept })) }
-  const headline = sentence(t('summary.faster', { fast, slow, x: times(d.ratio) }))
-  if (d.reason === 'drink') return { headline, reason: sentence(t('summary.reasonDrink', { fast })) }
+  const x = t('summary.times', { n: times(d.ratio) })
+  const headline = sentence(t(d.open ? 'summary.fasterMore' : 'summary.faster', { fast, slow, x }))
+  const key = { text: x, line: d.fast }
+  if (d.reason === 'drink') return { headline, key, reason: sentence(t('summary.reasonDrink', { fast })) }
   if (d.reason === 'calories')
-    return { headline, reason: sentence(t('summary.reasonCalories', { slow, kcalSlow: d.kcal[d.slow], kcalFast: d.kcal[d.fast] })) }
-  return { headline }
+    return { headline, key, reason: sentence(t('summary.reasonCalories', { slow, kcalSlow: d.kcal[d.slow], kcalFast: d.kcal[d.fast] })) }
+  return { headline, key }
 }

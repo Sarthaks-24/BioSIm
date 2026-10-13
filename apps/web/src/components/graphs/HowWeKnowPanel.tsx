@@ -3,11 +3,16 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { sourceById, type ProfileId, type SignalMeta, type SourceId } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
-import { localized } from '../../i18n/index.ts'
+import { addEnglish, localized } from '../../i18n/index.ts'
+import limitsText from 'virtual:lifepeek-en/limits'
+import signalsText from 'virtual:lifepeek-en/signals'
 import { unitInWords } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import Popover from '../stage/Popover.tsx'
 import { Section } from './HowWeKnow.tsx'
+
+// The known limits' and the signals' long English come with the panel, the only place that shows them.
+addEnglish(limitsText, signalsText)
 
 /**
  * A source's short name for a link: "Freckmann 2007", "FAO/WHO/UNU 2004", "OpenStax". The author
@@ -33,7 +38,7 @@ export interface PanelProps {
   profile: ProfileId
   /** What the marks on this graph mean. */
   notes?: ReactNode
-  /** Known limits of this graph beyond its signal's own (`limitKey`), as sentences. */
+  /** Known limits of this graph beyond its signal's own (`limitKey`), as `limits.*` keys (their text loads with this panel). */
   limits?: readonly string[]
 }
 
@@ -85,7 +90,7 @@ export default function HowWeKnowPanel({
             <span className="flex flex-col gap-1">
               {meta.limitKey && <span>{t(meta.limitKey)}</span>}
               {limits.map((l) => (
-                <span key={l}>{l}</span>
+                <span key={l}>{t(l)}</span>
               ))}
             </span>
           </Section>

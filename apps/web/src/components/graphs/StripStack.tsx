@@ -7,7 +7,7 @@ import { stripDescription, stripSummary } from '../../lib/stripSummary.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { StatusTag, TableIcon } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
-import HowWeKnow, { Section } from './HowWeKnow.tsx'
+import HowWeKnow, { Say, Section } from './HowWeKnow.tsx'
 import SignalStrip from './SignalStrip.tsx'
 import { stripMarker } from './marks.ts'
 
@@ -50,6 +50,17 @@ interface RunStripProps {
   className?: string
 }
 
+/** "How we know" limits beyond each signal's own, as keys: their text loads with the panel. */
+const LIMITS = ['limits.steadyEmptying'] as const
+const GLUCOSE_LIMITS = ['limits.glucoseSameHighest', ...LIMITS] as const
+
+/** A ring's label when it must name its meal (a kept meal is drawn too). */
+const RING_OF = {
+  'graph.highest': 'graph.highestOf',
+  'graph.halfEnergyLeft': 'graph.halfEnergyLeftOf',
+  'signals.event.stomachHalfEmpty.name': 'graph.halfLeftOf',
+} as const
+
 /** The running total of each rate drawn as a graph, shown after its readout (energy, G6). */
 const TOTAL_OF: Partial<Record<ActiveSignalId, ActiveSignalId>> = {
   'energy.inRate': 'energy.inTotal',
@@ -79,10 +90,20 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
     return runTotal ? { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null } : null
   }, [run, id, second])
   const title = second ? t('stage.strips.energy') : undefined
+  // Beside a kept meal the ring's label names its meal ("Cola: half the energy has left the
+  // stomach"): the ring is on this meal's line only, and the kept line's dot can sit right by it
+  // (council round 2, C3).
   const marker = useMemo(() => {
     const ring = stripMarker(id, run)
-    return ring && { atMin: ring.atMin, value: ring.value, label: t(ring.labelKey, { value: formatNumber(ring.value, series.meta, lang) }) }
-  }, [id, run, series, t, lang])
+    const value = ring && formatNumber(ring.value, series.meta, lang)
+    return (
+      ring && {
+        atMin: ring.atMin,
+        value: ring.value,
+        label: kept ? t(RING_OF[ring.labelKey], { meal: runName, value }) : t(ring.labelKey, { value }),
+      }
+    )
+  }, [id, run, kept, runName, series, t, lang])
   const secondLine = useMemo(() => second && { series: second, label: t('status.sameEveryMeal') }, [second, t])
   const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
 
@@ -94,7 +115,9 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
   const notes = glucose ? (
     <>
       <Section title={t('graph.highestTitle')}>{t('graph.highestNote')}</Section>
-      <Section title={t('signals.event.glucoseBackToBase.name')}>{t('limits.backToBase')}</Section>
+      <Section title={t('signals.event.glucoseBackToBase.name')}>
+        <Say k="limits.backToBase" />
+      </Section>
     </>
   ) : id === 'gut.stomach.contentG' ? (
     <Section title={t('graph.halfTitle')}>{t('graph.halfNote')}</Section>
@@ -104,7 +127,7 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
       <Section title={t(`${second.meta.i18nKey}.name`)}>
         <span className="flex flex-col gap-1">
           <StatusTag status={second.meta.status} />
-          {t(`${second.meta.i18nKey}.desc`)} {second.meta.limitKey && t(second.meta.limitKey)}
+          <Say k={`${second.meta.i18nKey}.desc`} /> {second.meta.limitKey && <Say k={second.meta.limitKey} />}
         </span>
       </Section>
     </>
@@ -134,8 +157,10 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
             sourceIds={second ? [...new Set([...series.sourceIds, ...second.sourceIds])] : series.sourceIds}
             profile={profile}
             notes={notes}
-            // More of the same food stays up longer at the same highest point (capped release).
-            limits={glucose ? [t('limits.glucoseSameHighest')] : undefined}
+            // More of the same food stays up longer at the same highest point (capped release). Every
+            // graph: the steady emptying's level-then-fall, which the squeezed axis makes look like a
+            // cliff at 6 h (council round 2, C2).
+            limits={glucose ? GLUCOSE_LIMITS : LIMITS}
           />
         </span>
       }

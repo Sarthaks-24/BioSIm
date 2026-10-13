@@ -101,6 +101,21 @@ export function placeLabel(
   return best?.box ?? null
 }
 
+/** The first spot inside the plot that touches no line and no placed label, or null: for words that may be left out. */
+export function freeSpot(
+  size: { w: number; h: number },
+  spots: readonly { x: number; y: number }[],
+  plot: { width: number; height: number },
+  lines: readonly Polyline[],
+  taken: readonly Box[] = [],
+): Box | null {
+  for (const s of spots) {
+    const box = { x: s.x, y: s.y, w: size.w, h: size.h }
+    if (inside(box, plot.width, plot.height) && !lines.some((l) => lineHits(box, l)) && !taken.some((t) => boxesOverlap(t, box))) return box
+  }
+  return null
+}
+
 /** Gap between a ring's centre and its label (px): clear of the 5 px ring and its 2 px edge. */
 const RING_GAP = 9
 

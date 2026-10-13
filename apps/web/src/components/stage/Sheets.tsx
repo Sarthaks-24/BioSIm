@@ -3,6 +3,12 @@ import type { Sheet } from '../../state/sheet.ts'
 import type { Slot } from './GraphColumn.tsx'
 import StripTable from '../graphs/StripTable.tsx'
 import KeysHelp from './KeysHelp.tsx'
+import { addEnglish } from '../../i18n/index.ts'
+import keysText from 'virtual:lifepeek-en/keys'
+import tableText from 'virtual:lifepeek-en/table'
+
+// The sheets' own English comes with them (the stage keeps only the buttons' names).
+addEnglish(keysText, tableText)
 
 export { default as FoodSearch } from './FoodSearch.tsx'
 

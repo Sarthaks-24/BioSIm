@@ -287,3 +287,47 @@ test('no words on a graph touch a line, and the legend names both meals (1280 an
     }
   }
 })
+
+// Council round 2, C2: after a big meal every graph fell "off a cliff" at 6 h. It is steady
+// emptying ending soon after 6 h, drawn on the squeezed part of the axis: each graph tints that
+// part from the knee to the end and breaks its x axis there.
+test('every graph shows where time is squeezed: a tint from 6 h to the end and a break in the axis', async ({ page }) => {
+  await page.goto('/next?v=2&a=cheeseburger:1,fries:1&t=420')
+  for (const name of ['Food in the stomach', 'Blood sugar', 'Energy']) {
+    const figure = await graph(page, name, { 'Food in the stomach': 'Stomach' }[name] ?? name)
+    const plot = (await figure.locator('svg[role="img"]').boundingBox())!
+    const tint = (await figure.locator('[data-squeezed]').boundingBox())!
+    // The knee is 60 % of the way along the plot, as on the dock (lib/time.ts).
+    expect(Math.abs(tint.x - (plot.x + 0.6 * plot.width)), `${name}: tint starts at 6 h`).toBeLessThanOrEqual(1)
+    expect(Math.abs(tint.x + tint.width - (plot.x + plot.width)), `${name}: tint runs to 48 h`).toBeLessThanOrEqual(1)
+    expect(tint.height).toBeCloseTo(plot.height, 0)
+    await expect(figure.locator('[data-axis-break]')).toBeAttached()
+  }
+})
+
+// Council round 2, C3, C5, C6.
+test('the ring’s label names its meal beside a kept one, and sits above the playhead', async ({ page }) => {
+  await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40')
+  const figure = await graph(page, 'Food in the stomach', 'Stomach')
+  const label = figure.locator('[data-plot-label="marker"]')
+  await expect(label).toHaveText('Cola: half the energy has left the stomach')
+  // Painted over the playhead (which may pass behind it), never under its line.
+  expect(await label.evaluate((el) => getComputedStyle(el).zIndex)).toBe('10')
+  await page.goto('/next?v=2&a=cola:1&t=40')
+  await expect((await graph(page, 'Food in the stomach', 'Stomach')).locator('[data-plot-label="marker"]')).toHaveText(
+    'Half the energy has left the stomach',
+  )
+})
+
+test('graphs under tabs write their unit at the top of the y axis', async ({ page }) => {
+  onlyIn('projector')
+  await page.goto('/next?v=2&a=cola:1')
+  for (const [tab, unit] of [
+    ['Stomach', 'g'],
+    ['Blood sugar', 'mg/dL'],
+    ['Energy', 'kcal/h'],
+  ] as const) {
+    await page.getByRole('group', { name: 'Graphs' }).getByRole('button', { name: tab, exact: true }).click()
+    await expect(page.locator('figure [data-plot-label="unit"]').filter({ visible: true })).toHaveText(unit)
+  }
+})

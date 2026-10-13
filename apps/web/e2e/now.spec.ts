@@ -74,10 +74,51 @@ test.describe('the Now line', () => {
     const now = page.locator('[data-now]')
     await expect(now).toHaveAttribute('data-now', 'stomach')
     await expect(now.getByRole('button', { name: 'Stomach: more about this stage' })).toBeVisible()
-    await expect(now).toContainText('acid and churning turn food into chyme')
     await page.goto('/next?v=2&a=cola:1&t=120')
     await expect(now).toHaveAttribute('data-now', 'smallIntestine')
     await expect(now.getByRole('button', { name: 'Small intestine: more about this stage' })).toBeVisible()
+  })
+
+  // Council round 2, C1: where MOST of the meal is, from the model, worded for a drink.
+  test('cola at 40 min: how much is still in the stomach and where the rest is, not "Stomach" alone', async ({ page }) => {
+    await page.goto('/next?v=2&a=cola:1&t=40')
+    const line = page.locator('[data-now] > div:first-child > p:not([aria-hidden])')
+    await expect(line).toHaveText(/^Where the meal is now: Stomach.*about half is here · some already in the small intestine/)
+    // What the organ does, for a drink: no "chyme" (from 1024 px up, not on the projector).
+    const job = page.locator('[data-now-job]')
+    if (await job.isVisible()) await expect(job).toHaveText('the stomach lets the drink through a little at a time')
+    await page.goto('/next?v=2&a=cola:1&t=0')
+    await expect(line).toContainText('the drink is swallowed in a few gulps')
+    await page.goto('/next?v=2&a=cheeseburger:1&t=0')
+    await expect(line).toContainText('teeth grind food')
+  })
+
+  test('with a kept meal it also says where that meal is', async ({ page }) => {
+    await page.goto(`${COLA_KEPT_BURGER}&t=40`)
+    const kept = page.locator('[data-now-kept]')
+    await expect(kept).toHaveAttribute('data-now-kept', 'stomach')
+    await expect(kept).toHaveText('Cheeseburger + French fries (kept): almost all in the stomach')
+    await page.goto(`${COLA_KEPT_BURGER}&t=40&lang=hi`)
+    await expect(kept).toHaveText('चीज़बर्गर + फ़्रेंच फ़्राइज़ (रखा गया): लगभग सारा भाग आमाशय में')
+  })
+
+  test('once the gut has finished with the meal it says "Done", never "Stomach" (cheeseburger at 30 h)', async ({ page }) => {
+    await page.goto('/next?v=2&a=cheeseburger:1&t=1800')
+    const now = page.locator('[data-now]')
+    await expect(now).toHaveAttribute('data-now', 'done')
+    await expect(now.getByRole('button', { name: 'Done: more about this stage' })).toBeVisible()
+    await expect(now.locator('> div:first-child > p:not([aria-hidden])')).toContainText('the gut is finished with this meal')
+  })
+
+  test('clearing the meal closes "More": the next food does not open it again', async ({ page }) => {
+    onlyIn('desktop')
+    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
+    await expect(page.getByRole('region', { name: 'Stomach' })).toBeVisible()
+    await page.getByRole('button', { name: /^Remove Cola/ }).click()
+    await page.getByRole('button', { name: /Roti/ }).first().click()
+    await expect(page.locator('[data-now]')).toBeVisible()
+    await expect(page.locator('[data-stage-more]')).toHaveCount(0)
   })
 
   test('the organ opens the full stage text; Esc closes it and gives focus back', async ({ page }) => {
@@ -175,5 +216,16 @@ test.describe('report a mistake on the stage', () => {
     await page.getByRole('button', { name: 'Copy link' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Link copied' })).toBeAttached()
     await expect(page.locator('button[aria-live]')).toHaveCount(0)
+    // A second copy is said again: the status region empties, then says it once more (review 14-17, LOW 9).
+    const status = page.getByRole('status').filter({ hasText: 'Link copied' })
+    await status.evaluate((el) => {
+      const w = window as unknown as { saidCopied: number }
+      w.saidCopied = 0
+      new MutationObserver(() => {
+        if (el.textContent === 'Link copied') w.saidCopied++
+      }).observe(el, { childList: true, characterData: true, subtree: true })
+    })
+    await page.getByRole('button', { name: 'Link copied' }).click()
+    await expect.poll(() => page.evaluate(() => (window as unknown as { saidCopied: number }).saidCopied)).toBeGreaterThanOrEqual(1)
   })
 })
