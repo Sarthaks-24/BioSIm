@@ -43,9 +43,12 @@
 //   WP-18 (2026-10-13): the stage's Hindi layout fixes (Now line as a row, kept row, chips that
 //   shorten, tick room, knee side) and the "Typical adult" strings: /next 188.9 (main with FIX-D)
 //   → 189.2 KB. The pseudo-locale (i18n/pseudo.ts) is only in VITE_PSEUDO=1 builds, never here.
+//   FIX-E (2026-10-13): "done" for big meals, an empty import as a load failure, the load box's
+//   focus and the stricter motion pref were paid for by the Now line's word keys becoming their
+//   JSON text (lib/nowWhere.ts): /next stays 189.2 KB (+2 bytes).
 //   WP-19 (2026-10-13): the swap. /sim is the stage (pages/Stage.tsx), /next redirects to it, and
 //   v1's simulator is no longer routed, so its row went. The first-screen "Press ▶" prompt and the
-//   phone menu: /sim 189.2 (as /next) → 189.8 KB. Home draws its race from data/hero.json instead
+//   phone menu: /sim 189.2 (as /next, with FIX-E) → 189.8 KB. Home draws its race from data/hero.json instead
 //   of running the model: 154.0 → 146.0 KB. The e2e build (pseudo-locale) now goes to dist-e2e,
 //   and this script refuses a dist that has it.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeStage, buildMeal, decodeMeal, mealLocationAt, simulate } from '@lifepeek/engine'
+import { activeStage, buildMeal, decodeMeal, gutIsDone, mealLocationAt, simulate } from '@lifepeek/engine'
 import { FOODS, lookupFood } from '../data/foods.ts'
 import { amountOf, nowKey, nowWhere, parseNowKey } from './nowWhere.ts'
 
@@ -85,6 +85,77 @@ describe('where the meal is now', () => {
     expect(loc.stomach + loc.smallIntestine, 'still in the stomach and small intestine').toBeLessThan(0.01 * loc.total)
     if (run.events.firstExit) expect(first!, 'not before the leftovers start leaving').toBeGreaterThanOrEqual(run.events.firstExit.typical)
     expect(nowWhere(run, run.horizonMin)).toMatchObject({ kind: 'done', restLeft: run.events.firstExit !== null })
+  })
+
+  // Review FIX-D + WP-18, MED 1: a big meal is still passing its last waste at 48 h, and against
+  // the little that has left by then its colon never looked "nearly all passed on": never "done".
+  it('three burgers and fries: done at the last minute, never before the leftovers leave, and no "the rest left"', () => {
+    const run = sim('cheeseburger:3,fries:3')
+    const end = run.horizonMin
+    expect(run.meal.overCap).toBe(true)
+    expect(gutIsDone(mealLocationAt(run, end))).toBe(true)
+    expect(nowWhere(run, end)).toEqual({ kind: 'done', stage: 'done', body: 'all', restLeft: false })
+    // Some of the waste is still in the colon at 48 h: the words claim only what was absorbed.
+    const loc = mealLocationAt(run, end)
+    expect(loc.largeIntestine).toBeGreaterThan(0.1 * run.excretedG[run.length - 1]!)
+    for (let t = 0; t < end; t += run.stepMin) expect(nowWhere(run, t).stage, `${t} min`).not.toBe('done')
+    expect(nowWhere(run, end - run.stepMin)).toMatchObject({ kind: 'gut', stage: 'largeIntestine' })
+  })
+
+  // Six foods, five servings each (the most a meal can hold): several kilos, far over the model's
+  // limit (the notes say so). Done at 48 h only if the engine says the gut has finished; otherwise
+  // the line says where the meal still is, as the body shows it (a 4.7 kg meal is still partly in
+  // the stomach at 48 h in the model, and "Stomach" there is the model's honest answer).
+  const ids = FOODS.map((f) => f.id)
+  const sixByFive = [0, 3, 6, 9, 12]
+    .map((k) =>
+      ids
+        .slice(k, k + 6)
+        .map((id) => `${id}:5`)
+        .join(','),
+    )
+    .filter((m) => m.split(',').length === 6)
+  it.each(sixByFive)('%s at 2880 min: done only when the gut is, else the words say where it still is', (meal) => {
+    const run = sim(meal)
+    const end = run.horizonMin
+    expect(end).toBe(2880)
+    expect(run.meal.overCap).toBe(true)
+    const loc = mealLocationAt(run, end)
+    const w = nowWhere(run, end)
+    if (gutIsDone(loc)) {
+      expect(w).toMatchObject({
+        kind: 'done',
+        restLeft: run.events.firstExit !== null && loc.largeIntestine <= 0.1 * run.excretedG[run.length - 1]!,
+      })
+    } else {
+      expect(w.kind).toBe('gut')
+      if (w.kind !== 'gut') return
+      expect(w.stage).toBe(activeStage(run, end))
+      const held = { stomach: loc.stomach, smallIntestine: loc.smallIntestine, largeIntestine: loc.largeIntestine }[w.stage]
+      expect(w.here).toBe(amountOf(held / loc.total))
+      expect(held, 'the organ named holds food').toBeGreaterThan(0.01 * loc.total)
+    }
+    for (let t = 0; t < (run.events.firstExit?.typical ?? 0); t += run.stepMin) expect(nowWhere(run, t).stage, `${t} min`).not.toBe('done')
+  })
+
+  it('both ends of the 6 × 5 meals: one still has food in the stomach at 48 h, one is done', () => {
+    const ends = sixByFive.map((m) => nowWhere(sim(m), 2880).stage)
+    expect(ends).toContain('stomach')
+    expect(ends).toContain('done')
+  })
+
+  it("every meal under the model's limit is done by 48 h", () => {
+    for (const meal of [
+      'cheeseburger:2,fries:1',
+      'roti:4,dal:2,milk:1',
+      'idli:4,dal:2',
+      'apple:3,banana:2',
+      'white-rice:3,dal:2,green-salad:2',
+    ]) {
+      const run = sim(meal)
+      expect(run.meal.overCap, meal).toBe(false)
+      expect(nowWhere(run, run.horizonMin).stage, meal).toBe('done')
+    }
   })
 
   it('no leftovers marker, no "the rest left as waste": cola, water, milk, orange juice, boiled egg, white rice', () => {

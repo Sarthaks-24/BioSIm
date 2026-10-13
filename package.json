@@ -16,7 +16,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "validate": "npm run validate -w @lifepeek/engine",
     "format": "prettier --write .",
-    "check": "npm run validate && npm run typecheck && npm run test && npm run build"
+    "check": "npm run validate && npm run typecheck && npm run test && npm run build",
+    "release-gate": "node apps/web/scripts/release-gate.mjs"
   },
   "devDependencies": {
     "prettier": "^3.9.0"

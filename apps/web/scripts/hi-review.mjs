@@ -7,8 +7,8 @@
 //   node apps/web/scripts/hi-review.mjs --write    first brings REVIEW.md up to date with the JSON:
 //                                                  new keys get a `draft` row, the English and Hindi
 //                                                  columns follow the files, a reviewed row whose
-//                                                  Hindi changed goes back to `draft`, rows of
-//                                                  deleted keys go
+//                                                  Hindi or English changed goes back to `draft`,
+//                                                  rows of deleted keys go
 //   node apps/web/scripts/hi-review.mjs --check    exits 1 if REVIEW.md is out of date (i18n.test.ts
 //                                                  runs the same check)
 //
@@ -40,7 +40,10 @@ export function flatten(value, prefix = '', out = new Map()) {
 /** A text as one table cell: on one line, with its pipes escaped. */
 const cell = (s) => s.replace(/\r?\n/g, ' ').replace(/\|/g, '\\|')
 
-const isReviewed = (status) => /^reviewed\b/i.test(status)
+/** A row's status: `draft`, or `reviewed by <initials> <YYYY-MM-DD>` (i18n.test.ts holds every row to it). */
+export const STATUS = /^(draft|reviewed by \S+ \d{4}-\d{2}-\d{2})$/
+
+const isReviewed = (status) => status !== 'draft' && STATUS.test(status)
 
 export function readTexts() {
   const read = (name) => flatten(JSON.parse(fs.readFileSync(path.join(I18N, name), 'utf8')))
@@ -49,7 +52,8 @@ export function readTexts() {
 
 /**
  * REVIEW.md as it should be: every Hindi key once, its texts as in the JSON files, statuses kept
- * (a reviewed row whose Hindi changed is `draft` again). `problems` says what was out of date.
+ * (a reviewed row whose Hindi or English changed is `draft` again). `problems` says what was out
+ * of date.
  */
 export function syncReview(markdown, { en, hi } = readTexts()) {
   const problems = []
@@ -74,15 +78,14 @@ export function syncReview(markdown, { en, hi } = readTexts()) {
     seen.add(key)
     const wantEn = cell(en.get(key) ?? '')
     const wantHi = cell(hi.get(key))
-    if (enCell !== wantEn) problems.push(`${key}: English differs from en.json`)
-    if (hiCell !== wantHi) {
-      problems.push(`${key}: Hindi differs from hi.json`)
-      if (isReviewed(status)) status = 'draft'
-    }
-    if (status !== 'draft' && !isReviewed(status)) {
-      problems.push(`${key}: status "${status}" is neither draft nor "reviewed by …"`)
+    if (!STATUS.test(status)) {
+      problems.push(`${key}: status "${status}" is neither draft nor "reviewed by <initials> <YYYY-MM-DD>"`)
       status = 'draft'
     }
+    if (enCell !== wantEn) problems.push(`${key}: English differs from en.json`)
+    if (hiCell !== wantHi) problems.push(`${key}: Hindi differs from hi.json`)
+    // The Hindi was checked against the old English: a change to either needs a new look.
+    if (enCell !== wantEn || hiCell !== wantHi) status = 'draft'
     lines.push(`| \`${key}\` | ${wantEn} | ${wantHi} | ${status} |`)
   }
   const missing = [...hi.keys()].filter((k) => !seen.has(k))
@@ -140,7 +143,9 @@ function main(args) {
   const csv = ['key,English,Hindi,status', ...rows.map((r) => [r.key, r.en, r.hi, r.status].map(csvField).join(','))].join('\r\n')
   fs.writeFileSync(CSV_FILE, `﻿${csv}\r\n`)
   const open = rows.filter((r) => !isReviewed(r.status))
-  console.log(`${rows.length} Hindi strings, ${rows.length - open.length} reviewed, ${open.length} to review. Wrote ${path.relative(process.cwd(), CSV_FILE)}.`)
+  console.log(
+    `${rows.length} Hindi strings, ${rows.length - open.length} reviewed, ${open.length} to review. Wrote ${path.relative(process.cwd(), CSV_FILE)}.`,
+  )
   for (const r of open) console.log(`  ${r.key}  (${r.status})`)
 }
 

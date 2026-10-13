@@ -145,14 +145,17 @@ test.describe('"More" and the report form when their code does not load', () => 
     await expect(page.getByRole('alert').filter({ hasText: 'This didn’t load' })).toBeVisible()
     await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Reload' })).toHaveCount(0)
+    // "Try again" has the focus, as the sheet would have, and keeps it when a try fails (review FIX-D + WP-18, LOW 3).
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeFocused()
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeFocused()
     online = true
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
   })
 
-  test('the food search: a box under "Add food" says so; ✕ closes it and gives the focus back', async ({ page }) => {
+  test('the food search: a box under "Add food" says so; ✕ or Escape closes it and gives the focus back', async ({ page }) => {
     onlyIn('desktop', 'phone')
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     await page.route(/\/Sheets-[\w-]+\.js$/, (route) => route.abort())
@@ -162,6 +165,12 @@ test.describe('"More" and the report form when their code does not load', () => 
     const alert = page.getByRole('alert').filter({ hasText: 'This didn’t load' })
     await expect(alert).toBeVisible()
     await page.locator('[data-load-failed]').getByRole('button', { name: 'Close' }).click()
+    await expect(alert).toBeHidden()
+    await expect(add).toBeFocused()
+    // Escape closes it too: "Try again" has the focus, so the key reaches the box.
+    await add.click()
+    await expect(alert).toBeVisible()
+    await page.keyboard.press('Escape')
     await expect(alert).toBeHidden()
     await expect(add).toBeFocused()
   })

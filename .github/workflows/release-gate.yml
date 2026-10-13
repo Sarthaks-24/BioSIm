@@ -1,0 +1,24 @@
+name: Release gate
+
+# The release gate's file checks (apps/web/scripts/release-gate.mjs): placeholders, the INDB sent
+# date, unread sources, the Hindi review, GOVERNANCE.md, the changelog entry. Run by hand from the
+# Actions tab before tagging a release (docs/RELEASE-CHECKLIST.md). It is not part of CI: it fails
+# until the maintainer's own items are done.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run release-gate

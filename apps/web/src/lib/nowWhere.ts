@@ -53,15 +53,29 @@ const shareIn = (loc: MealLocation, place: Place) =>
 /** The large intestine has passed on all but this share of what will leave the body. */
 const LEFTOVERS_DONE = 0.1
 
+/** The large intestine has passed on (nearly) all the waste it will pass on in this run. */
+const wastePassed = (run: Simulation, loc: MealLocation) => loc.largeIntestine <= LEFTOVERS_DONE * run.excretedG[run.length - 1]!
+
 /**
  * The gut has finished with the meal: the engine's test (`gutIsDone`: under 1 % of the meal still
- * in the gut) and, since that 1 % counts the meal's water, the large intestine has also passed on
- * nearly all it will (FIX-C review: "done" used to start while a fifth to a half of the waste was
- * still in the colon, yet said "the rest left as waste").
+ * in the gut), never before the leftovers start leaving (the marker's typical time), and, since
+ * that 1 % counts the meal's water, the large intestine has also passed on nearly all it will
+ * (FIX-C review: "done" used to start while a fifth to a half of the waste was still in the colon,
+ * yet said "the rest left as waste").
+ *
+ * A big meal (three burgers and fries) is still passing its last waste at 48 h, and against the
+ * little that has left by then the colon's last grams never look "nearly all": at the run's last
+ * minute the engine's test alone is enough (review FIX-D + WP-18, MED 1), and the words then
+ * claim only what was absorbed (`restLeft` is false), not that the rest has left. A meal still in the
+ * stomach or the intestines at 48 h (several kilos, over the model's limit, which the notes say)
+ * is not done: the line says where it still is.
  */
-export function gutFinished(run: Simulation, loc: MealLocation): boolean {
-  const out = run.excretedG[run.length - 1]!
-  return gutIsDone(loc) && loc.largeIntestine <= LEFTOVERS_DONE * out
+export function gutFinished(run: Simulation, tMin: number, loc: MealLocation = mealLocationAt(run, tMin)): boolean {
+  if (!gutIsDone(loc)) return false
+  const exit = run.events.firstExit
+  if (exit && tMin < exit.typical) return false
+  // The run's last minute: the meal clock stops here.
+  return wastePassed(run, loc) || tMin >= run.horizonMin
 }
 
 export function nowWhere(run: Simulation, tMin: number): NowWhere {
@@ -69,9 +83,15 @@ export function nowWhere(run: Simulation, tMin: number): NowWhere {
   if (stage === 'mouth' || stage === 'esophagus') return { kind: 'before', stage }
   const loc = mealLocationAt(run, tMin)
   // Only a meal with leftovers (the "leftovers start leaving" moment) has a rest that leaves as
-  // waste; for cola or water the words say what v1 did: (almost) all of it was absorbed.
-  if (gutFinished(run, loc))
-    return { kind: 'done', stage: 'done', body: amountOf(loc.absorbed / loc.total), restLeft: run.events.firstExit !== null }
+  // waste, and only once it has left; for cola or water the words say what v1 did: (almost) all
+  // of it was absorbed.
+  if (gutFinished(run, tMin, loc))
+    return {
+      kind: 'done',
+      stage: 'done',
+      body: amountOf(loc.absorbed / loc.total),
+      restLeft: run.events.firstExit !== null && wastePassed(run, loc),
+    }
   const at = GUT.indexOf(stage)
   // Further along first (where the meal is going), then the stomach behind it.
   const candidates = [...GUT.slice(at + 1), ...(at > 0 ? (['stomach'] as const) : [])]
@@ -83,25 +103,14 @@ export function nowWhere(run: Simulation, tMin: number): NowWhere {
   return { kind: 'gut', stage, here: amountOf(shareIn(loc, stage)), also: also && { place: also.place, amount: amountOf(also.share) } }
 }
 
-/** The words' identity: equal keys say the same thing ("stomach|half|smallIntestine:some"). */
-export function nowKey(w: NowWhere): string {
-  if (w.kind === 'before') return w.stage
-  if (w.kind === 'done') return `done|${w.body}|${w.restLeft ? 1 : 0}`
-  return `${w.stage}|${w.here}|${w.also ? `${w.also.place}:${w.also.amount}` : ''}`
-}
+/**
+ * The words' identity: equal keys say the same thing. `nowWhere` builds each kind of words with
+ * its fields in one order, so the JSON text is that identity (and the smallest code for it: the
+ * stage's first download has no room to spare).
+ */
+export const nowKey = (w: NowWhere): string => JSON.stringify(w)
 
-export function parseNowKey(key: string): NowWhere {
-  const [stage, a, b] = key.split('|') as [string, string?, string?]
-  if (stage === 'mouth' || stage === 'esophagus') return { kind: 'before', stage }
-  if (stage === 'done') return { kind: 'done', stage, body: a as Amount, restLeft: b === '1' }
-  const [place, amount] = (b ?? '').split(':')
-  return {
-    kind: 'gut',
-    stage: stage as 'stomach' | 'smallIntestine' | 'largeIntestine',
-    here: a as Amount,
-    also: place ? { place: place as Place, amount: amount as Amount } : null,
-  }
-}
+export const parseNowKey = (key: string): NowWhere => JSON.parse(key) as NowWhere
 
 /** Every set of words this run's Now line will say, in order: the line keeps the room of the longest. */
 export function nowKeysOf(run: Simulation): string[] {

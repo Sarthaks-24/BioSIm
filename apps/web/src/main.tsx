@@ -66,9 +66,10 @@ setTimeout(() => {
 
 // The in-app Reduce motion choice reaches CSS before the first draw (Home's reveal must not
 // start): html[data-motion], which state/motion.ts keeps up to date once the stage has loaded it.
-// Without a choice the stylesheet follows the device. Not the store itself: it is not first paint.
+// Without a choice ('1' or '0'; the store ignores anything else too) the stylesheet follows the
+// device. Not the store itself: it is not first paint.
 const motionChoice = readPref('reduceMotion')
-if (motionChoice) document.documentElement.dataset.motion = motionChoice === '1' ? 'reduce' : 'full'
+if (motionChoice === '1' || motionChoice === '0') document.documentElement.dataset.motion = motionChoice === '1' ? 'reduce' : 'full'
 
 // Draw once the first language is ready (Hindi is fetched on demand). If it fails to load, draw
 // anyway: every key falls back to English.
