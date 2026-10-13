@@ -27,13 +27,14 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readTexts, reviewRows, syncReview, REVIEW_FILE } from './hi-review.mjs'
 import { PARAMS_FILE, readSeal, sealProblem } from './model-seal.mjs'
+import { USER_PLACEHOLDERS, VERIFY_MARKS } from './lint-placeholders.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 const rel = (file) => path.relative(root, file).replace(/\\/g, '/')
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8')
 
-/** Text that must never ship. */
-const PLACEHOLDERS = ['<project email>', '<date', '<प्रोजेक्ट ईमेल>', '<लॉन्च की तारीख>', 'TO VERIFY', '<credit name']
+/** Text that must never ship: the named list the placeholder lint uses (one list, FIX-H / T10). */
+const PLACEHOLDERS = [...USER_PLACEHOLDERS.map((p) => p.text), ...VERIFY_MARKS]
 
 /** Shipped text: the app's source and public files, the food files, the engine, the legal files. */
 const SHIPPED_DIRS = ['apps/web/src', 'apps/web/public', 'content', 'packages/engine/src', '.github/ISSUE_TEMPLATE']

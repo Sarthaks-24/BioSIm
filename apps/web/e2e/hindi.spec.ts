@@ -133,12 +133,13 @@ async function expectNoOverlaps(page: Page, mode: 'enforce' | 'report') {
       ...words('[data-summary]', 'the summary'),
       ...words('[data-first-run]', 'the medical note'),
     ]
-    for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) {
-      const [a, b] = [labels[i]!, labels[j]!]
-      if (a.name.startsWith('organ label') && b.name.startsWith('organ label')) continue
-      if (a.name === b.name) continue
-      if (hit(a.r, b.r, 0.5)) found.push(`${a.name} overlaps ${b.name}`)
-    }
+    for (let i = 0; i < labels.length; i++)
+      for (let j = i + 1; j < labels.length; j++) {
+        const [a, b] = [labels[i]!, labels[j]!]
+        if (a.name.startsWith('organ label') && b.name.startsWith('organ label')) continue
+        if (a.name === b.name) continue
+        if (hit(a.r, b.r, 0.5)) found.push(`${a.name} overlaps ${b.name}`)
+      }
     // The stage's words are rows of their own, never laid over the picture.
     const picture = boxes('[data-stage] [role="img"]', () => 'the body picture')
     apart(
@@ -150,9 +151,17 @@ async function expectNoOverlaps(page: Page, mode: 'enforce' | 'report') {
       picture,
     )
     // Hour ticks and the thumb.
-    apart(words('[data-tick]', 'an hour tick'), boxes('[data-thumb]', () => 'the slider’s thumb'), 0)
+    apart(
+      words('[data-tick]', 'an hour tick'),
+      boxes('[data-thumb]', () => 'the slider’s thumb'),
+      0,
+    )
     // The knee's words and its dotted line.
-    apart(words('[data-knee]', 'the knee’s words'), boxes('[data-knee-line]', () => 'the dotted knee line'), 0)
+    apart(
+      words('[data-knee]', 'the knee’s words'),
+      boxes('[data-knee-line]', () => 'the dotted knee line'),
+      0,
+    )
     return found
   })
   verdict('no label on another', mode, problems)

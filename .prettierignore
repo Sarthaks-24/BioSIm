@@ -6,3 +6,5 @@ cache
 package-lock.json
 *.md
 content/foods
+# Written by apps/web/scripts/build-hero.ts (one line, as JSON.stringify writes it).
+apps/web/src/data/hero.json

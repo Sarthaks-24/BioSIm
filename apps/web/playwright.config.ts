@@ -145,6 +145,9 @@ function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
           {
             name: 'firefox-desktop',
             testMatch: [...invariants, 'smoke.spec.ts', 'update.spec.ts', 'loading.spec.ts'],
+            // Firefox's NS_ERROR_FAILURE navigation flake (R59): the helpers try such a navigation
+            // once more (e2e/helpers/gate.ts goto); a test that still fails gets one more run, as on CI.
+            retries: 1,
             use: { ...devices['Desktop Firefox'], viewport: desktop },
           },
         ]

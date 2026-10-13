@@ -33,9 +33,11 @@ function keysInSource() {
       if (statSync(path).isDirectory()) walk(path)
       else if (/\.tsx?$/.test(name) && !name.endsWith('.test.ts')) {
         const src = readFileSync(path, 'utf8')
-        for (const m of src.matchAll(/t\(\s*'([\w.]+)'/g)) called.add(m[1]!)
+        for (const m of src.matchAll(/\bt\(\s*'([\w.]+)'/g)) called.add(m[1]!)
         // Any quoted dotted string counts, so keys passed through helpers (e.g. list('teach.steps')) are seen too.
         for (const m of src.matchAll(/'(\w+\.[\w.]+)'/g)) literal.add(m[1]!)
+        // A text read when it is drawn (HowWeKnow's <Say k="graph.highestNote" />).
+        for (const m of src.matchAll(/\bk="(\w+\.[\w.]+)"/g)) literal.add(m[1]!)
         for (const m of src.matchAll(/\bt\(\s*`([\w.]*)\$\{/g)) prefixes.add(m[1]!)
       }
     }

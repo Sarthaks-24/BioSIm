@@ -204,8 +204,20 @@ test.describe('links', () => {
       }
       const link = `/sim?${q}`
       const changed = (await linkRoundTripProblems(page, link)).filter((c) => !c.startsWith('lang='))
-      const notes = await page.locator('[data-stage] [role="note"]').count()
-      if (changed.length && !notes) problems.push(`${link}: ${changed.join('; ')}, and no note says so`)
+      // The notes load on use (components/stage/LinkNotes.tsx): give them a moment on a busy machine (T10;
+      // counted at once, a run in three missed them).
+      const notes = page.locator('[data-stage] [role="note"]')
+      if (
+        changed.length &&
+        !(await notes
+          .first()
+          .waitFor({ timeout: 5_000 })
+          .then(
+            () => true,
+            () => false,
+          ))
+      )
+        problems.push(`${link}: ${changed.join('; ')}, and no note says so`)
     }
     expect(problems).toEqual([])
   })

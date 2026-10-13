@@ -4,15 +4,20 @@ import { useTranslation } from 'react-i18next'
 import { sourceById, type ProfileId, type SignalMeta, type SourceId } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
 import { addEnglish, localized } from '../../i18n/index.ts'
+import graphText from 'virtual:lifepeek-en/graph'
 import limitsText from 'virtual:lifepeek-en/limits'
+import profilesText from 'virtual:lifepeek-en/profiles'
 import signalsText from 'virtual:lifepeek-en/signals'
+import unitsText from 'virtual:lifepeek-en/units'
 import { unitInWords } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import Overlay from '../Overlay.tsx'
 import { Section } from './HowWeKnow.tsx'
 
-// The known limits' and the signals' long English come with the panel, the only place that shows them.
-addEnglish(limitsText, signalsText)
+// The known limits', the signals' and the rings' long English, the panel's own words, the units in
+// words and whose body it is come with the panel, the only place that shows them (whose body: the
+// "⋯" panel too).
+addEnglish(graphText, limitsText, profilesText, signalsText, unitsText)
 
 /**
  * A source's short name for a link: "Freckmann 2007", "FAO/WHO/UNU 2004", "OpenStax". The author

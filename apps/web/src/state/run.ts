@@ -69,8 +69,6 @@ export interface RunState {
   /** Copies the current meal into `kept` (the meal stays as it is). An empty meal is not kept. */
   keep: () => void
   unkeep: () => void
-  /** The kept run becomes the meal and the meal becomes the kept run. */
-  swapKept: () => void
   setLayer: (layer: SystemId) => void
   /** Opens a link's query string (meal, kept run, person, layer, and time on the meal clock). Returns its language. */
   loadLink: (search: string) => ShareLang | undefined
@@ -146,12 +144,6 @@ export const useRunStore = create<RunState>((set, get) => ({
     if (meal.length || activity.length) set({ kept: keptOf(meal, profile, activity) })
   },
   unkeep: () => set({ kept: null }),
-  swapKept: () => {
-    const { meal, profile, activity, kept } = get()
-    if (!kept) return
-    // A meal over the cap (from an old link) may come back as the meal: the cap only stops growing it.
-    set({ meal: kept.items, profile: kept.profile, activity: kept.activity, kept: keptOf(meal, profile, activity), capBlocked: false })
-  },
   setLayer: (layer) => set({ layer }),
 
   loadLink: (search) => {

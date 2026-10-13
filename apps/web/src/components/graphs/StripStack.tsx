@@ -114,13 +114,17 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
 
   const notes = glucose ? (
     <>
-      <Section title={t('graph.highestTitle')}>{t('graph.highestNote')}</Section>
+      <Section title={<Say k="graph.highestTitle" />}>
+        <Say k="graph.highestNote" />
+      </Section>
       <Section title={t('signals.event.glucoseBackToBase.name')}>
         <Say k="limits.backToBase" />
       </Section>
     </>
   ) : id === 'gut.stomach.contentG' ? (
-    <Section title={t('graph.halfTitle')}>{t('graph.halfNote')}</Section>
+    <Section title={<Say k="graph.halfTitle" />}>
+      <Say k="graph.halfNote" />
+    </Section>
   ) : second ? (
     <>
       <p className="text-ink">{summary}</p>

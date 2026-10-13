@@ -7,6 +7,7 @@ import {
   expectInFirstScreen,
   expectNoPageScroll,
   gateSteps,
+  goto,
   interactiveOverlaps,
   linkRoundTripProblems,
   onlyIn,
@@ -153,7 +154,7 @@ test.beforeEach(async ({ page }) => {
 async function open(page: Page, url: string, firstVisit = false): Promise<string | null> {
   if (!firstVisit && test.info().project.name !== 'storage-blocked') await returningVisitor(page)
   const problem = await tryStep(async () => {
-    await page.goto(url)
+    await goto(page, url)
     await page.locator('[data-stage]').waitFor()
     await page.waitForLoadState('networkidle')
     // The body picture, drawn at its settled size (none in the empty state, before FP-1).
