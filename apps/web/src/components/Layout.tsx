@@ -6,6 +6,7 @@ import { INK, ORGAN_COLOR } from '../lib/colors.ts'
 import { MAKER } from '../lib/credits.ts'
 import { useCanonical } from '../hooks/useCanonical.ts'
 import { setProjector, useProjector } from '../hooks/useProjector.ts'
+import LanguageButton from './LanguageButton.tsx'
 import MedicalNote from './MedicalNote.tsx'
 
 function Logo() {
@@ -89,7 +90,7 @@ export interface RouteHandle {
 }
 
 export default function Layout() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const fit = useMatches().some((m) => (m.handle as RouteHandle | undefined)?.fit)
   // The saved choice is applied before the first draw (hooks/useProjector.ts); the Teach page's
   // lessons can switch it on too, so the button reads it from the page, not from its own state.
@@ -230,16 +231,13 @@ export default function Layout() {
               </button>
               {/* On phones the switch is in the menu (plan-ui-ux §3.5: here it would cost the header a row). */}
               {projectorButton(false)}
-              {/* The name starts with the words on the button (WCAG 2.5.3), read in their own language;
-                  what the button does follows, for screen readers only, in the page's language. */}
-              <button
-                type="button"
-                onClick={() => void i18n.changeLanguage(i18n.language === 'hi' ? 'en' : 'hi')}
-                className={`${target} rounded-full border border-rule px-3 text-sm font-semibold whitespace-nowrap hover:bg-sunk`}
-              >
-                <span lang={i18n.language === 'hi' ? 'en' : 'hi'}>{t('nav.language')}</span>
-                <span className="sr-only"> ({t('nav.languageLabel')})</span>
-              </button>
+              {/* Only in a Hindi build (R47: Hindi is paused). The flag written out, so a build
+                  without it leaves the button's code out (i18n/index.ts says why). */}
+              {import.meta.env.VITE_HINDI === '1' && (
+                <LanguageButton
+                  className={`${target} rounded-full border border-rule px-3 text-sm font-semibold whitespace-nowrap hover:bg-sunk`}
+                />
+              )}
             </div>
           </div>
         </header>

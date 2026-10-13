@@ -90,5 +90,22 @@ export default defineConfig({
   build: {
     // For scripts/check-budget.mjs (route sizes). Under dist/.vite/, which the service worker does not precache.
     manifest: true,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          // Vite's lazy-import helper rode in the i18n chunk while i18n/index.ts lazily imported
+          // hi.json. With Hindi paused (R47) that import is gone from real builds, and the helper
+          // became a chunk of its own: one more file, +0.24 KB gzipped on every page. This keeps
+          // it with i18n: the same modules as before, and only these (not their dependencies).
+          groups: [
+            {
+              name: 'i18n',
+              test: /vite[\\/]preload-helper|[\\/]i18next[\\/]dist[\\/]|react-i18next[\\/]dist[\\/]es[\\/]initReactI18next|lifepeek-en[\\/-]core|src[\\/]i18n[\\/](index|language)\.ts/,
+              includeDependenciesRecursively: false,
+            },
+          ],
+        },
+      },
+    },
   },
 })

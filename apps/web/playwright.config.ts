@@ -2,7 +2,7 @@ import { defineConfig, type PlaywrightTestConfig } from '@playwright/test'
 
 // Set PLAYWRIGHT_BASE_URL to run the gate against a deployed site (WP-22) or a server you started;
 // otherwise the tests build the app and serve the preview locally. That build has the +40 %
-// pseudo-locale (VITE_PSEUDO=1), so it goes to its own folder (dist-e2e) and port: `dist` stays the
+// pseudo-locale (VITE_PSEUDO=1) and Hindi (VITE_HINDI=1, paused in real builds, R47), so it goes to its own folder (dist-e2e) and port: `dist` stays the
 // real build that `npm run budget` measures, and a plain `npm run preview` on 4173 is never
 // mistaken for the test build.
 const E2E_PORT = 4174
@@ -99,7 +99,8 @@ export default defineConfig({
         command: `npm run build -- --outDir dist-e2e && npm run preview -- --outDir dist-e2e --port ${E2E_PORT} --strictPort`,
         url: `http://localhost:${E2E_PORT}`,
         // The +40 % pseudo-locale for hindi.spec.ts (i18n/pseudo.ts). Only this build has it; Vercel never sets it.
-        env: { VITE_PSEUDO: '1' },
+        // Hindi too: it is paused in real builds (R47, i18n/language.ts), but its tests keep running here.
+        env: { VITE_PSEUDO: '1', VITE_HINDI: '1' },
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
       },
