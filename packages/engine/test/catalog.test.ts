@@ -142,7 +142,7 @@ describe('catalog rows', () => {
       if (s.round !== undefined) expect(s.round, s.id).toBeGreaterThan(0)
       if (s.limitKey) expect(s.limitKey, s.id).toMatch(/^limits\.[a-z][a-zA-Z0-9]*$/)
     }
-    // A 'Best guess' signal must say what it does not know.
+    // A 'Model estimate' signal must say what it does not know.
     for (const id of ACTIVE_SIGNAL_IDS) if (SIGNALS[id].status === 'assumption') expect(SIGNALS[id].limitKey, id).toBeDefined()
     // Markers and the human organism only point at signals the engine produces.
     for (const e of events) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)

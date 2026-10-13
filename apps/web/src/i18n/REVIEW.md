@@ -165,15 +165,15 @@ in later work packages). Notes for the reviewer:
 - `limits.energyInAtwater` is new wording: it says that "energy coming in" reads a few per cent low,
   and why. Please check that it is clear for a class 7–10 student.
 - `systems.digestion.name` (पाचन) and `lifeProcess.nutrition` (पोषण): please confirm these are the NCERT terms.
-- `status.assumption.label` ("Best guess"): is "सबसे अच्छा अनुमान" natural, or is there a better short tag?
+- `status.assumption.label` ("Model estimate", was "Best guess"): is "सबसे अच्छा अनुमान" natural, or is there a better short tag?
 - Numbers keep Latin digits; `mg/dL` stays in Latin letters, as on glucometers.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `status.simulated.label` | Calculated from studies | अध्ययनों के आधार पर गणना | draft |
 | `status.simulated.help` | Worked out by the model from published measurements. | मॉडल ने प्रकाशित मापों से इसकी गणना की है। | draft |
-| `status.assumption.label` | Best guess | सबसे अच्छा अनुमान | draft |
-| `status.assumption.help` | A formula or a reasonable estimate, not measured for this meal. | एक सूत्र या उचित अनुमान, जिसे इस भोजन के लिए मापा नहीं गया है। | draft |
+| `status.assumption.label` | Model estimate | सबसे अच्छा अनुमान | draft |
+| `status.assumption.help` | Worked out by the app's maths, not measured: a formula or a reasonable estimate. | एक सूत्र या उचित अनुमान, जिसे इस भोजन के लिए मापा नहीं गया है। | draft |
 | `status.illustration.label` | Drawing only | केवल चित्र | draft |
 | `status.illustration.help` | A picture to show the idea. The speed is not calculated. | बात समझाने के लिए एक चित्र। इसकी गति की गणना नहीं की गई है। | draft |
 | `status.howWeKnow` | How we know | हमें कैसे पता है | draft |
@@ -239,7 +239,7 @@ in later work packages). Notes for the reviewer:
 | `signals.event.firstLeftovers.desc` | Depends mostly on the person, not the meal | यह भोजन पर नहीं, मुख्य रूप से व्यक्ति पर निर्भर करता है | draft |
 | `signals.event.never` | Not within 48 h | 48 घंटे के भीतर नहीं | draft |
 | `limits.glucoseTail` | After big, fatty meals the model shows a small, slow tail; real bodies usually settle a little sooner. | बड़े, वसायुक्त भोजन के बाद मॉडल रक्त शर्करा में एक छोटी, धीमी पूँछ दिखाता है; असली शरीर में यह आमतौर पर कुछ जल्दी सामान्य हो जाती है। | draft |
-| `limits.glucoseBand` | The shaded band is a best guess of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
+| `limits.glucoseBand` | The shaded band is a model estimate of how much healthy people differ. | छायांकित पट्टी एक अनुमान है कि स्वस्थ लोगों में कितना अंतर होता है। | draft |
 | `limits.energyInAtwater` | Each gram of carbohydrate or protein counts as 4 kcal and each gram of fat as 9 kcal, so the total can be a little different from the food label. These standard numbers already allow for the bit of food the body cannot take in. The model also counts only what was taken in, so that bit is left out twice and energy coming in reads a few per cent low. The small amount of energy in fibre is not counted. | हर ग्राम कार्बोहाइड्रेट या प्रोटीन को 4 किलो कैलोरी और हर ग्राम वसा को 9 किलो कैलोरी गिना जाता है, इसलिए कुल मान भोजन के लेबल से थोड़ा अलग हो सकता है। ये मानक संख्याएँ पहले से मानकर चलती हैं कि भोजन का थोड़ा भाग शरीर के अंदर नहीं जा पाता। मॉडल भी केवल उतना ही गिनता है जितना शरीर के अंदर गया, इसलिए वह भाग दो बार छूट जाता है और आने वाली ऊर्जा कुछ प्रतिशत कम दिखती है। रेशे में मौजूद थोड़ी-सी ऊर्जा नहीं गिनी गई है। | draft |
 | `limits.energyUsedResting` | This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal. | यह आराम करते एक वयस्क (ICMR-NIN 2020 का संदर्भ वयस्क, 65 किलो) के लिए एक सूत्र है, कोई माप नहीं। यह भोजन के साथ नहीं बदलता। | draft |
 | `limits.backToBase` | "Back near the before-meal level" means within 5 mg/dL of it. | "खाने से पहले के स्तर के पास" का अर्थ है उससे 5 mg/dL के भीतर। | draft |
