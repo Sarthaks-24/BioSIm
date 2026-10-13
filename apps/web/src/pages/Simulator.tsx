@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
+import { useProjector } from '../hooks/useProjector.ts'
 import { runKey, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
@@ -110,6 +111,10 @@ export default function Simulator() {
   const slots = useSlots(run)
   const [attempt, setAttempt] = useState(0)
   const short = useMedia(SHORT_PHONE)
+  // The projector from 1024 px up: the summary goes under the graph, so the body has more of its column (FP-2, B12).
+  const wide = useMedia(WIDE)
+  const projector = useProjector() && wide
+  const [words, setWords] = useState<HTMLElement | null>(null)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
@@ -125,10 +130,13 @@ export default function Simulator() {
         <div className="lg:col-span-2">
           <MealBar />
         </div>
-        <div className="lg:col-span-2">
-          <Notes run={run} kept={kept} />
+        {/* The notes and the body: one column of a short, wide window (styles.css, FP-2); elsewhere two rows of the grid. */}
+        <div className="contents">
+          <div className="lg:col-span-2">
+            <Notes run={run} kept={kept} />
+          </div>
+          <BodyPane run={run} kept={kept} summary={!short} summaryTo={projector ? words : null} />
         </div>
-        <BodyPane run={run} kept={kept} summary={!short} />
         {/*
          * On a phone the graph row has one height for every tab (so the body never jumps when the
          * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
@@ -137,6 +145,7 @@ export default function Simulator() {
         <div className="flex min-h-0 [&>section]:flex-1">
           <GraphColumn run={run} kept={kept} />
         </div>
+        {projector && <div ref={setWords} className="border-l border-border bg-surface-raised" />}
         {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
         <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
           <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
@@ -160,14 +169,19 @@ export default function Simulator() {
       {/*
        * A phone under 680 px tall: the summary sentence moves under the stage, just past the first
        * screen, which keeps the body, a graph and Play (FP-1). BodyPane leaves its own out then.
+       * A short, wide window has no "past the first screen" (FP-2: it never scrolls), so there the
+       * sentence is for screen readers only (styles.css); the Now line and the graph's legend say the same.
        */}
-      {short && run.meal.items.length > 0 && <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />}
+      {short && run.meal.items.length > 0 && (
+        <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />
+      )}
     </>
   )
 }
 
 /** A phone under 680 px tall (FP-1): its stage is the first screen, the summary sentence past it. */
 const SHORT_PHONE = '(max-width: 63.99rem) and (max-height: 42.49rem)'
+const WIDE = '(min-width: 64rem)'
 
 /** Whether a media query matches; re-renders when that changes. */
 function useMedia(query: string) {
