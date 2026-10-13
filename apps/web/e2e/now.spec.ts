@@ -83,7 +83,8 @@ test.describe('the Now line', () => {
   test('cola at 40 min: how much is still in the stomach and where the rest is, not "Stomach" alone', async ({ page }) => {
     await page.goto('/sim?v=3&a=cola:1&t=40')
     const line = page.locator('[data-now] > div:first-child > p:not([aria-hidden])')
-    await expect(line).toHaveText(/^Where the meal is now: Stomach.*about half is here · some already in the small intestine/)
+    // Model version 3 (water 0.9 absorbed): by 40 min a little more is absorbed than is in the small intestine.
+    await expect(line).toHaveText(/^Where the meal is now: Stomach.*about half is here · some already absorbed/)
     // What the organ does, for a drink: no "chyme" (from 1024 px up, not on the projector).
     const job = page.locator('[data-now-job]')
     if (await job.isVisible()) await expect(job).toHaveText('the stomach lets the drink through a little at a time')

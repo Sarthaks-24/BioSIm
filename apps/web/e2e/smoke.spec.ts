@@ -70,7 +70,7 @@ test('/next redirects to /sim and keeps the link', async ({ page }) => {
   await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
   await page.goto('/next?v=3&a=cola:1&b=cheeseburger:1&t=40&lang=hi')
   await expect(page).toHaveURL(/\/sim\?/)
-  await expect.poll(() => [...params(page)].join('&')).toBe('v,2&a,cola:1&b,cheeseburger:1&t,40&lang,hi')
+  await expect.poll(() => [...params(page)].join('&')).toBe('v,3&a,cola:1&b,cheeseburger:1&t,40&lang,hi')
 })
 
 test('adding a food updates the link, and leaving and coming back keeps the meal', async ({ page }) => {
