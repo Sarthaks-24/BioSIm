@@ -114,7 +114,7 @@
     "close": "Close",
     "privacy": "Reports are public. Please don’t include names, school, emails or health information.",
     "openIssue": "Send it as a GitHub issue instead",
-    "publicWarning": "This opens a public page on GitHub. Don't type your name, school or phone number.",
+    "publicWarning": "This opens a public page on GitHub. Don't type your name, school, phone number, email or any health information.",
     "openIssueDirect": "Open the report on GitHub"
   },
   "disclaimer": {
@@ -134,7 +134,7 @@
     "plan": "A 40-minute lesson plan",
     "steps": [
       "Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more.",
-      "Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger.",
+      "Open cola with burger + fries kept (the first ready lesson below). It opens at 35 min; press Home to start from eating, then press Play. The dashed grey line is the kept burger.",
       "Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now.",
       "Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front.",
       "Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph."

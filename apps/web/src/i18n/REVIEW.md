@@ -152,7 +152,7 @@ Rules for the reviewer:
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `feedback.privacy` | Reports are public. Please don’t include names, school, emails or health information. | रिपोर्ट सार्वजनिक होती हैं। कृपया नाम, स्कूल, ईमेल या स्वास्थ्य संबंधी जानकारी न लिखें। | draft |
-| `feedback.publicWarning` | This opens a public page on GitHub. Don't type your name, school or phone number. | इससे GitHub पर एक सार्वजनिक पेज खुलता है। अपना नाम, स्कूल या फ़ोन नंबर न लिखें। | draft |
+| `feedback.publicWarning` | This opens a public page on GitHub. Don't type your name, school, phone number, email or any health information. | इससे GitHub पर एक सार्वजनिक पेज खुलता है। अपना नाम, स्कूल या फ़ोन नंबर न लिखें। | draft |
 | `feedback.openIssueDirect` | Open the report on GitHub | रिपोर्ट GitHub पर खोलें | draft |
 
 ## Signals, events, limits and labels (v2 screen, WP-10)
@@ -600,7 +600,7 @@ v1 and the keys only it used; the ones left here all ship and need the same chec
 | `feedback.openIssue` | Send it as a GitHub issue instead | इसके बजाय GitHub issue के रूप में भेजें | draft |
 | `teach.plan` | A 40-minute lesson plan | 40 मिनट की पाठ योजना | draft |
 | `teach.steps[0]` | Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more. | अनुमान: कक्षा से पूछें कि आमाशय से पहले क्या निकलेगा — कोला का एक कैन या फ़्राइज़ के साथ बर्गर, और रक्त शर्करा किससे ज़्यादा बढ़ेगी। | draft |
-| `teach.steps[1]` | Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger. | बर्गर + फ़्राइज़ को तुलना के लिए रखकर कोला खोलें (नीचे पहला तैयार पाठ) और ‘चलाएँ’ दबाएँ। धूसर टूटी रेखा रखा गया बर्गर है। | draft |
+| `teach.steps[1]` | Open cola with burger + fries kept (the first ready lesson below). It opens at 35 min; press Home to start from eating, then press Play. The dashed grey line is the kept burger. | बर्गर + फ़्राइज़ को तुलना के लिए रखकर कोला खोलें (नीचे पहला तैयार पाठ) और ‘चलाएँ’ दबाएँ। धूसर टूटी रेखा रखा गया बर्गर है। | draft |
 | `teach.steps[2]` | Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now. | एक मुख्य पल से अगले पर जाने के लिए Page Down (या प्रेज़ेंटेशन क्लिकर) दबाएँ। हर पल पर शरीर के नीचे की पंक्ति पढ़ें: भोजन अभी कहाँ है। | draft |
 | `teach.steps[3]` | Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front. | 1 घंटे पर रक्त शर्करा ‘रक्त शर्करा’ ग्राफ़ से पढ़ें: टाइमलाइन को 1 घं तक खींचें, और वह ग्राफ़ सामने लाने के लिए B दबाएँ। | draft |
 | `teach.steps[4]` | Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph. | 3 घंटे पर ऊर्जा के साथ समाप्त करें: क्या भोजन से ज़्यादा ऊर्जा आ रही है, या शरीर ज़्यादा उपयोग कर रहा है? ‘ऊर्जा’ ग्राफ़ के लिए E दबाएँ। | draft |
