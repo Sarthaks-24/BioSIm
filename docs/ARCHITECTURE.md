@@ -13,9 +13,14 @@ content/foods/*.json ──► packages/engine ──► apps/web (React PWA)
 
 1. **The engine has no UI dependencies.** It takes a meal and returns per-minute arrays,
    events and a particle schedule. If a number is wrong, the bug is in `packages/engine`, and
-   a test there should catch it. Files: `stomach.ts` (emptying) → `transit.ts` (intestines and
-   absorption) → `glucose.ts` → `events.ts` (key moments) and `particles.ts`, run by
-   `simulate.ts`. Shared helpers (`stomachFraction`, `mealLocation`, `activeStage`) live there
+   a test there should catch it. The model is a fixed, ordered list of modules
+   (`src/modules/`: `gut` → `energy` → `bloodSugar`, in the frozen order of
+   `core/module.ts`), each run once over the whole 48 h array. A module declares what it reads
+   (`needs`) and writes (`provides`, internal `x.*` arrays); `ctx.get`/`ctx.put` throw on
+   anything else, and `PROVIDES` is derived from the modules (`test/modules/`). The maths stays in
+   `stomach.ts` (emptying), `transit.ts` (intestines and absorption), `glucose.ts` and
+   `energy/energyBalance.ts`; `simulate.ts` runs the modules, then `events.ts` (key moments) and
+   `particles.ts`. Shared helpers (`stomachFraction`, `mealLocation`, `activeStage`) live there
    too, so every graph computes the same thing the same way. Modules take their numbers as an
    argument (`params`, from the run's context); only `simulate.ts` hands them `PARAMS`, the
    human set. The run carries its own clock (`run.horizonMin`, `run.stepMin`, `run.length`), and

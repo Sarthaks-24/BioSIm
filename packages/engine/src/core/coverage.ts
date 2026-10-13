@@ -7,18 +7,9 @@
  *   - every active 'assumption' signal needs a `golden()` or a `pinned()`, and a limitKey;
  *   - IDs and sources named in tests must exist.
  */
-import {
-  EVENTS,
-  EVENT_IDS,
-  PROVIDES,
-  SIGNALS,
-  isActiveSignal,
-  isEventId,
-  isSignalId,
-  type ActiveSignalId,
-  type EventId,
-} from './catalog.ts'
+import { EVENTS, EVENT_IDS, SIGNALS, isActiveSignal, isEventId, isSignalId, type ActiveSignalId, type EventId } from './catalog.ts'
 import type { OrganismId } from './organism.ts'
+import { PROVIDES } from '../modules/index.ts'
 import { isRegisteredSource, sourceById } from './sources.ts'
 
 /** One `golden(…)`, `golden.fails(…)` or `pinned(…)` call found in a test file. */

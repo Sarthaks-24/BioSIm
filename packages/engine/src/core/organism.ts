@@ -5,6 +5,7 @@
  */
 import type { MealItem } from '../meal.ts'
 import type { ActiveSignalId } from './catalog.ts'
+import type { ModelModule } from './module.ts'
 
 /** Later: | 'plant' | 'amoeba' | 'cow' | 'fish' … (plan-organisms). */
 export type OrganismId = 'human'
@@ -30,7 +31,7 @@ export interface HumanInput {
 export type SimInput = HumanInput
 
 /**
- * One organism's model: its version, clock and parameter set. `simulate()` puts `params` into
+ * One organism's model: its version, clock, parameter set and modules. `simulate()` puts `params` into
  * its context and passes it to every module; modules never read a global parameter object.
  */
 export interface OrganismModel<P extends object = object> {
@@ -40,6 +41,8 @@ export interface OrganismModel<P extends object = object> {
   horizonMin: number
   stepMin: number
   params: Readonly<P>
-  /** = PROVIDES[id]. */
+  /** What one run runs, in the frozen order (core/module.ts MODULE_ORDER). */
+  modules: readonly ModelModule<P>[]
+  /** = PROVIDES[id]: every signal the modules provide. */
   provides: readonly ActiveSignalId[]
 }

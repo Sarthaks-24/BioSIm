@@ -1,18 +1,18 @@
 import { buildMeal, type FoodLookup, type Meal } from './meal.ts'
 import type { FoodPhase } from './schema.ts'
 import { MODEL_VERSION, PARAMS, type Params } from './params.ts'
-import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind, type StageId } from './nutrients.ts'
-import { emptyingCurves, retention, stomachShare, type EmptyingCurve } from './stomach.ts'
-import { runSegment } from './transit.ts'
-import { bluntingFactor, glucoseCurve, type GlucoseCurve } from './glucose.ts'
+import { NUTRIENT_KINDS, type NutrientKind, type StageId } from './nutrients.ts'
+import { emptyingCurves, stomachShare, type EmptyingCurve } from './stomach.ts'
+import type { GlucoseCurve } from './glucose.ts'
 import { computeEvents, type SimEvents } from './events.ts'
 import { makeParticles, type Particle } from './particles.ts'
 import type { SignalTable } from './core/signal.ts'
 import { buildMoments, buildSignalTable } from './core/table.ts'
-import { PROVIDES } from './core/catalog.ts'
+import { runModules } from './core/module.ts'
 import { DEFAULT_ORGANISM, DEFAULT_PROFILE, type OrganismId, type OrganismModel, type ProfileId, type SimInput } from './core/organism.ts'
 import { PROFILES, isProfileId, type ProfileDef } from './core/profile.ts'
-import { energySignals } from './energy/energyBalance.ts'
+import { ABSORBED_ID, LEFTOVERS_IN_COLON, stomachArrivalMin } from './modules/gut.ts'
+import { HUMAN_MODULES, PROVIDES } from './modules/index.ts'
 
 /**
  * The human model: MODEL_VERSION, the 48 h clock and the PARAMS set. This is the one place the
@@ -24,18 +24,12 @@ export const HUMAN_MODEL: OrganismModel<Params> = {
   horizonMin: PARAMS.horizonMin,
   stepMin: PARAMS.stepMin,
   params: PARAMS,
+  modules: HUMAN_MODULES,
   provides: PROVIDES.human,
 }
 
 /** Every organism the engine can run. Later organisms are loaded lazily (plan-organisms item 16). */
 export const ORGANISM_MODELS: { readonly [O in OrganismId]: OrganismModel<Params> } = { human: HUMAN_MODEL }
-
-/** What every module of one run reads: the organism's model, its parameters and the stated person. */
-interface SimContext {
-  model: OrganismModel<Params>
-  params: Params
-  profile: ProfileDef
-}
 
 export interface SimOptions {
   /** Dots for the picture (default 48). 0 = none (tests, summaries). */
@@ -43,9 +37,9 @@ export interface SimOptions {
 }
 
 /**
- * Runs the whole model for one meal, minute by minute for 48 h:
- *   stomach (stomach.ts) → small intestine → large intestine (transit.ts) → blood glucose (glucose.ts)
- * then derives key moments (events.ts) and the particles for the picture (particles.ts).
+ * Runs the whole model for one meal, minute by minute for 48 h: the organism's modules in their
+ * frozen order (modules/: gut → energy → bloodSugar; core/module.ts), then the key moments
+ * (events.ts) and the particles for the picture (particles.ts).
  *
  * New code reads `signals` (catalog ID → Series) and `moments` (event ID → EventPoint), built by
  * core/table.ts. The raw arrays and `events` below are still read by stomachFraction / mealLocation
@@ -97,8 +91,6 @@ export interface Simulation extends SignalTable {
   particles: Particle[]
 }
 
-const zeros = (n: number) => new Float64Array(n)
-
 const isMeal = (input: SimInput | Meal): input is Meal => 'liquid' in input
 
 /**
@@ -121,86 +113,25 @@ export function simulate(input: SimInput | Meal, opts: SimOptions & { lookup?: F
   else throw new Error('simulate: a SimInput needs opts.lookup to find its foods')
   const profileId: string = isMeal(input) ? DEFAULT_PROFILE[model.id] : (input.profile ?? DEFAULT_PROFILE[model.id])
   if (!isProfileId(profileId) || PROFILES[profileId].organism !== model.id) throw new Error(`simulate: unknown profile "${profileId}"`)
-  return simulateHuman(meal, { model, params: model.params, profile: PROFILES[profileId] }, opts.particles ?? 48)
+  return simulateHuman(meal, model, PROFILES[profileId], opts.particles ?? 48)
 }
 
-function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simulation {
-  const { params } = ctx
+function simulateHuman(meal: Meal, model: OrganismModel<Params>, profile: ProfileDef, particleCount: number): Simulation {
+  const { params } = model
   const step = params.stepMin
   const n = Math.floor(params.horizonMin / step) + 1
+  const store = runModules(model.modules, { input: { meal }, params, profile, n, stepMin: step })
+  const get = (id: Parameters<typeof store.get>[0]) => store.get(id)!.values
+
+  // The raw arrays below are the @deprecated Simulation fields: the same arrays the gut and
+  // bloodSugar modules wrote, under their old names.
   const curves = emptyingCurves(meal, params)
-  const eatingMin = meal.eatingMin
-  const arrival = eatingMin + params.esophagus.transitMin
-
-  // --- Stomach: what's inside and what leaves each minute -------------------------------------
-  const stomachLiquidG = zeros(n)
-  const stomachSolidG = zeros(n)
-  const outflow = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, zeros(n)])) as Record<NutrientKind, Float64Array>
-  const glycemicOutflow = zeros(n)
-  const blunt = bluntingFactor(meal, params)
-
-  for (const phase of ['liquid', 'solid'] as const) {
-    const totals = meal[phase]
-    if (totals.massG <= 0) continue
-    const curve = curves[phase]
-    const store = phase === 'liquid' ? stomachLiquidG : stomachSolidG
-    // GI already includes a food's own emptying speed; see params.glucose.solidGlycemicCorrection.
-    const glycemicWeight = (totals.gi / 100) * blunt * (phase === 'solid' ? params.glucose.solidGlycemicCorrection : 1)
-    let prev = 1
-    for (let i = 0; i < n; i++) {
-      const t = i * step
-      if (t < arrival) {
-        store[i] = totals.massG * (eatingMin > 0 ? Math.min(1, t / eatingMin) : 1)
-        continue
-      }
-      const frac = retention(curve, t - arrival)
-      store[i] = totals.massG * frac
-      const left = Math.max(0, prev - frac)
-      prev = frac
-      if (left <= 0) continue
-      for (const k of NUTRIENT_KINDS) outflow[k][i]! += totals[GRAMS_KEY[k]] * left
-      glycemicOutflow[i]! += totals.carbsG * left * glycemicWeight
-    }
-  }
-
-  // --- Intestines -----------------------------------------------------------------------------
-  const siT = params.smallIntestine.typicalMin / step
-  const coT = params.colon.typicalMin / step
-  const smallIntestineG = zeros(n)
-  const colonG = zeros(n)
-  const excretedG = zeros(n)
-  const leftoversInColonCum = zeros(n)
-  const absorbedG = {} as Record<NutrientKind, Float64Array>
-  for (const k of NUTRIENT_KINDS) {
-    const small = runSegment(outflow[k], siT, params.absorbedInSmallIntestine[k], params.absorptionTauMin[k])
-    const large =
-      k === 'water'
-        ? runSegment(small.outflow, coT, params.colonWaterAbsorbed, params.colonWaterTauMin)
-        : runSegment(small.outflow, coT, 0, 1)
-    const abs = zeros(n)
-    let inColon = 0
-    let out = 0
-    for (let i = 0; i < n; i++) {
-      smallIntestineG[i]! += small.content[i]!
-      colonG[i]! += large.content[i]!
-      abs[i] = small.absorbedCum[i]! + large.absorbedCum[i]!
-      out += large.outflow[i]!
-      excretedG[i]! += out
-      // Leftovers = fibre, the part the body cannot digest. Small unabsorbed amounts of sugar,
-      // protein or fat are fermented by gut bacteria and don't count as "left over".
-      if (k === 'fiber') {
-        inColon += small.outflow[i]!
-        leftoversInColonCum[i]! += inColon
-      }
-    }
-    absorbedG[k] = abs
-  }
-
-  // --- Blood glucose: driven by the same carb absorption, weighted by GI ------------------------
-  const glycemic = runSegment(glycemicOutflow, siT, params.absorbedInSmallIntestine.carbs, params.absorptionTauMin.carbs)
-  const glycemicRate = zeros(n)
-  for (let i = 0; i < n; i++) glycemicRate[i] = glycemic.absorbedCum[i]! - (i > 0 ? glycemic.absorbedCum[i - 1]! : 0)
-  const glucose = glucoseCurve(glycemicRate, step, params)
+  const arrival = stomachArrivalMin(meal, params)
+  const stomachLiquidG = get('gut.stomach.liquidG')
+  const stomachSolidG = get('gut.stomach.solidG')
+  const absorbedG = Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, get(ABSORBED_ID[k])])) as Record<NutrientKind, Float64Array>
+  const g = store.get('blood.glucose')!
+  const glucose: GlucoseCurve = { low: g.band!.low, typical: g.values, high: g.band!.high }
 
   const events = computeEvents(
     meal,
@@ -209,7 +140,7 @@ function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simu
       stomachLiquidG,
       stomachSolidG,
       absorbedG,
-      leftoversInColonCum,
+      leftoversInColonCum: get(LEFTOVERS_IN_COLON),
       glucoseTypical: glucose.typical,
       step,
       n,
@@ -218,31 +149,25 @@ function simulateHuman(meal: Meal, ctx: SimContext, particleCount: number): Simu
   )
   const particles = makeParticles(meal, curves, arrival, particleCount, params)
 
-  // --- Energy in vs used: Atwater kcal of the absorbed grams, and the person's resting use -------
-  const energy = energySignals(absorbedG, ctx.profile, step, params)
-
-  const run = {
-    modelVersion: ctx.model.modelVersion,
+  return {
+    modelVersion: model.modelVersion,
     meal,
-    profile: ctx.profile.id,
+    profile: profile.id,
     curves,
     stomachArrivalMin: arrival,
     stepMin: step,
     length: n,
     stomachLiquidG,
     stomachSolidG,
-    smallIntestineG,
-    colonG,
+    smallIntestineG: get('gut.small.contentG'),
+    colonG: get('gut.colon.contentG'),
     absorbedG,
-    excretedG,
+    excretedG: get('gut.leftBodyG'),
     glucose,
     events,
     particles,
-  }
-  return {
-    ...run,
-    signals: buildSignalTable(run, energy),
-    moments: buildMoments(run),
+    signals: buildSignalTable(meal, store),
+    moments: buildMoments(events),
     rhythms: new Map(),
     horizonMin: params.horizonMin,
   }

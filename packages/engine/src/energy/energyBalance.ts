@@ -20,9 +20,9 @@ export interface EnergySeries {
   usedTotal: Float64Array
 }
 
-/** Running totals of absorbed grams (simulate's absorbedG) → the four energy series. */
+/** Running totals of absorbed carbs, protein and fat (gut.absorbed.*) → the four energy series. */
 export function energySignals(
-  absorbedG: Readonly<Record<NutrientKind, ArrayLike<number>>>,
+  absorbedG: Readonly<Record<Extract<NutrientKind, 'carbs' | 'protein' | 'fat'>, ArrayLike<number>>>,
   profile: Pick<ProfileDef, 'restingKcalPerDay'>,
   stepMin: number,
   params: Params = PARAMS,

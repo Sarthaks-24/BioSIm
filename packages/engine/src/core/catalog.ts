@@ -17,7 +17,6 @@
  *        (WP-20 deleted the v1 files it used to skip; its `V1_EXEMPT` list is empty).
  */
 import type { SourceId } from './sources.ts'
-import type { OrganismId } from './organism.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Best guess", illustration → "Drawing only". */
@@ -618,12 +617,6 @@ export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
     retired: ['events.firstExit', 'events.exit'],
   },
 }
-
-/** What each organism can produce. The contract test requires goldens per organism for these. */
-export const PROVIDES: { readonly [O in OrganismId]: readonly ActiveSignalId[] } = {
-  human: ACTIVE_SIGNAL_IDS,
-}
-export const HUMAN_PROVIDES = PROVIDES.human
 
 export const isActiveSignal = (id: string): id is ActiveSignalId => (ACTIVE_SIGNAL_IDS as readonly string[]).includes(id)
 export const isSignalId = (id: string): id is SignalId => Object.hasOwn(SIGNALS, id)

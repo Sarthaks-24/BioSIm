@@ -1,26 +1,23 @@
 /**
- * Builds the signal table from today's engine arrays (A1 + M4, v2.0 signals only). This is the
- * mapping in plans/v2 04-CATALOG-DRAFT §5: one line per catalog ID. No new physiology here, only
- * copies and sums, so MODEL_VERSION does not change. The energy series are computed by
- * energy/energyBalance.ts (they need the stated person, core/profile.ts) and copied in here.
+ * Builds the signal table from what the modules wrote (A1 + M4). No physiology here, only copies
+ * to Float32 under catalog IDs, plus the food sources, so MODEL_VERSION does not change. Rows come
+ * in catalog order.
  */
-import type { Simulation } from '../simulate.ts'
-import type { EnergySeries } from '../energy/energyBalance.ts'
-import { EVENTS, SIGNALS, type ActiveSignalId, type EventId } from './catalog.ts'
+import type { Meal } from '../meal.ts'
+import type { SimEvents } from '../events.ts'
+import { ACTIVE_SIGNAL_IDS, EVENTS, SIGNALS, type ActiveSignalId, type EventId } from './catalog.ts'
+import type { SignalStore } from './module.ts'
 import type { SourceId } from './sources.ts'
 import type { EventPoint, Series } from './signal.ts'
 
-/** The parts of a run the table is built from (everything except the table itself). */
-export type SimArrays = Omit<Simulation, 'signals' | 'moments' | 'rhythms' | 'horizonMin'>
-
 function series<Id extends ActiveSignalId>(
-  sim: SimArrays,
+  meal: Meal,
   id: Id,
   values: ArrayLike<number>,
   band?: { low: ArrayLike<number>; high: ArrayLike<number> },
 ): Series<Id> {
   const meta = SIGNALS[id]
-  const foodSources: SourceId[] = meta.reactsToMeal ? sim.meal.items.map((it) => `food:${it.food.id}` as const) : []
+  const foodSources: SourceId[] = meta.reactsToMeal ? meal.items.map((it) => `food:${it.food.id}` as const) : []
   return {
     meta,
     values: Float32Array.from(values),
@@ -29,41 +26,18 @@ function series<Id extends ActiveSignalId>(
   }
 }
 
-/** One Series per v2.0 signal: every active human signal. */
-export function buildSignalTable(sim: SimArrays, energy: EnergySeries): Map<ActiveSignalId, Series> {
-  const n = sim.length
-  const content = new Float64Array(n)
-  for (let i = 0; i < n; i++) content[i] = sim.stomachLiquidG[i]! + sim.stomachSolidG[i]!
-  const a = sim.absorbedG
-
-  const list: Series[] = [
-    // Stomach: grams of food as eaten. Intestines and absorbed: grams of tracked nutrients (note A).
-    series(sim, 'gut.stomach.contentG', content),
-    series(sim, 'gut.stomach.liquidG', sim.stomachLiquidG),
-    series(sim, 'gut.stomach.solidG', sim.stomachSolidG),
-    series(sim, 'gut.small.contentG', sim.smallIntestineG),
-    series(sim, 'gut.colon.contentG', sim.colonG),
-    series(sim, 'gut.absorbed.carbsG', a.carbs),
-    series(sim, 'gut.absorbed.proteinG', a.protein),
-    series(sim, 'gut.absorbed.fatG', a.fat),
-    series(sim, 'gut.absorbed.waterG', a.water),
-    // Engine spelling stays `fiber`; IDs use the UI spelling. Always 0 (note C).
-    series(sim, 'gut.absorbed.fibreG', a.fiber),
-    series(sim, 'gut.leftBodyG', sim.excretedG),
-    // Absolute mg/dL; the rise above fasting is the helper riseAboveFasting (core/derive.ts).
-    series(sim, 'blood.glucose', sim.glucose.typical, { low: sim.glucose.low, high: sim.glucose.high }),
-    // In = Atwater kcal of the absorbed grams; used = the run's profile at rest (same for every meal).
-    series(sim, 'energy.inRate', energy.inRate),
-    series(sim, 'energy.inTotal', energy.inTotal),
-    series(sim, 'energy.usedRate', energy.usedRate),
-    series(sim, 'energy.usedTotal', energy.usedTotal),
-  ]
+/** One Series per catalog signal the modules wrote (internal `x.*` arrays are never rows). */
+export function buildSignalTable(meal: Meal, store: SignalStore): Map<ActiveSignalId, Series> {
+  const list: Series[] = []
+  for (const id of ACTIVE_SIGNAL_IDS) {
+    const w = store.get(id)
+    if (w) list.push(series(meal, id, w.values, w.band))
+  }
   return new Map(list.map((s) => [s.meta.id as ActiveSignalId, s]))
 }
 
 /** One EventPoint per catalog event; atMin null when it does not happen within the run. */
-export function buildMoments(sim: SimArrays): Map<EventId, EventPoint> {
-  const e = sim.events
+export function buildMoments(e: SimEvents): Map<EventId, EventPoint> {
   const point = <Id extends EventId>(id: Id, atMin: number | null, range?: { low: number; high: number }): EventPoint<Id> => ({
     meta: EVENTS[id],
     atMin,
