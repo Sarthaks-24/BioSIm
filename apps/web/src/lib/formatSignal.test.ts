@@ -36,5 +36,9 @@ describe('formatSignal', () => {
     expect(unitInWords('mg/dL', tEn)).toContain('decilitre')
     expect(unitInWords('g', tHi)).toContain('ग्राम')
     expect(formatBand(98.6, 134.2, glucose, tEn, 'en')).toBe('99–134 mg/dL')
+    // Ends that round the same are one value, never "90–90 mg/dL" (ui-audit #10).
+    expect(formatBand(90, 90, glucose, tEn, 'en')).toBe('90 mg/dL')
+    expect(formatBand(89.6, 90.4, glucose, tEn, 'en')).toBe('90 mg/dL')
+    expect(formatBand(121, 122, stomach, tEn, 'en')).toBe('120 g')
   })
 })

@@ -63,6 +63,16 @@ describe('plot labels', () => {
     expect(box.x + box.w).toBeLessThan(100)
   })
 
+  it('when every spot by a flat line’s end touches a line, its name goes to the free band (B14)', () => {
+    const plot = { width: 300, height: 120 }
+    const size = { w: 90, h: 16 }
+    // The spots just above and below the flat line are closed off by two lines beside it.
+    const lines = [line(0, 60, 300, 60), line(0, 40, 300, 40), line(0, 80, 300, 80)]
+    const box = placeLabel(size, lineEndSpots(60, 300, size.w, size.h, plot.height), plot, lines)!
+    expect(lines.some((l) => lineHits(box, l))).toBe(false)
+    expect(box).toEqual({ x: 206, y: 0, w: 90, h: 16 })
+  })
+
   it('a label wider than either side of the ring is moved just inside the plot, never dropped (300 px phone graph)', () => {
     const plot = { width: 300, height: 120 }
     const size = { w: 144, h: 14 }

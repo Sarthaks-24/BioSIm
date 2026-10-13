@@ -231,7 +231,9 @@ test.describe('phone 390×844', () => {
       await page.waitForTimeout(500)
       if ((await menu.getAttribute('aria-expanded')) === 'true') problems.push('the menu stays open after switching projector mode on')
       const vw = await page.evaluate(() => document.documentElement.clientWidth)
-      for (const tab of await page.getByRole('tab').filter({ visible: true }).all()) {
+      // The graph tabs are toggle buttons in the "Graphs" group (Segmented), not role=tab. T6 keeps
+      // them whole (graphs.spec.ts enforces it); the menu half of B10 is T4's.
+      for (const tab of await page.getByRole('group', { name: 'Graphs' }).getByRole('button').filter({ visible: true }).all()) {
         const clip = await tab.evaluate((e, vw) => {
           const r = e.getBoundingClientRect()
           let right = vw

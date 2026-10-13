@@ -508,7 +508,7 @@
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
     "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people.",
-    "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still."
+    "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still."
   },
   "profiles": {
     "adult-ref": {
@@ -669,8 +669,7 @@
     "soFar": "({{value}} so far)",
     "halfEnergyLeftOf": "{{meal}}: half the energy has left the stomach",
     "halfLeftOf": "{{meal}}: half has left the stomach",
-    "highestOf": "{{meal}}: highest {{value}}",
-    "squeezed": "time squeezed"
+    "highestOf": "{{meal}}: highest {{value}}"
   },
   "table": {
     "title": "The graphs as a table",
