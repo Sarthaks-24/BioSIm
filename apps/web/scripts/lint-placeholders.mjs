@@ -29,8 +29,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const SHIPPED_DIRS = ['apps/web/src', 'apps/web/public', 'content']
 const SHIPPED_FILES = ['apps/web/index.html']
 const TEXT = /\.(tsx?|mjs|js|json|md|txt|html|css|svg|webmanifest)$/
-/** Tests and the reviewer's list are not shipped. */
-const SKIP = (rel) => /\.test\.[cm]?[jt]sx?$/.test(rel) || rel === 'apps/web/src/i18n/REVIEW.md'
+/** Hindi ships only in a build with VITE_HINDI=1 (R47: paused); without it hi.json is not in the app (as in release-gate.mjs). */
+const HINDI = process.env.VITE_HINDI === '1'
+/** Tests and the reviewer's list are not shipped, nor hi.json while Hindi is paused. */
+const SKIP = (rel) =>
+  /\.test\.[cm]?[jt]sx?$/.test(rel) || rel === 'apps/web/src/i18n/REVIEW.md' || (!HINDI && rel === 'apps/web/src/i18n/hi.json')
 
 /** The findings in one file's text: `{ line, found, owner }`. */
 export function findPlaceholders(text, { strings = false } = {}) {
