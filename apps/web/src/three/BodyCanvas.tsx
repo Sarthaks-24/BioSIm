@@ -93,7 +93,9 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
           style={drawn ? undefined : { visibility: 'hidden' }}
           frameloop="demand"
           dpr={[1, q.dpr]}
-          camera={{ position: [0, 0.7, 8.9], fov: 32 }}
+          // The `torso` framing (scene y −1.9 … 3.45, as the flat body's VIEW), with room over the
+          // head so it never touches the meal bar (FP-2).
+          camera={{ position: [0, 0.8, 9.4], fov: 32 }}
           gl={{ antialias: q.antialias, alpha: true, powerPreference: 'low-power' }}
           aria-label={label}
           role="img"
@@ -115,7 +117,7 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
             enablePan={false}
             minDistance={3.5}
             maxDistance={11}
-            target={[0, 0.7, 0]}
+            target={[0, 0.8, 0]}
             minPolarAngle={Math.PI * 0.2}
             maxPolarAngle={Math.PI * 0.8}
           />
