@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
+import { useProjector } from '../hooks/useProjector.ts'
 import { runKey, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
@@ -76,7 +77,9 @@ const ACTIONS: Record<KeyAction, () => void> = {
  * and the dock, which is a grid row of its own, so it can never cover the body. The body's row
  * is `1fr` with the body pane's own minimum (its words and a 10 rem picture), so on a short phone
  * the stage grows past the screen instead of squeezing the body to nothing (FP-1, bug B1).
- * The phone's rows are in styles.css.
+ * The phone's rows are in styles.css, and so is the short, wide window's layout (a phone on its
+ * side, a laptop at 200 %: FP-2): the notes and the body down the left, the meal bar, graph and dock
+ * on the right, nothing scrolling. On a small projector window the summary sits under the graph (FP-2).
  * The graphs and the dock's timeline share one x scale and one left and right edge (WP-12), so
  * the playhead on every graph stands straight above the timeline's thumb, like a chart recorder.
  */
@@ -110,6 +113,12 @@ export default function Simulator() {
   const slots = useSlots(run)
   const [attempt, setAttempt] = useState(0)
   const short = useMedia(SHORT_PHONE)
+  // A projector under 1280 px wide or 800 px tall (1024×768, 1366×768): the summary goes under the
+  // graph, so the body has more of its column (FP-2, B12). At 1280×800 it fits under the body, and
+  // the graph keeps its 250 px plot (WP-17).
+  const narrow = useMedia(NARROW)
+  const projector = useProjector() && narrow
+  const [words, setWords] = useState<HTMLElement | null>(null)
 
   return (
     // --plot-gutter: the room left of every graph for its y labels. It equals the room left of the
@@ -125,10 +134,13 @@ export default function Simulator() {
         <div className="lg:col-span-2">
           <MealBar />
         </div>
-        <div className="lg:col-span-2">
-          <Notes run={run} kept={kept} />
+        {/* The notes and the body: one column of a short, wide window (styles.css, FP-2); elsewhere two rows of the grid. */}
+        <div className="contents">
+          <div className="lg:col-span-2">
+            <Notes run={run} kept={kept} />
+          </div>
+          <BodyPane run={run} kept={kept} summary={!short} summaryTo={projector ? words : null} />
         </div>
-        <BodyPane run={run} kept={kept} summary={!short} />
         {/*
          * On a phone the graph row has one height for every tab (so the body never jumps when the
          * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
@@ -137,6 +149,7 @@ export default function Simulator() {
         <div className="flex min-h-0 [&>section]:flex-1">
           <GraphColumn run={run} kept={kept} />
         </div>
+        {projector && <div ref={setWords} className="border-l border-border bg-surface-raised" />}
         {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
         <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
           <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
@@ -160,6 +173,8 @@ export default function Simulator() {
       {/*
        * A phone under 680 px tall: the summary sentence moves under the stage, just past the first
        * screen, which keeps the body, a graph and Play (FP-1). BodyPane leaves its own out then.
+       * A short, wide window has no "past the first screen" (FP-2: it never scrolls), so there the
+       * sentence is for screen readers only (styles.css); the Now line and the graph's legend say the same.
        */}
       {short && run.meal.items.length > 0 && <SummaryLine run={run} kept={kept} className="border-t border-border px-3 py-1.5" />}
     </>
@@ -168,6 +183,8 @@ export default function Simulator() {
 
 /** A phone under 680 px tall (FP-1): its stage is the first screen, the summary sentence past it. */
 const SHORT_PHONE = '(max-width: 63.99rem) and (max-height: 42.49rem)'
+/** A projector window too small for the summary under the body (FP-2). */
+const NARROW = '(min-width: 64rem) and (max-width: 79.99rem), (min-width: 64rem) and (max-height: 49.99rem)'
 
 /** Whether a media query matches; re-renders when that changes. */
 function useMedia(query: string) {
