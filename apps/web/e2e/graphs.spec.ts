@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { pseudoText } from '../src/i18n/pseudo.ts'
 import { onlyIn } from './helpers/gate.ts'
 import { greyPixels } from './helpers/png.ts'
 
@@ -220,73 +221,99 @@ test('at 1440 × 900 the three graphs are stacked, each plot at least 90 px tall
   }
 })
 
-test('no words on a graph touch a line, and the legend names both meals (1280 and 390, EN and HI)', async ({ page }) => {
-  onlyIn('desktop')
-  const meals = [
-    'cola:1&b=cheeseburger:1,fries:1',
-    'cheeseburger:1,fries:1&b=cola:1',
-    'roti:2,dal:1&b=white-rice:1',
-    'cola:4&b=cola:1',
-    'water:1&b=orange-juice:1',
-  ]
-  for (const size of [
-    { width: 1280, height: 800 },
-    { width: 390, height: 844 },
-  ]) {
-    await page.setViewportSize(size)
-    for (const lang of ['en', 'hi']) {
+/**
+ * Every visible piece of text in the visible graphs that touches a drawn line (within 1 px), as
+ * "words" touches the run line. Lines are read from their path data (straight segments, lib/axis
+ * linePath) and checked against each text box exactly: no sampling, so it is fast under load.
+ */
+function wordsOnLines(figures: Element[]) {
+  const out: string[] = []
+  // True when segment (x1, y1)–(x2, y2) crosses the box (Liang–Barsky).
+  const crosses = (b: DOMRect, x1: number, y1: number, x2: number, y2: number) => {
+    let t0 = 0
+    let t1 = 1
+    const dx = x2 - x1
+    const dy = y2 - y1
+    for (const [p, q] of [
+      [-dx, x1 - (b.left - 1)],
+      [dx, b.right + 1 - x1],
+      [-dy, y1 - (b.top - 1)],
+      [dy, b.bottom + 1 - y1],
+    ] as const) {
+      if (p === 0) {
+        if (q < 0) return false
+      } else if (p < 0) t0 = Math.max(t0, q / p)
+      else t1 = Math.min(t1, q / p)
+      if (t0 > t1) return false
+    }
+    return true
+  }
+  for (const fig of figures) {
+    const svg = fig.querySelector('svg[role="img"]')
+    if (!svg) continue
+    const origin = svg.getBoundingClientRect()
+    const lines = [...svg.querySelectorAll<SVGPathElement>('[data-line="run"], [data-line="kept"], [data-line="second"]')].map((path) => {
+      const n = (path.getAttribute('d')!.match(/-?[\d.]+/g) ?? []).map(Number)
+      const pts: number[] = []
+      for (let i = 0; i + 1 < n.length; i += 2) pts.push(origin.x + n[i]!, origin.y + n[i + 1]!)
+      return { name: path.dataset.line!, pts }
+    })
+    const walker = document.createTreeWalker(fig, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent?.trim()
+      const el = node.parentElement!
+      if (!text || el.closest('[hidden], .sr-only') || getComputedStyle(el).visibility === 'hidden') continue
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      for (const r of range.getClientRects()) {
+        if (r.width === 0 || r.height === 0) continue
+        const hit = lines.find(({ pts }) => {
+          for (let i = 2; i + 1 < pts.length; i += 2) if (crosses(r, pts[i - 2]!, pts[i - 1]!, pts[i]!, pts[i + 1]!)) return true
+          return false
+        })
+        if (hit) out.push(`"${text}" touches the ${hit.name} line`)
+      }
+    }
+  }
+  return out
+}
+
+// B14 (FP-4): no word on a graph sits on a line, with a kept meal, stacked (1280) and under tabs
+// (390), in English and Hindi. One test per window and language, so each has its own time.
+for (const size of [
+  { width: 1280, height: 800 },
+  { width: 390, height: 844 },
+]) {
+  for (const lang of ['en', 'hi']) {
+    test(`no words on a graph touch a line, and the legend names both meals (${size.width}, ${lang})`, async ({ page }) => {
+      onlyIn('desktop')
+      await page.setViewportSize(size)
+      const meals = [
+        'cola:1&b=cheeseburger:1,fries:1',
+        'cheeseburger:1,fries:1&b=cola:1',
+        'roti:2,dal:1&b=white-rice:1',
+        'cola:4&b=cola:1',
+        'water:1&b=orange-juice:1',
+      ]
       for (const meal of meals) {
         await page.goto(`/sim?v=2&a=${meal}&lang=${lang}`)
         await page.locator('figure [data-line="run"]').first().waitFor()
+        await page.evaluate(() => document.fonts.ready)
         const tabs = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
         const tabNames = (await tabs.isVisible()) ? await tabs.getByRole('button').allTextContents() : ['']
         for (const tab of tabNames) {
           if (tab) await tabs.getByRole('button', { name: tab, exact: true }).click()
-          await page.evaluate(() => document.fonts.ready)
           const where = `${size.width}px, ${lang}, ${meal}${tab ? `, ${tab}` : ''}`
-          // Every visible piece of text in the graphs, against points every 2 px along every line.
-          const clashes = await page
-            .locator('figure')
-            .filter({ visible: true })
-            .evaluateAll((figures) => {
-              const out: string[] = []
-              for (const fig of figures) {
-                const svg = fig.querySelector('svg[role="img"]')
-                if (!svg) continue
-                const origin = svg.getBoundingClientRect()
-                const points: { x: number; y: number; line: string }[] = []
-                for (const path of svg.querySelectorAll<SVGPathElement>('[data-line="run"], [data-line="kept"], [data-line="second"]')) {
-                  const total = path.getTotalLength()
-                  for (let l = 0; l <= total; l += 2) {
-                    const p = path.getPointAtLength(l)
-                    points.push({ x: origin.x + p.x, y: origin.y + p.y, line: path.dataset.line! })
-                  }
-                }
-                const walker = document.createTreeWalker(fig, NodeFilter.SHOW_TEXT)
-                for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-                  const text = n.textContent?.trim()
-                  const el = n.parentElement!
-                  if (!text || el.closest('[hidden], .sr-only') || getComputedStyle(el).visibility === 'hidden') continue
-                  const range = document.createRange()
-                  range.selectNodeContents(n)
-                  for (const r of range.getClientRects()) {
-                    if (r.width === 0 || r.height === 0) continue
-                    const hit = points.find((p) => p.x > r.left - 1 && p.x < r.right + 1 && p.y > r.top - 1 && p.y < r.bottom + 1)
-                    if (hit) out.push(`"${text}" touches the ${hit.line} line`)
-                  }
-                }
-              }
-              return out
-            })
-          expect(clashes, where).toEqual([])
+          // Labels are placed before paint, and re-placed when a font arrives: poll until none touches a line.
+          await expect.poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), { message: where }).toEqual([])
           // The legend says which line is which meal: never a bare "Kept" or a word at a line's end.
           const kept = lang === 'en' ? /^Kept: / : /^रखा गया भोजन: /
           await expect(page.locator('figure figcaption').filter({ visible: true }).first().getByText(kept)).toBeVisible()
         }
       }
-    }
+    })
   }
-})
+}
 
 // Council round 2, C2: after a big meal every graph fell "off a cliff" at 6 h. It is steady
 // emptying ending soon after 6 h, drawn on the squeezed part of the axis: each graph tints that
@@ -329,5 +356,46 @@ test('graphs under tabs write their unit at the top of the y axis', async ({ pag
   ] as const) {
     await page.getByRole('group', { name: 'Graphs' }).getByRole('button', { name: tab, exact: true }).click()
     await expect(page.locator('figure [data-plot-label="unit"]').filter({ visible: true })).toHaveText(unit)
+  }
+})
+
+// B10 (FP-4 part): projector mode on a phone keeps the tabs at their usual size, so all three show
+// whole, with no sideways scroll (at title size "Energy" was cut at 390 px).
+test('projector mode on a 390 px phone: every graph tab shows whole', async ({ page }) => {
+  onlyIn('projector')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
+  const group = page.getByRole('group', { name: 'Graphs' })
+  await expect(group.getByRole('button')).toHaveCount(3)
+  await page.evaluate(() => document.fonts.ready)
+  const clipped = await group.evaluate((g) => {
+    const box = g.getBoundingClientRect()
+    const out = [...g.querySelectorAll('button')]
+      .filter((b) => b.getBoundingClientRect().right > box.right + 1 || b.scrollWidth > b.clientWidth + 1)
+      .map((b) => b.textContent)
+    return g.scrollWidth > g.clientWidth + 1 ? [...out, `the row scrolls (${g.scrollWidth} > ${g.clientWidth})`] : out
+  })
+  expect(clipped).toEqual([])
+})
+
+// R60: with 6 foods at 360 × 640 the stomach scale stretches; its note gets one row of its own,
+// so the plot stays above the dock (it wrapped to 3 lines beside the status and slid under it).
+test('a stretched scale’s note on a 360 × 640 phone is one line, and the plot stays above the dock', async ({ page }) => {
+  onlyIn('desktop')
+  await page.setViewportSize({ width: 360, height: 640 })
+  for (const lang of ['en', 'pseudo']) {
+    await page.goto(`/sim?v=2&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&lang=${lang}`)
+    await page.locator('figure [data-line="run"]').first().waitFor()
+    await page.evaluate(() => document.fonts.ready)
+    const figure = page.locator('figure').filter({ visible: true })
+    const words = 'Scale stretched to fit this meal'
+    const note = figure.getByText(lang === 'en' ? words : pseudoText(words), { exact: true })
+    await expect(note).toBeVisible()
+    const lineHeight = await note.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight))
+    expect((await note.boundingBox())!.height, `${lang}: the note is one line`).toBeLessThanOrEqual(lineHeight * 1.5)
+    const plot = (await figure.locator('svg[role="img"]').boundingBox())!
+    const column = (await page.locator('section[aria-labelledby="graphs-title"]').boundingBox())!
+    expect(plot.y + plot.height, `${lang}: the plot ends above the dock`).toBeLessThanOrEqual(column.y + column.height + 0.5)
+    expect(plot.height, `${lang}: plot height`).toBeGreaterThanOrEqual(48)
   }
 })

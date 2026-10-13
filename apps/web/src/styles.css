@@ -31,6 +31,8 @@
 
   /* Nutrients: outside the pink/peach tissue range so particles stay visible inside organs. */
   --color-carbs: #f2b705;
+  /* Carbs' lines, legend edges and text: the yellow is a fill only (1.77:1 on paper). colors.ts CARBS_INK. */
+  --color-carbs-ink: #8a6500;
   --color-protein: #6a3fd6;
   --color-fat: #00a3a3;
   --color-fiber: #3d8b1f;
