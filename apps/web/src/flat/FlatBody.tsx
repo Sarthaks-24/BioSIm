@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { activeStage, type NutrientKind, type Simulation, type StageId } from '@lifepeek/engine'
 import { useBodyClock } from '../hooks/useBodyClock.ts'
 import { useMotion } from '../state/motion.ts'
-import { useProjector } from '../hooks/useProjector.ts'
 import {
   ARM,
   ESOPHAGUS,
@@ -21,18 +20,7 @@ import {
 import { Vec3, type Spline3 } from '../anatomy/spline.ts'
 import { bodyStateAt, type BodyState } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Project } from '../anatomy/CalloutOverlay.tsx'
-import {
-  BODY_LOOK,
-  FADE_TONE,
-  ILEUM_TONE,
-  JEJUNUM_TONE,
-  ORGAN_TONE,
-  PARTICLE_EDGE,
-  PYLORUS_TONE,
-  outlineInk,
-  type BodyLook,
-  type LitOrgan,
-} from '../anatomy/tones.ts'
+import { FADE_TONE, ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PARTICLE_EDGE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { quality } from '../three/quality.ts'
 
@@ -68,8 +56,6 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
   const moving = useRef<HTMLCanvasElement>(null)
   const clock = useBodyClock()
   const reduced = useMotion((s) => s.reduced)
-  // The projector look (3D-5): less fade, near-black 2 px outlines.
-  const look: BodyLook = useProjector() ? 'projector' : 'normal'
   const [stage, setStage] = useState<StageId>(() => activeStage(sim, clock.now()))
   const [size, setSize] = useState({ w: 0, h: 0 })
   const { w, h } = size
@@ -96,6 +82,9 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
     const stillCtx = setup(a, rectOf(VIEW, w, h))
     const movingCtx = setup(b, rectOf(GUT, w, h))
     if (!stillCtx || !movingCtx) return
+    // The projector look, read when the picture is set up: switching projector mode changes the
+    // root size, so the picture is resized and this runs again (no subscription to download).
+    flat = document.documentElement.dataset.contrast === 'high' ? PROJECTOR : NORMAL
     let drawn = ''
     let shownStage = stage
     const draw = () => {
@@ -104,16 +93,16 @@ export default function FlatBody({ sim, label }: { sim: Simulation; label: strin
       // The still organs are redrawn only when an organ's highlight changes.
       const key = `${state.stage}|${state.holds.stomach}|${state.holds.smallIntestine}|${state.holds.largeIntestine}`
       if (key !== drawn) {
-        paintStill(stillCtx, w, h, state, look)
+        paintStill(stillCtx, w, h, state)
         drawn = key
       }
-      paintMoving(movingCtx, w, h, sim, t, state, reduced, look)
+      paintMoving(movingCtx, w, h, sim, t, state, reduced)
       // Re-render (labels) only when the meal moves to another organ, not every frame.
       if (state.stage !== shownStage) setStage((shownStage = state.stage))
     }
     draw()
     return clock.subscribe(draw)
-  }, [sim, clock, reduced, look, w, h]) // eslint-disable-line react-hooks/exhaustive-deps -- `stage` is only the starting value
+  }, [sim, clock, reduced, w, h]) // eslint-disable-line react-hooks/exhaustive-deps -- `stage` is only the starting value
 
   return (
     <div
@@ -179,15 +168,20 @@ function setup(canvas: HTMLCanvasElement, rect: Rect) {
 }
 
 /**
- * The flat organ colours: the 3D tones, faded when empty, and a deep shade for the outline. On
- * the projector empty organs fade less and the outline is the 3D body's near-black one.
+ * The flat look: how far an empty organ fades, the outline's shade of the organ colour and its
+ * width in CSS px (0.75 px more on the active organ). On the projector (3D-5) empty organs fade
+ * less and the outline is near-black and 2 px, like the 3D body's (three/look.ts).
  */
-const tone = (organ: LitOrgan, faded: boolean, look: BodyLook): Rgb => {
+const NORMAL = { fade: 0.55, ink: 0.42, line: 1.25 }
+const PROJECTOR = { fade: 0.33, ink: 0.2, line: 2 }
+let flat = NORMAL
+
+/** The flat organ colours: the 3D tones, faded when empty, and a deep shade for the outline. */
+const tone = (organ: LitOrgan, faded = false): Rgb => {
   const c = rgb(ORGAN_TONE[organ])
-  return faded ? mix(c, rgb(FADE_TONE), look === 'projector' ? 0.33 : 0.55) : c
+  return faded ? mix(c, rgb(FADE_TONE), flat.fade) : c
 }
-const ink = (c: Rgb, faded: boolean, look: BodyLook) =>
-  faded ? css(scale(mix(c, rgb(FADE_TONE), 0.2), 0.72)) : look === 'projector' ? outlineInk(hex(c), look) : css(scale(c, 0.42))
+const ink = (c: Rgb, faded = false) => css(faded ? scale(mix(c, rgb(FADE_TONE), 0.2), 0.72) : scale(c, flat.ink))
 const WHITE: Rgb = [255, 255, 255]
 
 /** sRGB colour maths small enough for the flat body (three's Color would add to the page's download). */
@@ -196,7 +190,6 @@ const rgb = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i +
 const mix = (a: Rgb, b: Rgb, t: number): Rgb => a.map((v, i) => v + (b[i]! - v) * t) as Rgb
 const scale = (a: Rgb, k: number): Rgb => a.map((v) => v * k) as Rgb
 const css = (c: Rgb) => `rgb(${c.map((v) => Math.round(v)).join(',')})`
-const hex = (c: Rgb) => `#${c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`
 
 /** What moves: the stomach's fill and the food. Drawn every frame the clock moves. */
 function paintMoving(
@@ -207,11 +200,10 @@ function paintMoving(
   time: number,
   state: BodyState,
   reduced: boolean,
-  look: BodyLook,
 ) {
   ctx.clearRect(0, 0, w, h)
   const { scale, X, Y } = frame(w, h)
-  paintStomach(ctx, X, Y, scale, state, look)
+  paintStomach(ctx, X, Y, scale, state)
   const p = new Vec3()
   for (const part of sim.particles) {
     const s = particlePosition(part, time, p)
@@ -221,7 +213,7 @@ function paintMoving(
 }
 
 /** The organ's state, as the 3D shader has it: active, normal or faded. */
-const stateOf = (organ: LitOrgan, s: BodyState) => {
+const look = (organ: LitOrgan, s: BodyState) => {
   if (organ === 'esophagus') return { active: s.stage === 'mouth' || s.stage === 'esophagus', faded: false }
   if (organ === 'stomach' || organ === 'smallIntestine' || organ === 'largeIntestine')
     return { active: s.stage === organ, faded: s.stage !== organ && !s.holds[organ] }
@@ -265,8 +257,7 @@ function tubeOutline(curve: Spline3, radius: (u: number) => number, n: number): 
 let armShape: [number, number][] | null = null
 
 /** Everything that only changes when the meal reaches another organ. */
-function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: BodyState, look: BodyLook) {
-  const line = BODY_LOOK[look].flatLine
+function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: BodyState) {
   ctx.clearRect(0, 0, w, h)
   const { scale, X, Y } = frame(w, h)
   const poly = (pts: readonly (readonly [number, number])[], mirror = false) => {
@@ -300,18 +291,18 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
 
   /** A filled shape with the organ's outline. */
   const solid = (organ: LitOrgan) => {
-    const { active, faded } = stateOf(organ, s)
-    const c = tone(organ, faded, look)
+    const { active, faded } = look(organ, s)
+    const c = tone(organ, faded)
     ctx.fillStyle = css(active ? mix(c, WHITE, 0.08) : c)
     ctx.fill()
-    ctx.strokeStyle = ink(c, faded, look)
-    ctx.lineWidth = line + (active ? 0.75 : 0)
+    ctx.strokeStyle = ink(c, faded)
+    ctx.lineWidth = flat.line + (active ? 0.75 : 0)
     ctx.stroke()
   }
   /** A tube drawn as a wide stroke: the outline colour first, then the organ colour inside it. */
   const tube = (organ: LitOrgan, curve: Spline3, width: number, n: number, colour?: (u: number) => string) => {
-    const { active, faded } = stateOf(organ, s)
-    const c = tone(organ, faded, look)
+    const { active, faded } = look(organ, s)
+    const c = tone(organ, faded)
     const pts = sampled(curve, n)
     const path = () => {
       ctx.beginPath()
@@ -321,8 +312,8 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
       }
     }
     path()
-    ctx.strokeStyle = ink(c, faded, look)
-    ctx.lineWidth = width * scale + 2 * (line + (active ? 0.75 : 0))
+    ctx.strokeStyle = ink(c, faded)
+    ctx.lineWidth = width * scale + 2 * (flat.line + (active ? 0.75 : 0))
     ctx.stroke()
     if (colour && !faded) {
       // A gradient along the tube is not possible in Canvas 2D; draw it in a few runs instead.
@@ -358,7 +349,7 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
   const jejunum = rgb(JEJUNUM_TONE)
   const ileum = rgb(ILEUM_TONE)
   tube('smallIntestine', SMALL_INTESTINE, 0.085, 640, (u) => {
-    const c = tone('smallIntestine', false, look)
+    const c = tone('smallIntestine')
     return css(u < 0.45 ? mix(c, jejunum, 0.4 * (1 - u / 0.45)) : mix(c, ileum, 0.45 * ((u - 0.45) / 0.55)))
   })
 }
@@ -366,25 +357,18 @@ function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, s: Body
 const PYLORUS = rgb(PYLORUS_TONE)
 
 /** The stomach, stretched by how full it is now (same rule as the 3D shader: ends pinned). */
-function paintStomach(
-  ctx: CanvasRenderingContext2D,
-  X: (x: number) => number,
-  Y: (y: number) => number,
-  scale: number,
-  s: BodyState,
-  look: BodyLook,
-) {
-  const { active, faded } = stateOf('stomach', s)
+function paintStomach(ctx: CanvasRenderingContext2D, X: (x: number) => number, Y: (y: number) => number, scale: number, s: BodyState) {
+  const { active, faded } = look('stomach', s)
   ctx.beginPath()
   tubeOutline(STOMACH, (u) => stomachFillRadius(u, s.stomachFill), 40).forEach(([x, y], i) =>
     i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y)),
   )
   ctx.closePath()
-  const c = tone('stomach', faded, look)
+  const c = tone('stomach', faded)
   ctx.fillStyle = css(active ? mix(c, WHITE, 0.08) : c)
   ctx.fill()
-  ctx.strokeStyle = ink(c, faded, look)
-  ctx.lineWidth = BODY_LOOK[look].flatLine + (active ? 0.75 : 0)
+  ctx.strokeStyle = ink(c, faded)
+  ctx.lineWidth = flat.line + (active ? 0.75 : 0)
   ctx.lineJoin = 'round'
   ctx.stroke()
   // Pylorus ring at the exit.

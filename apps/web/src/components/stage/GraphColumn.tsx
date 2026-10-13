@@ -104,7 +104,7 @@ export default function GraphColumn({ run, kept }: { run: Simulation; kept: Simu
       aria-labelledby="graphs-title"
       // Size and layout containment: the readouts change ~10 times a second while playing, and the
       // rest of the stage never needs to be laid out again for that (its size comes from the grid).
-      className="flex min-h-0 flex-col gap-2 border-rule2 bg-shelf px-3 py-2 [contain:size_layout] max-lg:border-t lg:gap-4 lg:border-l lg:px-4 lg:py-3 in-data-[contrast=high]:gap-2"
+      className="flex min-h-0 flex-col gap-2 border-rule2 bg-shelf px-3 py-2 [contain:size_layout] max-lg:border-t lg:gap-4 lg:border-l lg:px-4 lg:py-3 in-data-[contrast=high]:gap-2 in-data-[contrast=high]:py-2"
     >
       <h2 id="graphs-title" className="sr-only">
         {t('stage.graphs')}

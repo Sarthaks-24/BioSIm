@@ -18,11 +18,17 @@
 //   /next 195.0 → 181.4 KB, 3D body 249.2 → 258.9 KB.
 //   WP-14 (2026-10-13): the dock's key moments, the Now line and the summary sentence are first
 //   paint; the "More" stage text and the report form load on first use: /next 183.0 → 188.8 KB.
+//   WP-17 follow-up (2026-10-13): merged main was /next 190.6 KB. The projector's graph marks
+//   moved to one CSS block, the 3D look's colour maths into the 3D chunk, and the English text
+//   only About, Privacy, Teach and Science use is fetched with those pages (i18n loadPageText):
+//   /next 190.6 → 186.6 KB, /sim 181.1 → 177.8 KB, Home 157.3 → 154.0 KB.
 //   WP-15 (2026-10-13): the key map, the graphs' summaries, the table and settings buttons and the
 //   particle key are first paint; the table, the keys sheet and the food search load on first use
-//   (one chunk, components/stage/Sheets.tsx). The English texts of the other pages and of v1's
-//   simulator now load with those pages (scripts/i18n-sections.mjs): /next 190.6 → 189.2 KB,
-//   /sim 181.7 → 179.8 KB, Home 157.4 → 153.5 KB.
+//   (one chunk, components/stage/Sheets.tsx). The English page texts are now cut at build time
+//   (scripts/i18n-sections.mjs, replacing the list of named imports + loadPageText above): each
+//   page imports only its own section, and Stats, the report form and v1's simulator texts leave
+//   the first download too. /next 186.6 (main) → 188.6 KB with WP-15 (the named-import cut gave
+//   190.1 KB with WP-15), /sim 177.8 → 179.2 KB, Home 154.0 → 153.4 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
 //   the model (`simulate`) for its race until WP-19.
 import fs from 'node:fs'

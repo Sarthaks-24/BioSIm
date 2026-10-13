@@ -30,7 +30,8 @@ import {
   oklch,
   pairs,
 } from './colorCheck.ts'
-import { FOOD_PATH, NEIGHBOURS, PARTICLE_EDGE, TONE_BY_NAME, outlineInk } from '../anatomy/tones.ts'
+import { ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PARTICLE_EDGE } from '../anatomy/tones.ts'
+import { outlineInk } from '../three/look.ts'
 
 /** colors.ts copies some CSS tokens for WebGL/canvas. This keeps the two copies identical. */
 const css = readFileSync(fileURLToPath(new URL('../styles.css', import.meta.url)), 'utf8')
@@ -162,6 +163,34 @@ describe('graph line colours', () => {
     expect(oklch(KEPT).c).toBeLessThan(0.05)
   })
 })
+
+/**
+ * Organs (and parts of the small intestine) that touch in the picture, front-on. The audit below
+ * checks each pair; a new organ joins this list with its neighbours.
+ */
+const NEIGHBOURS: readonly (readonly [string, string])[] = [
+  ['esophagus', 'stomach'],
+  ['esophagus', 'liver'],
+  ['stomach', 'liver'],
+  ['stomach', 'pancreas'],
+  ['stomach', 'smallIntestine'],
+  ['stomach', 'jejunum'],
+  ['stomach', 'largeIntestine'],
+  ['liver', 'gallbladder'],
+  ['gallbladder', 'smallIntestine'],
+  ['gallbladder', 'pancreas'],
+  ['pancreas', 'smallIntestine'],
+  ['pancreas', 'jejunum'],
+  ['smallIntestine', 'largeIntestine'],
+  ['jejunum', 'largeIntestine'],
+  ['ileum', 'largeIntestine'],
+]
+
+/** Every tone the audit knows by name: the organs plus the small intestine's two ends. */
+const TONE_BY_NAME: Record<string, string> = { ...ORGAN_TONE, jejunum: JEJUNUM_TONE, ileum: ILEUM_TONE }
+
+/** Tones the food passes through (particles are checked against these). */
+const FOOD_PATH = ['esophagus', 'stomach', 'smallIntestine', 'jejunum', 'ileum', 'largeIntestine'] as const
 
 /**
  * The body's colour audit (3D-5, WP-17). Organs are drawn with an outline, so an organ's shape is
