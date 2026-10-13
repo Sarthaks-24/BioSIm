@@ -80,3 +80,9 @@ const draw = () =>
     </StrictMode>,
   )
 void i18nReady.then(draw, draw)
+
+// The service worker, and the "new version is ready" note (components/UpdateToast.tsx), once the
+// page has loaded (a module script always runs before "load"): not part of any page's first
+// download (size budget).
+if (import.meta.env.PROD && 'serviceWorker' in navigator)
+  addEventListener('load', () => import('./components/UpdateToast.tsx').then((m) => m.watchForUpdates()), { once: true })

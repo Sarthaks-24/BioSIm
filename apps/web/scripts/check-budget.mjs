@@ -53,6 +53,10 @@
 //   data/hero.json instead of running the model, and fetches that file after its first paint, so
 //   no page's first download carries it: /sim 190.03 → 189.5 KB, Home 154.0 → 145.5 KB. The e2e
 //   build (pseudo-locale) now goes to dist-e2e, and this script refuses a dist that has it.
+//   FIX-G (2026-10-13): the same-food summary (blood sugar raised longer, meals named by amount), the
+//   marker pills, the share text and the lazy "new version" note (components/UpdateToast.tsx) took /sim
+//   to 190.3 KB. Tailwind no longer scans v1's unrouted files (styles.css @source not; WP-20 deletes
+//   them), which took 0.85 KB of their CSS off every page: /sim 189.5 KB, Home 145.5 → 144.9 KB.
 //   WP-20 (2026-10-13): v1 deleted; the stage is pages/Simulator.tsx. v1's code had already left
 //   the bundle with WP-19 (no route imported it), so what went now is what Tailwind still found in
 //   v1's files (CSS), v1's texts (hi.json) and the registry's unused body loaders: /sim 189.5 →

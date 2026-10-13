@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
-import { LESSONS, TASKS, presetHref } from '../src/lib/presets.ts'
+import { LESSONS, QR_PATH, TASKS, presetHref } from '../src/lib/presets.ts'
+import en from '../src/i18n/en.json' with { type: 'json' }
 import { SIM_BODY, checkAxe, onlyIn } from './helpers/gate.ts'
 
 // The Teach page describes controls that exist (WP-19): every step of the lesson plan names a
 // control, and here it is found on /sim by its role and name and does what the step says. The
-// ready lessons open projector-friendly at their first key moment; the four task questions open
+// ready lessons open projector-friendly at the moment to talk about; the four task questions open
 // the screen a student starts from. Projects desktop and projector.
 
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
@@ -83,12 +84,14 @@ test('the four questions open the screen each starts from', async ({ page }) => 
   expect(await now(page)).toBe(0)
 })
 
-test('the QR code opens the site', async ({ page, request }) => {
+test('the QR code opens the screen the first questions start from', async ({ page, request }) => {
   onlyIn('desktop')
   await page.goto('/teach')
-  const qr = page.getByRole('img', { name: 'QR code for lifepeek.vercel.app' })
+  const qr = page.getByRole('img', { name: 'QR code for LifePeek with cola chosen' })
   await expect(qr).toBeVisible()
-  await expect(page.getByText('lifepeek.vercel.app', { exact: true })).toBeVisible()
+  // The address it holds is printed under it, to type if a camera can't read it (council round 3).
+  await expect(page.getByText(`lifepeek.vercel.app${QR_PATH}`, { exact: true })).toBeVisible()
+  expect(QR_PATH).toBe('/sim?v=2&a=cola:1')
   // A file of its own (not inlined into the page's code), drawn about 240 px wide.
   const src = (await qr.getAttribute('src'))!
   expect(src).toMatch(/^\/assets\/.+\.svg$/)
@@ -96,4 +99,40 @@ test('the QR code opens the site', async ({ page, request }) => {
   const res = await request.get(src)
   expect(res.status()).toBe(200)
   await checkAxe(page)
+})
+
+test('a ready lesson opens with nothing over its graph: marker names show only when asked (council round 3)', async ({ page }) => {
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const titles = en.teach.lessons
+  const tip = page.locator('[data-marker-tip]')
+  const opened = async (l: (typeof LESSONS)[number]) => {
+    // The slider by its role alone: its name is in the page's language.
+    await expect.poll(async () => Number(await page.getByRole('slider').first().getAttribute('aria-valuenow'))).toBe(l.t)
+    await expect(tip).toHaveCount(0)
+    // Still none once fonts, the graphs and the 3D body have settled.
+    await page.waitForTimeout(500)
+    await expect(tip).toHaveCount(0)
+  }
+  for (const l of LESSONS) {
+    // From the Teach page, as a teacher opens it (projector mode on a laptop, 1440 and 1280).
+    await page.goto('/teach')
+    await page.getByRole('link', { name: new RegExp(`^${escape(titles[l.key])}`) }).click()
+    await opened(l)
+  }
+  // In Hindi too, where the names are longest (each project's own mode).
+  for (const l of LESSONS) {
+    await page.goto(`${presetHref(l)}&lang=hi`)
+    await opened(l)
+  }
+  // "One cola or four" says what the lesson is about: blood sugar raised longer, by amount.
+  await page.goto(`${presetHref(LESSONS.find((l) => l.key === 'colaFour')!)}&lang=en`)
+  await expect(page.locator('[data-summary-headline]')).toHaveText(
+    /^Blood sugar stays raised about \d+ h( \d+ min)? longer after 4 servings of cola than after 1 serving of cola\.$/,
+  )
+  // Pointing at a marker names it; moving away hides the names again.
+  const marker = page.locator('[data-marker="run"]').first()
+  await marker.hover()
+  await expect(tip).toBeVisible()
+  await page.mouse.move(5, 5)
+  await expect(tip).toHaveCount(0)
 })

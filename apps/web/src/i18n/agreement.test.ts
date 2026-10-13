@@ -92,6 +92,10 @@ const TEMPLATES: Record<string, readonly string[]> = {
   'summary.fasterMore': ['fast', 'slow'],
   'summary.reasonDrink': ['fast'],
   'summary.reasonCalories': ['slow'],
+  // The same food in two amounts (council round 3): the amount phrase, and the blood sugar sentence.
+  'sameFood.amount': ['food'],
+  'sameFood.oblique.amount': ['food'],
+  'sameFood.bloodLonger': ['more', 'less'],
   'keep.tag': ['meal'],
   'keep.remove': ['meal'],
   'now.kept': ['meal'],
@@ -101,7 +105,7 @@ const TEMPLATES: Record<string, readonly string[]> = {
   'graph.halfLeftOf': ['meal'],
   'graph.highestOf': ['meal'],
 }
-const FIXED = { time: '2 घंटे', x: '3 गुना', kcalSlow: 900, kcalFast: 140, value: '140 mg/dL' }
+const FIXED = { time: '2 घंटे', x: '3 गुना', kcalSlow: 900, kcalFast: 140, value: '140 mg/dL', count: 4 }
 
 describe('Hindi agreement with food names (FIX-F)', () => {
   it('the checker catches the old wording with a feminine food', () => {
@@ -166,6 +170,10 @@ describe('the summary sentence in Hindi (FIX-F)', () => {
     for (const food of FOODS) {
       const meal = `${food.id}:1`
       check(texts(singleSummary(sim(meal), t, 'hi')), nameOf(meal))
+      // The same food in another amount: named by amount ("कोला के 4 हिस्से"), either way round.
+      const short = shortFoodName(food.name.hi ?? food.name.en)
+      check(texts(compareSummary(sim(meal), sim(`${food.id}:4`), t, 'hi')), short)
+      check(texts(compareSummary(sim(`${food.id}:4`), sim(meal), t, 'hi')), short)
       for (const other of OTHERS) {
         for (const [run, kept] of [
           [meal, other],

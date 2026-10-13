@@ -19,6 +19,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
   feedback: ['components/FeedbackDialog.tsx', 'pages/About.tsx'],
+  update: ['components/UpdateToast.tsx'],
   lesson: ['pages/Science.tsx'],
   // The panel, and the files that only name limits for it: it reads them when it draws (HowWeKnow's Say).
   limits: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx', 'registry/human/systems.ts'],

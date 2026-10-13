@@ -16,8 +16,11 @@ import { groupClose, hitAreas, momentNameKey, runMoments, type Moment } from '..
  * the graphs' playheads. Shape and place tell them apart, never the grey alone. Each marker is a
  * button that pauses and moves the clock there; "leftovers start leaving" also shows its low–high
  * range. Moments that nearly coincide (cola's first hour) are one marker that names them all
- * (council round 2, WP-15), with one dot per moment. A marker's names show above the bar on hover
- * and focus, and stay while the clock is paused on one of its moments (after a click, or PageDown).
+ * (council round 2, WP-15), drawn as one pill with their count, so a cluster never looks like a
+ * row of separate targets (council round 3). A marker's names show above the bar while the pointer
+ * or the keyboard focus is on it, and after it is pressed, until the clock moves on. Never when a
+ * link, a lesson or Page Down moves the clock to a moment: the names would sit over the graph's
+ * last line and "6 h → 48 h squeezed" on the projector (council round 3, FIX-G).
  *
  * The thumb, the filled part and the slider's value are moved straight from the meal clock
  * (`useClock.subscribe`), never through React state, so playing re-renders nothing here.
@@ -43,7 +46,7 @@ const TICK_FITS: Record<number, string> = {
  */
 const GAP_WIDE = 24
 const GAP_PHONE = 44
-/** A paused clock this close (minutes) to a moment is "at" it: its name stays shown. */
+/** A paused clock this close (minutes) to where a marker press moved it is still "at" it: the names stay shown. */
 const AT_MOMENT_MIN = 0.5
 
 /** One marker on the bar: one moment, or a few that nearly coincide, of one meal. */
@@ -126,18 +129,21 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
     return [...of(run, 'run'), ...of(kept, 'kept')]
   }, [run, kept, t, width, gap])
 
-  // Which names show: the marker under the pointer or focus; else every moment the paused clock
-  // is at, of both meals (cola's "half has left" and "highest" can share a minute, and so can the
-  // kept meal's), so none hides behind another.
+  // Which names show: the marker under the pointer or the keyboard focus; else, after a marker was
+  // pressed (a tap on a phone has no hover), every moment the paused clock is at, of both meals
+  // (cola's "half has left" and "highest" can share a minute, and so can the kept meal's), so
+  // none hides behind another. `pressed` is the minute the press moved the clock to: once the
+  // clock is anywhere else (playing, a drag, Page Down, a link) nothing shows by itself.
   const [hot, setHot] = useState<string | null>(null)
+  const [pressed, setPressed] = useState<number | null>(null)
   const atMoment = useCallback(
     (s: { simMin: number; playing: boolean }) =>
-      s.playing
+      s.playing || pressed === null || Math.abs(s.simMin - pressed) >= AT_MOMENT_MIN
         ? ''
         : markers
             .flatMap((m) => m.moments.filter((x) => Math.abs(x.atMin - s.simMin) < AT_MOMENT_MIN).map((x) => `${m.key}|${x.id}`))
             .join(' '),
-    [markers],
+    [markers, pressed],
   )
   const here = useClock(atMoment)
   const tip = useMemo(() => {
@@ -248,8 +254,8 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
             />
           </span>
         </div>
-        <MarkerLane markers={lane('run')} lane="run" label={t('dock.moments')} onHot={setHot} />
-        {kept && <MarkerLane markers={lane('kept')} lane="kept" label={t('dock.keptMoments')} onHot={setHot} />}
+        <MarkerLane markers={lane('run')} lane="run" label={t('dock.moments')} onHot={setHot} onPress={setPressed} />
+        {kept && <MarkerLane markers={lane('kept')} lane="kept" label={t('dock.keptMoments')} onHot={setHot} onPress={setPressed} />}
         {tip && <MarkerTip key={tip.key} atMin={tip.atMin} lines={tip.lines} width={width} />}
       </div>
       {TIMELINE_TICKS.map((m) => (
@@ -341,11 +347,14 @@ function MarkerLane({
   lane,
   label,
   onHot,
+  onPress,
 }: {
   markers: Marker[]
   lane: Marker['lane']
   label: string
   onHot: (key: string | null) => void
+  /** A marker was pressed and moved the clock to `atMin`. */
+  onPress: (atMin: number) => void
 }) {
   const kept = lane === 'kept'
   const box = useRef<HTMLDivElement>(null)
@@ -402,30 +411,33 @@ function MarkerLane({
               const clock = useClock.getState()
               clock.pause()
               clock.setSimMin(m.atMin)
+              onPress(m.atMin)
             }}
             onPointerEnter={() => onHot(m.key)}
             onPointerLeave={() => onHot(null)}
-            onFocus={() => {
+            onFocus={(e) => {
               setFocus(i)
-              onHot(m.key)
+              // Keyboard focus only: a click focuses the button too, and the press shows the names anyway.
+              if (e.currentTarget.matches(':focus-visible')) onHot(m.key)
             }}
             onBlur={() => onHot(null)}
             className={`pointer-events-auto absolute top-0 h-6 cursor-pointer rounded-full focus-visible:outline-offset-0 ${kept ? '-translate-y-1/3' : '-translate-y-2/3'}`}
             style={{ left: -m.before, width: m.before + m.after }}
           >
-            {/* One dot per moment, overlapping a little: a marker of three moments shows three. The first dot's centre is its time. */}
+            {/*
+             * One dot, centred on its time. Moments that share a marker are one pill with their
+             * count ("3"): a row of dots read as that many separate targets (council round 3).
+             */}
             <span
               aria-hidden="true"
-              className={`pointer-events-none absolute flex -translate-y-1/2 ${kept ? 'top-1/3' : 'top-2/3'}`}
-              style={{ left: `calc(${m.before}px - ${kept ? 0.3125 : 0.4375}rem)` }}
+              data-dot=""
+              data-count={m.moments.length > 1 ? m.moments.length : undefined}
+              className={`tabular pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 leading-none font-bold ${
+                kept ? 'top-1/3 border-kept bg-shelf text-kept' : 'top-2/3 border-shelf bg-run text-white'
+              } ${m.moments.length > 1 ? 'h-4 min-w-4 px-0.5 text-[0.625rem]' : kept ? 'size-2.5' : 'size-3.5'}`}
+              style={{ left: m.before }}
             >
-              {m.moments.map((x, j) => (
-                <span
-                  key={x.id}
-                  data-dot=""
-                  className={`shrink-0 rounded-full border-2 ${j > 0 ? '-ml-1' : ''} ${kept ? 'size-2.5 border-kept bg-shelf' : 'size-3.5 border-shelf bg-run'}`}
-                />
-              ))}
+              {m.moments.length > 1 ? m.moments.length : null}
             </span>
           </button>
         </div>

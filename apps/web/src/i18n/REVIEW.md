@@ -381,7 +381,7 @@ back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `home.headline` | Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours. | कोला के एक कैन का आधा भाग लगभग आधे घंटे में आमाशय से निकल जाता है। फ़्राइज़ के साथ बर्गर के आधे भाग को चार घंटे से ज़्यादा लगते हैं। | draft |
+| `home.headline` | Half the food energy in a can of cola leaves your stomach in about half an hour. For a burger with fries, it takes over four hours. | कोला के एक कैन की आधी ऊर्जा लगभग आधे घंटे में आमाशय से निकल जाती है। फ़्राइज़ के साथ बर्गर की आधी ऊर्जा को निकलने में चार घंटे से ज़्यादा लगते हैं। | draft |
 | `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
 | `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
 | `nav.main` | Main | मुख्य | draft |
@@ -701,25 +701,35 @@ summary, so those sentences are worded to fit feminine (इडली, दाल,
 | `nav.menu` | Menu | मेन्यू | draft |
 | `home.example` | {{meal}}, with {{kept}} kept | {{meal}}, तुलना के लिए {{kept}} रखा गया | draft |
 | `teach.lessonsTitle` | Ready lessons | तैयार पाठ | draft |
-| `teach.lessonsLead` | Each opens in projector mode on a laptop, paused at its first key moment, on the graph it is about. Press Play, or Page Down for the next key moment. | हर पाठ लैपटॉप पर प्रोजेक्टर मोड में खुलता है, अपने पहले मुख्य पल पर रुका हुआ, उसी ग्राफ़ पर जिसके बारे में पाठ है। ‘चलाएँ’ दबाएँ, या अगले मुख्य पल के लिए Page Down। | draft |
+| `teach.lessonsLead` | Each opens in projector mode on a laptop, paused at the moment to talk about, on the graph it is about. Press Play, or Page Down for the next key moment. | हर पाठ लैपटॉप पर प्रोजेक्टर मोड में खुलता है, उस पल पर रुका हुआ जिस पर बात करनी है, उसी ग्राफ़ पर जिसके बारे में पाठ है। ‘चलाएँ’ दबाएँ, या अगले मुख्य पल के लिए Page Down। | draft |
 | `teach.lessons.stomachRace` | Which leaves the stomach first? | आमाशय से पहले क्या निकलता है? | draft |
 | `teach.lessons.rotiDal` | Which raises blood sugar more gently? | रक्त शर्करा किससे धीरे बढ़ती है? | draft |
 | `teach.lessons.colaFour` | One cola or four: what happens to blood sugar? | एक कोला या चार: रक्त शर्करा का क्या होता है? | draft |
 | `teach.opensAt` | opens at {{time}} on the {{graph}} graph | {{graph}} ग्राफ़ पर {{time}} पर खुलता है | draft |
-| `teach.questionsLead` | Students answer on their own phones, with no help, each starting from the link. If four out of five get a question right, the screen teaches it. | विद्यार्थी अपने फ़ोन पर, बिना मदद के, हर प्रश्न उसके लिंक से शुरू करके उत्तर दें। अगर पाँच में से चार किसी प्रश्न का सही उत्तर दें, तो स्क्रीन उसे सिखा रही है। | draft |
+| `teach.questionsLead` | Use these after the lesson. Students answer on their own phones, without help, each starting from its link. The answers are in the closed box below. | इन्हें पाठ के बाद इस्तेमाल करें। विद्यार्थी अपने फ़ोन पर, बिना मदद के, हर प्रश्न उसके लिंक से शुरू करके उत्तर दें। उत्तर नीचे बंद बॉक्स में हैं। | draft |
 | `teach.tasks.halfLeft` | Cola is chosen. When has half of it left the stomach? | कोला चुना हुआ है। आधा कोला आमाशय (पेट) से कब तक निकल गया? | draft |
 | `teach.tasks.faster` | Now compare cola with a burger and fries. Which leaves the stomach faster, and why? | अब कोला की तुलना बर्गर और फ़्राइज़ से करो। कौन-सा आमाशय से जल्दी निकलता है, और क्यों? | draft |
 | `teach.tasks.bloodAt1h` | What is blood sugar 1 hour after the cola? | कोला के 1 घंटे बाद रक्त शर्करा (ब्लड शुगर) कितनी है? | draft |
 | `teach.tasks.energyAt3h` | At 3 hours, is more energy coming in from the cola, or is the body using more? | 3 घंटे पर कोला से शरीर में ऊर्जा ज़्यादा आ रही है, या शरीर ज़्यादा ऊर्जा खर्च कर रहा है? | draft |
 | `teach.qrTitle` | Open it on students’ phones | विद्यार्थियों के फ़ोन पर खोलें | draft |
-| `teach.qrCaption` | Students scan this code with the phone camera to open LifePeek. No login, nothing to install. | LifePeek खोलने के लिए विद्यार्थी फ़ोन के कैमरे से यह कोड स्कैन करें। न लॉगिन, न कुछ इंस्टॉल करना। | draft |
-| `teach.qrAlt` | QR code for lifepeek.vercel.app | lifepeek.vercel.app का QR कोड | draft |
+| `teach.qrCaption` | Students scan this code with the phone camera: LifePeek opens with cola chosen, where questions 1 to 3 start. No login, nothing to install. | विद्यार्थी फ़ोन के कैमरे से यह कोड स्कैन करें: LifePeek कोला चुने हुए खुलता है, जहाँ से प्रश्न 1 से 3 शुरू होते हैं। न लॉगिन, न कुछ इंस्टॉल करना। | draft |
+| `teach.qrAlt` | QR code for LifePeek with cola chosen | कोला चुने हुए LifePeek का QR कोड | draft |
 | `teach.answersTitle` | Answers for teachers | शिक्षकों के लिए उत्तर | draft |
 | `teach.answers[0]` | About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline. | लगभग 35 मिनट (30 से 40 सही है): आमाशय ग्राफ़ पर गोला, या टाइमलाइन पर उसका निशान। | draft |
 | `teach.answers[1]` | Cola, about 8 times faster: a drink starts leaving straight away, and it has fewer calories than a burger with fries. | कोला, लगभग 8 गुना जल्दी: पेय तुरंत निकलना शुरू हो जाता है, और उसमें फ़्राइज़ के साथ बर्गर से कम कैलोरी होती है। | draft |
 | `teach.answers[2]` | About 111 mg/dL (105 to 115). Its highest, about 121, was at 35 minutes. | लगभग 111 mg/dL (105 से 115)। इसका सबसे ऊँचा स्तर, लगभग 121, 35 मिनट पर था। | draft |
 | `teach.answers[3]` | The body is using more: almost nothing is coming in from the cola, while the body uses about 63 kcal an hour. | शरीर ज़्यादा खर्च कर रहा है: कोला से लगभग कुछ नहीं आ रहा, जबकि शरीर लगभग 63 किलो कैलोरी प्रति घंटा खर्च करता है। | draft |
 | `stage.pressPlay` | Press ▶ to watch {{meal}} go through the body | ▶ दबाएँ और देखें कि {{meal}} शरीर में कैसे आगे बढ़ता है | draft |
+| `teach.lessonNotes.colaFour` | What to see: both reach the same highest point, about 121 mg/dL, but after four colas blood sugar stays raised about 3 h 15 min longer. | क्या देखें: दोनों बार सबसे ऊँचा स्तर लगभग 121 mg/dL ही रहता है, पर चार कोला के बाद रक्त शर्करा लगभग 3 घंटे 15 मिनट ज़्यादा देर तक बढ़ी रहती है। | draft |
+| `update.ready` | A new version of LifePeek is ready. | LifePeek का नया संस्करण तैयार है। | draft |
+| `update.reload` | Reload | दोबारा लोड करें | draft |
+| `update.later` | Later | बाद में | draft |
+| `sameFood.amount_one` | {{count}} serving of {{food}} | {{food}} का {{count}} हिस्सा | draft |
+| `sameFood.amount_other` | {{count}} servings of {{food}} | {{food}} के {{count}} हिस्से | draft |
+| `sameFood.bloodLonger` | Blood sugar stays raised about {{time}} longer after {{more}} than after {{less}}. | {{more}} के बाद रक्त शर्करा, {{less}} के बाद से लगभग {{time}} ज़्यादा देर तक बढ़ी रहती है। | draft |
+| `sameFood.reasonSamePeak` | Both reach about the same highest point ({{peak}} mg/dL): the stomach lets only a little sugar through each minute, so more food keeps blood sugar up for longer, not higher. | दोनों बार सबसे ऊँचा स्तर लगभग बराबर ({{peak}} mg/dL) रहता है: आमाशय हर मिनट थोड़ी-सी शर्करा ही आगे जाने देता है, इसलिए ज़्यादा भोजन से रक्त शर्करा ज़्यादा ऊपर नहीं जाती, बल्कि ज़्यादा देर तक बढ़ी रहती है। | draft |
+| `sameFood.oblique.amount_one` | {{count}} serving of {{food}} | {{food}} के {{count}} हिस्से | draft |
+| `sameFood.oblique.amount_other` | {{count}} servings of {{food}} | {{food}} के {{count}} हिस्सों | draft |
 
 ## Sign-off
 
