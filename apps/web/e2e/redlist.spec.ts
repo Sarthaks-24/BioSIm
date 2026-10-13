@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from '@playwright/test'
 import {
+  bodySettled,
   interactiveOverlaps,
   linkRoundTripProblems,
   measureBody,
@@ -42,6 +43,7 @@ async function stageReady(page: Page) {
   await page.locator('[data-stage]').waitFor()
   await page.locator('[data-body]').first().waitFor({ state: 'attached' })
   await page.waitForLoadState('networkidle')
+  await bodySettled(page, 10_000)
   await page.evaluate(() => document.fonts.ready)
 }
 
@@ -360,10 +362,40 @@ test.describe('desktop', () => {
       const normal = await advance(false)
       const slow = await advance(true)
       const ratio = slow / normal
-      if (ratio < 0.9)
+      // ±10 % (T7): real elapsed time, timed in the page.
+      if (Math.abs(ratio - 1) > 0.1)
         problems.push(
           `with 250 ms frames the clock runs at ${Math.round(100 * ratio)} % of its pace (${slow.toFixed(1)} vs ${normal.toFixed(1)} sim min/s)`,
         )
+    })
+  })
+
+  test('B18 a hidden page does not move the clock, and goes on without a jump when shown', async ({ page }) => {
+    test.slow()
+    await red('B18', async (problems) => {
+      await page.goto('/sim')
+      await stageReady(page)
+      await page.getByRole('slider').first().press('Home')
+      await page.getByRole('button', { name: 'Play' }).click()
+      const value = () => page.getByRole('slider').first().getAttribute('aria-valuenow').then(Number)
+      const setHidden = (hidden: boolean) =>
+        page.evaluate((hidden) => {
+          Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') })
+          Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden })
+          document.dispatchEvent(new Event('visibilitychange'))
+        }, hidden)
+      await page.waitForTimeout(500)
+      await setHidden(true)
+      const before = await value()
+      await page.waitForTimeout(10_000)
+      const after = await value()
+      if (after !== before) problems.push(`hidden for 10 s, the clock moved from ${before} to ${after} min`)
+      await setHidden(false)
+      await page.waitForTimeout(1000)
+      const shown = await value()
+      // About 1 s of play at the default pace (< 30 sim min), not the 10 s it was hidden.
+      if (shown <= after) problems.push('shown again, the clock did not go on')
+      else if (shown - after > 60) problems.push(`shown again, the clock jumped ${shown - after} min in 1 s`)
     })
   })
 

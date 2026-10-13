@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { GATE_ROUTES, SIM_BODY, expectInFirstScreen, expectNoPageScroll, modeFor, onlyIn } from './helpers/gate.ts'
+import { GATE_ROUTES, SIM_BODY, bodySettled, expectInFirstScreen, expectNoPageScroll, modeFor, onlyIn } from './helpers/gate.ts'
 
 // Layout gates. This file runs in the desktop, projector and phone projects; each test says
 // which of them it belongs to.
@@ -34,6 +34,7 @@ for (const route of GATE_ROUTES.firstScreen) {
     test.fixme(!targets, `no first-screen targets listed for ${route.url}`)
     await page.goto(route.url)
     await page.waitForLoadState('networkidle')
+    await bodySettled(page)
     await expectInFirstScreen(page, targets!(page), { mode })
   })
 }

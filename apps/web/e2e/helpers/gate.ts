@@ -138,6 +138,25 @@ export async function expectNoPageScroll(page: Page, { mode = 'enforce' }: { mod
   verdict('no page scroll', mode, problems)
 }
 
+/**
+ * Waits until the body picture is drawn at its settled size: `data-ready` on the 3D body after its
+ * first frame (BodyCanvas waits for a stable box and the fonts), or on the flat body when it is the
+ * one shown. Until then the flat stand-in is swapped for the 3D body, and anything measured on it
+ * can be detached mid-check (T7: the "body has no box" and "leader NaN" flakes). A drawn stage with
+ * no body (the empty state before FP-1) goes on at once; a body never ready, after `timeout`.
+ */
+export async function bodySettled(page: Page, timeout = 15_000) {
+  await page
+    .waitForFunction(
+      () =>
+        !!document.querySelector('[data-body][data-ready]') ||
+        (!!document.querySelector('[data-stage]') && !document.querySelector('[data-body]')),
+      null,
+      { timeout },
+    )
+    .catch(() => undefined)
+}
+
 /** Each named element is visible and wholly inside the first screen, before any scrolling. */
 export async function expectInFirstScreen(page: Page, targets: Record<string, Locator>, { mode = 'enforce' }: { mode?: Mode } = {}) {
   await page.evaluate(() => window.scrollTo(0, 0))
@@ -566,8 +585,8 @@ export const RED_LIST: Record<string, Mode> = {
   B12: 'report',
   B13: 'report',
   B15: 'report',
-  B18: 'report',
-  B19: 'report',
+  B18: 'enforce',
+  B19: 'enforce',
   B20: 'report',
   B21: 'report',
   B22: 'report',
