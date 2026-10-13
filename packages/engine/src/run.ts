@@ -7,7 +7,7 @@
 export { simulate, HUMAN_MODEL, ORGANISM_MODELS, type SimOptions } from './simulate.ts'
 export { HUMAN_MODULES, HUMAN_PROVIDES, PROVIDES, activityModule, gutModule, energyModule, bloodSugarModule } from './modules/index.ts'
 export { ABSORB_RATE_ID, CARBS_OUT, LEFTOVERS_IN_COLON, LEFT_WATER, stomachArrivalMin } from './modules/gut.ts'
-export { ACTIVITY_MET } from './modules/activity.ts'
+export { ACTIVITY_CODES, ACTIVITY_MET, activityProblems } from './modules/activity.ts'
 export { ENERGY_TOTAL } from './modules/energy.ts'
 export { runModules } from './core/module.ts'
 export { buildMoments, buildSignalTable } from './core/table.ts'

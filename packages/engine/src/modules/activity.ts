@@ -11,6 +11,39 @@
  * arrow into the gut or blood glucose (model D6, C3): those modules never read x.activity.met.
  */
 import type { ModelModule } from '../core/module.ts'
+import { ACTIVITY_LIMITS, boutInLimits, sortBouts, type ActivityBout, type ActivityKind } from '../core/activity.ts'
+
+/**
+ * The 2024 Adult Compendium row of each kind (pacompendium.com; V-0 items 1 and 9, V-0b item 1).
+ * Its MET is in params.ts (activity.met). `football` is soccer (15610), not American football (15210).
+ */
+export const ACTIVITY_CODES: { readonly [K in ActivityKind]: string } = {
+  walk: '17190', // walking, 2.8–3.4 mph, level, moderate pace
+  walkBrisk: '17200', // walking, 3.5–3.9 mph, level, brisk
+  run: '12050', // running, 6–6.3 mph (10 min/mile)
+  sitClass: '09065', // sitting in class, general
+  football: '15610', // soccer, casual, general
+  cricket: '15150', // cricket, batting, bowling, fielding
+  badminton: '15030', // badminton, social singles and doubles
+}
+
+/**
+ * What is wrong with a list of bouts, in words (empty = a valid plan): too many, a bout outside the
+ * limits, or two bouts that overlap (one may start the minute the other ends).
+ */
+export function activityProblems(bouts: readonly ActivityBout[]): string[] {
+  const problems: string[] = []
+  if (bouts.length > ACTIVITY_LIMITS.maxBouts) problems.push(`more than ${ACTIVITY_LIMITS.maxBouts} bouts`)
+  for (const b of bouts) if (!boutInLimits(b)) problems.push(`bout ${b.kind}.${b.startMin}.${b.durMin} is outside the limits`)
+  const sorted = sortBouts(bouts)
+  for (let i = 1; i < sorted.length; i++) {
+    const a = sorted[i - 1]!
+    const b = sorted[i]!
+    if (b.startMin < a.startMin + a.durMin)
+      problems.push(`bouts ${a.kind}.${a.startMin}.${a.durMin} and ${b.kind}.${b.startMin}.${b.durMin} overlap`)
+  }
+  return problems
+}
 
 /** MET of each step (internal): 1 at rest. */
 export const ACTIVITY_MET = 'x.activity.met'

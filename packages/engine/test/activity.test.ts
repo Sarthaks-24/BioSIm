@@ -4,12 +4,11 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   ACTIVITY_KINDS,
-  ACTIVITY_KIND_DEFS,
+  PUBLIC_ACTIVITY_KINDS,
   ACTIVE_SIGNAL_IDS,
   PARAMS,
   PROFILES,
   activityKey,
-  activityProblems,
   buildMeal,
   decodeMeal,
   parseFood,
@@ -18,7 +17,7 @@ import {
   type Params,
   type RunResult,
 } from '../src/index.ts'
-import { ENERGY_TOTAL, HUMAN_MODULES, LEFT_WATER, runModules, simulate } from '../src/run.ts'
+import { ACTIVITY_CODES, ENERGY_TOTAL, HUMAN_MODULES, LEFT_WATER, activityProblems, runModules, simulate } from '../src/run.ts'
 import { lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 import { paramsWith } from './modules/ctx.ts'
@@ -61,7 +60,7 @@ const run10: ActivityBout = { kind: 'run', startMin: 240, durMin: 10 }
 describe('the activity plan (core/activity.ts)', () => {
   it('seven kinds; walk, brisk walk and run are offered, the other four stay hidden (V-0 item 9)', () => {
     expect(ACTIVITY_KINDS).toEqual(['walk', 'walkBrisk', 'run', 'sitClass', 'football', 'cricket', 'badminton'])
-    expect(ACTIVITY_KINDS.filter((k) => ACTIVITY_KIND_DEFS[k].public)).toEqual(['walk', 'walkBrisk', 'run'])
+    expect(PUBLIC_ACTIVITY_KINDS).toEqual(['walk', 'walkBrisk', 'run'])
   })
 
   it('≤ 8 bouts, start 0–2880, 5–120 min, whole minutes, no overlap (a bout may start as another ends)', () => {
@@ -103,7 +102,7 @@ describe('activity: Compendium METs and the cost of moving', () => {
         cricket: 4.8,
         badminton: 5.5,
       })
-      expect(Object.fromEntries(ACTIVITY_KINDS.map((k) => [k, ACTIVITY_KIND_DEFS[k].code]))).toEqual({
+      expect(ACTIVITY_CODES).toEqual({
         walk: '17190',
         walkBrisk: '17200',
         run: '12050',
