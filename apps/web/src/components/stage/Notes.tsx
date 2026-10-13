@@ -9,8 +9,8 @@ import { InfoIcon } from '../kit/index.ts'
 
 /**
  * Short notes under the meal bar, only when they apply: the first-visit medical note (until
- * "Got it"), a link from an older or newer version, foods a link named that no longer exist, and
- * a meal over the size the model is good for. The texts are v1's; the newer-version one is new.
+ * "Got it"), a Hindi link while Hindi is paused (R47), a link from an older or newer version, foods
+ * a link named that no longer exist, and a meal over the size the model is good for. The texts are v1's; the newer-version one is new.
  * The "too big" alert for a food being added sits where it is added (food sheet, servings).
  */
 export default function Notes({ run, kept }: { run: Simulation; kept: Simulation | null }) {
@@ -18,10 +18,12 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
   const linkVersion = useRunStore((s) => s.linkModelVersion)
   const unknownOrganism = useRunStore((s) => s.unknownOrganism)
   const dropped = useRunStore((s) => s.droppedFoods)
+  const hindiLater = useRunStore((s) => s.hindiLater)
   const [firstRun, setFirstRun] = useState(() => readPref('medicalNoteSeen') !== '1')
 
   const newer = unknownOrganism !== null || (linkVersion !== null && linkVersion > MODEL_VERSION)
   const notes = [
+    hindiLater && t('sim.hindiLater'),
     newer && t('sim.newerLink'),
     // A link can't be from both a newer and an older version: the newer note wins.
     !newer && linkVersion !== null && linkVersion < MODEL_VERSION && t('sim.oldLink'),

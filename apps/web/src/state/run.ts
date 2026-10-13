@@ -51,6 +51,8 @@ export interface RunState {
   droppedFoods: number
   /** Set when the user tried to make the meal bigger than the cap allows. */
   capBlocked: boolean
+  /** The opened link asked for Hindi, which this build doesn't have (R47): it opened in English, with a note. */
+  hindiLater: boolean
 
   /** Returns false if the food is already there, the meal is full, or it would go over the cap. */
   addFood: (foodId: string) => boolean
@@ -90,6 +92,7 @@ export const INITIAL_RUN = {
   unknownOrganism: null as string | null,
   droppedFoods: 0,
   capBlocked: false,
+  hindiLater: false,
 } satisfies Partial<RunState>
 
 export const useRunStore = create<RunState>((set, get) => ({

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import RichText from '../components/RichText.tsx'
 import { FOODS } from '../data/foods.ts'
-import { addEnglish, LANGUAGES } from '../i18n/index.ts'
+import { addEnglish, HINDI, LANGUAGES } from '../i18n/index.ts'
 import { REPO_URL } from '../lib/site.ts'
 import statsText from 'virtual:lifepeek-en/stats'
 
@@ -143,7 +143,8 @@ export default function Stats() {
   const facts: [string, string][] = [
     [t('stats.modelVersion'), String(MODEL_VERSION)],
     [t('stats.foods'), number(FOODS.length)],
-    [t('stats.languages'), `${number(LANGUAGES.length)} (${t('stats.languageNames')})`],
+    // English only while Hindi is paused (R47).
+    [t('stats.languages'), `${number(LANGUAGES.length)} (${t(HINDI ? 'stats.languageNames' : 'stats.englishOnly')})`],
   ]
   if (stats) {
     const r = stats.lastRelease

@@ -47,12 +47,16 @@ describe('translations', () => {
   const fe = flatten(en)
   const fh = flatten(hi)
 
-  it('Hindi has exactly the English keys', () => {
-    expect([...fh.keys()].sort()).toEqual([...fe.keys()].sort())
+  // While Hindi is paused (R47) a new key may be English only (i18next falls back to English), so
+  // Hindi's keys are a subset of English's, never more. Still to translate when Hindi comes back:
+  // the English keys missing from hi.json (sim.hindiLater and stats.englishOnly show only without Hindi).
+  it('every Hindi key exists in English', () => {
+    expect([...fh.keys()].filter((k) => !fe.has(k))).toEqual([])
   })
 
   it('placeholders and list lengths match', () => {
     for (const [key, value] of fe) {
+      if (!fh.has(key)) continue
       if (typeof value === 'string' && value.startsWith('array:')) expect(fh.get(key), key).toBe(value)
       else expect(placeholders(fh.get(key)), key).toEqual(placeholders(value))
     }
