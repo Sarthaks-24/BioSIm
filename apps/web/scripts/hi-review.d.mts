@@ -1,5 +1,6 @@
 export const REVIEW_FILE: string
 export function flatten(value: unknown, prefix?: string, out?: Map<string, string>): Map<string, string>
+export function readFoodTexts(dir?: string): { en: Map<string, string>; hi: Map<string, string> }
 export function readTexts(): { en: Map<string, string>; hi: Map<string, string> }
 export function syncReview(
   markdown: string,

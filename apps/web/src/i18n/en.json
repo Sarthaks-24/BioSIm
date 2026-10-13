@@ -665,7 +665,11 @@
     "times": "{{n}}×",
     "fasterMore": "{{fast}} leaves the stomach more than {{x}} faster than {{slow}}.",
     "singleMore": "Half of the food energy in {{meal}} takes more than {{time}} to leave the stomach.",
-    "singleWaterMore": "Half of {{meal}} takes more than {{time}} to leave the stomach."
+    "singleWaterMore": "Half of {{meal}} takes more than {{time}} to leave the stomach.",
+    "oblique": {
+      "thisMeal": "this meal",
+      "keptMeal": "the kept meal"
+    }
   },
   "dock": {
     "squeezed": "{{from}} → {{to}} squeezed",
