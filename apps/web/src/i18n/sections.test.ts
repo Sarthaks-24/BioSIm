@@ -12,18 +12,6 @@ import { PAGE_SECTIONS, coreText } from '../../scripts/i18n-sections.mjs'
  * may use it; anywhere else it would show as its raw key until then. Add a file here only when it
  * loads with its section; otherwise keep the key in the core (PAGE_SECTIONS).
  */
-/** v1's simulator and the parts only it draws (pages/Simulator.tsx imports their sections), until WP-20. */
-const V1 = [
-  'pages/Simulator.tsx',
-  'components/Legend.tsx',
-  'components/StagePanel.tsx',
-  'components/charts/SimCharts.tsx',
-  'components/KeyMoments.tsx',
-  'components/Timeline.tsx',
-  'components/LessonView.tsx',
-  'components/MealPicker.tsx',
-  'components/Verdict.tsx',
-]
 const ALLOWED: Record<string, readonly string[]> = {
   privacy: ['pages/Privacy.tsx'],
   about: ['pages/About.tsx'],
@@ -31,18 +19,13 @@ const ALLOWED: Record<string, readonly string[]> = {
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
   feedback: ['components/FeedbackDialog.tsx', 'pages/About.tsx'],
-  verdict: V1,
-  charts: V1,
-  events: V1,
-  lesson: [...V1, 'pages/Science.tsx'],
+  lesson: ['pages/Science.tsx'],
   // The panel, and the files that only name limits for it: it reads them when it draws (HowWeKnow's Say).
   limits: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx', 'registry/human/systems.ts'],
-  stages: [...V1, 'components/stage/StageMore.tsx'],
+  stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
   table: ['components/graphs/StripTable.tsx'],
   signals: ['components/graphs/HowWeKnowPanel.tsx'],
-  // state/sim.ts: `mealLabel`, called only by v1's files.
-  sim: [...V1, 'state/sim.ts'],
 }
 
 function flatKeys(obj: unknown, prefix = '', out = new Set<string>()): Set<string> {

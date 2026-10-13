@@ -4,8 +4,8 @@
 // whole). At build time this Vite plugin cuts it in two: the app's entry imports
 // `virtual:lifepeek-en/core` (every key except the sections below), and each of those pages imports
 // its own section, `virtual:lifepeek-en/<section>`, and adds it with `addEnglish` (i18n/index.ts).
-// The page texts (privacy, about, teaching, science, stats, the report form and v1's simulator) are
-// a third of en.json; before, every visitor of the stage downloaded them. Hindi is one file fetched on demand, so it is not split.
+// The page texts (privacy, about, teaching, science, stats and the report form) are a large part
+// of en.json; before, every visitor of the stage downloaded them. Hindi is one file fetched on demand, so it is not split.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -15,12 +15,12 @@ const PREFIX = 'virtual:lifepeek-en/'
 
 /**
  * Sections only their own pages read, and the keys of them that every page needs (the footer's).
- * The v1 simulator's own texts (verdict, charts, events, lesson) go with it until WP-20 deletes it.
+ * `lesson` is only the Science page's "Meal" column now (v1's step-by-step tab went in WP-20).
  * A kept key `*.leaf` keeps that leaf of every entry (`stages.<stage>.short`); `**!leaf` keeps
  * everything but that leaf, at any depth (`signals.<…>.desc`).
  *
  * The stage's own parts that load on first use bring their text too (FIX-C, size budget): the
- * "How we know" panel its known limits, "More" (and v1) the full stage texts (the stage keeps
+ * "How we know" panel its known limits, "More" the full stage texts (the stage keeps
  * only the organs' names), the tables and keys sheet theirs (the stage keeps the buttons' names
  * and the announcer's kept value), and the panel the signals' long descriptions.
  */
@@ -31,36 +31,12 @@ export const PAGE_SECTIONS = {
   science: [],
   stats: ['footer'],
   feedback: [],
-  verdict: [],
-  charts: [],
-  events: [],
   lesson: [],
   limits: [],
   stages: ['*.name', '*.short'],
   keys: ['button'],
   table: ['showFor', 'keptValue'],
   signals: ['**!desc'],
-  // v1's simulator keeps its own texts; the stage keeps the ones it shares (until WP-20).
-  sim: [
-    'title',
-    'addFood',
-    'servings',
-    'remove',
-    'play',
-    'pause',
-    'timeline',
-    'share',
-    'shareCopied',
-    'shareManual',
-    'reportError',
-    'noWebgl',
-    'oldLink',
-    'newerLink',
-    'afterEating',
-    'capReached',
-    'unknownFoods',
-    'overCap',
-  ],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

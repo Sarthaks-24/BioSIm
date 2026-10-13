@@ -7,7 +7,7 @@ import { EVENTS, SIGNALS } from '../src/index.ts'
 /**
  * Old plan names never come back. Every `retired` name in src/core/catalog.ts is banned as a
  * quoted string ('x', "x" or `x`) in the .ts/.tsx source of apps/ and packages/.
- * i18n JSON is not scanned: v1's `events.*` keys live there until WP-20.
+ * i18n JSON is not scanned (v1's `events.*` keys left it in WP-20).
  */
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -17,27 +17,10 @@ const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.vite', 'test-re
 const ALWAYS_EXEMPT = ['packages/engine/src/core/catalog.ts', 'packages/engine/test/retired-names.test.ts']
 
 /**
- * The v1 files that still use v1 keys such as 'events.peak', 'events.half', 'events.exit' and
- * 'events.absorbed'. WP-20 deletes these files and empties this list. Do NOT add new files here:
- * new code uses the catalog IDs.
+ * The v1 files that used v1 keys such as 'events.peak' and 'events.half' were skipped here until
+ * WP-20 deleted them. The list stays empty. Do NOT add files here: new code uses the catalog IDs.
  */
-const V1_EXEMPT = [
-  'apps/web/src/components/KeyMoments.tsx',
-  'apps/web/src/components/Timeline.tsx',
-  'apps/web/src/components/LessonView.tsx',
-  'apps/web/src/components/StagePanel.tsx',
-  'apps/web/src/components/Verdict.tsx',
-  'apps/web/src/components/MealPicker.tsx',
-  'apps/web/src/components/charts/SimCharts.tsx',
-  'apps/web/src/components/charts/LineChart.tsx',
-  'apps/web/src/lib/verdict.ts',
-  'apps/web/src/lib/verdict.test.ts',
-  'apps/web/src/state/sim.ts',
-  'apps/web/src/hooks/useSimulation.ts',
-  'apps/web/src/hooks/useUrlSync.ts',
-  'apps/web/src/hooks/useClock.ts',
-  'apps/web/src/pages/Simulator.tsx',
-]
+const V1_EXEMPT: readonly string[] = []
 
 const RETIRED = [...Object.values(SIGNALS), ...Object.values(EVENTS)].flatMap((row) => row.retired)
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -70,8 +53,9 @@ describe('retired names', () => {
     expect(files.map(rel)).toContain('apps/web/src/main.tsx')
   })
 
-  it('every exempt file still exists (WP-20 removes the v1 entries when it deletes the files)', () => {
+  it('every exempt file still exists, and no v1 file is exempt any more (WP-20)', () => {
     for (const f of [...ALWAYS_EXEMPT, ...V1_EXEMPT]) expect(existsSync(join(ROOT, f)), f).toBe(true)
+    expect(V1_EXEMPT).toEqual([])
   })
 
   it('no quoted retired name appears outside the exempt files', () => {

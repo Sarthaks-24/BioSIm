@@ -79,8 +79,8 @@ const FEMININE = ['इडली', 'दाल', 'रोटी']
 
 /**
  * Every Hindi template that is given a food or meal name, and its placeholders that take one.
- * Left out on purpose: `sim.*` and `verdict.*` of the v1 screen get only "भोजन A/B" or "यह भोजन"
- * (`sim.overCap`'s "बड़ा है" agrees with भोजन); `dock.keptMarker` gets a moment's name.
+ * Left out on purpose: `sim.overCap` gets only "यह भोजन" (its "बड़ा है" agrees with भोजन);
+ * `dock.keptMarker` gets a moment's name.
  */
 const TEMPLATES: Record<string, readonly string[]> = {
   'summary.single': ['meal'],
@@ -92,7 +92,6 @@ const TEMPLATES: Record<string, readonly string[]> = {
   'summary.fasterMore': ['fast', 'slow'],
   'summary.reasonDrink': ['fast'],
   'summary.reasonCalories': ['slow'],
-  'verdict.faster': ['fast', 'slow'],
   'keep.tag': ['meal'],
   'keep.remove': ['meal'],
   'now.kept': ['meal'],

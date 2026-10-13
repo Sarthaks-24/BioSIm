@@ -14,7 +14,7 @@
  *   - Style: dotted, system first, camelCase segments. Organ and view IDs use the same style.
  * Tests: test/catalog.test.ts (shape), test/contract.test.ts (golden coverage, from WP-04),
  *        test/retired-names.test.ts (old plan names never come back)
- *        (skips the v1 files in `V1_EXEMPT` until WP-20 empties it; see 03 WP-02).
+ *        (WP-20 deleted the v1 files it used to skip; its `V1_EXEMPT` list is empty).
  */
 import type { SourceId } from './sources.ts'
 import type { OrganismId } from './organism.ts'
