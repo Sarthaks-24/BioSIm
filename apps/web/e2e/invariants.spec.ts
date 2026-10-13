@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { PSEUDO_LANG, pseudoText } from '../src/i18n/pseudo.ts'
 import {
+  bodySettled,
   checkBody,
   expectInFirstScreen,
   expectNoPageScroll,
@@ -31,12 +32,30 @@ export const INVARIANTS: Record<string, Mode> = {
   'tablet-portrait': 'report',
   landscape: 'report',
   'projector-sizes': 'report',
-  'storage-blocked': 'report',
+  'storage-blocked': 'enforce',
   'webkit-desktop': 'report',
   'webkit-phone': 'report',
   'firefox-desktop': 'report',
 }
 const PROJECTS = Object.keys(INVARIANTS)
+
+/**
+ * T7 (FP-7) enforces storage-blocked for what it fixed: the stage loads, plays, switches language and
+ * logs nothing. The checks a later T-step's FP fixes report there until that step lands and
+ * removes its line (they fail on every project before it).
+ */
+const LATER: Record<string, string> = {
+  'empty state': 'T2 (FP-1)',
+  overlaps: 'T5 (FP-3)',
+  overlays: 'T4 (FP-5)',
+  links: 'T8 (FP-6)',
+}
+/** The running project's mode for a check (`owner`: its LATER line, if a later T-step owns it). */
+function modeOf(owner?: keyof typeof LATER): Mode {
+  const project = test.info().project.name
+  if (project === 'storage-blocked' && owner && LATER[owner]) return 'report'
+  return INVARIANTS[project]!
+}
 
 const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60'
 /** The stage states of FP-1's acceptance: default, kept, first visit, empty, 6 foods. */
@@ -126,8 +145,8 @@ async function open(page: Page, url: string, firstVisit = false): Promise<string
     await page.goto(url)
     await page.locator('[data-stage]').waitFor()
     await page.waitForLoadState('networkidle')
-    // The body picture (none in the empty state, before FP-1); 3D replaces the flat one once loaded.
-    await page.waitForTimeout(300)
+    // The body picture, drawn at its settled size (none in the empty state, before FP-1).
+    await bodySettled(page, 10_000)
     await page.evaluate(() => document.fonts.ready)
   })
   return problem && `${url} did not open: ${problem}`
@@ -137,7 +156,7 @@ for (const l of ['en', 'pseudo'] as const) {
   for (const [state, { url, firstVisit }] of Object.entries(STATES)) {
     test(`body visible, ${state}, ${l}`, async ({ page }) => {
       const project = test.info().project.name
-      const mode = INVARIANTS[project]!
+      const mode = modeOf(state === 'empty' ? 'empty state' : undefined)
       for (const [w, h] of SIZES[project] ?? [[0, 0]]) {
         if (w) await page.setViewportSize({ width: w, height: h })
         const size = page.viewportSize()!
@@ -167,7 +186,7 @@ for (const l of ['en', 'pseudo'] as const) {
 }
 
 test('no overlapping controls', async ({ page }) => {
-  const mode = INVARIANTS[test.info().project.name]!
+  const mode = modeOf('overlaps')
   for (const url of ['/sim', lang(KEPT, 'pseudo')]) {
     const failed = await open(page, url)
     verdict(`no overlapping controls ${url}`, mode, failed ? [failed] : await interactiveOverlaps(page))
@@ -175,7 +194,7 @@ test('no overlapping controls', async ({ page }) => {
 })
 
 test('overlays stay on screen, below the header, with a Close button; Esc closes them', async ({ page }) => {
-  const mode = INVARIANTS[test.info().project.name]!
+  const mode = modeOf('overlays')
   const failed = await open(page, KEPT)
   if (failed) return verdict('overlays', mode, [failed])
   const overlays = [
@@ -230,7 +249,8 @@ test('Back closes a sheet and keeps the meal', async ({ page }) => {
 })
 
 test('no console errors or warnings', async ({ page }) => {
-  const mode = INVARIANTS[test.info().project.name]!
+  // B19 is fixed (T7): enforced on every project, whatever the project's mode (allow-list: CONSOLE_ALLOW).
+  const mode: Mode = 'enforce'
   const console = watchConsole(page)
   const failed = await open(page, KEPT)
   if (failed) return verdict('console', mode, [failed, ...new Set(console.problems())])
@@ -254,7 +274,7 @@ test('the stage plays', async ({ page }) => {
 
 test('links survive a load (round trip)', async ({ page }) => {
   onlyIn('phone-small', 'storage-blocked')
-  const mode = INVARIANTS[test.info().project.name]!
+  const mode = modeOf('links')
   await returningVisitor(page)
   const roundTrip = async (links: string[]) => {
     const problems: string[] = []
@@ -278,6 +298,22 @@ test('links survive a load (round trip)', async ({ page }) => {
   verdict('link round trip', mode, await roundTrip(links))
   // A Hindi link (R47: Hindi is paused; it opens in English, with a note): report only, whatever the project's mode.
   verdict('link round trip (lang=hi)', 'report', await roundTrip(['/sim?v=2&a=cola:1&lang=hi']))
+})
+
+test('switches language with storage blocked', async ({ page }) => {
+  onlyIn('storage-blocked')
+  const mode = INVARIANTS[test.info().project.name]!
+  await gateSteps('switches language', mode, async () => {
+    const failed = await open(page, '/sim')
+    if (failed) throw new Error(failed)
+    const toHindi = page.getByRole('button', { name: /Switch to Hindi/ }).filter({ visible: true })
+    test.skip(!(await toHindi.count()), 'Hindi is paused (R47): this build has no language switch')
+    await toHindi.first().click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
+    // And back (the button's words are in the other language).
+    await page.locator('header button:has(> span[lang="en"])').filter({ visible: true }).first().click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  })
 })
 
 test('every dvh has a vh fallback before it', async ({ page }) => {

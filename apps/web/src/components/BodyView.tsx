@@ -17,7 +17,7 @@ export default function BodyView({ sim, label }: { sim: Simulation; label: strin
   const flat = <FlatBody sim={sim} label={label} />
   const fallback = (
     <>
-      {flat}
+      <FlatBody sim={sim} label={label} final />
       <NoWebglNote />
     </>
   )
@@ -27,7 +27,7 @@ export default function BodyView({ sim, label }: { sim: Simulation; label: strin
     ) : (
       <WebGLBoundary fallback={fallback}>
         <Suspense fallback={flat}>
-          <BodyCanvas sim={sim} label={label} onContextLost={() => setLost(true)} />
+          <BodyCanvas sim={sim} label={label} onContextLost={() => setLost(true)} placeholder={flat} />
         </Suspense>
       </WebGLBoundary>
     )

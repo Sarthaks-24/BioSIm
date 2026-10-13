@@ -322,7 +322,11 @@ export default function SignalStrip({
 
       <div className="grid min-h-0 flex-1 grid-cols-[var(--plot-gutter)_minmax(0,1fr)]">
         {/* y labels: top, before eating (or middle), bottom. Text, so it never stretches. */}
-        <div aria-hidden="true" data-axis="y" className="tabular relative border-r-2 border-ink-muted/70 text-caption whitespace-nowrap text-ink-muted">
+        <div
+          aria-hidden="true"
+          data-axis="y"
+          className="tabular relative border-r-2 border-ink-muted/70 text-caption whitespace-nowrap text-ink-muted"
+        >
           {ticks.map((v, i) => {
             const fromTop = (domain[1] - v) / (domain[1] - domain[0])
             // The middle label only when a short graph (projector, phone) leaves room between the others.
@@ -347,12 +351,15 @@ export default function SignalStrip({
           className="relative min-h-12 cursor-ew-resize lg:min-h-0 touch-pan-y border-b-2 border-ink-muted/70 select-none"
         >
           {paths && (
+            // Sized by the plot's box, its drawing by the last measured size: the same, except for
+            // the frame or two before a new size is measured (a busy WebKit, B17), when the lines
+            // stretch to the box instead of being drawn past it, over the next graph.
             <svg
               role="img"
               aria-label={t('graph.label', { name })}
-              width={width}
-              height={height}
-              className="absolute inset-0 overflow-visible"
+              viewBox={`0 0 ${width} ${height}`}
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full overflow-visible"
             >
               {/*
                * After 6 h the time axis is squeezed (42 h in the last 40 % of the width), so a fall
@@ -420,7 +427,9 @@ export default function SignalStrip({
                 strokeLinejoin="round"
                 strokeLinecap="round"
               />
-              {paths.marker && <circle cx={paths.marker.x} cy={paths.marker.y} r="5" className="fill-surface-raised stroke-ink" strokeWidth="2" />}
+              {paths.marker && (
+                <circle cx={paths.marker.x} cy={paths.marker.y} r="5" className="fill-surface-raised stroke-ink" strokeWidth="2" />
+              )}
             </svg>
           )}
           {paths?.marker && marker && (

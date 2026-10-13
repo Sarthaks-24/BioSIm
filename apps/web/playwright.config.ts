@@ -32,6 +32,8 @@ const projects: PlaywrightTestConfig['projects'] = [
       'now.spec.ts',
       'keyboard.spec.ts',
       'teach.spec.ts',
+      'update.spec.ts',
+      'loading.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -79,6 +81,10 @@ const projects: PlaywrightTestConfig['projects'] = [
     dependencies: ['desktop', 'projector', 'phone', 'reduced', 'nowebgl', ...trackA().map((p) => p.name!)],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
+  // A 40-minute lesson on one page, for leaks (T7, report): nightly only, it takes the whole run.
+  ...(process.env.E2E_NIGHTLY
+    ? [{ name: 'lesson', testMatch: ['lesson.spec.ts'], timeout: 60 * 60_000, use: { viewport: desktop, launchOptions: webgl } }]
+    : []),
 ]
 
 /**
@@ -112,11 +118,15 @@ function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
     { name: 'storage-blocked', testMatch: invariants, use: { viewport: desktop, serviceWorkers: 'block', launchOptions: webgl } },
     ...(process.env.E2E_ENGINES
       ? [
-          { name: 'webkit-desktop', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['Desktop Safari'], viewport: desktop } },
-          { name: 'webkit-phone', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['iPhone 13'] } },
+          {
+            name: 'webkit-desktop',
+            testMatch: [...invariants, 'smoke.spec.ts', 'update.spec.ts', 'loading.spec.ts'],
+            use: { ...devices['Desktop Safari'], viewport: desktop },
+          },
+          { name: 'webkit-phone', testMatch: [...invariants, 'smoke.spec.ts', 'loading.spec.ts'], use: { ...devices['iPhone 13'] } },
           {
             name: 'firefox-desktop',
-            testMatch: [...invariants, 'smoke.spec.ts'],
+            testMatch: [...invariants, 'smoke.spec.ts', 'update.spec.ts', 'loading.spec.ts'],
             use: { ...devices['Desktop Firefox'], viewport: desktop },
           },
         ]

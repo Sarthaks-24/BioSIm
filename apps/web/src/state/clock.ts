@@ -42,8 +42,14 @@ export const clampSimMin = (min: number) => (Number.isFinite(min) ? Math.min(Mat
 
 /** Moments closer than this to "now" count as "here", so stepping never lands on the same one twice. */
 const SAME_MOMENT_MIN = 0.5
-/** Longest real time one frame may advance, so a tab coming back from the background doesn't jump hours. */
-export const MAX_FRAME_SEC = 0.1
+/**
+ * A gap between two frames longer than this (seconds) is not playing time: the laptop slept, or
+ * the tab was hidden without saying so. It moves the clock not at all. Anything shorter counts in
+ * full, so a cheap phone drawing 1–2 frames a second still plays at the pace the Teach page
+ * promises (B18: a 0.1 s cap per frame made a 4 fps phone run at 40 %). A tab that says it is
+ * hidden (`visibilitychange`) stops the loop instead (startMealClock).
+ */
+export const MAX_GAP_SEC = 5
 
 export const useClock = create<ClockState>()(
   subscribeWithSelector((set, get) => ({
@@ -77,8 +83,10 @@ export const useClock = create<ClockState>()(
     advance: (dtSec) => {
       const { simMin, pace, playing } = get()
       if (!playing) return
-      // Steady speed along the BAR (lib/time.ts), so the busy first 6 hours get 60 % of the playing time.
-      const next = posToTime(timeToPos(simMin) + Math.min(Math.max(dtSec, 0), MAX_FRAME_SEC) / pace)
+      // Real elapsed time (a gap over MAX_GAP_SEC: none). Steady speed along the BAR (lib/time.ts),
+      // so the busy first 6 hours get 60 % of the playing time.
+      const dt = dtSec > MAX_GAP_SEC || !(dtSec > 0) ? 0 : dtSec
+      const next = posToTime(timeToPos(simMin) + dt / pace)
       if (next >= HORIZON_MIN) set({ simMin: HORIZON_MIN, playing: false })
       else set({ simMin: next })
     },
@@ -97,8 +105,10 @@ const browserFrames: FrameSource = {
 
 /**
  * The playback loop: one requestAnimationFrame chain that runs only while `playing` is true and
- * asks for no frames at all while paused. Returns a function that stops it.
- * Outside React so it can be tested with a fake frame source.
+ * the page is shown, and asks for no frames at all while paused. Each frame advances the clock by
+ * the real time since the one before (B18). A hidden page stops the loop and keeps `playing`:
+ * shown again, it goes on from where it was, without a jump. Returns a function that stops it.
+ * Outside React so it can be tested with fake frames (and a fake `document`).
  */
 export function startMealClock(frames: FrameSource = browserFrames): () => void {
   let id: number | null = null
@@ -111,7 +121,7 @@ export function startMealClock(frames: FrameSource = browserFrames): () => void 
     id = useClock.getState().playing ? frames.request(tick) : null
   }
   const start = () => {
-    if (id !== null) return
+    if (id !== null || document.hidden) return
     // The first frame only sets the start time (advances 0), so Play never jumps.
     id = frames.request((now) => {
       last = now
@@ -129,8 +139,11 @@ export function startMealClock(frames: FrameSource = browserFrames): () => void 
     (s) => s.playing,
     (playing) => (playing ? start() : stop()),
   )
+  const shown = () => (document.hidden || !useClock.getState().playing ? stop() : start())
+  document.addEventListener('visibilitychange', shown)
   return () => {
     unsubscribe()
+    document.removeEventListener('visibilitychange', shown)
     stop()
   }
 }

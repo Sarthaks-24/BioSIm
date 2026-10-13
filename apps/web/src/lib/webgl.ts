@@ -6,9 +6,10 @@ export function hasWebGL(): boolean {
   try {
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    // The probe's context is left for the garbage collector. Losing it on purpose
+    // (WEBGL_lose_context) printed "WebGL context was lost" in Firefox on every load (B19); it is
+    // one context, made once, and browsers allow 16.
     cached = !!gl
-    // Release the probe context straight away; browsers allow only a few at once.
-    gl?.getExtension('WEBGL_lose_context')?.loseContext()
   } catch {
     cached = false
   }
