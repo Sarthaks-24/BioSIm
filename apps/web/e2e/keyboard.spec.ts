@@ -254,13 +254,15 @@ test.describe('the timeline’s key moments (council round 2, FP-3)', () => {
     await page.goto('/sim?v=2&a=cola:1,water:1&b=cola:1')
     await expect(page.locator('[data-marker~="kept"]').first()).toBeAttached()
     await page.locator('[data-marker~="run"]').first().click()
-    // The list (U7): every moment of the target, each a button.
+    // The list (U7): every moment of the target, each a button, in time order (both meals' first
+    // hour here: cola's moments fall within a finger's width of each other on the bar).
     const list = page.getByRole('dialog', { name: 'Key moments' })
-    await expect(list.getByRole('listitem')).toHaveText([
-      /^Half the energy has left the stomach, \d+ min$/,
-      /^Blood sugar highest, \d+ min$/,
-      /^Kept: Half the energy has left the stomach, \d+ min$/,
-      /^Kept: Blood sugar highest, \d+ min$/,
+    await expect(list.getByRole('listitem').nth(3)).toBeVisible()
+    expect((await list.getByRole('listitem').allTextContents()).slice(0, 4)).toEqual([
+      expect.stringMatching(/^Half the energy has left the stomach, \d+ min$/),
+      expect.stringMatching(/^Blood sugar highest, \d+ min$/),
+      expect.stringMatching(/^Kept: Half the energy has left the stomach, \d+ min$/),
+      expect.stringMatching(/^Kept: Blood sugar highest, \d+ min$/),
     ])
     await page.keyboard.press('Escape')
     await expect(list).toBeHidden()

@@ -45,7 +45,13 @@ export default function Dock({ label, play, clock, pace, tools, children }: Prop
           <div className="tabular text-clock-sm font-extrabold lg:text-clock">{clock}</div>
           {pace}
         </div>
-        {tools && <div className="max-lg:[&>*]:h-(--lane) max-lg:[&>*]:min-h-0">{tools}</div>}
+        {/*
+         * Phones: under Play, at the bottom of the lane's row, as tall as Play leaves it (Play is
+         * 3 rem, centred on the 44 px band and overflowing it a little, more in Hindi's larger rem).
+         */}
+        {tools && (
+          <div className="max-lg:flex max-lg:self-end max-lg:[&>*]:h-[calc(var(--lane)+22px-1.5rem)] max-lg:[&>*]:min-h-0">{tools}</div>
+        )}
       </div>
       <div className="col-start-2 row-span-2 row-start-1 min-w-0 lg:flex lg:h-full lg:items-center lg:border-l lg:border-border lg:pr-4 lg:pl-[calc(1rem+var(--plot-gutter))]">
         <div className="min-w-0 flex-1">{children}</div>
