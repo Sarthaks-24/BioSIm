@@ -1,14 +1,14 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { Simulation } from '@lifepeek/engine'
 import FlatBody from '../flat/FlatBody.tsx'
-import { hasWebGL } from '../lib/webgl.ts'
+import { hasWebGL, sayFlat } from '../lib/webgl.ts'
 
 const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
 
 /**
  * 3D when the device can, the flat diagram otherwise — while the 3D code loads, if WebGL is
- * missing, if it crashes, or if the GPU drops the context. The flat view says why it's showing.
+ * missing, if it crashes, or if the GPU drops the context. When it stands in for good, the stage's
+ * notes say why (stage/Notes.tsx), in a line of their own, not over the body.
  *
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
  */
@@ -18,7 +18,7 @@ export default function BodyView({ sim, label }: { sim: Simulation; label: strin
   const fallback = (
     <>
       <FlatBody sim={sim} label={label} final />
-      <NoWebglNote />
+      <SayFlat />
     </>
   )
   const body =
@@ -39,11 +39,10 @@ export default function BodyView({ sim, label }: { sim: Simulation; label: strin
   )
 }
 
-function NoWebglNote() {
-  const { t } = useTranslation()
-  return (
-    <p className="absolute right-2 bottom-2 left-2 rounded-md bg-surface-raised/90 px-2 py-1 text-xs text-ink-muted">{t('sim.noWebgl')}</p>
-  )
+/** Tells the stage's notes that the flat body stands in for the 3D one (lib/webgl.ts). */
+function SayFlat() {
+  useEffect(sayFlat, [])
+  return null
 }
 
 /** If WebGL fails at runtime (driver bug, shader error), fall back instead of a blank box. */

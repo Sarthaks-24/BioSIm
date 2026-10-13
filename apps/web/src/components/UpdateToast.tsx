@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { useTranslation } from 'react-i18next'
 import { registerSW } from 'virtual:pwa-register'
@@ -70,21 +70,47 @@ function show(reload: () => void) {
 /**
  * The note: a status message (read out once, it takes no focus away from the lesson), with its two
  * buttons in the Tab order at the end of the page. A light card in the bottom right corner (no wider
- * than a phone's screen), above everything else. Its place and shadow are inline styles and its
- * classes are ones the first paint already has, so it adds nothing to the page's CSS (size budget).
+ * than a phone's screen), above everything else, but never over the stage's clock dock (FP-5, B16):
+ * where the dock is in the window, the note sits under it if it fits there, else just above it.
+ * Its place and shadow are inline styles and its classes are ones the first paint already has, so
+ * it adds nothing to the page's CSS (size budget).
  */
 const BOX: React.CSSProperties = {
   position: 'fixed',
   right: '1rem',
-  bottom: '1rem',
   zIndex: 60,
   maxWidth: 'min(28rem, calc(100vw - 2rem))',
   boxShadow: '0 4px 16px rgb(20 33 61 / 0.25)',
+}
+/** Room between the note and the window's bottom edge, or the dock (px). */
+const EDGE = 16
+
+/** How far up from the window's bottom the note sits: clear of the dock (components/kit/Dock.tsx). */
+function lift(note: HTMLElement | null): number {
+  const dock = document.querySelector('[data-dock]')?.getBoundingClientRect()
+  const vh = window.innerHeight
+  if (!dock || !note || dock.bottom <= 0 || dock.top >= vh) return EDGE
+  // Under the dock if it fits there (the dock scrolled up a phone's page), else above it.
+  return vh - dock.bottom >= note.offsetHeight + 2 * EDGE ? EDGE : vh - dock.top + EDGE / 2
 }
 
 function UpdateToast({ onReload, onLater }: { onReload: () => void; onLater: () => void }) {
   const { t } = useTranslation()
   const box = useRef<HTMLDivElement>(null)
+  const [bottom, setBottom] = useState(EDGE)
+  // Kept clear of the dock as the page scrolls, the window changes size, or the stage opens.
+  useEffect(() => {
+    const place = () => setBottom(lift(box.current))
+    place()
+    const every = setInterval(place, 500)
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      clearInterval(every)
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [])
   // Escape is "Later" while one of its buttons has the focus.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -98,7 +124,7 @@ function UpdateToast({ onReload, onLater }: { onReload: () => void; onLater: () 
       ref={box}
       role="status"
       data-update-toast=""
-      style={BOX}
+      style={{ ...BOX, bottom }}
       className="flex flex-col gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 text-ink sm:flex-row sm:items-start"
     >
       <p className="min-w-0 flex-1 font-semibold">{t('update.ready')}</p>
