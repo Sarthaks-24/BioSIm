@@ -36,7 +36,7 @@ export default function KeepButton() {
         aria-describedby={why}
         aria-keyshortcuts={keysOff ? undefined : 'P'}
         onClick={() => !off && useRunStore.getState().keep()}
-        className="aria-disabled:cursor-not-allowed aria-disabled:text-ink-2 aria-disabled:hover:bg-transparent"
+        className="aria-disabled:cursor-not-allowed aria-disabled:text-ink-muted aria-disabled:hover:bg-transparent"
       />
       <span id={why} hidden>
         {reason}

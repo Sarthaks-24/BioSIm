@@ -17,7 +17,7 @@ export default function ParticleKey({ run, className = '' }: { run: Simulation; 
     <ul
       aria-label={t('stage.particles')}
       data-particle-key=""
-      className={`flex gap-x-3 gap-y-0.5 text-caption text-ink-2 ${className}`}
+      className={`flex gap-x-3 gap-y-0.5 text-caption text-ink-muted ${className}`}
     >
       {kinds.map((k) => (
         <li key={k} className="flex shrink-0 items-center gap-1">

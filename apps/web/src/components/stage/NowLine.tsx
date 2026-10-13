@@ -122,7 +122,7 @@ function WhereRow({ w, open, onToggle, pillRef, panelId, drink }: PillProps) {
       <More
         {...control}
         tabIndex={live ? -1 : undefined}
-        className="-my-1 inline-flex items-center gap-0.5 rounded-control px-1.5 py-1 align-baseline font-semibold whitespace-nowrap text-ink underline decoration-ink/30 underline-offset-4 hover:bg-sunk2 hover:decoration-ink max-lg:hidden"
+        className="-my-1 inline-flex items-center gap-0.5 rounded-control px-1.5 py-1 align-baseline font-semibold whitespace-nowrap text-ink underline decoration-ink/30 underline-offset-4 hover:bg-surface-sunk hover:decoration-ink max-lg:hidden"
       >
         {t('now.more')}
         <Chevron open={open} />
@@ -193,7 +193,7 @@ export function NowLine({
         </p>
       </div>
       {/* What the organ does: a quieter second row where there is room (not on a phone or the projector). */}
-      <div className="grid text-ink-2 max-lg:hidden in-data-[contrast=high]:hidden">
+      <div className="grid text-ink-muted max-lg:hidden in-data-[contrast=high]:hidden">
         {jobs.map((s) => (
           <p key={s} aria-hidden="true" className={`invisible ${cell}`}>
             {jobText(s, drink, t)}
@@ -205,7 +205,7 @@ export function NowLine({
       </div>
       {keptWhere && keptItems && (
         // The kept meal at the same minute (council round 2: the body no longer said where it was).
-        <p data-now-kept={keptWhere.stage} className="mt-0.5 flex items-baseline gap-2 text-caption text-ink-2 lg:text-control">
+        <p data-now-kept={keptWhere.stage} className="mt-0.5 flex items-baseline gap-2 text-caption text-ink-muted lg:text-control">
           <span className="relative -top-[0.2em] shrink-0">
             <LineSwatch kept />
           </span>

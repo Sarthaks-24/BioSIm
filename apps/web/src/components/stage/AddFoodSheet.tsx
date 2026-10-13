@@ -50,7 +50,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
         title={full ? t('stage.mealFull', { n: MAX_ITEMS }) : undefined}
         // Next to food chips "+" alone is clear (the words stay its name); with no food yet the
         // words show, as the first thing to do.
-        className={`bg-sunk2/60 ${compact ? 'w-11 justify-center px-0 lg:w-9 [&>span]:sr-only' : ''}`}
+        className={`bg-surface-sunk/60 ${compact ? 'w-11 justify-center px-0 lg:w-9 [&>span]:sr-only' : ''}`}
       />
       {open && (
         <LoadBoundary

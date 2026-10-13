@@ -209,7 +209,7 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
         ref={kneeLabel}
         aria-hidden="true"
         data-knee=""
-        className="absolute top-0 text-caption whitespace-nowrap text-ink-2 max-sm:hidden"
+        className="absolute top-0 text-caption whitespace-nowrap text-ink-muted max-sm:hidden"
         style={kneeLeft ? { right: `calc(${(1 - KNEE_FRACTION) * 100}% + 0.375rem)` } : { left: `calc(${knee} + 0.375rem)` }}
       >
         {t('dock.squeezed', { from: formatDuration(KNEE_MIN, t), to: formatDuration(HORIZON_MIN, t) })}
@@ -217,7 +217,7 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
       <span
         aria-hidden="true"
         data-knee-line=""
-        className="absolute top-1 bottom-4 border-l-2 border-dotted border-ink-2/60"
+        className="absolute top-1 bottom-4 border-l-2 border-dotted border-ink-muted/60"
         style={{ left: knee }}
       />
       {/* The bar's row: the slider, with the moments laid over it (they are its siblings: a slider's children are not read out). */}
@@ -250,7 +250,7 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
           <span aria-hidden="true" ref={thumb} className="pointer-events-none absolute inset-0 will-change-transform">
             <span
               data-thumb=""
-              className="absolute top-1/2 left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-shelf bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
+              className="absolute top-1/2 left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface-raised bg-ink shadow-[0_1px_3px_rgb(20_33_61/0.4)] group-focus-visible:outline-3 group-focus-visible:outline-offset-2 group-focus-visible:outline-ink group-active:scale-110"
             />
           </span>
         </div>
@@ -263,7 +263,7 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
           key={m}
           aria-hidden="true"
           data-tick=""
-          className={`tabular absolute bottom-0 text-caption leading-none whitespace-nowrap text-ink-2 ${
+          className={`tabular absolute bottom-0 text-caption leading-none whitespace-nowrap text-ink-muted ${
             m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
           } ${TICK_FITS[m] ?? ''}`}
           style={{ left: `${timeToPos(m) * 100}%` }}
@@ -393,7 +393,7 @@ function MarkerLane({
                 key={x.id}
                 aria-hidden="true"
                 data-range=""
-                className={`absolute top-0 h-2 -translate-y-1/2 rounded-full ${kept ? 'border border-kept/70 bg-shelf' : 'bg-run/30'}`}
+                className={`absolute top-0 h-2 -translate-y-1/2 rounded-full ${kept ? 'border border-kept/70 bg-surface-raised' : 'bg-run/30'}`}
                 style={{
                   left: `calc(${posAt(x.low) - posAt(m.atMin)} * var(--track-w))`,
                   width: `calc(${posAt(x.high) - posAt(x.low)} * var(--track-w))`,
@@ -433,7 +433,7 @@ function MarkerLane({
               data-dot=""
               data-count={m.moments.length > 1 ? m.moments.length : undefined}
               className={`tabular pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 leading-none font-bold ${
-                kept ? 'top-1/3 border-kept bg-shelf text-kept' : 'top-2/3 border-shelf bg-run text-white'
+                kept ? 'top-1/3 border-kept bg-surface-raised text-kept' : 'top-2/3 border-surface-raised bg-run text-white'
               } ${m.moments.length > 1 ? 'h-4 min-w-4 px-0.5 text-[0.625rem]' : kept ? 'size-2.5' : 'size-3.5'}`}
               style={{ left: m.before }}
             >

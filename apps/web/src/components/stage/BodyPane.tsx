@@ -92,7 +92,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
                       <button
                         type="button"
                         onClick={() => useRunStore.getState().addFood(id)}
-                        className="flex min-h-11 items-center gap-1.5 rounded-control bg-sunk2 px-3 text-control font-semibold hover:bg-sunk2-hover lg:min-h-9"
+                        className="flex min-h-11 items-center gap-1.5 rounded-control bg-surface-sunk px-3 text-control font-semibold hover:bg-surface-sunk-hover lg:min-h-9"
                       >
                         <span aria-hidden="true">{food.emoji}</span>
                         {localized(food.name, i18n.language)}
@@ -115,7 +115,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             {!open && (
               <PlayPrompt
                 meal={meal}
-                className="-ml-1.5 max-w-full rounded-[1.125rem] bg-shelf/90 px-3 py-1 text-control leading-6 shadow-[0_1px_3px_rgb(20_33_61/0.18)]"
+                className="-ml-1.5 max-w-full rounded-[1.125rem] bg-surface-raised/90 px-3 py-1 text-control leading-6 shadow-[0_1px_3px_rgb(20_33_61/0.18)]"
               />
             )}
           </div>
@@ -126,7 +126,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             key={attempt}
             onFail={stageMore.reset}
             fallback={
-              <section id={panelId} aria-label={t('now.more')} className={`${MORE_BOX} z-20 border border-rule2 bg-shelf p-4`}>
+              <section id={panelId} aria-label={t('now.more')} className={`${MORE_BOX} z-20 border border-border bg-surface-raised p-4`}>
                 <LoadFailed onRetry={() => setAttempt((a) => a + 1)} attempt={attempt} />
               </section>
             }
@@ -155,7 +155,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
       {hasMeal && (
         // From 1024 px up one band under the body. On a phone the band dissolves (`contents`): the
         // Now line is the pane's first row, above the body, and the summary its last.
-        <div className="max-lg:contents lg:flex lg:flex-col lg:gap-1.5 lg:border-t lg:border-rule2 lg:px-4 lg:py-2.5">
+        <div className="max-lg:contents lg:flex lg:flex-col lg:gap-1.5 lg:border-t lg:border-border lg:px-4 lg:py-2.5">
           <NowLine
             run={run}
             kept={kept}
@@ -165,7 +165,7 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             panelId={panelId}
             className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
           />
-          <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-rule2 max-lg:px-3 max-lg:py-1" />
+          <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
         </div>
       )}
     </section>

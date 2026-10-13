@@ -76,6 +76,9 @@ test.describe('with numbers', () => {
     await expect(table.getByRole('row', { name: /3 Aug/ })).toContainText('0')
     await expect(table.getByRole('row', { name: /this week/ })).toContainText('12 Oct')
     await expect(mistakes.getByText('Updated 12 Oct 2026.')).toBeVisible()
+    // The table is as wide as the boxes above it (FP-10, one page shell).
+    const width = async (l: typeof table) => Math.round((await l.boundingBox())!.width)
+    expect(await width(table)).toBe(await width(mistakes.locator('dl').first()))
     await expect(page.getByRole('region', { name: 'This version' }).getByText('v1.0.0')).toBeVisible()
     expect(elsewhere()).toEqual([])
   })

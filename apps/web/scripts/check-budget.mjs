@@ -70,6 +70,10 @@
 //   FIX-H (2026-10-13): Hindi's font (Noto Sans Devanagari, 6 woff2 files) only in a Hindi build
 //   (i18n/devanagari.css), and the English texts that named Hindi swapped for English-only ones
 //   (scripts/i18n-sections.mjs): precache 1871.1 → 1730.4 KB, /sim 188.2 → 188.0 KB, Home 144.8 → 144.5 KB.
+//   T1 / FP-10 (2026-10-13): one token set (longer semantic class names: surface-raised for shelf,
+//   ink-muted for ink-2) and PageShell, which the not-found page in the entry chunk uses:
+//   /sim 187.955 → 188.045 KB on main with FIX-H (+0.09; ledger row +0.1 against a planned −0.1),
+//   Home 144.55 → 144.62 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

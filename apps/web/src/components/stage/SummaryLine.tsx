@@ -48,7 +48,7 @@ export default function SummaryLine({ run, kept, className = '' }: { run: Simula
         <strong data-summary-headline="" className="block font-semibold sm:text-lead">
           <Headline summary={summary} />
         </strong>
-        {summary.reason && <span className="mt-0.5 block text-ink-2 max-sm:hidden">{summary.reason}</span>}
+        {summary.reason && <span className="mt-0.5 block text-ink-muted max-sm:hidden">{summary.reason}</span>}
       </span>
     </p>
   )

@@ -42,9 +42,9 @@ export default function StageMore({
         e.stopPropagation()
         onClose()
       }}
-      className={`z-20 flex flex-col overflow-hidden border border-rule2 bg-shelf shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)] ${className}`}
+      className={`z-20 flex flex-col overflow-hidden border border-border bg-surface-raised shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)] ${className}`}
     >
-      <div className="flex items-start gap-2 border-b border-rule2 py-2 pr-1.5 pl-4">
+      <div className="flex items-start gap-2 border-b border-border py-2 pr-1.5 pl-4">
         <h3
           ref={heading}
           id={`${id}-title`}
@@ -59,7 +59,7 @@ export default function StageMore({
           onClick={onClose}
           aria-label={t('stage.close')}
           title={t('stage.close')}
-          className="grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:size-9"
+          className="grid size-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-surface-sunk hover:text-ink lg:size-9"
         >
           <CloseIcon />
         </button>
@@ -69,15 +69,15 @@ export default function StageMore({
         <p className="max-w-[60ch]">{t(`stages.${stage}.what`)}</p>
         <dl className="mt-3 flex max-w-[60ch] flex-col gap-3">
           <div>
-            <dt className="text-caption font-semibold text-ink-2">{t('now.chemistry')}</dt>
+            <dt className="text-caption font-semibold text-ink-muted">{t('now.chemistry')}</dt>
             <dd>{t(`stages.${stage}.chemistry`)}</dd>
           </div>
           <div>
-            <dt className="text-caption font-semibold text-ink-2">{t('now.absorbed')}</dt>
+            <dt className="text-caption font-semibold text-ink-muted">{t('now.absorbed')}</dt>
             <dd>{t(`stages.${stage}.absorbed`)}</dd>
           </div>
         </dl>
-        <p className="mt-3 max-w-[60ch] border-t border-rule2 pt-3 text-ink-2">{t(`stages.${stage}.fact`)}</p>
+        <p className="mt-3 max-w-[60ch] border-t border-border pt-3 text-ink-muted">{t(`stages.${stage}.fact`)}</p>
       </div>
     </section>
   )

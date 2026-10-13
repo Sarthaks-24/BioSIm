@@ -73,11 +73,11 @@ export default function StripTable({
         ? t('dock.usually', { time: formatDuration(m.atMin, t), low: formatDuration(m.low, t), high: formatDuration(m.high, t) })
         : formatDuration(m.atMin, t)
 
-  const th = 'px-2 py-1.5 text-left align-bottom text-caption font-semibold text-ink-2'
+  const th = 'px-2 py-1.5 text-left align-bottom text-caption font-semibold text-ink-muted'
   const td = 'tabular px-2 py-1.5 whitespace-nowrap'
   return (
     <Sheet title={t('table.title')} wide>
-      {!current && <p className="text-ink-2">{t('stage.empty')}</p>}
+      {!current && <p className="text-ink-muted">{t('stage.empty')}</p>}
       {slots.length > 1 && (
         <Segmented
           label={t('stage.graphs')}
@@ -96,10 +96,10 @@ export default function StripTable({
           <table data-strip-table={current.id} className="w-full border-collapse">
             <caption className="mb-2 text-left">
               <span className="block font-semibold">{graphName(signals)}</span>
-              <span className="block max-w-[65ch] text-ink-2">{stripDescription(signals[0]!, run, kept, keptName, t, lang)}</span>
+              <span className="block max-w-[65ch] text-ink-muted">{stripDescription(signals[0]!, run, kept, keptName, t, lang)}</span>
             </caption>
             <thead>
-              <tr className="border-b-2 border-rule2">
+              <tr className="border-b-2 border-border">
                 <th scope="col" className={th}>
                   {t('table.time')}
                 </th>
@@ -112,12 +112,12 @@ export default function StripTable({
             </thead>
             <tbody>
               {tableTimes(run.horizonMin).map((min) => (
-                <tr key={min} className="border-b border-rule2/60 last:border-0">
+                <tr key={min} className="border-b border-border/60 last:border-0">
                   <th scope="row" className={`${td} text-left font-semibold`}>
                     {formatDuration(min, t)}
                   </th>
                   {cols.map((c, i) => (
-                    <td key={i} className={`${td} ${c.kind === 'run' ? 'text-ink' : 'text-ink-2'}`}>
+                    <td key={i} className={`${td} ${c.kind === 'run' ? 'text-ink' : 'text-ink-muted'}`}>
                       {cell(c, min)}
                     </td>
                   ))}
@@ -132,7 +132,7 @@ export default function StripTable({
           <table data-moments-table="" className="w-full border-collapse">
             <caption className="mb-2 text-left font-semibold">{t('table.moments')}</caption>
             <thead>
-              <tr className="border-b-2 border-rule2">
+              <tr className="border-b-2 border-border">
                 <th scope="col" className={th}>
                   {t('table.moment')}
                 </th>
@@ -148,12 +148,12 @@ export default function StripTable({
             </thead>
             <tbody>
               {moments.map((m) => (
-                <tr key={m.id} className="border-b border-rule2/60 last:border-0">
+                <tr key={m.id} className="border-b border-border/60 last:border-0">
                   <th scope="row" className="px-2 py-1.5 text-left font-semibold">
                     {t(momentName(m))}
                   </th>
                   <td className="tabular px-2 py-1.5 text-ink">{when(m.run)}</td>
-                  {kept && <td className="tabular px-2 py-1.5 text-ink-2">{when(m.kept)}</td>}
+                  {kept && <td className="tabular px-2 py-1.5 text-ink-muted">{when(m.kept)}</td>}
                 </tr>
               ))}
             </tbody>

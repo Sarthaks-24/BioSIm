@@ -39,7 +39,7 @@ export default function HowWeKnow({ title, ...panel }: PanelProps & { title?: st
         onFocus={prefetch}
         onClick={() => setOpen((o) => !o)}
         // 44 px to touch on a phone; 28 px from 1024 px up, pulled into the header line so it adds no height.
-        className="-my-2 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink aria-expanded:bg-sunk2 aria-expanded:text-ink lg:-my-1 lg:size-7"
+        className="-my-2 grid size-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-surface-sunk hover:text-ink aria-expanded:bg-surface-sunk aria-expanded:text-ink lg:-my-1 lg:size-7"
       >
         <InfoIcon />
       </button>

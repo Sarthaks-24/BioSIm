@@ -32,28 +32,28 @@ export const ORGAN_COLOR: Record<StageId, string> = {
 export const INK = '#14213d'
 
 /**
- * v2 surface and text tokens per theme (plan-ui-ux §3.2), mirroring styles.css: `normal` is the
- * @theme block, `projector` is what html[data-contrast='high'] ends up with. `ink` and `ink2` are
- * the names every page shares (--color-ink, --color-ink-2); the rest are the new v2 names.
+ * The surface, rule and text tokens per theme (FP-10), mirroring styles.css: `normal` is the
+ * @theme block, `projector` is what html[data-contrast='high'] ends up with. Keys are the CSS
+ * names in camelCase (surfacePage = --color-surface-page).
  */
 export const THEME = {
   normal: {
-    paper2: '#eef3f1',
-    shelf: '#f8fbfa',
-    sunk2: '#e1e9e6',
-    rule2: '#c3d0cc',
+    surfacePage: '#eef3f1',
+    surfaceRaised: '#f8fbfa',
+    surfaceSunk: '#e1e9e6',
+    border: '#c3d0cc',
     grid: '#dce6e2',
     ink: '#14213d',
-    ink2: '#46536e',
+    inkMuted: '#46536e',
   },
   projector: {
-    paper2: '#ffffff',
-    shelf: '#ffffff',
-    sunk2: '#e6e6e6',
-    rule2: '#4f5d6b',
+    surfacePage: '#ffffff',
+    surfaceRaised: '#ffffff',
+    surfaceSunk: '#e6e6e6',
+    border: '#4f5d6b',
     grid: '#b8c2cc',
     ink: '#000000',
-    ink2: '#1d2433',
+    inkMuted: '#1d2433',
   },
 } as const satisfies Record<string, Record<string, string>>
 

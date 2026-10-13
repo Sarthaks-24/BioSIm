@@ -69,7 +69,7 @@ async function stage(viewport, deviceScaleFactor, url) {
   // The page keeps its stylesheet (fonts and colour tokens); only the body is replaced.
   await page.evaluate((shot) => {
     document.body.innerHTML = `
-      <div style="position:relative;width:1200px;height:630px;overflow:hidden;background:var(--color-paper2,#eef3f1);color:var(--color-ink,#14213d)">
+      <div style="position:relative;width:1200px;height:630px;overflow:hidden;background:var(--color-surface-page,#eef3f1);color:var(--color-ink,#14213d)">
         <div style="position:absolute;left:64px;top:0;bottom:0;width:380px;display:flex;flex-direction:column;justify-content:center;gap:22px">
           <div style="display:flex;align-items:center;gap:16px">
             <svg width="64" height="64" viewBox="0 0 32 32" aria-hidden="true">
@@ -79,7 +79,7 @@ async function stage(viewport, deviceScaleFactor, url) {
             <span style="font-size:72px;font-weight:800;letter-spacing:-0.03em;line-height:1">LifePeek</span>
           </div>
           <p style="margin:0;font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-0.01em">Peek inside living things</p>
-          <p style="margin:0;font-size:24px;line-height:1.35;color:var(--color-ink-2,#46536e)">Watch a meal travel through the body, and see what it does to blood sugar and energy.</p>
+          <p style="margin:0;font-size:24px;line-height:1.35;color:var(--color-ink-muted,#46536e)">Watch a meal travel through the body, and see what it does to blood sugar and energy.</p>
         </div>
         <img src="data:image/png;base64,${shot}" alt="" style="position:absolute;left:480px;top:70px;width:960px;height:600px;border-radius:14px;border:1px solid #c3d0cc;box-shadow:0 18px 40px -12px rgb(20 33 61 / 0.35)" />
       </div>`

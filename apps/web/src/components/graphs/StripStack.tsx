@@ -165,7 +165,7 @@ export function RunStrip({ slot, series, run, kept, runName, keptName, profile, 
         </span>
       }
       // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).
-      footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-2" /> : undefined}
+      footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-muted" /> : undefined}
     />
   )
 }
@@ -185,7 +185,7 @@ function TableButton({ slot, name }: { slot: string; name: string }) {
       aria-haspopup="dialog"
       onClick={() => useSheet.getState().open({ kind: 'table', slot })}
       // The size of the ⓘ beside it: 44 px to touch on a phone, 28 px in the header line from 1024 px up.
-      className="-my-2 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:-my-1 lg:size-7"
+      className="-my-2 grid size-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-surface-sunk hover:text-ink lg:-my-1 lg:size-7"
     >
       <TableIcon />
     </button>

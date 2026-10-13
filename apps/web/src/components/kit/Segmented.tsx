@@ -37,8 +37,8 @@ export default function Segmented<T extends string>({ label, options, value, onC
             onClick={() => onChange(o.id)}
             className={`relative min-h-11 shrink-0 rounded-control px-3 pb-1 text-control font-semibold whitespace-nowrap lg:min-h-9 ${
               selected
-                ? 'bg-sunk2 text-ink after:absolute after:inset-x-2 after:bottom-1 after:h-[3px] after:rounded-[2px] after:bg-ink'
-                : 'text-ink-2 hover:bg-sunk2 hover:text-ink'
+                ? 'bg-surface-sunk text-ink after:absolute after:inset-x-2 after:bottom-1 after:h-[3px] after:rounded-[2px] after:bg-ink'
+                : 'text-ink-muted hover:bg-surface-sunk hover:text-ink'
             }`}
           >
             {o.label}

@@ -8,7 +8,9 @@ import { onlyIn, returningVisitor } from './helpers/gate.ts'
 // Baselines are Linux only and are not made on a laptop: the "Visual baselines" workflow
 // (.github/workflows/visual-baselines.yml) runs this with --update-snapshots and uploads the
 // PNGs; the user commits them to e2e/visual.spec.ts-snapshots/. Until then CI does not run this
-// project (a missing baseline fails). FP-10 (T1) runs it with maxDiffPixels 0 for its 0 px commits.
+// project (a missing baseline fails). FP-10 (T1) runs it with maxDiffPixels 0 for its 0 px commits:
+// VISUAL_ZERO=1 makes every shot exact (threshold 0, 0 px) and adds a computed-style snapshot of
+// each page (every visible element's colours), which also catches what a shot can't see.
 
 const VIEWS: Record<string, { width: number; height: number; projector?: boolean; phone?: boolean }> = {
   desktop: { width: 1440, height: 900 },
@@ -17,14 +19,54 @@ const VIEWS: Record<string, { width: number; height: number; projector?: boolean
   phone360: { width: 360, height: 640, phone: true },
 }
 
-const PAGES: { name: string; url: string; views: string[] }[] = [
+const PAGES: { name: string; url: string; views: string[]; menu?: boolean }[] = [
   { name: 'sim-0', url: '/sim?v=2&a=cola:1', views: Object.keys(VIEWS) },
   { name: 'sim-2h-kept', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=120', views: Object.keys(VIEWS) },
   { name: 'sim-2h', url: '/sim?v=2&a=cola:1&t=120', views: ['desktop', 'phone360'] },
   { name: 'sim-0-kept', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0', views: ['projector'] },
   { name: 'home', url: '/', views: ['desktop', 'phone360'] },
-  { name: 'teach', url: '/teach', views: ['desktop'] },
+  { name: 'teach', url: '/teach', views: ['desktop', 'projector'] },
+  // The content pages (FP-10: one token set, one page shell) and the phone menu.
+  { name: 'home-projector', url: '/', views: ['projector'] },
+  { name: 'stats', url: '/stats', views: ['desktop', 'projector', 'phone360'] },
+  { name: 'about', url: '/about', views: ['desktop', 'projector'] },
+  { name: 'science', url: '/science', views: ['desktop'] },
+  { name: 'privacy', url: '/privacy', views: ['projector'] },
+  { name: 'not-found', url: '/no-such-page', views: ['desktop'] },
+  { name: 'menu', url: '/', views: ['phone360'], menu: true },
 ]
+
+const ZERO = !!process.env.VISUAL_ZERO
+
+/**
+ * Every visible element's colours, one line each, in document order (the index is its place in
+ * that order, so a class rename or a wrapper with the same tag keeps the lines comparable).
+ */
+async function colourStyles(page: Page) {
+  return page.evaluate(() => {
+    const props = [
+      'color',
+      'background-color',
+      'border-top-color',
+      'border-right-color',
+      'border-bottom-color',
+      'border-left-color',
+      'outline-color',
+      'fill',
+      'stroke',
+      'box-shadow',
+      'text-shadow',
+      'text-decoration-color',
+    ]
+    const lines: string[] = []
+    document.body.querySelectorAll('*').forEach((el, i) => {
+      const s = getComputedStyle(el)
+      if (s.display === 'none' || s.visibility === 'hidden') return
+      lines.push(`${i} ${el.tagName.toLowerCase()} ${props.map((p) => s.getPropertyValue(p)).join(' | ')}`)
+    })
+    return lines.join('\n')
+  })
+}
 
 async function settle(page: Page) {
   await page.waitForLoadState('networkidle')
@@ -49,12 +91,14 @@ for (const lang of ['en', 'hi'] as const) {
         )
         await page.goto(p.url)
         await settle(page)
+        if (p.menu) await page.locator('header button[aria-controls]').click()
         await expect(page).toHaveScreenshot(`${p.name}-${view}-${lang}.png`, {
           // The dock's clock text (the time a shot is taken at is set by the link; it is masked anyway).
           mask: [page.locator('[data-stage] .text-clock-sm')],
           animations: 'disabled',
-          maxDiffPixelRatio: 0.002,
+          ...(ZERO ? { maxDiffPixels: 0, threshold: 0 } : { maxDiffPixelRatio: 0.002 }),
         })
+        if (ZERO) expect(await colourStyles(page)).toMatchSnapshot(`${p.name}-${view}-${lang}-styles.txt`)
       })
     }
   }

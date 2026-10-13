@@ -79,7 +79,7 @@ function UpdateToast({ onReload, onLater }: { onReload: () => void; onLater: () 
       role="status"
       data-update-toast=""
       style={BOX}
-      className="flex flex-col gap-3 rounded-xl border border-rule bg-panel px-4 py-3 text-ink sm:flex-row sm:items-start"
+      className="flex flex-col gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 text-ink sm:flex-row sm:items-start"
     >
       <p className="min-w-0 flex-1 font-semibold">{t('update.ready')}</p>
       <div className="flex shrink-0 items-center gap-3 self-end sm:self-center">

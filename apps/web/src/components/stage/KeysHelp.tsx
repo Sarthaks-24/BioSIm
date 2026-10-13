@@ -47,14 +47,14 @@ export default function KeysHelp() {
           <button
             type="button"
             onClick={() => useMotion.getState().setChoice(null)}
-            className="-mt-1 self-start rounded-control px-1 text-caption font-semibold text-ink underline underline-offset-4 hover:bg-sunk2"
+            className="-mt-1 self-start rounded-control px-1 text-caption font-semibold text-ink underline underline-offset-4 hover:bg-surface-sunk"
           >
             {t('keys.motionReset')}
           </button>
         )}
         <Switch on={!keysOff} onChange={(on) => useKeys.getState().setOff(!on)} label={t('keys.letters')} help={t('keys.lettersHelp')} />
       </section>
-      <section aria-labelledby="keys-list" className="mt-4 border-t border-rule2 pt-3">
+      <section aria-labelledby="keys-list" className="mt-4 border-t border-border pt-3">
         <h3 id="keys-list" className="font-semibold">
           {t('keys.list')}
         </h3>
@@ -66,7 +66,7 @@ export default function KeysHelp() {
                   <kbd
                     key={k}
                     translate="no"
-                    className="tabular rounded-[4px] border border-rule2 border-b-2 bg-paper2 px-1.5 py-px font-sans text-caption font-semibold whitespace-nowrap text-ink"
+                    className="tabular rounded-[4px] border border-border border-b-2 bg-surface-page px-1.5 py-px font-sans text-caption font-semibold whitespace-nowrap text-ink"
                   >
                     {k}
                   </kbd>
@@ -74,12 +74,12 @@ export default function KeysHelp() {
               </dt>
               <dd className="self-center">
                 {t(row.what)}
-                {row.letter && keysOff && <span className="text-ink-2"> ({t('keys.offNote')})</span>}
+                {row.letter && keysOff && <span className="text-ink-muted"> ({t('keys.offNote')})</span>}
               </dd>
             </div>
           ))}
         </dl>
-        <p className="mt-3 text-caption text-ink-2">{t('keys.typing')}</p>
+        <p className="mt-3 text-caption text-ink-muted">{t('keys.typing')}</p>
       </section>
     </Sheet>
   )
@@ -96,7 +96,7 @@ function Switch({ on, onChange, label, help }: { on: boolean; onChange: (on: boo
         <p id={id} className="font-semibold">
           {label}
         </p>
-        <p id={helpId} className="text-caption text-ink-2">
+        <p id={helpId} className="text-caption text-ink-muted">
           {help}
         </p>
       </div>
@@ -107,7 +107,7 @@ function Switch({ on, onChange, label, help }: { on: boolean; onChange: (on: boo
         aria-labelledby={id}
         aria-describedby={helpId}
         onClick={() => onChange(!on)}
-        className="flex min-h-11 shrink-0 items-center gap-2 rounded-control px-2 font-semibold hover:bg-sunk2 lg:min-h-9"
+        className="flex min-h-11 shrink-0 items-center gap-2 rounded-control px-2 font-semibold hover:bg-surface-sunk lg:min-h-9"
       >
         {/* The state in words for the eye; screen readers hear it from aria-checked. */}
         <span aria-hidden="true" className="min-w-[3ch] text-right text-caption">
@@ -116,10 +116,10 @@ function Switch({ on, onChange, label, help }: { on: boolean; onChange: (on: boo
         {/* The track: filled ink when on, an outline when off; the knob moves too (never colour alone). */}
         <span
           aria-hidden="true"
-          className={`relative h-6 w-10 rounded-full border-2 border-ink transition-colors motion-reduce:transition-none ${on ? 'bg-ink' : 'bg-shelf'}`}
+          className={`relative h-6 w-10 rounded-full border-2 border-ink transition-colors motion-reduce:transition-none ${on ? 'bg-ink' : 'bg-surface-raised'}`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform motion-reduce:transition-none ${on ? 'translate-x-4 bg-shelf' : 'bg-ink'}`}
+            className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform motion-reduce:transition-none ${on ? 'translate-x-4 bg-surface-raised' : 'bg-ink'}`}
           />
         </span>
       </button>

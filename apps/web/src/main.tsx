@@ -22,7 +22,7 @@ function ToSim() {
   return <Navigate replace to={{ pathname: '/sim', search, hash }} />
 }
 
-const page = (el: React.ReactNode) => <Suspense fallback={<p className="p-10 text-center text-ink-2">…</p>}>{el}</Suspense>
+const page = (el: React.ReactNode) => <Suspense fallback={<p className="p-10 text-center text-ink-muted">…</p>}>{el}</Suspense>
 
 const router = createBrowserRouter([
   {

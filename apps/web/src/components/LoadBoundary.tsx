@@ -87,10 +87,11 @@ export class LoadBoundary extends Component<
  */
 export function LoadFailed({ onRetry, attempt = 0, focus = false }: { onRetry: () => void; attempt?: number; focus?: boolean }) {
   const { t } = useTranslation()
-  const button = 'mt-2 min-h-11 rounded-control bg-sunk2 px-3 text-control font-semibold text-ink hover:bg-sunk2-hover lg:min-h-9'
+  const button =
+    'mt-2 min-h-11 rounded-control bg-surface-sunk px-3 text-control font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9'
   return (
     <>
-      <p className="text-caption text-ink-2" role="alert">
+      <p className="text-caption text-ink-muted" role="alert">
         {t('graph.loadFailed')}
       </p>
       <span className="flex flex-wrap gap-2">
@@ -131,7 +132,7 @@ export function LoadFailedBox({
       data-load-failed=""
       style={style}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
-      className={`fixed z-40 flex w-[20rem] max-w-[calc(100vw-1rem)] items-start gap-2 rounded-control border border-rule2 bg-shelf p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)] ${
+      className={`fixed z-40 flex w-[20rem] max-w-[calc(100vw-1rem)] items-start gap-2 rounded-control border border-border bg-surface-raised p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)] ${
         style ? '' : 'bottom-24 left-1/2 -translate-x-1/2'
       }`}
     >
@@ -143,7 +144,7 @@ export function LoadFailedBox({
         onClick={onClose}
         aria-label={t('stage.close')}
         title={t('stage.close')}
-        className="-mt-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:size-9"
+        className="-mt-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-surface-sunk hover:text-ink lg:size-9"
       >
         <CloseIcon />
       </button>
@@ -170,7 +171,7 @@ export function LoadFailedPanel({
     <span className="relative inline-flex">
       {trigger(() => setOpen((o) => !o))}
       {open && (
-        <span className="absolute top-full right-0 z-40 mt-1.5 block w-[20rem] max-w-[calc(100vw-1rem)] rounded-control border border-rule2 bg-shelf p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)]">
+        <span className="absolute top-full right-0 z-40 mt-1.5 block w-[20rem] max-w-[calc(100vw-1rem)] rounded-control border border-border bg-surface-raised p-3 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)]">
           <LoadFailed onRetry={onRetry} attempt={attempt} />
         </span>
       )}

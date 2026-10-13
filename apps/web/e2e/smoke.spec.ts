@@ -114,6 +114,16 @@ test('on a phone the site links are in a menu', async ({ page }) => {
   await expect(nav).toBeHidden()
 })
 
+test('the logo sits in the same place on every page, the stage included (FP-10)', async ({ page }) => {
+  const at: Record<string, number> = {}
+  for (const path of ['/sim', '/', '/teach', '/science', '/about', '/privacy', '/stats', '/no-such-page']) {
+    await page.goto(path)
+    const box = await page.getByRole('banner').getByRole('link', { name: 'LifePeek' }).boundingBox()
+    at[path] = Math.round(box!.x)
+  }
+  expect(new Set(Object.values(at)).size, JSON.stringify(at)).toBe(1)
+})
+
 test('footer shows Made by, Privacy and About on every page', async ({ page }) => {
   for (const path of ['/', '/sim', '/teach', '/science', '/about', '/privacy', '/stats']) {
     await page.goto(path)

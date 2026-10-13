@@ -44,7 +44,7 @@ export default function StatusTag({ status, quiet = false }: { status: SignalSta
     <span
       data-status={status}
       title={t(`status.${status}.help`)}
-      className={`inline-flex shrink-0 items-center whitespace-nowrap text-ink-2 ${quiet ? 'gap-1 text-micro' : 'gap-1.5 text-caption font-semibold'}`}
+      className={`inline-flex shrink-0 items-center whitespace-nowrap text-ink-muted ${quiet ? 'gap-1 text-micro' : 'gap-1.5 text-caption font-semibold'}`}
     >
       <StatusGlyph status={status} size={quiet ? 10 : 12} />
       {t(`status.${status}.label`)}

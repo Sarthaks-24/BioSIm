@@ -43,7 +43,7 @@ test.describe('timeline key moments', () => {
         return { fill: cs.backgroundColor, ring: cs.borderTopColor, y: el.getBoundingClientRect().y }
       })
     const [r, k] = [await look(run), await look(kept)]
-    // Kept: shelf-coloured inside a grey ring (hollow). This meal: filled with its line's blue.
+    // Kept: surface-raised inside a grey ring (hollow). This meal: filled with its line's blue.
     expect(k.fill).not.toBe(r.fill)
     expect(k.fill).toBe(r.ring)
     expect(k.y).toBeGreaterThan(r.y)

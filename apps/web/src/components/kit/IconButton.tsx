@@ -24,7 +24,7 @@ export default function IconButton({ icon, label, iconOnly = false, className = 
       type={type}
       aria-label={iconOnly ? label : undefined}
       title={iconOnly ? label : undefined}
-      className={`inline-flex shrink-0 items-center rounded-control text-control font-semibold whitespace-nowrap text-ink hover:bg-sunk2 disabled:cursor-not-allowed disabled:text-ink-2 disabled:hover:bg-transparent aria-pressed:bg-ink aria-pressed:text-white aria-pressed:hover:bg-ink ${shape} ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-control text-control font-semibold whitespace-nowrap text-ink hover:bg-surface-sunk disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:bg-transparent aria-pressed:bg-ink aria-pressed:text-white aria-pressed:hover:bg-ink ${shape} ${className}`}
       {...rest}
     >
       {icon}

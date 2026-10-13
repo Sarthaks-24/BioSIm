@@ -29,7 +29,7 @@ export default function MealBar() {
   const kept = useRunStore((s) => s.kept)
 
   return (
-    <section aria-labelledby="meal-bar-title" className="border-b border-rule2 bg-paper2">
+    <section aria-labelledby="meal-bar-title" className="border-b border-border bg-surface-page">
       {/*
        * Phone rows: the meal (chips, add, kcal) / the person and Keep / the kept run, if any. From
        * 1024 px up one line while it fits: the meal counts as 20 rem (its name, a chip, + and kcal;
@@ -42,7 +42,7 @@ export default function MealBar() {
        */}
       <div className="@container/bar flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:gap-x-4 lg:px-4">
         <div className="flex min-w-0 basis-full items-center gap-2 lg:max-w-max lg:flex-[1_1_20rem]">
-          <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-2 max-lg:sr-only">
+          <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-muted max-lg:sr-only">
             <LineSwatch />
             {t('stage.meal')}
           </h2>
@@ -144,9 +144,9 @@ function MealChip({ item }: { item: MealItem }) {
       {open && (
         <Popover anchor={anchor} onClose={() => setOpen(false)} label={`${t('sim.servings')}: ${name}`} className="w-[17rem]">
           <p className="text-control font-semibold">
-            {name} <span className="font-normal text-ink-2">({localized(food.serving.label, lang)})</span>
+            {name} <span className="font-normal text-ink-muted">({localized(food.serving.label, lang)})</span>
           </p>
-          <p className="mt-0.5 text-caption text-ink-2">{t('sim.servings')}</p>
+          <p className="mt-0.5 text-caption text-ink-muted">{t('sim.servings')}</p>
           <div role="group" aria-label={t('sim.servings')} className="mt-2 grid grid-cols-5 gap-1">
             {steps.map((n) => (
               <button
@@ -157,7 +157,7 @@ function MealChip({ item }: { item: MealItem }) {
                   if (useRunStore.getState().setServings(item.foodId, n)) setOpen(false)
                   else setBlocked(true)
                 }}
-                className="tabular min-h-11 rounded-control text-control font-semibold hover:bg-sunk2 aria-pressed:bg-ink aria-pressed:text-white lg:min-h-9"
+                className="tabular min-h-11 rounded-control text-control font-semibold hover:bg-surface-sunk aria-pressed:bg-ink aria-pressed:text-white lg:min-h-9"
               >
                 ×{n}
               </button>
@@ -187,7 +187,7 @@ function PersonInfo({ profile }: { profile: Parameters<typeof PersonTag>[0]['pro
       {open && (
         <Popover anchor={anchor} onClose={() => setOpen(false)} label={t(`profiles.${profile}.tag`)} className="w-[20rem]">
           <p className="text-control font-semibold">{t(`profiles.${profile}.tag`)}</p>
-          <p className="mt-1 text-control text-ink-2">{t(`profiles.${profile}.desc`)}</p>
+          <p className="mt-1 text-control text-ink-muted">{t(`profiles.${profile}.desc`)}</p>
           <Link to="/science" className="mt-2 inline-block text-control font-semibold underline underline-offset-2">
             {t('nav.science')}
           </Link>
@@ -260,13 +260,13 @@ function CopyLink() {
       </span>
       {status === 'manual' && (
         <Popover anchor={anchor} onClose={() => setStatus('idle')} label={t('sim.shareManual')} className="w-[22rem]">
-          <label className="block text-caption text-ink-2">
+          <label className="block text-caption text-ink-muted">
             {t('sim.shareManual')}
             <input
               readOnly
               value={window.location.href}
               onFocus={(e) => e.target.select()}
-              className="mt-1 block w-full rounded-control bg-sunk2 px-2 py-1.5 text-control text-ink"
+              className="mt-1 block w-full rounded-control bg-surface-sunk px-2 py-1.5 text-control text-ink"
             />
           </label>
         </Popover>

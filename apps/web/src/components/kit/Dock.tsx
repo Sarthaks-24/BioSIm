@@ -16,7 +16,7 @@ interface Props {
 }
 
 /**
- * The clock dock at the bottom of the stage (layout only: it owns no state). A Shelf surface with
+ * The clock dock at the bottom of the stage (layout only: it owns no state). A raised surface with
  * the one rule above it. It is a normal grid row of the stage, so it reserves its own height and
  * never covers the body; on phones it also pads for the home indicator (safe area). About 72 px tall.
  *
@@ -31,7 +31,7 @@ export default function Dock({ label, play, clock, pace, tools, children }: Prop
   return (
     <section
       aria-label={label}
-      className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 border-t border-rule2 bg-shelf px-3 pt-1.5 pb-[env(safe-area-inset-bottom)] lg:col-span-2 lg:grid-cols-subgrid lg:gap-x-0 lg:p-0"
+      className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 border-t border-border bg-surface-raised px-3 pt-1.5 pb-[env(safe-area-inset-bottom)] lg:col-span-2 lg:grid-cols-subgrid lg:gap-x-0 lg:p-0"
     >
       <div className="contents lg:flex lg:min-h-18 lg:items-center lg:gap-4 lg:px-4">
         <div className="row-span-2">{play}</div>
@@ -42,7 +42,7 @@ export default function Dock({ label, play, clock, pace, tools, children }: Prop
           {tools && <div className="-my-2 ml-auto shrink-0 lg:my-0">{tools}</div>}
         </div>
       </div>
-      <div className="col-start-2 min-w-0 lg:flex lg:h-full lg:items-center lg:border-l lg:border-rule2 lg:pr-4 lg:pl-[calc(1rem+var(--plot-gutter))]">
+      <div className="col-start-2 min-w-0 lg:flex lg:h-full lg:items-center lg:border-l lg:border-border lg:pr-4 lg:pl-[calc(1rem+var(--plot-gutter))]">
         <div className="min-w-0 flex-1">{children}</div>
       </div>
     </section>

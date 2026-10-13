@@ -249,7 +249,7 @@ export default function SignalStrip({
   // Phones show name and value only (plan-graphs §3.5): the totals, like the second line's label,
   // need the room of a desktop column; on a phone "How we know" gives them in its summary.
   const totalSpan = (ref: RefObject<HTMLSpanElement | null>) =>
-    totals && <span ref={ref} data-total="" className="whitespace-nowrap text-ink-2 max-lg:hidden" />
+    totals && <span ref={ref} data-total="" className="whitespace-nowrap text-ink-muted max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
   return (
@@ -294,14 +294,14 @@ export default function SignalStrip({
              * A two-line graph names the line ("Coming in"); beside a kept meal, the meal names it
              * (on a phone the meal bar above does). Alone, the graph's name says what the line is.
              */}
-            <span className={named ? 'text-ink-2' : kept ? 'text-ink-2 max-lg:sr-only' : 'sr-only'}>
+            <span className={named ? 'text-ink-muted' : kept ? 'text-ink-muted max-lg:sr-only' : 'sr-only'}>
               {named ? t(`${meta.i18nKey}.short`) : kept ? runName : `${t('stage.thisMeal')}: `}
             </span>
             <span ref={runText} data-readout="" className="font-semibold whitespace-nowrap text-ink" />
             {totalSpan(runTotal)}
           </span>
           {second && (
-            <span className={`${group} text-ink-2`}>
+            <span className={`${group} text-ink-muted`}>
               <LineSwatch color="var(--color-energy-used)" />
               {t(`${second.series.meta.i18nKey}.short`)}
               <span ref={secondText} data-readout="" className="font-semibold whitespace-nowrap text-ink" />
@@ -310,19 +310,19 @@ export default function SignalStrip({
             </span>
           )}
           {kept && (
-            <span className={`${group} text-ink-2 max-lg:[grid-area:kept]`}>
+            <span className={`${group} text-ink-muted max-lg:[grid-area:kept]`}>
               <LineSwatch kept />
               <span>{t('keep.tag', { meal: keptName })}</span>
               <span ref={keptText} data-readout="" className="font-semibold whitespace-nowrap" />
             </span>
           )}
-          {stretched && <span className="text-ink-2 max-lg:[grid-area:note]">{t('graph.stretched')}</span>}
+          {stretched && <span className="text-ink-muted max-lg:[grid-area:note]">{t('graph.stretched')}</span>}
         </span>
       </figcaption>
 
       <div className="grid min-h-0 flex-1 grid-cols-[var(--plot-gutter)_minmax(0,1fr)]">
         {/* y labels: top, before eating (or middle), bottom. Text, so it never stretches. */}
-        <div aria-hidden="true" data-axis="y" className="tabular relative border-r-2 border-ink-2/70 text-caption whitespace-nowrap text-ink-2">
+        <div aria-hidden="true" data-axis="y" className="tabular relative border-r-2 border-ink-muted/70 text-caption whitespace-nowrap text-ink-muted">
           {ticks.map((v, i) => {
             const fromTop = (domain[1] - v) / (domain[1] - domain[0])
             // The middle label only when a short graph (projector, phone) leaves room between the others.
@@ -344,7 +344,7 @@ export default function SignalStrip({
           onPointerMove={onPointerMove}
           // The y axis line is the label column's right border, so x = 0 is exactly the plot's left
           // edge, where the dock's track starts too.
-          className="relative min-h-12 cursor-ew-resize lg:min-h-0 touch-pan-y border-b-2 border-ink-2/70 select-none"
+          className="relative min-h-12 cursor-ew-resize lg:min-h-0 touch-pan-y border-b-2 border-ink-muted/70 select-none"
         >
           {paths && (
             <svg
@@ -357,7 +357,7 @@ export default function SignalStrip({
               {/*
                * After 6 h the time axis is squeezed (42 h in the last 40 % of the width), so a fall
                * that takes hours there looks like a cliff (council round 2, C2): the squeezed part is
-               * tinted, the same Sunk2 as the dock's track, and the x axis is broken at the knee.
+               * tinted, the same sunk surface as the dock's track, and the x axis is broken at the knee.
                */}
               <rect
                 data-squeezed=""
@@ -365,7 +365,7 @@ export default function SignalStrip({
                 y="0"
                 width={width - xAt(KNEE_MIN, width)}
                 height={height}
-                className="fill-sunk2"
+                className="fill-surface-sunk"
               />
               <g className="stroke-grid" strokeWidth="1" shapeRendering="crispEdges">
                 {ticks.slice(0, -1).map((v, i) => (
@@ -387,15 +387,15 @@ export default function SignalStrip({
                 x2={xAt(KNEE_MIN, width)}
                 y1="0"
                 y2={height}
-                className="stroke-ink-2/60"
+                className="stroke-ink-muted/60"
                 strokeWidth="2"
                 strokeDasharray="0 4"
                 strokeLinecap="round"
               />
               {/* The break in the x axis: two short slashes across it, with a gap of paper between. */}
               <g data-axis-break="" transform={`translate(${xAt(KNEE_MIN, width)} ${height + 1})`}>
-                <rect x="-3.5" y="-3" width="7" height="6" className="fill-shelf" />
-                <path d="M-6.5 4 L-1.5 -4 M1.5 4 L6.5 -4" className="fill-none stroke-ink-2" strokeWidth="1.5" strokeLinecap="round" />
+                <rect x="-3.5" y="-3" width="7" height="6" className="fill-surface-raised" />
+                <path d="M-6.5 4 L-1.5 -4 M1.5 4 L6.5 -4" className="fill-none stroke-ink-muted" strokeWidth="1.5" strokeLinecap="round" />
               </g>
               {paths.band && <path data-line="band" d={paths.band} className="fill-run [fill-opacity:var(--strip-band-opacity)]" />}
               {paths.kept && (
@@ -420,7 +420,7 @@ export default function SignalStrip({
                 strokeLinejoin="round"
                 strokeLinecap="round"
               />
-              {paths.marker && <circle cx={paths.marker.x} cy={paths.marker.y} r="5" className="fill-shelf stroke-ink" strokeWidth="2" />}
+              {paths.marker && <circle cx={paths.marker.x} cy={paths.marker.y} r="5" className="fill-surface-raised stroke-ink" strokeWidth="2" />}
             </svg>
           )}
           {paths?.marker && marker && (
@@ -430,7 +430,7 @@ export default function SignalStrip({
               data-plot-label="marker"
               // Above the playhead (z-10), on a backing of graph paper: the moving line passes behind
               // the words, never through them (council round 2, C5).
-              className="pointer-events-none absolute z-10 w-max max-w-[max(9rem,45%)] rounded-[3px] bg-shelf/85 px-0.5 text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
+              className="pointer-events-none absolute z-10 w-max max-w-[max(9rem,45%)] rounded-[3px] bg-surface-raised/85 px-0.5 text-caption leading-tight font-semibold text-balance text-ink [text-shadow:var(--strip-halo)]"
               style={labelStyle(placed.marker)}
             >
               {marker.label}
@@ -443,7 +443,7 @@ export default function SignalStrip({
               ref={secondLabel}
               aria-hidden="true"
               data-plot-label="second"
-              className="pointer-events-none absolute z-10 w-max max-w-[38%] rounded-[3px] bg-shelf/85 px-0.5 text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
+              className="pointer-events-none absolute z-10 w-max max-w-[38%] rounded-[3px] bg-surface-raised/85 px-0.5 text-right text-caption leading-tight text-balance text-ink [text-shadow:var(--strip-halo)] max-lg:hidden"
               style={labelStyle(placed.second)}
             >
               {second.label}
@@ -456,7 +456,7 @@ export default function SignalStrip({
               ref={unitText}
               aria-hidden="true"
               data-plot-label="unit"
-              className="pointer-events-none absolute z-10 rounded-[3px] bg-shelf/85 px-0.5 text-caption leading-tight text-ink-2"
+              className="pointer-events-none absolute z-10 rounded-[3px] bg-surface-raised/85 px-0.5 text-caption leading-tight text-ink-muted"
               style={labelStyle(placed.unit)}
             >
               {unitLabel(meta, t)}
@@ -467,7 +467,7 @@ export default function SignalStrip({
               ref={squeezeText}
               aria-hidden="true"
               data-plot-label="squeezed"
-              className="pointer-events-none absolute z-10 rounded-[3px] bg-sunk2/85 px-0.5 text-caption leading-tight whitespace-nowrap text-ink-2 max-sm:hidden"
+              className="pointer-events-none absolute z-10 rounded-[3px] bg-surface-sunk/85 px-0.5 text-caption leading-tight whitespace-nowrap text-ink-muted max-sm:hidden"
               style={labelStyle(placed.squeeze)}
             >
               {t('graph.squeezed')}

@@ -140,7 +140,7 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
             visibility="hidden"
             // The projector draws leaders heavier, the active one heaviest (styles.css).
             data-leader={spec.tone}
-            className={spec.tone === 'active' ? 'text-ink' : 'text-ink-2'}
+            className={spec.tone === 'active' ? 'text-ink' : 'text-ink-muted'}
           >
             <line
               stroke="currentColor"
@@ -171,6 +171,6 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
 
 const TONE_CLASS: Record<CalloutSpec['tone'], string> = {
   active: 'bg-ink font-semibold text-white shadow-sm',
-  stage: 'bg-panel/90 text-ink ring-1 ring-ink/15',
-  context: 'bg-panel/80 text-ink-2 ring-1 ring-ink/10',
+  stage: 'bg-surface-raised/90 text-ink ring-1 ring-ink/15',
+  context: 'bg-surface-raised/80 text-ink-muted ring-1 ring-ink/10',
 }
