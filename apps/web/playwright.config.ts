@@ -34,6 +34,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'teach.spec.ts',
       'update.spec.ts',
       'loading.spec.ts',
+      'links.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -59,7 +60,16 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'phone',
-    testMatch: ['gate.spec.ts', 'hindi.spec.ts', 'stage.spec.ts', 'now.spec.ts', 'projector.spec.ts', 'keyboard.spec.ts', 'a11y.spec.ts'],
+    testMatch: [
+      'gate.spec.ts',
+      'hindi.spec.ts',
+      'stage.spec.ts',
+      'now.spec.ts',
+      'projector.spec.ts',
+      'keyboard.spec.ts',
+      'a11y.spec.ts',
+      'links.spec.ts',
+    ],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },
   {
@@ -123,7 +133,11 @@ function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
             testMatch: [...invariants, 'smoke.spec.ts', 'update.spec.ts', 'loading.spec.ts'],
             use: { ...devices['Desktop Safari'], viewport: desktop },
           },
-          { name: 'webkit-phone', testMatch: [...invariants, 'smoke.spec.ts', 'loading.spec.ts'], use: { ...devices['iPhone 13'] } },
+          {
+            name: 'webkit-phone',
+            testMatch: [...invariants, 'smoke.spec.ts', 'loading.spec.ts', 'links.spec.ts'],
+            use: { ...devices['iPhone 13'] },
+          },
           {
             name: 'firefox-desktop',
             testMatch: [...invariants, 'smoke.spec.ts', 'update.spec.ts', 'loading.spec.ts'],

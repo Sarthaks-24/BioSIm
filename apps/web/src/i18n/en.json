@@ -41,14 +41,8 @@
     "shareCopied": "Link copied",
     "reportError": "Report a mistake",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
-    "hindiLater": "Hindi is coming later, so this link opens in English.",
-    "oldLink": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
-    "newerLink": "This link was made with a newer version of LifePeek, so this version may show it differently.",
     "afterEating": "after eating",
-    "shareManual": "Copy this link",
-    "capReached": "That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big.",
-    "unknownFoods": "Some foods in this link no longer exist and were left out ({{count}}).",
-    "overCap": "{{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough."
+    "capReached": "That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big."
   },
   "stages": {
     "mouth": {
@@ -712,5 +706,23 @@
     "ready": "A new version of LifePeek is ready.",
     "reload": "Reload",
     "later": "Later"
+  },
+  "link": {
+    "hindiLater": "Hindi is coming later, so this link opens in English.",
+    "newer": "This link was made with a newer version of LifePeek, so this version may show it differently.",
+    "old": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
+    "unknownFoods": "Some foods in this link no longer exist and were left out ({{count}}).",
+    "newerOffline": "Made with a newer LifePeek. Connect once to update; until then the walk or run is not shown.",
+    "update": "Update now",
+    "servings": "This link asked for {{food}} ×{{asked}}; showing ×{{shown}}, the nearest amount this version allows.",
+    "tooMany": "A meal can have at most {{n}} foods, so these in the link were left out: {{foods}}.",
+    "time": "This link’s time is past the end of the model’s {{hours}} hours, so it opens at the end.",
+    "who": "This version doesn’t know the person this link asks for, so it shows the typical adult.",
+    "layer": "This version doesn’t have the body system this link asks for (“{{asked}}”), so it shows {{shown}}.",
+    "activity": "This version can’t show the walk or run in this link, so it is left out.",
+    "unread": "Part of this link could not be read, so it was left out: {{parts}}.",
+    "overCap": "{{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough.",
+    "shareTo": "Share",
+    "shareManual": "Copy this link"
   }
 }

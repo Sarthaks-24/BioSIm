@@ -178,7 +178,14 @@ test.describe('Android 360×640', () => {
         await page.setViewportSize({ width: w, height: h })
         await page.goto('/sim')
         await stageReady(page)
+        // FP-6: in "⋯" at every width (from 1024 px up on the bar too).
+        await openMealActions(page)
         const share = page.getByRole('button', { name: /^(Copy link|Share)/ }).filter({ visible: true })
+        // The panel loads on first use.
+        await share
+          .first()
+          .waitFor({ timeout: 5_000 })
+          .catch(() => {})
         if (!(await share.count())) problems.push(`${w}×${h}: no Copy link or Share button`)
       }
     })

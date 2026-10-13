@@ -27,6 +27,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   keys: ['components/stage/KeysHelp.tsx'],
   table: ['components/graphs/StripTable.tsx'],
   signals: ['components/graphs/HowWeKnowPanel.tsx'],
+  link: ['components/stage/LinkNotes.tsx', 'lib/linkNotes.ts', 'components/stage/MealActions.tsx'],
 }
 
 function flatKeys(obj: unknown, prefix = '', out = new Set<string>()): Set<string> {
