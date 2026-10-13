@@ -41,10 +41,17 @@ export const INVARIANTS: Record<string, Mode> = {
 const PROJECTS = Object.keys(INVARIANTS)
 /**
  * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project. T2
- * (FP-1) enforces them on phone-small and tablet-portrait; the project's other checks (overlaps,
- * overlays, Back, console, links) belong to other FPs and follow INVARIANTS until those land.
+ * (FP-1) enforces them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
+ * projector-sizes; the project's other checks (overlaps, overlays, Back, console, links) belong
+ * to other FPs and follow INVARIANTS until those land.
  */
-const BODY_VISIBLE: Record<string, Mode> = { ...INVARIANTS, 'phone-small': 'enforce', 'tablet-portrait': 'enforce' }
+const BODY_VISIBLE: Record<string, Mode> = {
+  ...INVARIANTS,
+  'phone-small': 'enforce',
+  'tablet-portrait': 'enforce',
+  landscape: 'enforce',
+  'projector-sizes': 'enforce',
+}
 /**
  * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
  * hour labels apart, the moments' targets and list, Settings on touch). T5 enforces them on every

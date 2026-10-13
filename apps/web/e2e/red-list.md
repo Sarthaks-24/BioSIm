@@ -22,7 +22,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 |---|---|---|---|
 | B1 | body picture 0 px tall at 360×640 and 320×568, EN and HI, ± kept | FP-1 | T2 |
 | B2 | meal bar: 3 rows of controls, 153 px tall, at 320/360/375 | FP-1 | T2 |
-| B3 | body 0 px at 640×360, 844×390, 640×400 (200 % zoom) | FP-2 | T3 |
+| B3 | body 0 px at 640×360, 844×390, 640×400 (200 % zoom) | FP-2 | T3 (enforced; + body visible and no scroll on `landscape`, 4 sizes × 5 states, EN + pseudo-locale) |
 | B4 | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360 | FP-3 | T5 (enforced; + 3 × 10 tap grid and no overlaps on every Chromium project) |
 | B5 | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close | FP-5 | T4 |
 | B6 | Back with the Add food sheet open goes to `about:blank` | FP-6 | T8 |
@@ -31,7 +31,7 @@ Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9
 | B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b (Hindi reports, R47; EN + pseudo-locale enforced) |
 | B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (T6 done) |
 | B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
-| B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 |
+| B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 (enforced, EN and HI; + body visible and no scroll on `projector-sizes`, 3 sizes × 5 states, EN + pseudo-locale) |
 | B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 (Hindi reports, R47; EN + pseudo-locale enforced in invariants.spec.ts) |
 | B15 | 6 foods: 2 of 6 chips wholly visible at 1440, 1 of 6 at 360, no "+n" | FP-1 | T2 |
 | B18 | with 250 ms frames the clock runs at 37 % of its pace (3.7 vs 9.9 sim min/s) | FP-7 | T7 (enforced; + hidden page 10 s) |

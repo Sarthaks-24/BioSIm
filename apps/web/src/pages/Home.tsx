@@ -37,7 +37,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <img src={restingBody} alt={t('stage.bodyResting')} width={290} height={515} className="home-body" />
+        <img src={restingBody} alt={t('stage.bodyResting')} width={290} height={535} className="home-body" />
       </section>
 
       <section aria-labelledby="race" className="home-split border-t border-border py-12">

@@ -10,6 +10,13 @@ import { SIM_BODY, showChip } from './helpers/gate.ts'
 /** The address bar's query, decoded. */
 const params = (page: Page) => new URL(page.url()).searchParams
 
+/** Follows a site link in the header; on a phone (webkit-phone) it is in the menu, opened first. */
+async function siteLink(page: Page, name: string) {
+  const menu = page.getByRole('button', { name: 'Menu' })
+  if (await menu.isVisible()) await menu.click()
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name }).click()
+}
+
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
 
 test('home page leads to the simulator: cola, ready to play', async ({ page }) => {
@@ -84,9 +91,9 @@ test('adding a food updates the link, and leaving and coming back keeps the meal
   await sheet.getByRole('combobox').fill('apple')
   await sheet.getByRole('combobox').press('Enter')
   await expect.poll(() => params(page).get('a')).toBe('water:1,apple:1')
-  await page.getByRole('link', { name: 'For teachers' }).click()
+  await siteLink(page, 'For teachers')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Using LifePeek in class')
-  await page.getByRole('link', { name: 'Simulator' }).click()
+  await siteLink(page, 'Simulator')
   await expect(page.getByRole('img', { name: /^The body, digesting Water/ })).toBeVisible({ timeout: 20_000 })
   await showChip(page, /^Apple, Servings 1$/)
   await expect.poll(() => params(page).get('a')).toBe('water:1,apple:1')

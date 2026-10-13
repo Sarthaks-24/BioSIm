@@ -50,7 +50,8 @@ const LIVER_OUTLINE: [number, number][] = [
   [-0.5, 0.56],
   [-0.72, 0.6],
 ]
-export const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.25 }
+// The `torso` framing; 0.2 over the head (at 3.25), so it never touches the meal bar (FP-2).
+export const VIEW = { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.45 }
 
 /**
  * `final`: this is the body the stage shows (no WebGL, or it failed), not the stand-in while the 3D
