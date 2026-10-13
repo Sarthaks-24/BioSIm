@@ -1,11 +1,29 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { MAX_FRAME_SEC, startMealClock, useClock, type FrameSource } from './clock.ts'
+import { MAX_GAP_SEC, startMealClock, useClock, type FrameSource, type VisibilitySource } from './clock.ts'
 import { DEFAULT_PACE, HORIZON_MIN, KNEE_MIN, timeToPos } from '../lib/time.ts'
 
 const initial = useClock.getState()
 beforeEach(() => useClock.setState(initial, true))
 
 const clock = () => useClock.getState()
+
+/** A page that can be hidden and shown again by hand (visibilitychange). */
+function fakePage() {
+  let hidden = false
+  const listeners = new Set<() => void>()
+  const source: VisibilitySource = {
+    hidden: () => hidden,
+    watch: (cb) => {
+      listeners.add(cb)
+      return () => void listeners.delete(cb)
+    },
+  }
+  const set = (h: boolean) => {
+    hidden = h
+    for (const cb of listeners) cb()
+  }
+  return { source, hide: () => set(true), show: () => set(false) }
+}
 
 /** A hand-cranked requestAnimationFrame: frames run only when the test calls `frame(ms)`. */
 function fakeFrames() {
@@ -139,10 +157,17 @@ describe('meal clock: play and pause', () => {
     expect(clock().simMin).toBeCloseTo(KNEE_MIN, 6)
   })
 
-  it('a long frame (tab in the background) advances at most one short step', () => {
+  it('a slow frame counts in full; a gap over MAX_GAP_SEC (the laptop slept) not at all', () => {
     clock().play()
+    // A 2 GB phone drawing 1–2 frames a second plays at full pace (B18).
+    clock().advance(2)
+    expect(timeToPos(clock().simMin)).toBeCloseTo(2 / DEFAULT_PACE, 9)
+    const at = clock().simMin
+    clock().advance(MAX_GAP_SEC + 0.01)
     clock().advance(30)
-    expect(timeToPos(clock().simMin)).toBeCloseTo(MAX_FRAME_SEC / DEFAULT_PACE, 9)
+    clock().advance(-1)
+    clock().advance(Number.NaN)
+    expect(clock().simMin).toBe(at)
   })
 
   it('does not advance while paused', () => {
@@ -189,6 +214,60 @@ describe('meal clock: playback loop', () => {
     for (let i = 0; i < 10; i++) frames.frame()
     expect(frames.requested).toBe(before)
     expect(clock().simMin).toBe(at)
+    stop()
+  })
+
+  it('keeps real pace with slow frames: 250 ms frames for 3 s move the bar 3 / pace (±1 %)', () => {
+    const frames = fakeFrames()
+    const stop = startMealClock(frames.source)
+    clock().play()
+    frames.frame()
+    for (let i = 0; i < 12; i++) frames.frame(250)
+    const moved = timeToPos(clock().simMin)
+    expect(Math.abs(moved / (3 / DEFAULT_PACE) - 1)).toBeLessThan(0.01)
+    stop()
+  })
+
+  it('a hidden page asks for no frames and does not move; shown again it goes on without a jump', () => {
+    const frames = fakeFrames()
+    const page = fakePage()
+    const stop = startMealClock(frames.source, page.source)
+    clock().play()
+    frames.frame()
+    for (let i = 0; i < 10; i++) frames.frame(100)
+    const at = clock().simMin
+    expect(at).toBeGreaterThan(0)
+
+    page.hide()
+    expect(frames.waiting).toBe(0)
+    // 10 s hidden: nothing asked for, nothing moved, still playing.
+    for (let i = 0; i < 100; i++) frames.frame(100)
+    expect(clock()).toMatchObject({ simMin: at, playing: true })
+
+    page.show()
+    expect(frames.waiting).toBe(1)
+    // The first frame back only notes the time (the 10 s are not played).
+    frames.frame(10_000)
+    expect(clock().simMin).toBe(at)
+    frames.frame(100)
+    expect(timeToPos(clock().simMin)).toBeCloseTo(timeToPos(at) + 0.1 / DEFAULT_PACE, 9)
+    stop()
+  })
+
+  it('Play on a hidden page waits for it to be shown', () => {
+    const frames = fakeFrames()
+    const page = fakePage()
+    page.hide()
+    const stop = startMealClock(frames.source, page.source)
+    clock().play()
+    expect(frames.waiting).toBe(0)
+    page.show()
+    expect(frames.waiting).toBe(1)
+    // Paused while hidden: shown again, still no frames.
+    clock().pause()
+    page.hide()
+    page.show()
+    expect(frames.waiting).toBe(0)
     stop()
   })
 
