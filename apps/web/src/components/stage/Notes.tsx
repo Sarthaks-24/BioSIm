@@ -34,7 +34,7 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
 
   if (!firstRun && notes.length === 0) return null
   return (
-    <div className="border-b border-rule2 bg-shelf px-3 py-1.5 lg:px-4">
+    <div className="border-b border-border bg-surface-raised px-3 py-1.5 lg:px-4">
       <ul className="flex flex-col gap-1">
         {firstRun && (
           // On a phone the card is small (legal/medical-note.md: "a small dismissible card"): its
@@ -43,12 +43,12 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
           // advice" too. In Hindi the whole card took 200 px and left the body almost no room (WP-18).
           <li data-first-run="" className="flex items-start gap-x-3 gap-y-1 lg:flex-wrap lg:items-center">
             <p className="flex min-w-0 flex-1 items-start gap-2 text-caption lg:basis-80 lg:text-control">
-              <span className="mt-px text-ink-2">
+              <span className="mt-px text-ink-muted">
                 <InfoIcon />
               </span>
               <span>
                 <strong className="font-semibold">{t('disclaimer.firstRun.title')}</strong>{' '}
-                <span className="text-ink-2 max-lg:sr-only">{t('disclaimer.firstRun.body')}</span>{' '}
+                <span className="text-ink-muted max-lg:sr-only">{t('disclaimer.firstRun.body')}</span>{' '}
                 <Link to={MEDICAL_HREF} className="font-semibold whitespace-nowrap underline underline-offset-2">
                   {t('disclaimer.more')}
                 </Link>
@@ -68,7 +68,7 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
         )}
         {notes.map((n) => (
           <li key={n} role="note" className="flex items-start gap-2 text-control">
-            <span className="mt-px text-ink-2">
+            <span className="mt-px text-ink-muted">
               <InfoIcon />
             </span>
             {n}

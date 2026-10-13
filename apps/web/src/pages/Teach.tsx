@@ -10,6 +10,7 @@ import { shortMealNames } from '../components/stage/mealText.ts'
 // A file next to the page, never inlined into its code (D-QR: made with qrcode@1.5.4, error level M).
 import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
+import PageShell from '../components/PageShell.tsx'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(teachText)
@@ -48,7 +49,7 @@ const Chevron = () => (
     strokeLinejoin="round"
     aria-hidden="true"
     focusable="false"
-    className="shrink-0 text-ink-2 group-hover:text-ink"
+    className="shrink-0 text-ink-muted group-hover:text-ink"
   >
     <path d="m8 5.5 4.5 4.5L8 14.5" />
   </svg>
@@ -64,26 +65,26 @@ export default function Teach() {
       ? t('home.example', { meal: shortMealNames(l.meal, i18n.language), kept: shortMealNames(l.kept, i18n.language) })
       : shortMealNames(l.meal, i18n.language)
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 leading-relaxed">
-      <h1 className="text-4xl font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
-      <p className="mt-4 text-lg text-ink-2">{t('teach.lead')}</p>
+    <PageShell>
+      <h1 className="text-display font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
+      <p className="mt-4 text-lg text-ink-muted">{t('teach.lead')}</p>
 
-      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.plan')}</h2>
+      <h2 className="mt-10 mb-3 text-h2 font-extrabold">{t('teach.plan')}</h2>
       <ol className="list-decimal space-y-3 pl-6">
         {list('teach.steps').map((s) => (
           <li key={s}>{s}</li>
         ))}
       </ol>
 
-      <h2 className="mt-10 mb-2 text-2xl font-extrabold">{t('teach.lessonsTitle')}</h2>
-      <p className="mb-3 text-ink-2">{t('teach.lessonsLead')}</p>
+      <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.lessonsTitle')}</h2>
+      <p className="mb-3 text-ink-muted">{t('teach.lessonsLead')}</p>
       <ul className="divide-y divide-rule border-y border-rule">
         {LESSONS.map((l) => (
           <li key={l.key}>
             <Link to={presetHref(l)} onClick={(e) => openLesson(e, l)} className={ROW}>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
-                <span className="block text-ink-2">
+                <span className="block text-ink-muted">
                   {meals(l)} ·{' '}
                   {t('teach.opensAt', {
                     time: l.t % 60 === 0 ? t('units.h', { n: l.t / 60 }) : t('units.min', { n: l.t }),
@@ -91,7 +92,7 @@ export default function Teach() {
                   })}
                 </span>
                 {/* What the class should see, where the graph alone could mislead (council round 3). */}
-                {l.key === 'colaFour' && <span className="mt-1 block text-ink-2">{t('teach.lessonNotes.colaFour')}</span>}
+                {l.key === 'colaFour' && <span className="mt-1 block text-ink-muted">{t('teach.lessonNotes.colaFour')}</span>}
               </span>
               <Chevron />
             </Link>
@@ -99,13 +100,13 @@ export default function Teach() {
         ))}
       </ul>
 
-      <h2 className="mt-10 mb-2 text-2xl font-extrabold">{t('teach.questionsTitle')}</h2>
-      <p className="mb-3 text-ink-2">{t('teach.questionsLead')}</p>
+      <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.questionsTitle')}</h2>
+      <p className="mb-3 text-ink-muted">{t('teach.questionsLead')}</p>
       <ol className="divide-y divide-rule border-y border-rule">
         {TASKS.map((q, i) => (
           <li key={q.key}>
             <Link to={presetHref(q)} onClick={openTask} className={ROW}>
-              <span aria-hidden="true" className="tabular w-5 shrink-0 self-start text-lg font-extrabold text-ink-2">
+              <span aria-hidden="true" className="tabular w-5 shrink-0 self-start text-lg font-extrabold text-ink-muted">
                 {i + 1}
               </span>
               <span className="min-w-0 flex-1 font-semibold">{t(`teach.tasks.${q.key}`)}</span>
@@ -117,14 +118,14 @@ export default function Teach() {
       {/* Closed, so a student looking at the page doesn't read them first. */}
       <details className="mt-3 rounded-lg bg-sunk px-4 py-2">
         <summary className="cursor-pointer py-1 font-semibold">{t('teach.answersTitle')}</summary>
-        <ol className="mt-1 mb-2 list-decimal space-y-1 pl-6 text-ink-2">
+        <ol className="mt-1 mb-2 list-decimal space-y-1 pl-6 text-ink-muted">
           {list('teach.answers').map((s) => (
             <li key={s}>{s}</li>
           ))}
         </ol>
       </details>
 
-      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.tipsTitle')}</h2>
+      <h2 className="mt-10 mb-3 text-h2 font-extrabold">{t('teach.tipsTitle')}</h2>
       <ul className="list-disc space-y-2 pl-6">
         {list('teach.tips').map((s) => (
           <li key={s}>{s}</li>
@@ -140,12 +141,12 @@ export default function Teach() {
           </figcaption>
         </figure>
         <div>
-          <h2 id="teach-qr" className="mb-2 text-2xl font-extrabold">
+          <h2 id="teach-qr" className="mb-2 text-h2 font-extrabold">
             {t('teach.qrTitle')}
           </h2>
-          <p className="text-ink-2">{t('teach.qrCaption')}</p>
+          <p className="text-ink-muted">{t('teach.qrCaption')}</p>
         </div>
       </section>
-    </article>
+    </PageShell>
   )
 }

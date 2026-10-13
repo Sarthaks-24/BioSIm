@@ -100,15 +100,16 @@ export default function Layout() {
   // projector switch); from 640 px up the links are a row and the switch sits on the right. On the
   // projector stage the links are hidden from 1024 px up (UI-5), where the stage has its projector
   // size; below that they stay, so a phone or tablet left in projector mode can always leave it.
-  const menuBox = `${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:gap-1 max-sm:border-b max-sm:border-rule max-sm:bg-paper max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'max-sm:hidden'} sm:contents ${fit && projector ? 'lg:hidden' : ''}`
+  const menuBox = `${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:gap-1 max-sm:border-b max-sm:border-rule max-sm:bg-surface-page max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'max-sm:hidden'} sm:contents ${fit && projector ? 'lg:hidden' : ''}`
   // The projector switch in the header: from 640 px up; on the stage only from 1024 px up while it is
   // off (it has no projector size below that), but always while it is on, so it can be turned off.
+  // In the phone menu it is drawn like the link rows above it (FP-10): no outline, filled while on.
   const projectorButton = (inMenu: boolean) => (
     <button
       type="button"
       aria-pressed={projector}
       onClick={() => setProjector(!projector)}
-      className={`${target} w-fit rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${inMenu ? 'sm:hidden' : fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}
+      className={`${target} rounded-full px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'bg-ink text-white' : 'hover:bg-sunk'} ${inMenu ? 'sm:hidden' : `w-fit border ${projector ? 'border-ink' : 'border-rule'} ${fit && !projector ? 'max-lg:hidden' : 'max-sm:hidden'}`}`}
     >
       {t('nav.projector')}
     </button>
@@ -132,12 +133,12 @@ export default function Layout() {
   const extra = fit ? 'in-data-[contrast=high]:hidden' : ''
 
   const footer = (
-    <footer className={`no-print border-t border-rule ${fit ? 'lg:border-rule2 lg:bg-paper2' : ''}`}>
+    <footer className={`no-print border-t border-rule ${fit ? 'lg:border-border lg:bg-surface-page' : ''}`}>
       <div
         className={
           fit
-            ? 'flex flex-col gap-1 px-4 py-2 text-caption text-ink-2 lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-6 lg:py-1.5 in-data-[contrast=high]:text-micro'
-            : 'mx-auto max-w-7xl space-y-3 px-4 py-5 text-sm text-ink-2'
+            ? 'flex flex-col gap-1 px-4 py-2 text-caption text-ink-muted lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-6 lg:py-1.5 in-data-[contrast=high]:text-micro'
+            : 'space-y-3 px-4 py-5 text-sm text-ink-muted'
         }
       >
         <MedicalNote text="short" />
@@ -188,12 +189,11 @@ export default function Layout() {
         <a href="#main" className="sr-only z-50 rounded bg-ink px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
           {t('nav.skip')}
         </a>
-        <header className="no-print relative z-30 border-b border-rule bg-paper/90 backdrop-blur">
-          {/* The stage uses the full width, so its header does too (edges line up with the meal bar).
-              On a phone its two rows of 44 px controls get almost no padding: the body needs the room. */}
-          <div
-            className={`flex flex-wrap items-center gap-x-4 px-4 ${fit ? 'py-0.5 lg:py-1.5' : 'mx-auto max-w-7xl gap-y-1 py-2 lg:py-3'}`}
-          >
+        <header className="no-print relative z-30 border-b border-rule bg-surface-page/90 backdrop-blur">
+          {/* Full width on every page, as on the stage (edges line up with its meal bar), so the logo
+              never moves between pages (FP-10); content pages centre their own column (PageShell).
+              On a phone the stage's two rows of 44 px controls get almost no padding: the body needs the room. */}
+          <div className={`flex flex-wrap items-center gap-x-4 px-4 ${fit ? 'py-0.5 lg:py-1.5' : 'gap-y-1 py-2 lg:py-3'}`}>
             <Link to="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
               <Logo />
               LifePeek

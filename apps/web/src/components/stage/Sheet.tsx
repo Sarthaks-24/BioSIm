@@ -27,9 +27,9 @@ export default function Sheet({ title, children, wide = false }: { title: string
       // that starts inside (selecting text) and ends outside does not (review 15).
       onPointerDown={(e) => (pressedOutside.current = e.target === e.currentTarget)}
       onClick={(e) => pressedOutside.current && e.target === e.currentTarget && dialog.current?.close()}
-      className={`flex-col overflow-hidden border-rule2 bg-shelf p-0 text-ink backdrop:bg-ink/30 open:flex max-lg:inset-x-0 max-lg:top-auto max-lg:bottom-0 max-lg:m-0 max-lg:max-h-[85dvh] max-lg:w-full max-lg:max-w-none max-lg:rounded-t-frame max-lg:border-t max-lg:pb-[env(safe-area-inset-bottom)] lg:m-auto lg:max-h-[min(44rem,calc(100dvh-3rem))] lg:rounded-frame lg:border ${wide ? 'lg:w-[44rem]' : 'lg:w-[32rem]'}`}
+      className={`flex-col overflow-hidden border-border bg-surface-raised p-0 text-ink backdrop:bg-ink/30 open:flex max-lg:inset-x-0 max-lg:top-auto max-lg:bottom-0 max-lg:m-0 max-lg:max-h-[85dvh] max-lg:w-full max-lg:max-w-none max-lg:rounded-t-frame max-lg:border-t max-lg:pb-[env(safe-area-inset-bottom)] lg:m-auto lg:max-h-[min(44rem,calc(100dvh-3rem))] lg:rounded-frame lg:border ${wide ? 'lg:w-[44rem]' : 'lg:w-[32rem]'}`}
     >
-      <div className="flex items-center gap-2 border-b border-rule2 py-1.5 pr-1.5 pl-4">
+      <div className="flex items-center gap-2 border-b border-border py-1.5 pr-1.5 pl-4">
         <h2 id={titleId} className="flex-1 text-title font-extrabold">
           {title}
         </h2>
@@ -38,7 +38,7 @@ export default function Sheet({ title, children, wide = false }: { title: string
           onClick={() => dialog.current?.close()}
           aria-label={t('stage.close')}
           title={t('stage.close')}
-          className="grid size-11 shrink-0 place-items-center rounded-control text-ink-2 hover:bg-sunk2 hover:text-ink lg:size-9"
+          className="grid size-11 shrink-0 place-items-center rounded-control text-ink-muted hover:bg-surface-sunk hover:text-ink lg:size-9"
         >
           <CloseIcon />
         </button>

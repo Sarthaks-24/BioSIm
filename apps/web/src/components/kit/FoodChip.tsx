@@ -32,10 +32,10 @@ export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRe
       <span data-may-shorten="" className="min-w-8 truncate font-semibold">
         {name}
       </span>
-      <span className="tabular shrink-0 text-ink-2">×{servings}</span>
+      <span className="tabular shrink-0 text-ink-muted">×{servings}</span>
     </>
   )
-  const part = 'flex min-h-11 items-center gap-1.5 bg-sunk2 lg:min-h-9'
+  const part = 'flex min-h-11 items-center gap-1.5 bg-surface-sunk lg:min-h-9'
   return (
     <span className="inline-flex max-w-full shrink-0 items-stretch gap-0.5 text-control whitespace-nowrap text-ink">
       {onEdit ? (
@@ -44,7 +44,7 @@ export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRe
           onClick={onEdit}
           aria-expanded={expanded}
           aria-label={`${name}, ${t('sim.servings')} ${servings}`}
-          className={`${part} min-w-0 rounded-l-control pr-1.5 pl-2.5 hover:bg-sunk2-hover`}
+          className={`${part} min-w-0 rounded-l-control pr-1.5 pl-2.5 hover:bg-surface-sunk-hover`}
         >
           {body}
           <ChevronDownIcon />
@@ -57,7 +57,7 @@ export default function FoodChip({ emoji, name, servings, onEdit, expanded, onRe
         onClick={onRemove}
         aria-label={t('sim.remove', { name })}
         title={t('sim.remove', { name })}
-        className={`${part} w-11 shrink-0 justify-center rounded-r-control text-ink-2 hover:bg-sunk2-hover hover:text-ink lg:w-9`}
+        className={`${part} w-11 shrink-0 justify-center rounded-r-control text-ink-muted hover:bg-surface-sunk-hover hover:text-ink lg:w-9`}
       >
         <CloseIcon />
       </button>

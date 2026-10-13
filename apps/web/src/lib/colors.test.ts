@@ -47,13 +47,13 @@ function declarations(selector: string): Record<string, string> {
 
 /** The CSS name of each THEME key. */
 const CSS_NAME: Record<keyof (typeof THEME)['normal'], string> = {
-  paper2: 'surface-page',
-  shelf: 'surface-raised',
-  sunk2: 'surface-sunk',
-  rule2: 'border',
+  surfacePage: 'surface-page',
+  surfaceRaised: 'surface-raised',
+  surfaceSunk: 'surface-sunk',
+  border: 'border',
   grid: 'grid',
   ink: 'ink',
-  ink2: 'ink-muted',
+  inkMuted: 'ink-muted',
 }
 
 const THEMES = Object.keys(THEME) as ThemeName[]
@@ -68,7 +68,7 @@ describe('colour tokens', () => {
     expect(token('large-intestine')).toBe(ORGAN_COLOR.largeIntestine)
   })
 
-  it('v2 tokens match styles.css in the normal and projector themes', () => {
+  it('surface, rule and text tokens match styles.css in the normal and projector themes', () => {
     const normal = declarations('@theme')
     const projector = { ...normal, ...declarations("html[data-contrast='high']") }
     for (const [key, name] of Object.entries(CSS_NAME)) {
@@ -107,12 +107,12 @@ describe('colour checks (ported from the dataviz validator)', () => {
 
 describe.each(THEMES)('%s theme', (name) => {
   const t = THEME[name]
-  const surfaces = { paper2: t.paper2, shelf: t.shelf, sunk2: t.sunk2 }
+  const surfaces = { 'surface-page': t.surfacePage, 'surface-raised': t.surfaceRaised, 'surface-sunk': t.surfaceSunk }
 
   it(`every text and background pair is at least ${TEXT_MIN}:1`, () => {
     const pairsToCheck: [string, string, string][] = []
     for (const [bg, hex] of Object.entries(surfaces)) {
-      pairsToCheck.push([`ink on ${bg}`, t.ink, hex], [`ink-2 on ${bg}`, t.ink2, hex])
+      pairsToCheck.push([`ink on ${bg}`, t.ink, hex], [`ink-muted on ${bg}`, t.inkMuted, hex])
     }
     // Play, the selected nav item and other filled controls: white text on ink.
     pairsToCheck.push(['white on ink', '#ffffff', t.ink])
@@ -122,10 +122,10 @@ describe.each(THEMES)('%s theme', (name) => {
     expect(failing).toEqual([])
   })
 
-  it(`every graph line is at least ${LINE_MIN}:1 on Paper and Shelf`, () => {
+  it(`every graph line is at least ${LINE_MIN}:1 on the page and raised surfaces`, () => {
     const failing: string[] = []
     for (const line of [RUN, KEPT, ENERGY_IN, ENERGY_USED])
-      for (const [bg, hex] of Object.entries({ paper2: t.paper2, shelf: t.shelf }))
+      for (const [bg, hex] of Object.entries({ 'surface-page': t.surfacePage, 'surface-raised': t.surfaceRaised }))
         if (contrast(line, hex) < LINE_MIN) failing.push(`${line} on ${bg} ${fmt(contrast(line, hex))}:1`)
     expect(failing).toEqual([])
   })
@@ -208,7 +208,7 @@ describe('body colours', () => {
   })
 
   it.each(['normal', 'projector'] as const)(`every organ's %s outline is at least ${LINE_MIN}:1 on the page`, (look) => {
-    const page = look === 'projector' ? THEME.projector.paper2 : THEME.normal.paper2
+    const page = look === 'projector' ? THEME.projector.surfacePage : THEME.normal.surfacePage
     const failing = Object.entries(TONE_BY_NAME)
       .map(([name, hex]) => [name, contrast(outlineInk(hex, look), page)] as const)
       .filter(([, c]) => c < LINE_MIN)
@@ -233,7 +233,7 @@ describe('body colours', () => {
         const edge = contrast(PARTICLE_EDGE, tone(organ))
         if (cvd < CVD_MIN && edge < LINE_MIN) failing.push(`${kind} in ${organ}: CVD ${fmt(cvd)}, edge ${fmt(edge)}:1`)
       }
-    for (const name of THEMES) expect(contrast(PARTICLE_EDGE, THEME[name].paper2), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
+    for (const name of THEMES) expect(contrast(PARTICLE_EDGE, THEME[name].surfacePage), `edge on ${name} paper`).toBeGreaterThanOrEqual(TEXT_MIN)
     expect(failing).toEqual([])
   })
 
@@ -244,7 +244,7 @@ describe('body colours', () => {
     return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
   }
   it.each(['normal', 'projector'] as const)(`the flat diagram's %s outline is at least ${LINE_MIN}:1 on the page`, (look) => {
-    const page = look === 'projector' ? THEME.projector.paper2 : THEME.normal.paper2
+    const page = look === 'projector' ? THEME.projector.surfacePage : THEME.normal.surfacePage
     const failing = Object.entries(TONE_BY_NAME)
       .map(([name, hex]) => [name, contrast(flatInk(hex, look), page)] as const)
       .filter(([, c]) => c < LINE_MIN)

@@ -73,9 +73,9 @@ export default function Playhead({ width, height, domain, run, kept, second = nu
       // A 2 px ink line centred on x (hence the -1 px); its dots hang off it.
       className="pointer-events-none absolute inset-y-0 -left-px w-0.5 bg-ink will-change-transform"
     >
-      {kept && <span ref={keptDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-2.5 rounded-full border-2 border-kept bg-shelf" />}
-      {second && <span ref={secondDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-shelf bg-energy-used" />}
-      <span ref={runDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-shelf bg-run" />
+      {kept && <span ref={keptDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-2.5 rounded-full border-2 border-kept bg-surface-raised" />}
+      {second && <span ref={secondDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-surface-raised bg-energy-used" />}
+      <span ref={runDot} className="absolute top-0 left-1/2 -translate-1/2 will-change-transform size-3 rounded-full border-2 border-surface-raised bg-run" />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { FOODS } from '../data/foods.ts'
 import { addEnglish, HINDI, LANGUAGES } from '../i18n/index.ts'
 import { REPO_URL } from '../lib/site.ts'
 import statsText from 'virtual:lifepeek-en/stats'
+import PageShell from '../components/PageShell.tsx'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(statsText)
@@ -95,7 +96,7 @@ function Columns({ values }: { values: number[] }) {
         const r = 1.5
         // Rounded at the top, square on the baseline.
         const d = `M${x},${H}V${H - h + r}Q${x},${H - h} ${x + r},${H - h}H${x + W - r}Q${x + W},${H - h} ${x + W},${H - h + r}V${H}Z`
-        return <path key={i} d={d} fill={i === values.length - 1 ? 'var(--color-ink)' : 'var(--color-ink-2)'} />
+        return <path key={i} d={d} fill={i === values.length - 1 ? 'var(--color-ink)' : 'var(--color-ink-muted)'} />
       })}
     </svg>
   )
@@ -113,10 +114,10 @@ interface TileProps {
 /** One headline number: what it counts, the number, and what it covers. */
 function Tile({ label, value, note, wide, children }: TileProps) {
   return (
-    <div className={`rounded-xl border border-rule bg-panel px-4 py-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
-      <dt className="text-sm font-semibold text-ink-2">{label}</dt>
+    <div className={`rounded-xl border border-rule bg-surface-raised px-4 py-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
+      <dt className="text-sm font-semibold text-ink-muted">{label}</dt>
       <dd className="mt-1 text-4xl font-extrabold tracking-tight">{value}</dd>
-      {note && <dd className="mt-1 text-sm text-ink-2">{note}</dd>}
+      {note && <dd className="mt-1 text-sm text-ink-muted">{note}</dd>}
       {children && <dd>{children}</dd>}
     </div>
   )
@@ -134,7 +135,7 @@ export default function Stats() {
     )
   const number = (n: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(n)
 
-  const h2 = 'mt-10 mb-3 text-2xl font-extrabold'
+  const h2 = 'mt-10 mb-3 text-h2 font-extrabold'
   const link = 'underline underline-offset-2 hover:text-ink'
   const message = 'rounded-xl border border-dashed border-rule px-4 py-3'
   const stats = state.status === 'ready' ? state.stats : null
@@ -152,11 +153,11 @@ export default function Stats() {
   }
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 leading-relaxed">
-      <h1 className="text-4xl font-extrabold tracking-tight">{t('stats.title')}</h1>
-      <p className="mt-4 max-w-[68ch] text-lg text-ink-2">{t('stats.lead')}</p>
+    <PageShell>
+      <h1 className="text-display font-extrabold tracking-tight">{t('stats.title')}</h1>
+      <p className="mt-4 max-w-[68ch] text-lg text-ink-muted">{t('stats.lead')}</p>
 
-      <p className="mt-6 max-w-[68ch] rounded-xl border border-rule bg-panel px-4 py-3 text-lg">
+      <p className="mt-6 max-w-[68ch] rounded-xl border border-rule bg-surface-raised px-4 py-3 text-lg">
         <RichText text={t('stats.noTracking')} />
       </p>
 
@@ -167,7 +168,7 @@ export default function Stats() {
         <p className="max-w-[68ch]">{t('stats.mistakesLead', { weeks })}</p>
 
         <div className="mt-5" role="status">
-          {state.status === 'loading' && <p className="text-ink-2">{t('stats.loading')}</p>}
+          {state.status === 'loading' && <p className="text-ink-muted">{t('stats.loading')}</p>}
           {state.status === 'unavailable' && <p className={message}>{t('stats.unavailable')}</p>}
           {state.status === 'failed' && (
             <div className={`${message} flex flex-wrap items-center gap-x-4 gap-y-2`}>
@@ -201,7 +202,7 @@ export default function Stats() {
             </dl>
 
             <div className="mt-6 overflow-x-auto">
-              <table className="tabular w-full max-w-md text-sm">
+              <table className="tabular w-full text-sm">
                 <caption className="mb-2 text-left text-base font-semibold">{t('stats.tableTitle')}</caption>
                 <thead>
                   <tr className="border-b-2 border-ink text-left">
@@ -221,7 +222,7 @@ export default function Stats() {
                     <tr key={w.start} className="border-b border-rule">
                       <th scope="row" className="py-1.5 pr-3 text-left font-normal">
                         {day(w.start)}
-                        {i === stats.weeks.length - 1 && <span className="text-ink-2"> ({t('stats.thisWeek')})</span>}
+                        {i === stats.weeks.length - 1 && <span className="text-ink-muted"> ({t('stats.thisWeek')})</span>}
                       </th>
                       <td className="py-1.5 pr-3 text-right">{w.reported}</td>
                       <td className="py-1.5 text-right">{w.fixed}</td>
@@ -231,7 +232,7 @@ export default function Stats() {
               </table>
             </div>
 
-            <p className="mt-4 text-sm text-ink-2">
+            <p className="mt-4 text-sm text-ink-muted">
               {t('stats.updated', { date: day(stats.generatedAt, true) })}{' '}
               <a href={`${REPO_URL}/issues?q=label%3Amistake-report`} target="_blank" rel="noreferrer" className={link}>
                 {t('stats.source')}
@@ -245,15 +246,15 @@ export default function Stats() {
         <h2 id="stats-version" className={h2}>
           {t('stats.factsTitle')}
         </h2>
-        <dl className="max-w-md border-t border-rule">
+        <dl className="border-t border-rule">
           {facts.map(([label, value]) => (
             <div key={label} className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
-              <dt className="text-ink-2">{label}</dt>
+              <dt className="text-ink-muted">{label}</dt>
               <dd className="text-right font-semibold">{value}</dd>
             </div>
           ))}
         </dl>
       </section>
-    </article>
+    </PageShell>
   )
 }

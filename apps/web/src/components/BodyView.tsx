@@ -41,7 +41,7 @@ export default function BodyView({ sim, label }: { sim: Simulation; label: strin
 
 function NoWebglNote() {
   const { t } = useTranslation()
-  return <p className="absolute right-2 bottom-2 left-2 rounded-md bg-panel/90 px-2 py-1 text-xs text-ink-2">{t('sim.noWebgl')}</p>
+  return <p className="absolute right-2 bottom-2 left-2 rounded-md bg-surface-raised/90 px-2 py-1 text-xs text-ink-muted">{t('sim.noWebgl')}</p>
 }
 
 /** If WebGL fails at runtime (driver bug, shader error), fall back instead of a blank box. */

@@ -38,7 +38,7 @@ export default function KeptTag() {
       {/* Never cut short: the words wrap when the meal bar is full (on a phone the tag has its own
           row). Its kcal is for the wider screens: a phone's first screen has no room for it (WP-18). */}
       <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{t('keep.tag', { meal: names })}</span>
-      <span className="tabular shrink-0 whitespace-nowrap text-ink-2 max-lg:sr-only">{t('units.kcal', { n: mealKcalRounded(kept.items) })}</span>
+      <span className="tabular shrink-0 whitespace-nowrap text-ink-muted max-lg:sr-only">{t('units.kcal', { n: mealKcalRounded(kept.items) })}</span>
       <UnkeepButton meal={names} className="rounded-r-control lg:size-9" />
     </span>
   )
@@ -53,7 +53,7 @@ export function UnkeepButton({ meal, className = '' }: { meal: string; className
       onClick={() => useRunStore.getState().unkeep()}
       aria-label={t('keep.remove', { meal })}
       title={t('keep.remove', { meal })}
-      className={`grid size-11 shrink-0 place-items-center text-ink-2 hover:bg-sunk2 hover:text-ink ${className}`}
+      className={`grid size-11 shrink-0 place-items-center text-ink-muted hover:bg-surface-sunk hover:text-ink ${className}`}
     >
       <CloseIcon />
     </button>

@@ -66,7 +66,7 @@ export default function HowWeKnowPanel({
 
   return (
     <Popover anchor={anchor} onClose={onClose} label={label} className="w-[26rem] max-h-[min(34rem,75dvh)] overflow-y-auto">
-      <div className="flex flex-col gap-3 text-caption leading-relaxed text-ink-2">
+      <div className="flex flex-col gap-3 text-caption leading-relaxed text-ink-muted">
         <h3 className="text-control font-semibold text-ink">{label}</h3>
         <p className="text-ink">{t(`${meta.i18nKey}.desc`)}</p>
         <Section title={t('graph.unit')}>{t('graph.unitIs', { unit: meta.unit, words: unitInWords(meta.unit, t) })}</Section>

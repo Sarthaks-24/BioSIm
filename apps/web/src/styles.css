@@ -87,6 +87,11 @@
   /* Quiet labels beside a title (a graph's "Calculated from studies"): a step below captions. */
   --text-micro: 0.75rem;
   --text-micro--line-height: 1.35;
+  /* The content pages' headings (FP-10): a page title and its section headings. */
+  --text-display: 2.25rem;
+  --text-display--line-height: calc(2.5 / 2.25);
+  --text-h2: 1.5rem;
+  --text-h2--line-height: calc(2 / 1.5);
 }
 
 :root {
@@ -99,8 +104,8 @@
   --strip-line: 2.5px;
   --strip-kept-dash: 6 4;
   --strip-band-opacity: 0.14;
-  /* A Shelf-coloured halo round labels drawn over the lines, so they stay readable where they cross. */
-  --strip-halo: 0 0 2px var(--color-shelf), 0 0 2px var(--color-shelf), 0 0 4px var(--color-shelf), 0 0 4px var(--color-shelf);
+  /* A raised-surface halo round labels drawn over the lines, so they stay readable where they cross. */
+  --strip-halo: 0 0 2px var(--color-surface-raised), 0 0 2px var(--color-surface-raised), 0 0 4px var(--color-surface-raised), 0 0 4px var(--color-surface-raised);
 }
 @media (width >= 64rem) {
   :root {
@@ -109,7 +114,7 @@
 }
 
 html {
-  background: var(--color-paper);
+  background: var(--color-surface-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

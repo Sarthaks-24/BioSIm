@@ -18,7 +18,7 @@ export default function PersonTag({ profile, onInfo, expanded }: Props) {
   const { t } = useTranslation()
   const tag = t(`profiles.${profile}.tag`)
   const desc = t(`profiles.${profile}.desc`)
-  const look = 'inline-flex shrink-0 items-center gap-1 text-control font-semibold whitespace-nowrap text-ink-2'
+  const look = 'inline-flex shrink-0 items-center gap-1 text-control font-semibold whitespace-nowrap text-ink-muted'
   if (!onInfo) {
     return (
       <span className={look} title={desc}>
@@ -33,7 +33,7 @@ export default function PersonTag({ profile, onInfo, expanded }: Props) {
       aria-haspopup="dialog"
       aria-expanded={expanded}
       title={desc}
-      className={`${look} min-h-11 rounded-control px-2 hover:bg-sunk2 hover:text-ink lg:min-h-9`}
+      className={`${look} min-h-11 rounded-control px-2 hover:bg-surface-sunk hover:text-ink lg:min-h-9`}
     >
       {tag}
       <InfoIcon />

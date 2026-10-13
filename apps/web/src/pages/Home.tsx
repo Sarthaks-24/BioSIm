@@ -6,6 +6,7 @@ import { KEPT, RUN } from '../lib/colors.ts'
 import { lookupFood } from '../data/foods.ts'
 import { HERO_END_MIN, HERO_STEP_MIN, type Hero } from '../data/heroShape.ts'
 import { mealNames, shortMealNames } from '../components/stage/mealText.ts'
+import PageShell from '../components/PageShell.tsx'
 
 const x = (min: number) => (min / HERO_END_MIN) * 600
 const y = (share: number) => 20 + (1 - share) * 240
@@ -42,13 +43,13 @@ function EmptyingRace() {
         {[0, 50, 100].map((p) => (
           <g key={p}>
             <line x1={0} x2={600} y1={y(p / 100)} y2={y(p / 100)} stroke="var(--color-rule)" />
-            <text x={-8} y={y(p / 100)} textAnchor="end" dominantBaseline="middle" className="fill-ink-2 text-[13px]">
+            <text x={-8} y={y(p / 100)} textAnchor="end" dominantBaseline="middle" className="fill-ink-muted text-[13px]">
               {p}%
             </text>
           </g>
         ))}
         {[0, 1, 2, 3, 4, 5, 6].map((h) => (
-          <text key={h} x={x(h * 60)} y={286} textAnchor="middle" className="tabular fill-ink-2 text-[13px]">
+          <text key={h} x={x(h * 60)} y={286} textAnchor="middle" className="tabular fill-ink-muted text-[13px]">
             {h}
           </text>
         ))}
@@ -71,7 +72,7 @@ function EmptyingRace() {
             {l.name}
           </span>
         ))}
-        <span className="w-full text-ink-2">
+        <span className="w-full text-ink-muted">
           {t('home.previewCaption')} · {t('home.hours')}
         </span>
       </figcaption>
@@ -82,13 +83,13 @@ function EmptyingRace() {
 export default function Home() {
   const { t, i18n } = useTranslation()
   return (
-    <div className="mx-auto max-w-7xl px-4">
+    <PageShell width="wide" as="div">
       <section className="grid items-center gap-10 py-12 lg:grid-cols-[1.05fr_1fr] lg:py-20">
         <div>
           <h1 className="max-w-[18ch] text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">
             {t('home.headline')}
           </h1>
-          <p className="mt-6 max-w-[60ch] text-lg leading-relaxed text-ink-2">{t('home.lead')}</p>
+          <p className="mt-6 max-w-[60ch] text-lg leading-relaxed text-ink-muted">{t('home.lead')}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/sim" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">
               {t('home.cta')}
@@ -99,27 +100,27 @@ export default function Home() {
       </section>
 
       <section aria-labelledby="how" className="border-t border-rule py-12">
-        <h2 id="how" className="mb-8 text-2xl font-extrabold">
+        <h2 id="how" className="mb-8 text-h2 font-extrabold">
           {t('home.how.title')}
         </h2>
         <dl className="grid gap-8 md:grid-cols-3">
           {(['computed', 'honest', 'class'] as const).map((k) => (
             <div key={k}>
               <dt className="mb-2 text-lg font-semibold">{t(`home.how.${k}`)}</dt>
-              <dd className="leading-relaxed text-ink-2">{t(`home.how.${k}Body`)}</dd>
+              <dd className="leading-relaxed text-ink-muted">{t(`home.how.${k}Body`)}</dd>
             </div>
           ))}
         </dl>
       </section>
 
       <section aria-labelledby="examples" className="border-t border-rule py-12">
-        <h2 id="examples" className="mb-6 text-2xl font-extrabold">
+        <h2 id="examples" className="mb-6 text-h2 font-extrabold">
           {t('home.examples')}
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PRESETS.map((p) => (
             <li key={p.key}>
-              <Link to={presetHref(p)} className="flex h-full flex-col gap-2 rounded-xl border border-rule bg-panel p-4 hover:border-ink">
+              <Link to={presetHref(p)} className="flex h-full flex-col gap-2 rounded-xl border border-rule bg-surface-raised p-4 hover:border-ink">
                 <span className="text-3xl" aria-hidden="true">
                   {[...p.meal, ...p.kept].map((i) => lookupFood(i.foodId)?.emoji).join('')}
                 </span>
@@ -131,6 +132,6 @@ export default function Home() {
           ))}
         </ul>
       </section>
-    </div>
+    </PageShell>
   )
 }

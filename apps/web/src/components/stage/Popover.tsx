@@ -128,7 +128,7 @@ export default function Popover({ anchor, onClose, label, children, className = 
       aria-label={label}
       tabIndex={-1}
       style={pos ? { top: pos.top, left: pos.left } : { top: 0, left: 0, visibility: 'hidden' }}
-      className={`fixed z-40 max-w-[calc(100vw-1rem)] rounded-control border border-rule2 bg-shelf p-3 text-ink focus:outline-none ${className}`}
+      className={`fixed z-40 max-w-[calc(100vw-1rem)] rounded-control border border-border bg-surface-raised p-3 text-ink focus:outline-none ${className}`}
     >
       {children}
     </div>,

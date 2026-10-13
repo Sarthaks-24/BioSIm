@@ -111,7 +111,7 @@ export default function Simulator() {
     // dock's timeline (on a phone the Play button and its gap), so graphs and timeline share x.
     <div
       data-stage=""
-      className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-paper2 [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
+      className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] bg-surface-page [--plot-gutter:3.75rem] lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:[--plot-gutter:2.75rem]"
     >
       <h1 className="sr-only">{t('sim.title')}</h1>
       <div className="lg:col-span-2">
@@ -204,7 +204,7 @@ function ClockText() {
         </span>
         <span className="col-start-1 row-start-1">{text}</span>
       </span>
-      <span className="text-caption font-semibold whitespace-nowrap text-ink-2">{t('sim.afterEating')}</span>
+      <span className="text-caption font-semibold whitespace-nowrap text-ink-muted">{t('sim.afterEating')}</span>
     </span>
   )
 }

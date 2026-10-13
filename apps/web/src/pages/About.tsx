@@ -7,6 +7,7 @@ import { REPO_URL } from '../lib/site.ts'
 import { addEnglish } from '../i18n/index.ts'
 import aboutText from 'virtual:lifepeek-en/about'
 import feedbackText from 'virtual:lifepeek-en/feedback'
+import PageShell from '../components/PageShell.tsx'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(aboutText, feedbackText)
@@ -31,13 +32,13 @@ export default function About() {
     { text: t('about.licenceData'), href: file('DATA-SOURCES.md'), label: 'DATA-SOURCES.md' },
     { text: t('about.licenceName'), href: file('TRADEMARKS.md'), label: 'TRADEMARKS.md' },
   ]
-  const h2 = 'mt-10 mb-3 scroll-mt-6 text-2xl font-extrabold'
+  const h2 = 'mt-10 mb-3 scroll-mt-6 text-h2 font-extrabold'
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 leading-relaxed">
-      <h1 className="text-4xl font-extrabold tracking-tight">{t('about.title')}</h1>
+    <PageShell>
+      <h1 className="text-display font-extrabold tracking-tight">{t('about.title')}</h1>
       <p className="mt-4 text-lg font-semibold">{t('about.tagline')}</p>
-      <p className="mt-1 max-w-[68ch] text-lg text-ink-2">{t('about.lead')}</p>
+      <p className="mt-1 max-w-[68ch] text-lg text-ink-muted">{t('about.lead')}</p>
 
       <section className="max-w-[68ch]">
         <h2 className={h2}>{t('about.makerTitle')}</h2>
@@ -53,7 +54,7 @@ export default function About() {
         <h2 id="medical" className={h2}>
           {t('about.medicalTitle')}
         </h2>
-        <p className="rounded-xl border border-rule bg-panel px-4 py-3">{t('about.medical')}</p>
+        <p className="rounded-xl border border-rule bg-surface-raised px-4 py-3">{t('about.medical')}</p>
       </section>
 
       <section className="max-w-[68ch]">
@@ -96,7 +97,7 @@ export default function About() {
             {t('about.openIssue')}
           </a>
         </p>
-        <p className="mt-2 text-sm text-ink-2">{t('feedback.publicWarning')}</p>
+        <p className="mt-2 text-sm text-ink-muted">{t('feedback.publicWarning')}</p>
       </section>
 
       <section className="max-w-[68ch]">
@@ -108,6 +109,6 @@ export default function About() {
           </Link>
         </p>
       </section>
-    </article>
+    </PageShell>
   )
 }

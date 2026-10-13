@@ -74,13 +74,13 @@ export default function FeedbackDialog({
       <dialog
         ref={ref}
         aria-labelledby="fb-title"
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl bg-panel p-0 text-ink backdrop:bg-ink/40"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl bg-surface-raised p-0 text-ink backdrop:bg-ink/40"
       >
         <form onSubmit={submit} className="space-y-3 p-5">
           <h2 id="fb-title" className="text-xl font-extrabold">
             {t('feedback.title')}
           </h2>
-          <p className="text-sm text-ink-2">{t('feedback.intro')}</p>
+          <p className="text-sm text-ink-muted">{t('feedback.intro')}</p>
           <label className="block text-sm font-semibold">
             {t('feedback.where')}
             <input name="location" required maxLength={200} className={field} />
@@ -93,7 +93,7 @@ export default function FeedbackDialog({
             {t('feedback.source')}
             <input name="source" maxLength={500} className={field} />
           </label>
-          <p className="text-xs text-ink-2">{t('feedback.privacy')}</p>
+          <p className="text-xs text-ink-muted">{t('feedback.privacy')}</p>
           {!HAS_API && warning}
           <div role="status" className="text-sm font-semibold">
             {status === 'sent' && t('feedback.sent')}
