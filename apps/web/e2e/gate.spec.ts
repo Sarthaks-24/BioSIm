@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { GATE_ROUTES, NEXT_BODY, V1_BODY, V1_SIM, expectInFirstScreen, expectNoPageScroll, modeFor, onlyIn } from './helpers/gate.ts'
+import { GATE_ROUTES, SIM_BODY, expectInFirstScreen, expectNoPageScroll, modeFor, onlyIn } from './helpers/gate.ts'
 
 // Layout gates. This file runs in the desktop, projector and phone projects; each test says
 // which of them it belongs to.
@@ -18,14 +18,9 @@ for (const route of GATE_ROUTES.noScroll) {
 
 /** What must be in the first phone screen, per page. */
 const FIRST_SCREEN: Record<string, (page: Page) => Record<string, Locator>> = {
-  [V1_SIM]: (page) => ({
-    body: page.getByRole('img', { name: V1_BODY, exact: true }),
-    graph: page.locator('figure svg[role="img"]'),
-    Play: page.getByRole('button', { name: 'Play' }),
-  }),
-  // The v2 stage (WP-12): on a phone one graph shows at a time, under the body, above the dock.
-  '/next': (page) => ({
-    body: page.getByRole('img', { name: NEXT_BODY, exact: true }),
+  // The stage (WP-12): on a phone one graph shows at a time, under the body, above the dock.
+  '/sim': (page) => ({
+    body: page.getByRole('img', { name: SIM_BODY, exact: true }),
     graph: page.locator('figure svg[role="img"]').filter({ visible: true }),
     Play: page.getByRole('button', { name: 'Play' }),
   }),

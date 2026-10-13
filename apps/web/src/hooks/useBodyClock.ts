@@ -3,7 +3,7 @@ import { useClock, useSimMinute } from '../state/clock.ts'
 
 /**
  * Which clock a body picture follows. The flat and 3D bodies are shared by v1 `/sim` (its own
- * store, state/sim.ts) and the v2 stage at `/next` (the meal clock, state/clock.ts), so they read
+ * store, state/sim.ts) and the v2 stage at `/sim` (the meal clock, state/clock.ts), so they read
  * time through this small interface instead of importing a store. The meal clock is the default;
  * v1 wraps its bodies in `<BodyClockContext value={V1_BODY_CLOCK}>` (state/sim.ts), so the stage
  * never downloads v1's store (size budget, FIX-D). WP-20 deletes the v1 entry.

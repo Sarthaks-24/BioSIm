@@ -69,7 +69,7 @@ export function useUrlSync() {
       // "v" but no meals is a deliberately empty comparison and stays empty.
       const { a, b } = useSim.getState()
       if (a.length === 0 && b.length === 0) {
-        useSim.setState({ a: DEFAULT_PRESET.a, b: DEFAULT_PRESET.b, time: 0, playing: false, linkModelVersion: null })
+        useSim.setState({ a: DEFAULT_PRESET.meal, b: DEFAULT_PRESET.kept ?? [], time: 0, playing: false, linkModelVersion: null })
       }
     }
     // Write back the canonical form (this also fills in a bare /sim).

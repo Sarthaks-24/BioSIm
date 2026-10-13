@@ -7,12 +7,13 @@
     "languageLabel": "Switch to Hindi",
     "projector": "Projector mode",
     "main": "Main",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "menu": "Menu"
   },
   "home": {
     "headline": "Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours.",
-    "lead": "LifePeek shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds.",
-    "cta": "Compare two meals",
+    "lead": "LifePeek shows why. Pick a meal, press Play and watch it travel through the body: how fast it leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next.",
+    "cta": "Open the simulator",
     "previewCaption": "Food still in the stomach after eating — computed by the LifePeek model",
     "hours": "hours after eating",
     "how": {
@@ -22,15 +23,10 @@
       "honest": "Ranges, not fake precision",
       "honestBody": "People differ. Times in the intestines and blood sugar are shown as typical ranges for healthy adults, with the source for every input.",
       "class": "Made for the classroom",
-      "classBody": "Projector mode, English and Hindi, a step-by-step text view, works offline once loaded, and a link that reopens the exact same comparison."
+      "classBody": "Projector mode, English and Hindi, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals."
     },
     "examples": "Try a comparison",
-    "example": {
-      "colaBurger": "Cola vs burger and fries",
-      "rotiRice": "Roti and dal vs white rice",
-      "appleJuice": "Apple vs orange juice",
-      "waterMilk": "Water vs milk"
-    }
+    "example": "{{meal}}, with {{kept}} kept"
   },
   "sim": {
     "title": "Simulator",
@@ -188,29 +184,47 @@
   "teach": {
     "title": "Using LifePeek in class",
     "lead": "LifePeek is built for a projector and a 40-minute lesson on nutrition and digestion (for example, the “Life Processes” chapter).",
-    "plan": "A simple lesson plan",
+    "plan": "A 40-minute lesson plan",
     "steps": [
-      "Ask the class to predict: which leaves the stomach first — a can of cola or a burger with fries? Which raises blood sugar more?",
-      "Open the cola vs burger comparison and press Play. Pause when the cola is mostly out of the stomach and ask why.",
-      "Switch to Step by step and read the stomach stage together. Link the result to calories and fat.",
-      "Let groups build their own comparisons on their phones (no login needed) and share the link with you.",
-      "Close with the blood sugar chart: why does adding fat or protein flatten the curve?"
+      "Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more.",
+      "Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger.",
+      "Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now.",
+      "Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front.",
+      "Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph."
     ],
-    "questionsTitle": "Questions to ask",
-    "questions": [
-      "Why do drinks leave the stomach before solid food?",
-      "Fibre is never absorbed. Where does it end up, and what eats it?",
-      "Why is blood sugar shown as a band instead of one number?",
-      "Roti and dal versus white rice: which gives a gentler blood sugar curve? Look at each food’s glycemic index on the Science page."
-    ],
+    "questionsTitle": "Four questions to check understanding",
     "tipsTitle": "Practical tips",
     "tips": [
-      "Turn on Projector mode for stronger contrast in a bright room.",
+      "Projector mode (top right) shows one big graph at a time: press S, B or E to switch between Stomach, Blood sugar and Energy.",
       "Open the app once on Wi-Fi; after that it works offline.",
-      "Every comparison has its own link — save it in your notes to reopen the exact setup.",
-      "Use the Step by step view for students using screen readers or old phones."
+      "Every screen has its own link: save it in your notes to reopen the exact setup.",
+      "Every graph has “Show as table” for students using screen readers, and every control works from the keyboard (press ? for the list of keys)."
     ],
-    "presetsTitle": "Ready-made comparisons"
+    "lessonsTitle": "Ready lessons",
+    "lessonsLead": "Each opens in projector mode on a laptop, paused at its first key moment, on the graph it is about. Press Play, or Page Down for the next key moment.",
+    "lessons": {
+      "stomachRace": "Which leaves the stomach first?",
+      "rotiDal": "Which raises blood sugar more gently?",
+      "colaFour": "One cola or four: what happens to blood sugar?"
+    },
+    "opensAt": "opens at {{time}} on the {{graph}} graph",
+    "questionsLead": "Students answer on their own phones, with no help, each starting from the link. If four out of five get a question right, the screen teaches it.",
+    "tasks": {
+      "halfLeft": "Cola is chosen. When has half of it left the stomach?",
+      "faster": "Now compare cola with a burger and fries. Which leaves the stomach faster, and why?",
+      "bloodAt1h": "What is blood sugar 1 hour after the cola?",
+      "energyAt3h": "At 3 hours, is more energy coming in from the cola, or is the body using more?"
+    },
+    "qrTitle": "Open it on students’ phones",
+    "qrCaption": "Students scan this code with the phone camera to open LifePeek. No login, nothing to install.",
+    "qrAlt": "QR code for lifepeek.vercel.app",
+    "answersTitle": "Answers for teachers",
+    "answers": [
+      "About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline.",
+      "Cola, about 8 times faster: a drink starts leaving straight away, and it has fewer calories than a burger with fries.",
+      "About 111 mg/dL (105 to 115). Its highest, about 121, was at 35 minutes.",
+      "The body is using more: almost nothing is coming in from the cola, while the body uses about 63 kcal an hour."
+    ]
   },
   "science": {
     "title": "Science and sources",
@@ -596,7 +610,8 @@
     "close": "Close",
     "thisMeal": "This meal",
     "keptMeal": "The kept meal",
-    "particles": "Food pieces in the body"
+    "particles": "Food pieces in the body",
+    "pressPlay": "Press ▶ to watch {{meal}} go through the body"
   },
   "keep": {
     "button": "Keep to compare",

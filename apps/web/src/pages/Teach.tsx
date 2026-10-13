@@ -1,18 +1,60 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { PRESETS, presetHref } from '../lib/presets.ts'
+import { LESSONS, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { SITE_URL } from '../lib/site.ts'
+import { setProjector } from '../hooks/useProjector.ts'
+import { useStripTab } from '../state/stripTab.ts'
 import { addEnglish } from '../i18n/index.ts'
+import { shortMealNames } from '../components/stage/mealText.ts'
+// A file next to the page, never inlined into its code (D-QR: made with qrcode@1.5.4, error level M).
+import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(teachText)
 
+/**
+ * A ready lesson opens projector-friendly (council round 2): projector mode on (on a laptop), the lesson's graph
+ * in front, paused at its first key moment (the link's `t`). A copied or shared link is a plain
+ * link: it opens the same meals and time in whatever mode the reader uses.
+ */
+function openLesson(l: Lesson) {
+  // Not on a phone or tablet: the stage has no projector button below 1024 px to switch it off.
+  if (window.matchMedia('(min-width: 64rem)').matches) setProjector(true)
+  useStripTab.getState().show(l.strip)
+}
+
+/** A right-pointing chevron, drawn like the kit's icons. */
+const Chevron = () => (
+  <svg
+    viewBox="0 0 20 20"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+    className="shrink-0 text-ink-2 group-hover:text-ink"
+  >
+    <path d="m8 5.5 4.5 4.5L8 14.5" />
+  </svg>
+)
+
+const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-sunk focus-visible:bg-sunk sm:px-3 sm:-mx-3 sm:rounded-lg'
+
 export default function Teach() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const list = (key: string) => t(key, { returnObjects: true }) as string[]
+  const meals = (l: { meal: Lesson['meal']; kept?: Lesson['kept'] }) =>
+    l.kept?.length
+      ? t('home.example', { meal: shortMealNames(l.meal, i18n.language), kept: shortMealNames(l.kept, i18n.language) })
+      : shortMealNames(l.meal, i18n.language)
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 leading-relaxed">
-      <h1 className="text-4xl font-extrabold tracking-tight">{t('teach.title')}</h1>
+      <h1 className="text-4xl font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
       <p className="mt-4 text-lg text-ink-2">{t('teach.lead')}</p>
 
       <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.plan')}</h2>
@@ -21,23 +63,49 @@ export default function Teach() {
           <li key={s}>{s}</li>
         ))}
       </ol>
-      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.presetsTitle')}</h2>
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {PRESETS.map((p) => (
-          <li key={p.key}>
-            <Link to={presetHref(p)} className="block rounded-lg border border-rule bg-panel px-4 py-3 font-semibold hover:border-ink">
-              {t(`home.example.${p.key}`)}
+
+      <h2 className="mt-10 mb-2 text-2xl font-extrabold">{t('teach.lessonsTitle')}</h2>
+      <p className="mb-3 text-ink-2">{t('teach.lessonsLead')}</p>
+      <ul className="divide-y divide-rule border-y border-rule">
+        {LESSONS.map((l) => (
+          <li key={l.key}>
+            <Link to={presetHref(l)} onClick={() => openLesson(l)} className={ROW}>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
+                <span className="block text-ink-2">
+                  {meals(l)} · {t('teach.opensAt', { time: t('units.min', { n: l.t }), graph: t(`stage.strips.${l.strip}`) })}
+                </span>
+              </span>
+              <Chevron />
             </Link>
           </li>
         ))}
       </ul>
 
-      <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.questionsTitle')}</h2>
-      <ul className="list-disc space-y-2 pl-6">
-        {list('teach.questions').map((s) => (
-          <li key={s}>{s}</li>
+      <h2 className="mt-10 mb-2 text-2xl font-extrabold">{t('teach.questionsTitle')}</h2>
+      <p className="mb-3 text-ink-2">{t('teach.questionsLead')}</p>
+      <ol className="divide-y divide-rule border-y border-rule">
+        {TASKS.map((q, i) => (
+          <li key={q.key}>
+            <Link to={presetHref(q)} className={ROW}>
+              <span aria-hidden="true" className="tabular w-5 shrink-0 self-start text-lg font-extrabold text-ink-2">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1 font-semibold">{t(`teach.tasks.${q.key}`)}</span>
+              <Chevron />
+            </Link>
+          </li>
         ))}
-      </ul>
+      </ol>
+      {/* Closed, so a student looking at the page doesn't read them first. */}
+      <details className="mt-3 rounded-lg bg-sunk px-4 py-2">
+        <summary className="cursor-pointer py-1 font-semibold">{t('teach.answersTitle')}</summary>
+        <ol className="mt-1 mb-2 list-decimal space-y-1 pl-6 text-ink-2">
+          {list('teach.answers').map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ol>
+      </details>
 
       <h2 className="mt-10 mb-3 text-2xl font-extrabold">{t('teach.tipsTitle')}</h2>
       <ul className="list-disc space-y-2 pl-6">
@@ -45,6 +113,19 @@ export default function Teach() {
           <li key={s}>{s}</li>
         ))}
       </ul>
+
+      <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-rule pt-10 sm:flex-row sm:items-center">
+        <figure className="shrink-0">
+          <img src={qrCode} alt={t('teach.qrAlt')} width={240} height={240} className="size-60 rounded-lg bg-white" />
+          <figcaption className="tabular mt-2 text-center font-semibold">{SITE_URL.replace(/^https:\/\//, '')}</figcaption>
+        </figure>
+        <div>
+          <h2 id="teach-qr" className="mb-2 text-2xl font-extrabold">
+            {t('teach.qrTitle')}
+          </h2>
+          <p className="text-ink-2">{t('teach.qrCaption')}</p>
+        </div>
+      </section>
     </article>
   )
 }

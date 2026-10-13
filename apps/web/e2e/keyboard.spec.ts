@@ -1,12 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { onlyIn } from './helpers/gate.ts'
 
-// WP-15 on /next: everything works without a mouse (G8, UI-6). The key map and its off-switch,
+// WP-15 on /sim: everything works without a mouse (G8, UI-6). The key map and its off-switch,
 // the graphs as tables, their summaries for screen readers, and the timeline's key moments
 // (merged where they nearly coincide, council round 2). Projects desktop (1440), projector (1280,
 // projector mode) and phone (390, where it checks the targets and the sheets).
 
-const COLA_KEPT_BURGER = '/next?v=2&a=cola:1&b=cheeseburger:1,fries:1'
+const COLA_KEPT_BURGER = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1'
 const params = (page: Page) => new URL(page.url()).searchParams
 const now = (page: Page) => page.getByRole('slider', { name: 'Timeline' }).getAttribute('aria-valuenow').then(Number)
 
@@ -26,7 +26,7 @@ async function tabTo(page: Page, target: Locator, max = 60) {
 
 test('a whole lesson with the keyboard only: add a food, play, step through the moments, keep, table, Esc', async ({ page }) => {
   onlyIn('desktop', 'projector')
-  await page.goto('/next?v=2&a=cola:1')
+  await page.goto('/sim?v=2&a=cola:1')
   await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
 
   // Add an apple from the food search, typing its name; the letters typed are not shortcuts.
@@ -99,7 +99,7 @@ test('a whole lesson with the keyboard only: add a food, play, step through the 
 
 test('? lists the keys; the letter keys can be switched off (WCAG 2.1.4), and the clicker keys still work', async ({ page }) => {
   onlyIn('desktop', 'projector')
-  await page.goto('/next?v=2&a=cola:1')
+  await page.goto('/sim?v=2&a=cola:1')
   await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
   await page.keyboard.press('?')
   const help = page.getByRole('dialog', { name: 'Keys and settings' })
@@ -129,7 +129,7 @@ test('? lists the keys; the letter keys can be switched off (WCAG 2.1.4), and th
 
 test('"Reduce motion" can be chosen on screen and is saved; it can follow the device again', async ({ page }) => {
   onlyIn('desktop', 'phone')
-  await page.goto('/next?v=2&a=cola:1')
+  await page.goto('/sim?v=2&a=cola:1')
   await page.getByRole('button', { name: 'Keys and settings' }).click()
   const help = page.getByRole('dialog', { name: 'Keys and settings' })
   const motion = help.getByRole('switch', { name: 'Reduce motion' })
@@ -176,7 +176,7 @@ test('every graph has a summary for screen readers and a working table', async (
 test.describe('the timeline’s key moments (council round 2)', () => {
   test('moments that nearly coincide are one marker naming them all; no two targets overlap; each is at least 24 px', async ({ page }) => {
     onlyIn('projector', 'phone')
-    for (const url of [COLA_KEPT_BURGER, `${COLA_KEPT_BURGER}&lang=hi`, '/next?v=2&a=roti:2,dal:1&b=water:1']) {
+    for (const url of [COLA_KEPT_BURGER, `${COLA_KEPT_BURGER}&lang=hi`, '/sim?v=2&a=roti:2,dal:1&b=water:1']) {
       await page.goto(url)
       const markers = page.locator('[data-marker]')
       await expect(markers.first()).toBeVisible()
@@ -196,7 +196,7 @@ test.describe('the timeline’s key moments (council round 2)', () => {
       }
     }
     // Cola's first hour (half has left, highest) is one marker that names both.
-    await page.goto('/next?v=2&a=cola:1&lang=en')
+    await page.goto('/sim?v=2&a=cola:1&lang=en')
     await expect(page.locator('[data-marker="run"]').first()).toHaveAttribute(
       'aria-label',
       /^Half the energy has left the stomach, .+; Blood sugar highest, /,
@@ -205,7 +205,7 @@ test.describe('the timeline’s key moments (council round 2)', () => {
 
   test('a meal with one moment gets a full-size target, its dot in the middle (verify: 12 px button)', async ({ page }) => {
     onlyIn('projector', 'phone')
-    await page.goto('/next?v=2&a=water:1')
+    await page.goto('/sim?v=2&a=water:1')
     const marker = page.locator('[data-marker="run"]')
     await expect(marker).toHaveCount(1)
     const box = (await marker.boundingBox())!
@@ -237,7 +237,7 @@ test.describe('the timeline’s key moments (council round 2)', () => {
   test('paused where moments coincide, all are named, the kept meal’s too; Page Down visits the kept meal’s moments', async ({ page }) => {
     onlyIn('desktop')
     // Cola kept and cola + water now: cola's "half has left" and "highest" share a minute, in both meals.
-    await page.goto('/next?v=2&a=cola:1,water:1&b=cola:1')
+    await page.goto('/sim?v=2&a=cola:1,water:1&b=cola:1')
     await expect(page.locator('[data-marker="kept"]').first()).toBeAttached()
     await page.locator('body').press('Home')
     await page.locator('body').press('PageDown')
@@ -276,7 +276,7 @@ test('after keeping, the meal bar’s buttons keep their words (council SHOULD 1
 
 test('the food pieces in the body have a key, only for what the meal has', async ({ page }) => {
   onlyIn('desktop', 'phone')
-  await page.goto('/next?v=2&a=cola:1')
+  await page.goto('/sim?v=2&a=cola:1')
   const key = page.getByRole('list', { name: 'Food pieces in the body' })
   await expect(key).toBeVisible()
   await expect(key.getByRole('listitem')).toHaveText(['Carbohydrate', 'Water'])
@@ -288,7 +288,7 @@ test.describe('review 15 (FIX-D)', () => {
 
   test('P, S, B and E say what they did; the kept value is said once per graph', async ({ page }) => {
     onlyIn('desktop', 'projector')
-    await page.goto('/next?v=2&a=cola:1&t=60')
+    await page.goto('/sim?v=2&a=cola:1&t=60')
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     const said = page.locator('[data-announcer]')
     await page.locator('body').press('p')
@@ -309,7 +309,7 @@ test.describe('review 15 (FIX-D)', () => {
     await page.goto('/')
     // Into the stage inside the app (as a link would), so its state outlives the visit.
     await page.evaluate(() => {
-      history.pushState(null, '', '/next?v=2&a=cola:1')
+      history.pushState(null, '', '/sim?v=2&a=cola:1')
       dispatchEvent(new PopStateEvent('popstate'))
     })
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
@@ -324,7 +324,7 @@ test.describe('review 15 (FIX-D)', () => {
 
   test('dragging a selection out of a sheet does not close it; a press outside does', async ({ page }) => {
     onlyIn('desktop')
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     await page.locator('body').press('t')
     const sheet = page.getByRole('dialog', { name: 'The graphs as a table' })
@@ -345,7 +345,7 @@ test.describe('review 15 (FIX-D)', () => {
     onlyIn('desktop')
     // A short window, so the stage text is taller than its box.
     await page.setViewportSize({ width: 1440, height: 560 })
-    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.goto('/sim?v=2&a=cola:1&t=20')
     await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
     const text = page.locator('[data-stage-more] [data-scroll]')
     await expect(text).toContainText('Hydrochloric acid')
@@ -365,7 +365,7 @@ test.describe('review 15 (FIX-D)', () => {
   test('the in-app Reduce motion switch reaches CSS: the reveal on Home and the transitions do not run', async ({ page }) => {
     onlyIn('desktop')
     // The device does not ask for reduced motion (project desktop): only the switch does.
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'full')
     await page.getByRole('button', { name: 'Keys and settings' }).click()
     const help = page.getByRole('dialog', { name: 'Keys and settings' })

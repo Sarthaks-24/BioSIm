@@ -1,11 +1,11 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
-import { NavLink, Outlet, ScrollRestoration, Link, useMatches } from 'react-router'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, ScrollRestoration, Link, useLocation, useMatches } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
-import { readPref, writePref } from '../lib/prefs.ts'
 import { INK, ORGAN_COLOR } from '../lib/colors.ts'
 import { MAKER } from '../lib/credits.ts'
 import { useCanonical } from '../hooks/useCanonical.ts'
+import { setProjector, useProjector } from '../hooks/useProjector.ts'
 import MedicalNote from './MedicalNote.tsx'
 
 function Logo() {
@@ -24,10 +24,64 @@ function Logo() {
   )
 }
 
+/** Three lines, or a cross while the menu is open; drawn like the kit's icons (components/kit/icons.tsx). */
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={open ? 'm5.5 5.5 9 9m0-9-9 9' : 'M3.5 5.5h13M3.5 10h13M3.5 14.5h13'} />
+    </svg>
+  )
+}
+
+/**
+ * The phone menu's state. It closes when a link is followed (the page changes), on Escape (focus
+ * goes back to its button) and on a tap anywhere else.
+ */
+function useMenu() {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  const button = useRef<HTMLButtonElement>(null)
+  const { pathname } = useLocation()
+  const [page, setPage] = useState(pathname)
+  if (page !== pathname) {
+    setPage(pathname)
+    setOpen(false)
+  }
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      button.current?.focus()
+    }
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node
+      if (!button.current?.contains(target) && !document.getElementById(id)?.contains(target)) setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('pointerdown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('pointerdown', onDown)
+    }
+  }, [open, id])
+  return { open, setOpen, id, button }
+}
+
 /** Route `handle` flags the Layout reads. */
 export interface RouteHandle {
   /**
-   * The page is one screen (the v2 stage at /next): from 1024 px up the header, page and footer
+   * The page is one screen (the stage at /sim): from 1024 px up the header, page and footer
    * share the window exactly, so nothing scrolls on a laptop or a projector. On phones the page
    * fills the first screen and the footer sits just below it.
    */
@@ -37,12 +91,16 @@ export interface RouteHandle {
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const fit = useMatches().some((m) => (m.handle as RouteHandle | undefined)?.fit)
-  const [projector, setProjector] = useState(() => readPref('projector') === '1')
-
-  useEffect(() => {
-    document.documentElement.dataset.contrast = projector ? 'high' : 'normal'
-    writePref('projector', projector ? '1' : '0')
-  }, [projector])
+  // The saved choice is applied before the first draw (hooks/useProjector.ts); the Teach page's
+  // lessons can switch it on too, so the button reads it from the page, not from its own state.
+  const projector = useProjector()
+  const menu = useMenu()
+  // The site nav: hidden on the projector stage; on phones a drop-down under the header while the
+  // menu is open; from 640 px up a row of links.
+  const navBox =
+    fit && projector
+      ? 'hidden'
+      : `gap-1 sm:flex ${menu.open ? 'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:flex max-sm:flex-col max-sm:border-b max-sm:border-rule max-sm:bg-paper max-sm:px-3 max-sm:py-2 max-sm:shadow-[0_6px_12px_-6px_rgb(20_33_61/0.25)]' : 'hidden'}`
 
   // A one-screen page has its own projector size (styles.css). Set before the paint of the first
   // render that matches it, while its code may still be loading, so the size never jumps.
@@ -118,7 +176,7 @@ export default function Layout() {
         <a href="#main" className="sr-only z-50 rounded bg-ink px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
           {t('nav.skip')}
         </a>
-        <header className="no-print border-b border-rule bg-paper/90 backdrop-blur">
+        <header className="no-print relative z-30 border-b border-rule bg-paper/90 backdrop-blur">
           {/* The stage uses the full width, so its header does too (edges line up with the meal bar).
               On a phone its two rows of 44 px controls get almost no padding: the body needs the room. */}
           <div
@@ -128,11 +186,12 @@ export default function Layout() {
               <Logo />
               LifePeek
             </Link>
-            {/* The projector shows one page, the stage, to a room: its site nav is hidden there (UI-5). */}
-            <nav
-              aria-label={t('nav.main')}
-              className={`order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto ${fit ? 'in-data-[contrast=high]:hidden' : ''}`}
-            >
+            {/*
+             * The projector shows one page, the stage, to a room: its site nav is hidden there (UI-5).
+             * On a phone the links fold into a menu (council round 2): a row of its own cost the
+             * stage's body about 50 px of the first screen. Opened, they drop down under the header.
+             */}
+            <nav id={menu.id} aria-label={t('nav.main')} className={navBox}>
               <NavLink to="/sim" className={nav}>
                 {t('nav.simulator')}
               </NavLink>
@@ -144,12 +203,24 @@ export default function Layout() {
               </NavLink>
             </nav>
             <div className="ml-auto flex items-center gap-2">
-              {/* The stage has no projector button on phones (plan-ui-ux §3.5): it would cost a row. */}
+              <button
+                ref={menu.button}
+                type="button"
+                aria-expanded={menu.open}
+                aria-controls={menu.id}
+                onClick={() => menu.setOpen(!menu.open)}
+                className={`${target} order-last w-11 justify-center rounded-full border border-rule hover:bg-sunk sm:hidden ${fit && projector ? 'hidden' : ''}`}
+              >
+                <MenuIcon open={menu.open} />
+                <span className="sr-only">{t('nav.menu')}</span>
+              </button>
+              {/* No projector button on phones (plan-ui-ux §3.5): it would cost the header a row. The stage
+                  shows it from 1024 px up, where its one-screen layout has a projector size. */}
               <button
                 type="button"
                 aria-pressed={projector}
-                onClick={() => setProjector((p) => !p)}
-                className={`${target} rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${fit ? 'max-lg:hidden' : ''}`}
+                onClick={() => setProjector(!projector)}
+                className={`${target} rounded-full border px-3 text-sm font-semibold whitespace-nowrap ${projector ? 'border-ink bg-ink text-white' : 'border-rule hover:bg-sunk'} ${fit ? 'max-lg:hidden' : 'max-sm:hidden'}`}
               >
                 {t('nav.projector')}
               </button>

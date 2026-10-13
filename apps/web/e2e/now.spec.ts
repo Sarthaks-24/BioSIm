@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
 import { expectInFirstScreen, onlyIn } from './helpers/gate.ts'
 
-// WP-14 on /next: the dock's key moments, the Now line, the summary sentence and "Report a
+// WP-14 on /sim: the dock's key moments, the Now line, the summary sentence and "Report a
 // mistake" (council verdicts #3, #4, #6 and verification-council K2). Projects desktop (1440),
 // projector (1280, projector mode) and phone (390).
 
-const COLA_KEPT_BURGER = '/next?v=2&a=cola:1&b=cheeseburger:1,fries:1'
+const COLA_KEPT_BURGER = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1'
 /** The address bar's query, decoded. */
 const params = (page: Page) => new URL(page.url()).searchParams
 
@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('timeline key moments', () => {
   test('clicking "half has left the stomach" moves the clock and the link’s t, and names it', async ({ page }) => {
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     // Cola's "half has left" and "highest" nearly coincide: one marker names both (council round 2).
     const marker = page.getByRole('button', { name: /^Half the energy has left the stomach, \d+ min(;|$)/ })
     await marker.click()
@@ -57,9 +57,9 @@ test.describe('timeline key moments', () => {
 
   test('the squeezed part of the bar says so (English and Hindi)', async ({ page }) => {
     onlyIn('desktop', 'projector')
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     await expect(page.locator('[data-knee]')).toHaveText('6 h → 48 h squeezed')
-    await page.goto('/next?v=2&a=cola:1&lang=hi')
+    await page.goto('/sim?v=2&a=cola:1&lang=hi')
     await expect(page.locator('[data-knee]')).toHaveText('6 घंटे → 48 घंटे सिकोड़ा गया')
     // Never runs off the bar's end.
     const knee = (await page.locator('[data-knee]').boundingBox())!
@@ -70,26 +70,26 @@ test.describe('timeline key moments', () => {
 
 test.describe('the Now line', () => {
   test('follows the food: cola is in the stomach at 20 min and in the small intestine at 2 h', async ({ page }) => {
-    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.goto('/sim?v=2&a=cola:1&t=20')
     const now = page.locator('[data-now]')
     await expect(now).toHaveAttribute('data-now', 'stomach')
     await expect(now.getByRole('button', { name: 'Stomach: more about this stage' })).toBeVisible()
-    await page.goto('/next?v=2&a=cola:1&t=120')
+    await page.goto('/sim?v=2&a=cola:1&t=120')
     await expect(now).toHaveAttribute('data-now', 'smallIntestine')
     await expect(now.getByRole('button', { name: 'Small intestine: more about this stage' })).toBeVisible()
   })
 
   // Council round 2, C1: where MOST of the meal is, from the model, worded for a drink.
   test('cola at 40 min: how much is still in the stomach and where the rest is, not "Stomach" alone', async ({ page }) => {
-    await page.goto('/next?v=2&a=cola:1&t=40')
+    await page.goto('/sim?v=2&a=cola:1&t=40')
     const line = page.locator('[data-now] > div:first-child > p:not([aria-hidden])')
     await expect(line).toHaveText(/^Where the meal is now: Stomach.*about half is here · some already in the small intestine/)
     // What the organ does, for a drink: no "chyme" (from 1024 px up, not on the projector).
     const job = page.locator('[data-now-job]')
     if (await job.isVisible()) await expect(job).toHaveText('the stomach lets the drink through a little at a time')
-    await page.goto('/next?v=2&a=cola:1&t=0')
+    await page.goto('/sim?v=2&a=cola:1&t=0')
     await expect(line).toContainText('the drink is swallowed in a few gulps')
-    await page.goto('/next?v=2&a=cheeseburger:1&t=0')
+    await page.goto('/sim?v=2&a=cheeseburger:1&t=0')
     await expect(line).toContainText('teeth grind food')
   })
 
@@ -111,7 +111,7 @@ test.describe('the Now line', () => {
   })
 
   test('once the gut has finished with the meal it says "Done", never "Stomach" (cheeseburger at 30 h)', async ({ page }) => {
-    await page.goto('/next?v=2&a=cheeseburger:1&t=1800')
+    await page.goto('/sim?v=2&a=cheeseburger:1&t=1800')
     const now = page.locator('[data-now]')
     await expect(now).toHaveAttribute('data-now', 'done')
     await expect(now.getByRole('button', { name: 'Done: more about this stage' })).toBeVisible()
@@ -120,7 +120,7 @@ test.describe('the Now line', () => {
 
   test('clearing the meal closes "More": the next food does not open it again', async ({ page }) => {
     onlyIn('desktop')
-    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.goto('/sim?v=2&a=cola:1&t=20')
     await page.getByRole('button', { name: 'Stomach: more about this stage' }).click()
     await expect(page.getByRole('region', { name: 'Stomach' })).toBeVisible()
     await page.getByRole('button', { name: /^Remove Cola/ }).click()
@@ -130,7 +130,7 @@ test.describe('the Now line', () => {
   })
 
   test('the organ opens the full stage text; Esc closes it and gives focus back', async ({ page }) => {
-    await page.goto('/next?v=2&a=cola:1&t=20')
+    await page.goto('/sim?v=2&a=cola:1&t=20')
     const pill = page.getByRole('button', { name: 'Stomach: more about this stage' })
     await pill.click()
     const more = page.getByRole('region', { name: 'Stomach' })
@@ -145,7 +145,7 @@ test.describe('the Now line', () => {
 
   test('on a phone it is in the first screen, in place of the layer switch (English and Hindi)', async ({ page }) => {
     onlyIn('phone')
-    for (const url of ['/next', `${COLA_KEPT_BURGER}&lang=hi`]) {
+    for (const url of ['/sim', `${COLA_KEPT_BURGER}&lang=hi`]) {
       await page.goto(url)
       await page.waitForLoadState('networkidle')
       await expect(page.getByRole('group', { name: /^(Body system|शरीर का तंत्र)$/ })).toBeHidden()
@@ -164,7 +164,7 @@ test('on a phone’s first visit the medical note comes first, then the Now line
   // A fresh visitor (no beforeEach note flag): its own context.
   const context = await browser.newContext({ ...test.info().project.use, storageState: undefined })
   const page = await context.newPage()
-  await page.goto('/next')
+  await page.goto('/sim')
   await expect(page.locator('[data-summary]')).toBeHidden()
   await page.getByRole('button', { name: 'Got it' }).click()
   await expect(page.locator('[data-summary]')).toBeVisible()
@@ -174,7 +174,7 @@ test('on a phone’s first visit the medical note comes first, then the Now line
 
 test.describe('the summary sentence', () => {
   test('one meal: when half of its food energy has left the stomach, on screen', async ({ page }) => {
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     const summary = page.locator('[data-summary]')
     await expect(summary).toHaveText(/Half of the food energy in Cola has left the stomach after \d+ min\./)
     await expect(summary).toBeInViewport({ ratio: 1 })
@@ -199,7 +199,7 @@ test.describe('report a mistake on the stage', () => {
     })
     // Never reach the real GitHub from a test.
     await context.route('https://github.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<title>GitHub stub</title>' }))
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     await page.getByRole('button', { name: 'Report a mistake' }).click()
     const dialog = page.getByRole('dialog', { name: 'Report a mistake' })
     await expect(dialog.getByText('This opens a public page on GitHub.')).toBeVisible()
@@ -220,7 +220,7 @@ test.describe('report a mistake on the stage', () => {
   test('"Copy link" says it copied in a status message, not by changing the button', async ({ page, context }) => {
     onlyIn('desktop')
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-    await page.goto('/next?v=2&a=cola:1')
+    await page.goto('/sim?v=2&a=cola:1')
     await page.getByRole('button', { name: 'Copy link' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Link copied' })).toBeAttached()
     await expect(page.locator('button[aria-live]')).toHaveCount(0)

@@ -11,16 +11,18 @@
 
 *LifePeek was called BioSim until 2026.*
 
-Compare what happens to two meals inside your body. Pick a meal for A and a meal for B, then
-watch them travel through a 3D body side by side. You can see how fast each leaves the stomach,
-where the carbohydrate, protein, fat, fibre and water go, and how blood sugar typically responds.
+See what happens to a meal inside your body. Pick a meal, press Play and watch it travel through
+a 3D body, with graphs of the stomach, blood sugar and energy beside it. Keep one meal to compare
+it with the next: the kept meal is a dashed line on every graph. You can see how fast each leaves
+the stomach, where the carbohydrate, protein, fat, fibre and water go, and how blood sugar
+typically responds.
 Other living things (animals, plants, cells) are planned.
 
 It is built for classrooms:
 
 - a projector mode
 - English and Hindi
-- a text-only step-by-step view
+- every graph can be read as a table, and every control works from the keyboard or a presentation clicker
 - works offline once loaded
 - every comparison has a link you can share
 

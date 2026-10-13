@@ -1,24 +1,14 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { pseudoText } from '../src/i18n/pseudo.ts'
-import { GATE_ROUTES, V1_SIM, expectInFirstScreen, expectNoClippedText, expectNoPageScroll, modeFor, verdict } from './helpers/gate.ts'
+import { GATE_ROUTES, expectInFirstScreen, expectNoClippedText, expectNoPageScroll, modeFor, verdict } from './helpers/gate.ts'
 
 // Gate "Hindi parity" (03 §0.4, enforced from WP-18): nothing on the stage is cut off, in English,
 // in Hindi and in the +40 % pseudo-locale (i18n/pseudo.ts), at 390 (phone), 1280 and 1440
 // (desktop) and on the projector (1280 × 800, projector mode). Council MUST 9 and round 2: the
 // Hindi Now line, its kept row and the summary fit the phone's first screen and the projector, no
 // label lands on another, the "0 h" tick clears the slider's thumb and the knee's words clear its
-// dotted line. v1's /sim stays report-only.
-
-const v1 = GATE_ROUTES.clippedText.find((r) => r.url.startsWith(V1_SIM))!
-test(`no clipped text (v1, report): ${v1.url}`, async ({ page }) => {
-  test.skip(test.info().project.name !== 'desktop', 'v1 is checked at desktop size')
-  const mode = modeFor(v1)
-  await page.goto(v1.url)
-  await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
-  await page.waitForLoadState('networkidle')
-  await expectNoClippedText(page, { mode })
-})
+// dotted line.
 
 const text = (lang: string) => JSON.parse(readFileSync(new URL(`../src/i18n/${lang}.json`, import.meta.url), 'utf8'))
 const [en, hi] = [text('en'), text('hi')]
@@ -32,19 +22,19 @@ const LANGS = [
 
 /** The stage's two fullest states: a first visit (medical note, clock at 0) and a kept meal at 40 min. */
 const STATES = [
-  { name: 'first visit', url: '/next', firstVisit: true },
-  { name: 'kept meal at 40 min', url: '/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40', firstVisit: false },
-  { name: 'four foods', url: '/next?v=2&a=roti:2,dal:1,orange-juice:1,boiled-egg:1&b=cola:1&t=400', firstVisit: false },
+  { name: 'first visit', url: '/sim', firstVisit: true },
+  { name: 'kept meal at 40 min', url: '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40', firstVisit: false },
+  { name: 'four foods', url: '/sim?v=2&a=roti:2,dal:1,orange-juice:1,boiled-egg:1&b=cola:1&t=400', firstVisit: false },
 ] as const
 
 /** The pseudo-locale is only in builds made with VITE_PSEUDO=1 (Playwright's own server); a deployed site has none. */
 const deployed = !!process.env.PLAYWRIGHT_BASE_URL && !/localhost|127\.0\.0\.1/.test(process.env.PLAYWRIGHT_BASE_URL)
 
-const next = GATE_ROUTES.clippedText.find((r) => r.url === '/next')!
+const next = GATE_ROUTES.clippedText.find((r) => r.url === '/sim')!
 
 for (const l of LANGS) {
   for (const s of STATES) {
-    test(`/next, ${l.name}, ${s.name}: nothing clipped, nothing on top of anything`, async ({ page }) => {
+    test(`/sim, ${l.name}, ${s.name}: nothing clipped, nothing on top of anything`, async ({ page }) => {
       test.skip(l.saved === 'en-XA' && deployed, 'the deployed build has no pseudo-locale')
       const mode = modeFor(next)
       const project = test.info().project.name
@@ -181,9 +171,9 @@ async function expectFirstScreen(page: Page, firstVisit: boolean, play: string) 
     if ((await page.locator('[data-now-kept]').count()) > 0) targets['kept row'] = page.locator('[data-now-kept]')
   }
   await expectInFirstScreen(page, targets)
-  // The body is still a picture, not a strip. 90 px is the floor for the fullest case (Hindi or
-  // the pseudo-locale, a kept meal: three meal-bar rows' worth of words above a 15 rem graph); the
-  // site nav's own row (WP-19 makes it a menu) is the next 50 px to win back.
+  // The body is still a picture, not a strip. 130 px is the floor for the fullest case (Hindi or
+  // the pseudo-locale, a kept meal: three meal-bar rows' worth of words above a 15 rem graph). It
+  // was 90 px until WP-19 folded the site nav's own row into a menu (the fullest case is now 139 px).
   const body = (await targets.body!.first().boundingBox())!
-  verdict('body at least 90 px tall', 'enforce', body.height >= 90 ? [] : [`body is ${Math.round(body.height)} px tall`])
+  verdict('body at least 130 px tall', 'enforce', body.height >= 130 ? [] : [`body is ${Math.round(body.height)} px tall`])
 }

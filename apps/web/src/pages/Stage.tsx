@@ -64,7 +64,7 @@ const ACTIONS: Record<KeyAction, () => void> = {
 }
 
 /**
- * The v2 one-screen stage (UI-1), at the unlisted /next until WP-19 swaps it in for /sim.
+ * The v2 one-screen stage (UI-1), at /sim since WP-19 (built at the unlisted /next, which now redirects here).
  *
  * Four zones on one grid, rows `auto auto 1fr auto`: the meal bar (and its notes), then the body
  * beside the graph column, then the clock dock. From 1024 px up the columns are

@@ -1,71 +1,121 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+import { V1_LINKS } from '../src/lib/v1-links.fixture.ts'
+import { SIM_BODY } from './helpers/gate.ts'
 
-test('home page leads to the default comparison with a verdict', async ({ page }) => {
+// Smoke tests of the site around the stage (rewritten for the swap, WP-19): Home leads to /sim,
+// every link v1 ever shared still opens there, /next redirects, and the pages every visitor sees
+// (footer, privacy, report form) still work. The stage's own behaviour is in stage, graphs, now,
+// keyboard and projector.spec.ts. Project desktop.
+
+/** The address bar's query, decoded. */
+const params = (page: Page) => new URL(page.url()).searchParams
+
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
+
+test('home page leads to the simulator: cola, ready to play', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('cola')
-  await page.getByRole('link', { name: 'Compare two meals' }).click()
+  await page.getByRole('link', { name: 'Open the simulator' }).click()
   await expect(page).toHaveURL(/\/sim\?v=2&a=cola/)
-  await expect(page.getByText(/leaves the stomach about .*faster than/)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Key moments' })).toBeVisible()
+  await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+  // The first-screen prompt points at Play, and goes once the meal moves.
+  const prompt = page.locator('[data-play-prompt]')
+  await expect(prompt).toHaveText('Press Play to watch Cola go through the body')
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(prompt).toHaveCount(0)
   expect(errors).toEqual([])
 })
 
-test('timeline responds to the keyboard and markers jump to key moments', async ({ page }) => {
-  await page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1')
-  const slider = page.getByRole('slider', { name: 'Timeline' })
-  await slider.focus()
-  for (let i = 0; i < 12; i++) await page.keyboard.press('ArrowRight')
-  await expect(slider).toHaveAttribute('aria-valuenow', '120')
-  await page.getByRole('button', { name: /^Meal B: Half has left the stomach/ }).click()
-  await expect(slider).not.toHaveAttribute('aria-valuenow', '120')
-  await expect(page).toHaveURL(/t=\d+/)
+test('a Home example opens its meal with the other one kept, as the same link v1 shared', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Cola, with Cheeseburger + French fries kept' }).click()
+  await expect(page).toHaveURL(/\/sim\?v=2&a=cola%3A1&b=cheeseburger%3A1%2Cfries%3A1/)
+  await expect(page.getByText('Kept: Cheeseburger + French fries', { exact: true }).filter({ visible: true }).first()).toBeVisible()
 })
 
-test('adding a food updates the link, and leaving and coming back keeps the meals', async ({ page }) => {
+test.describe('every v1 link opens on the new /sim', () => {
+  // Old A/B links open as "meal A, with meal B kept": the dashed ghost line on the graphs.
+  for (const link of V1_LINKS) {
+    test(link.href, async ({ page }) => {
+      await page.goto(link.href)
+      await expect(page.getByRole('img', { name: /^(The body|शरीर)/ })).toBeVisible()
+      const known = (items: typeof link.a) =>
+        items
+          .filter((i) => i.foodId !== 'nope')
+          .map((i) => `${i.foodId}:${i.servings}`)
+          .join(',')
+      // A bare /sim opens the default meal, cola (nothing kept).
+      await expect.poll(() => params(page).get('a')).toBe(known(link.a) || 'cola:1')
+      expect(params(page).get('b')).toBe(known(link.b) || null)
+      if (link.t) expect(params(page).get('t')).toBe(String(link.t))
+      if (link.lang) await expect(page.locator('html')).toHaveAttribute('lang', link.lang)
+      if (link.b.length) await expect(page.locator('[data-line="kept"]').filter({ visible: true }).first()).toBeVisible()
+      else await expect(page.locator('[data-line="kept"]')).toHaveCount(0)
+    })
+  }
+
+  test('an old link with a missing food says both things instead of failing silently', async ({ page }) => {
+    await page.goto('/sim?v=1&a=cola:1,nope:1&b=water:1')
+    await expect(page.getByText(/older version of the model/)).toBeVisible()
+    await expect(page.getByText(/no longer exist/)).toBeVisible()
+  })
+})
+
+test('/next redirects to /sim and keeps the link', async ({ page }) => {
+  await page.goto('/next?a=cola:1')
+  await expect(page).toHaveURL(/\/sim\?/)
+  await expect.poll(() => params(page).get('a')).toBe('cola:1')
+  await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+  await page.goto('/next?v=2&a=cola:1&b=cheeseburger:1&t=40&lang=hi')
+  await expect(page).toHaveURL(/\/sim\?/)
+  await expect.poll(() => [...params(page)].join('&')).toBe('v,2&a,cola:1&b,cheeseburger:1&t,40&lang,hi')
+})
+
+test('adding a food updates the link, and leaving and coming back keeps the meal', async ({ page }) => {
   await page.goto('/sim?v=2&a=water:1&b=milk:1')
-  await page.getByRole('combobox', { name: /Add food — Meal A/ }).fill('apple')
-  await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/a=water%3A1%2Capple%3A1/)
+  await page.getByRole('button', { name: 'Add food' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Add food' })
+  await sheet.getByRole('combobox').fill('apple')
+  await sheet.getByRole('combobox').press('Enter')
+  await expect.poll(() => params(page).get('a')).toBe('water:1,apple:1')
   await page.getByRole('link', { name: 'For teachers' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Using LifePeek in class')
   await page.getByRole('link', { name: 'Simulator' }).click()
-  // The simulator writes the link when it mounts, so wait for it to be back on screen first. Coming
-  // back rebuilds both 3D bodies, which in software WebGL on a loaded machine can take over 5 s.
-  await expect(page.getByRole('region', { name: 'Meal A' }).getByText('Apple', { exact: true })).toBeVisible({ timeout: 20_000 })
-  await expect(page).toHaveURL(/a=water%3A1%2Capple%3A1/)
-})
-
-test('meal size cap blocks adding more and says why', async ({ page }) => {
-  await page.goto('/sim?v=2&a=cheeseburger:2,fries:2&b=water:1')
-  await page.getByRole('combobox', { name: /Add food — Meal A/ }).fill('rice')
-  await page.keyboard.press('Enter')
-  await expect(page.getByRole('alert')).toContainText('1500 kcal')
-})
-
-test('old and broken links open with a note instead of failing silently', async ({ page }) => {
-  await page.goto('/sim?v=1&a=cola:1,nope:1&b=water:1')
-  await expect(page.getByText(/older version of the model/)).toBeVisible()
-  await expect(page.getByText(/no longer exist/)).toBeVisible()
-})
-
-test('step-by-step view works without 3D', async ({ page }) => {
-  await page.goto('/sim?v=2&a=roti:1,dal:1&b=white-rice:1')
-  await page.getByRole('button', { name: 'Step by step' }).click()
-  await expect(page.getByRole('heading', { name: 'Step by step', level: 2 })).toBeVisible()
-  await expect(page.getByRole('rowheader', { name: /Stomach/ }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Apple, Servings 1$/ })).toBeVisible({ timeout: 20_000 })
+  await expect.poll(() => params(page).get('a')).toBe('water:1,apple:1')
+  expect(params(page).get('b')).toBe('milk:1')
 })
 
 test('Hindi switch translates the interface and is kept in the link', async ({ page }) => {
   await page.goto('/sim')
   await page.getByRole('button', { name: 'Switch to Hindi' }).click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
-  await expect(page.getByText('भोजन A').first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'चलाएँ', exact: true })).toBeVisible()
   await expect(page).toHaveURL(/lang=hi/)
 })
 
+test('on a phone the site links are in a menu', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/sim')
+  const nav = page.getByRole('navigation', { name: 'Main' })
+  await expect(nav).toBeHidden()
+  const menu = page.getByRole('button', { name: 'Menu' })
+  await menu.click()
+  await expect(menu).toHaveAttribute('aria-expanded', 'true')
+  await expect(nav).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(nav).toBeHidden()
+  await expect(menu).toBeFocused()
+  await menu.click()
+  await nav.getByRole('link', { name: 'For teachers' }).click()
+  await expect(page).toHaveURL(/\/teach$/)
+  await expect(nav).toBeHidden()
+})
+
 test('footer shows Made by, Privacy and About on every page', async ({ page }) => {
-  for (const path of ['/', '/sim', '/next', '/teach', '/science', '/about', '/privacy', '/stats']) {
+  for (const path of ['/', '/sim', '/teach', '/science', '/about', '/privacy', '/stats']) {
     await page.goto(path)
     const footer = page.getByRole('contentinfo')
     await expect(footer.getByRole('link', { name: 'Made by Sarthak' }), path).toHaveAttribute('href', 'https://github.com/Sarthaks-24')
@@ -84,54 +134,45 @@ test('privacy page renders in Hindi', async ({ page }) => {
   await expect(page.getByText('देखरेख करने वाले: Sarthak (GitHub: @Sarthaks-24)')).toBeVisible()
 })
 
-test('the first-run medical note closes for good, and the blood-sugar chart keeps its note', async ({ page }) => {
+test('the first-run medical note closes for good, and the blood-sugar graph keeps its note', async ({ browser }) => {
+  // A first visit: no "seen" flag.
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, baseURL: test.info().project.use.baseURL })
+  const page = await context.newPage()
   await page.goto('/sim?v=2&a=cola:1&b=water:1')
-  const note = page.getByRole('region', { name: 'For learning, not for diet decisions' })
-  await expect(note).toBeVisible()
+  const note = page.locator('[data-first-run]')
+  await expect(note).toContainText('For learning, not for diet decisions')
   await note.getByRole('button', { name: 'Got it' }).click()
   await expect(note).toBeHidden()
   await page.reload()
-  await expect(page.getByText('A typical range for a healthy adult, not a prediction for you.')).toBeVisible()
+  await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
   await expect(note).toBeHidden()
-})
-
-test('the report dialog shows the public-GitHub warning', async ({ page }) => {
-  await page.goto('/sim?v=2&a=water:1&b=milk:1')
-  await page.getByRole('button', { name: 'Report a mistake' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Report a mistake' })
-  await expect(dialog.getByText('This opens a public page on GitHub.')).toBeVisible()
-  await expect(dialog.getByText('Reports are public.')).toBeVisible()
-})
-
-test('report with no API opens GitHub and sends nothing', async ({ page, context }) => {
-  const posted: string[] = []
-  context.on('request', (r) => {
-    if (r.url().includes('/api/feedback')) posted.push(r.url())
-  })
-  // Never reach the real GitHub from a test.
-  await context.route('https://github.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<title>GitHub stub</title>' }))
-  await page.goto('/sim?v=2&a=water:1&b=milk:1')
-  await page.getByRole('button', { name: 'Report a mistake' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Report a mistake' })
-  await dialog.getByLabel('Where is the mistake?').fill('Milk')
-  await dialog.getByLabel('What’s wrong, and what should it say?').fill('The fat value looks too high.')
-  const popupOpened = context.waitForEvent('page')
-  await dialog.getByRole('button', { name: 'Open the report on GitHub' }).click()
-  const popup = await popupOpened
-  await popup.waitForURL(/^https:\/\/github\.com\/Sarthaks-24\/lifepeek\/issues\/new\?/)
-  const params = new URL(popup.url()).searchParams
-  expect(params.get('template')).toBe('mistake.md')
-  expect(params.get('title')).toBe('Mistake: Milk')
-  // The pre-filled text replaces the template's, so its public warning comes first again.
-  expect(params.get('body')).toMatch(/^<!--\nIssues are public\. Don't write your name/)
-  expect(params.get('body')).toContain('The fat value looks too high.')
-  expect(posted).toEqual([])
+  await expect(
+    page
+      .getByText(/^A typical range for a healthy adult, not a prediction for you./)
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible()
+  await context.close()
 })
 
 test('canonical on /teach', async ({ page }) => {
   await page.goto('/teach?from=test')
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href', 'https://lifepeek.vercel.app/teach')
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://lifepeek.vercel.app/teach')
+})
+
+test('share image and install pictures are served, and the page points at them', async ({ page, request }) => {
+  await page.goto('/')
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://lifepeek.vercel.app/og-image.png')
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image')
+  const manifest = await (await request.get('/manifest.webmanifest')).json()
+  expect(manifest.categories).toEqual(['education'])
+  expect(manifest.shortcuts.map((s: { url: string }) => s.url)).toEqual(['/teach'])
+  for (const src of ['/og-image.png', ...manifest.screenshots.map((s: { src: string }) => s.src)]) {
+    const res = await request.get(src)
+    expect(res.status(), src).toBe(200)
+    expect(res.headers()['content-type'], src).toMatch(/^image\//)
+  }
 })
 
 test('notices file is text', async ({ request }) => {

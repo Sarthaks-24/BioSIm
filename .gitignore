@@ -3,6 +3,8 @@ node_modules/
 
 # Builds
 dist/
+# The e2e build (with the pseudo-locale), apps/web/playwright.config.ts
+dist-e2e/
 dist-ssr/
 build/
 coverage/

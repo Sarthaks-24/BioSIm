@@ -56,7 +56,7 @@ describe('verdict', () => {
 
   it('every ready-made lesson gives a sensible verdict', () => {
     for (const p of PRESETS) {
-      const v = verdictData(pair(encode(p.a), encode(p.b)))
+      const v = verdictData(pair(encode(p.meal), encode(p.kept)))
       expect(v.kind, p.key).toBe('pair')
     }
   })

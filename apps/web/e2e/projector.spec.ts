@@ -23,14 +23,14 @@ function styles(page: Page, selector: string, prop: string) {
 for (const lang of ['en', 'hi'] as const) {
   test(`projector stage (${lang}): no site nav, a one-line footer, text the back row can read`, async ({ page }) => {
     onlyIn('projector')
-    await page.goto(`/next?lang=${lang}`)
+    await page.goto(`/sim?lang=${lang}`)
     await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
     await expect(page.locator('html')).toHaveAttribute('lang', lang)
     await page.locator('figure [data-line="run"]').first().waitFor()
 
     // The stage is the only page shown to a room: the site nav is hidden, the two buttons stay.
     await expect(page.getByRole('navigation')).toBeHidden()
-    await expect(page.locator('header button')).toHaveCount(2)
+    await expect(page.locator('header button').filter({ visible: true })).toHaveCount(2)
 
     // The footer is one line: every visible item's top within one line of the first.
     const tops = await page
@@ -76,7 +76,7 @@ for (const lang of ['en', 'hi'] as const) {
 for (const lang of ['en', 'hi'] as const) {
   test(`projector lesson view (${lang}): summary, Now line and a ≥ 250 px plot on every tab, no scroll`, async ({ page }) => {
     onlyIn('projector')
-    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
+    await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
     const group = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
     await expect(group).toBeVisible()
     const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
@@ -106,7 +106,7 @@ for (const lang of ['en', 'hi'] as const) {
 for (const lang of ['en', 'hi'] as const) {
   test(`projector at 0 min (${lang}): the summary and the Now line are there from the start`, async ({ page }) => {
     onlyIn('projector')
-    await page.goto(`/next?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0&lang=${lang}`)
+    await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0&lang=${lang}`)
     await page.locator('figure [data-line="run"]').first().waitFor()
     const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
     if (await ok.isVisible()) await ok.click()
@@ -130,28 +130,31 @@ for (const lang of ['en', 'hi'] as const) {
 
 test('the stage keeps its site nav when projector mode is off', async ({ page }) => {
   onlyIn('projector')
-  await page.goto('/next')
+  await page.goto('/sim')
   await page.getByRole('button', { name: 'Projector mode' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-contrast', 'normal')
   await expect(page.getByRole('navigation')).toBeVisible()
 })
 
-for (const url of ['/next', '/next?lang=hi', '/']) {
+for (const url of ['/sim', '/sim?lang=hi', '/']) {
   test(`phone header controls are at least 44 px tall: ${url}`, async ({ page }) => {
     onlyIn('phone')
     await page.goto(url)
     const controls = page.locator('header button, header nav a').filter({ visible: true })
     await expect(controls.first()).toBeVisible()
-    const heights = await controls.evaluateAll((els) =>
-      els.map((el) => [el.textContent?.trim(), el.getBoundingClientRect().height] as const),
-    )
-    expect(heights.length).toBeGreaterThanOrEqual(4)
-    for (const [name, h] of heights) expect(h, `${name}`).toBeGreaterThanOrEqual(44)
+    const heights = () =>
+      controls.evaluateAll((els) => els.map((el) => [el.textContent?.trim(), el.getBoundingClientRect().height] as const))
+    // Language and the menu (WP-19: the site links are in the menu on a phone), then the links.
+    expect((await heights()).length).toBeGreaterThanOrEqual(2)
+    await page.getByRole('button', { name: /^(Menu|मेन्यू)$/ }).click()
+    const open = await heights()
+    expect(open.length).toBeGreaterThanOrEqual(5)
+    for (const [name, h] of open) expect(h, `${name}`).toBeGreaterThanOrEqual(44)
   })
 }
 
 // FIX-C review, item 6: the stage's projector size comes from html[data-fit], set by the Layout
-// as soon as /next is matched, not from :has([data-stage]) once the stage has drawn.
+// as soon as /sim is matched, not from :has([data-stage]) once the stage has drawn.
 test.describe('while the stage loads', () => {
   test.use({ serviceWorkers: 'block' })
 
@@ -163,7 +166,7 @@ test.describe('while the stage loads', () => {
       await held
       await route.continue()
     })
-    await page.goto('/next?v=2&a=cola:1', { waitUntil: 'commit' })
+    await page.goto('/sim?v=2&a=cola:1', { waitUntil: 'commit' })
     await expect(page.locator('html')).toHaveAttribute('data-fit', '')
     await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
     expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')

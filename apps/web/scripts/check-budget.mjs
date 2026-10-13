@@ -43,8 +43,13 @@
 //   WP-18 (2026-10-13): the stage's Hindi layout fixes (Now line as a row, kept row, chips that
 //   shorten, tick room, knee side) and the "Typical adult" strings: /next 188.9 (main with FIX-D)
 //   → 189.2 KB. The pseudo-locale (i18n/pseudo.ts) is only in VITE_PSEUDO=1 builds, never here.
-//   Home stays "report": React, the router and i18next alone are about 100 KB, and Home still runs
-//   the model (`simulate`) for its race until WP-19.
+//   WP-19 (2026-10-13): the swap. /sim is the stage (pages/Stage.tsx), /next redirects to it, and
+//   v1's simulator is no longer routed, so its row went. The first-screen "Press ▶" prompt and the
+//   phone menu: /sim 189.2 (as /next) → 189.8 KB. Home draws its race from data/hero.json instead
+//   of running the model: 154.0 → 146.0 KB. The e2e build (pseudo-locale) now goes to dist-e2e,
+//   and this script refuses a dist that has it.
+//   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
+//   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -55,8 +60,8 @@ const KB = 1000
 
 const BUDGETS = [
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
-  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'enforce' },
-  { name: '/next before 3D', roots: ['index.html', 'src/pages/Stage.tsx'], max: 190 * KB, mode: 'enforce' },
+  // The stage (pages/Stage.tsx) is /sim since WP-19; /next only redirects to it.
+  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Stage.tsx'], max: 190 * KB, mode: 'enforce' },
   // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
   {
     name: '3D body (lazy)',
@@ -74,6 +79,17 @@ if (!fs.existsSync(manifestFile)) {
   process.exit(1)
 }
 const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'))
+// A build with the test-only pseudo-locale (VITE_PSEUDO=1, i18n/pseudo.ts) is not what ships, and
+// it is bigger. The e2e build goes to dist-e2e (playwright.config.ts); the one measured here must be real.
+const assets = path.join(dist, 'assets')
+const pseudo = fs
+  .readdirSync(assets)
+  .filter((f) => f.endsWith('.js'))
+  .find((f) => fs.readFileSync(path.join(assets, f), 'utf8').includes('en-XA'))
+if (pseudo) {
+  console.error(`dist/assets/${pseudo} has the pseudo-locale (en-XA): a VITE_PSEUDO=1 test build. Build again without it.`)
+  process.exit(1)
+}
 const size = (file) => fs.statSync(path.join(dist, file)).size
 const gzip = (file) => gzipSync(fs.readFileSync(path.join(dist, file))).length
 

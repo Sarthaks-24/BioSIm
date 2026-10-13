@@ -28,7 +28,7 @@ Rules for the reviewer:
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `home.lead` | LifePeek shows why. Pick two meals and watch them travel through the body side by side — how fast each leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar responds. | LifePeek बताता है कि ऐसा क्यों होता है। दो भोजन चुनें और उन्हें साथ-साथ शरीर में आगे बढ़ते देखें — हर भोजन आमाशय से कितनी जल्दी निकलता है, शर्करा, प्रोटीन, वसा और रेशा कहाँ जाते हैं, और रक्त शर्करा कैसे बदलती है। | draft |
+| `home.lead` | LifePeek shows why. Pick a meal, press Play and watch it travel through the body: how fast it leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next. | LifePeek बताता है कि ऐसा क्यों होता है। कोई भोजन चुनें, ‘चलाएँ’ दबाएँ और उसे शरीर में आगे बढ़ते देखें: वह आमाशय से कितनी जल्दी निकलता है, शर्करा, प्रोटीन, वसा और रेशा कहाँ जाते हैं, और रक्त शर्करा व ऊर्जा कैसे बदलती हैं। अगले भोजन से तुलना के लिए एक भोजन रख लें। | draft |
 | `home.previewCaption` | Food still in the stomach after eating — computed by the LifePeek model | खाने के बाद आमाशय में बचा भोजन — LifePeek मॉडल द्वारा गणना | draft |
 | `feedback.failed` | Couldn’t reach the LifePeek server. | LifePeek सर्वर से संपर्क नहीं हो सका। | draft |
 | `disclaimer.long` | LifePeek is a simplified teaching model. Times and blood-sugar values are typical ranges for healthy adults and vary a lot between people. It must not be used to make health, diet or medical decisions. | LifePeek पढ़ाने के लिए बनाया गया एक सरल मॉडल है। समय और रक्त शर्करा के मान स्वस्थ वयस्कों की सामान्य सीमाएँ हैं और हर व्यक्ति में काफ़ी अलग होते हैं। इसका उपयोग स्वास्थ्य, आहार या चिकित्सा संबंधी निर्णय लेने के लिए नहीं किया जाना चाहिए। | draft |
@@ -367,7 +367,6 @@ back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `home.headline` | Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours. | कोला के एक कैन का आधा भाग लगभग आधे घंटे में आमाशय से निकल जाता है। फ़्राइज़ के साथ बर्गर के आधे भाग को चार घंटे से ज़्यादा लगते हैं। | draft |
-| `home.example.appleJuice` | Apple vs orange juice | सेब बनाम संतरे का रस | draft |
 | `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
 | `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
 | `nav.main` | Main | मुख्य | draft |
@@ -513,7 +512,7 @@ WP-20; until then they ship and need the same check.
 | `nav.languageLabel` | Switch to Hindi | अंग्रेज़ी में बदलें | draft |
 | `nav.projector` | Projector mode | प्रोजेक्टर मोड | draft |
 | `nav.skip` | Skip to content | मुख्य सामग्री पर जाएँ | draft |
-| `home.cta` | Compare two meals | दो भोजनों की तुलना करें | draft |
+| `home.cta` | Open the simulator | सिम्युलेटर खोलें | draft |
 | `home.hours` | hours after eating | खाने के बाद घंटे | draft |
 | `home.how.title` | How it works | यह कैसे काम करता है | draft |
 | `home.how.computed` | Nothing is typed in by hand | कुछ भी हाथ से नहीं भरा गया | draft |
@@ -521,11 +520,8 @@ WP-20; until then they ship and need the same check.
 | `home.how.honest` | Ranges, not fake precision | सीमाएँ दिखाते हैं, नकली सटीकता नहीं | draft |
 | `home.how.honestBody` | People differ. Times in the intestines and blood sugar are shown as typical ranges for healthy adults, with the source for every input. | हर व्यक्ति अलग होता है। आँतों में लगने वाला समय और रक्त शर्करा स्वस्थ वयस्कों की सामान्य सीमा के रूप में दिखाए गए हैं, और हर इनपुट का स्रोत दिया गया है। | draft |
 | `home.how.class` | Made for the classroom | कक्षा के लिए बनाया गया | draft |
-| `home.how.classBody` | Projector mode, English and Hindi, a step-by-step text view, works offline once loaded, and a link that reopens the exact same comparison. | प्रोजेक्टर मोड, अंग्रेज़ी और हिन्दी, चरण-दर-चरण पाठ दृश्य, एक बार लोड होने के बाद बिना इंटरनेट के चलता है, और एक लिंक जो ठीक वही तुलना दोबारा खोलता है। | draft |
+| `home.how.classBody` | Projector mode, English and Hindi, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals. | प्रोजेक्टर मोड, अंग्रेज़ी और हिन्दी, प्रेज़ेंटेशन क्लिकर के लिए कुंजियाँ, एक बार लोड होने के बाद बिना इंटरनेट के चलता है, और एक लिंक जो ठीक वही भोजन दोबारा खोलता है। | draft |
 | `home.examples` | Try a comparison | कोई तुलना आज़माएँ | draft |
-| `home.example.colaBurger` | Cola vs burger and fries | कोला बनाम बर्गर और फ़्राइज़ | draft |
-| `home.example.rotiRice` | Roti and dal vs white rice | रोटी और दाल बनाम सफ़ेद चावल | draft |
-| `home.example.waterMilk` | Water vs milk | पानी बनाम दूध | draft |
 | `sim.title` | Simulator | सिम्युलेटर | draft |
 | `sim.mealA` | Meal A | भोजन A | draft |
 | `sim.mealB` | Meal B | भोजन B | draft |
@@ -638,23 +634,18 @@ WP-20; until then they ship and need the same check.
 | `feedback.sent` | Thanks — report sent. | धन्यवाद — रिपोर्ट भेज दी गई। | draft |
 | `feedback.close` | Close | बंद करें | draft |
 | `feedback.openIssue` | Send it as a GitHub issue instead | इसके बजाय GitHub issue के रूप में भेजें | draft |
-| `teach.plan` | A simple lesson plan | एक सरल पाठ योजना | draft |
-| `teach.steps[0]` | Ask the class to predict: which leaves the stomach first — a can of cola or a burger with fries? Which raises blood sugar more? | कक्षा से अनुमान लगाने को कहें: आमाशय से पहले क्या निकलेगा — कोला का एक कैन या फ़्राइज़ के साथ बर्गर? रक्त शर्करा किससे ज़्यादा बढ़ेगी? | draft |
-| `teach.steps[1]` | Open the cola vs burger comparison and press Play. Pause when the cola is mostly out of the stomach and ask why. | कोला बनाम बर्गर की तुलना खोलें और ‘चलाएँ’ दबाएँ। जब कोला ज़्यादातर आमाशय से निकल जाए तो रोकें और पूछें कि ऐसा क्यों हुआ। | draft |
-| `teach.steps[2]` | Switch to Step by step and read the stomach stage together. Link the result to calories and fat. | ‘चरण-दर-चरण’ पर जाएँ और आमाशय वाला चरण साथ मिलकर पढ़ें। परिणाम को कैलोरी और वसा से जोड़ें। | draft |
-| `teach.steps[3]` | Let groups build their own comparisons on their phones (no login needed) and share the link with you. | समूहों को अपने फ़ोन पर अपनी तुलनाएँ बनाने दें (लॉगिन की ज़रूरत नहीं) और लिंक आपके साथ साझा करने दें। | draft |
-| `teach.steps[4]` | Close with the blood sugar chart: why does adding fat or protein flatten the curve? | रक्त शर्करा चार्ट के साथ समाप्त करें: वसा या प्रोटीन जोड़ने से वक्र चपटा क्यों हो जाता है? | draft |
-| `teach.questionsTitle` | Questions to ask | पूछने के लिए प्रश्न | draft |
-| `teach.questions[0]` | Why do drinks leave the stomach before solid food? | पेय पदार्थ ठोस भोजन से पहले आमाशय से क्यों निकल जाते हैं? | draft |
-| `teach.questions[1]` | Fibre is never absorbed. Where does it end up, and what eats it? | रेशा कभी अवशोषित नहीं होता। वह अंत में कहाँ जाता है, और उसे कौन खाता है? | draft |
-| `teach.questions[2]` | Why is blood sugar shown as a band instead of one number? | रक्त शर्करा को एक संख्या के बजाय एक पट्टी के रूप में क्यों दिखाया गया है? | draft |
-| `teach.questions[3]` | Roti and dal versus white rice: which gives a gentler blood sugar curve? Look at each food’s glycemic index on the Science page. | रोटी और दाल बनाम सफ़ेद चावल: किससे रक्त शर्करा का वक्र धीरे-धीरे बढ़ता है? ‘विज्ञान’ पेज पर हर खाद्य पदार्थ का ग्लाइसेमिक इंडेक्स देखें। | draft |
+| `teach.plan` | A 40-minute lesson plan | 40 मिनट की पाठ योजना | draft |
+| `teach.steps[0]` | Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more. | अनुमान: कक्षा से पूछें कि आमाशय से पहले क्या निकलेगा — कोला का एक कैन या फ़्राइज़ के साथ बर्गर, और रक्त शर्करा किससे ज़्यादा बढ़ेगी। | draft |
+| `teach.steps[1]` | Open cola with burger + fries kept (the first ready lesson below) and press Play. The dashed grey line is the kept burger. | बर्गर + फ़्राइज़ को तुलना के लिए रखकर कोला खोलें (नीचे पहला तैयार पाठ) और ‘चलाएँ’ दबाएँ। धूसर टूटी रेखा रखा गया बर्गर है। | draft |
+| `teach.steps[2]` | Press Page Down (or the presentation clicker) to jump from one key moment to the next. At each one, read the line under the body: where the food is now. | एक मुख्य पल से अगले पर जाने के लिए Page Down (या प्रेज़ेंटेशन क्लिकर) दबाएँ। हर पल पर शरीर के नीचे की पंक्ति पढ़ें: भोजन अभी कहाँ है। | draft |
+| `teach.steps[3]` | Read blood sugar at 1 hour from the Blood sugar graph: drag the timeline to 1 h, and press B to bring that graph to the front. | 1 घंटे पर रक्त शर्करा ‘रक्त शर्करा’ ग्राफ़ से पढ़ें: टाइमलाइन को 1 घं तक खींचें, और वह ग्राफ़ सामने लाने के लिए B दबाएँ। | draft |
+| `teach.steps[4]` | Finish with energy at 3 hours: is more energy coming in from the meal, or being used by the body? Press E for the Energy graph. | 3 घंटे पर ऊर्जा के साथ समाप्त करें: क्या भोजन से ज़्यादा ऊर्जा आ रही है, या शरीर ज़्यादा उपयोग कर रहा है? ‘ऊर्जा’ ग्राफ़ के लिए E दबाएँ। | draft |
+| `teach.questionsTitle` | Four questions to check understanding | समझ जाँचने के चार प्रश्न | draft |
 | `teach.tipsTitle` | Practical tips | उपयोगी सुझाव | draft |
-| `teach.tips[0]` | Turn on Projector mode for stronger contrast in a bright room. | तेज़ रोशनी वाले कमरे में बेहतर कंट्रास्ट के लिए प्रोजेक्टर मोड चालू करें। | draft |
+| `teach.tips[0]` | Projector mode (top right) shows one big graph at a time: press S, B or E to switch between Stomach, Blood sugar and Energy. | प्रोजेक्टर मोड (ऊपर दाईं ओर) एक समय में एक बड़ा ग्राफ़ दिखाता है: आमाशय, रक्त शर्करा और ऊर्जा के बीच जाने के लिए S, B या E दबाएँ। | draft |
 | `teach.tips[1]` | Open the app once on Wi-Fi; after that it works offline. | ऐप को एक बार वाई-फ़ाई पर खोलें; उसके बाद यह बिना इंटरनेट के भी चलता है। | draft |
-| `teach.tips[2]` | Every comparison has its own link — save it in your notes to reopen the exact setup. | हर तुलना का अपना लिंक होता है — ठीक वही सेटअप दोबारा खोलने के लिए इसे अपने नोट्स में सहेज लें। | draft |
-| `teach.tips[3]` | Use the Step by step view for students using screen readers or old phones. | स्क्रीन रीडर या पुराने फ़ोन इस्तेमाल करने वाले विद्यार्थियों के लिए ‘चरण-दर-चरण’ दृश्य का उपयोग करें। | draft |
-| `teach.presetsTitle` | Ready-made comparisons | तैयार तुलनाएँ | draft |
+| `teach.tips[2]` | Every screen has its own link: save it in your notes to reopen the exact setup. | हर स्क्रीन का अपना लिंक होता है: ठीक वही सेटअप दोबारा खोलने के लिए इसे अपने नोट्स में सहेज लें। | draft |
+| `teach.tips[3]` | Every graph has “Show as table” for students using screen readers, and every control works from the keyboard (press ? for the list of keys). | स्क्रीन रीडर इस्तेमाल करने वाले विद्यार्थियों के लिए हर ग्राफ़ में “तालिका के रूप में देखें” है, और हर नियंत्रण कीबोर्ड से चलता है (कुंजियों की सूची के लिए ? दबाएँ)। | draft |
 | `science.title` | Science and sources | विज्ञान और स्रोत | draft |
 | `science.lead` | What the model computes, what it assumes, and where every number comes from. | मॉडल क्या गणना करता है, क्या मानकर चलता है, और हर संख्या कहाँ से आती है। | draft |
 | `science.modelTitle` | What is computed | क्या गणना की जाती है | draft |
@@ -698,6 +689,33 @@ WP-20; until then they ship and need the same check.
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `now.keptShort` | Kept: | रखा गया: | draft |
+
+## New strings (added by scripts/hi-review.mjs)
+
+| Key | English | Hindi | Status |
+|---|---|---|---|
+| `nav.menu` | Menu | मेन्यू | draft |
+| `home.example` | {{meal}}, with {{kept}} kept | {{meal}}, तुलना के लिए {{kept}} रखा गया | draft |
+| `teach.lessonsTitle` | Ready lessons | तैयार पाठ | draft |
+| `teach.lessonsLead` | Each opens in projector mode on a laptop, paused at its first key moment, on the graph it is about. Press Play, or Page Down for the next key moment. | हर पाठ लैपटॉप पर प्रोजेक्टर मोड में खुलता है, अपने पहले मुख्य पल पर रुका हुआ, उसी ग्राफ़ पर जिसके बारे में पाठ है। ‘चलाएँ’ दबाएँ, या अगले मुख्य पल के लिए Page Down। | draft |
+| `teach.lessons.stomachRace` | Which leaves the stomach first? | आमाशय से पहले क्या निकलता है? | draft |
+| `teach.lessons.rotiDal` | Which raises blood sugar more gently? | रक्त शर्करा किससे धीरे बढ़ती है? | draft |
+| `teach.lessons.colaFour` | One cola or four: what happens to blood sugar? | एक कोला या चार: रक्त शर्करा का क्या होता है? | draft |
+| `teach.opensAt` | opens at {{time}} on the {{graph}} graph | {{graph}} ग्राफ़ पर {{time}} पर खुलता है | draft |
+| `teach.questionsLead` | Students answer on their own phones, with no help, each starting from the link. If four out of five get a question right, the screen teaches it. | विद्यार्थी अपने फ़ोन पर, बिना मदद के, हर प्रश्न उसके लिंक से शुरू करके उत्तर दें। अगर पाँच में से चार किसी प्रश्न का सही उत्तर दें, तो स्क्रीन उसे सिखा रही है। | draft |
+| `teach.tasks.halfLeft` | Cola is chosen. When has half of it left the stomach? | कोला चुना हुआ है। आधा कोला आमाशय (पेट) से कब तक निकल गया? | draft |
+| `teach.tasks.faster` | Now compare cola with a burger and fries. Which leaves the stomach faster, and why? | अब कोला की तुलना बर्गर और फ़्राइज़ से करो। कौन-सा आमाशय से जल्दी निकलता है, और क्यों? | draft |
+| `teach.tasks.bloodAt1h` | What is blood sugar 1 hour after the cola? | कोला के 1 घंटे बाद रक्त शर्करा (ब्लड शुगर) कितनी है? | draft |
+| `teach.tasks.energyAt3h` | At 3 hours, is more energy coming in from the cola, or is the body using more? | 3 घंटे पर कोला से शरीर में ऊर्जा ज़्यादा आ रही है, या शरीर ज़्यादा ऊर्जा खर्च कर रहा है? | draft |
+| `teach.qrTitle` | Open it on students’ phones | विद्यार्थियों के फ़ोन पर खोलें | draft |
+| `teach.qrCaption` | Students scan this code with the phone camera to open LifePeek. No login, nothing to install. | LifePeek खोलने के लिए विद्यार्थी फ़ोन के कैमरे से यह कोड स्कैन करें। न लॉगिन, न कुछ इंस्टॉल करना। | draft |
+| `teach.qrAlt` | QR code for lifepeek.vercel.app | lifepeek.vercel.app का QR कोड | draft |
+| `stage.pressPlay` | Press ▶ to watch {{meal}} go through the body | ▶ दबाएँ और देखें कि {{meal}} शरीर में कैसे आगे बढ़ता है | draft |
+| `teach.answersTitle` | Answers for teachers | शिक्षकों के लिए उत्तर | draft |
+| `teach.answers[0]` | About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline. | लगभग 35 मिनट (30 से 40 सही है): आमाशय ग्राफ़ पर गोला, या टाइमलाइन पर उसका निशान। | draft |
+| `teach.answers[1]` | Cola, about 8 times faster: a drink starts leaving straight away, and it has fewer calories than a burger with fries. | कोला, लगभग 8 गुना जल्दी: पेय तुरंत निकलना शुरू हो जाता है, और उसमें फ़्राइज़ के साथ बर्गर से कम कैलोरी होती है। | draft |
+| `teach.answers[2]` | About 111 mg/dL (105 to 115). Its highest, about 121, was at 35 minutes. | लगभग 111 mg/dL (105 से 115)। इसका सबसे ऊँचा स्तर, लगभग 121, 35 मिनट पर था। | draft |
+| `teach.answers[3]` | The body is using more: almost nothing is coming in from the cola, while the body uses about 63 kcal an hour. | शरीर ज़्यादा खर्च कर रहा है: कोला से लगभग कुछ नहीं आ रहा, जबकि शरीर लगभग 63 किलो कैलोरी प्रति घंटा खर्च करता है। | draft |
 
 ## Sign-off
 

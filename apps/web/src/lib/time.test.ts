@@ -27,6 +27,6 @@ describe('bundled content', () => {
   })
 
   it('every preset refers to real foods', () => {
-    for (const p of PRESETS) for (const i of [...p.a, ...p.b]) expect(lookupFood(i.foodId), i.foodId).toBeDefined()
+    for (const p of PRESETS) for (const i of [...p.meal, ...p.kept]) expect(lookupFood(i.foodId), i.foodId).toBeDefined()
   })
 })

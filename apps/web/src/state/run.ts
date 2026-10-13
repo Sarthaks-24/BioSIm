@@ -74,8 +74,8 @@ export interface RunState {
 const HUMAN = ORGANISMS[DEFAULT_ORGANISM].organism
 export const DEFAULT_LAYER: SystemId = HUMAN.defaultSystem
 export const DEFAULT_RUN_PROFILE: ProfileId = DEFAULT_PROFILE[DEFAULT_ORGANISM]
-/** What a bare `/next` opens: the first preset's meal, nothing kept. */
-export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.a
+/** What a bare `/sim` opens: the first preset's meal (cola), nothing kept, so Play works at once. */
+export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.meal
 
 const fitsCap = (items: MealItem[]) => mealKcal(items, lookupFood) <= PARAMS.maxMealKcal
 const isLayer = (id: string | undefined): id is SystemId => ORGANISMS[DEFAULT_ORGANISM].systems.some((s) => s.id === id)

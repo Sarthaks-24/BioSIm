@@ -1,6 +1,6 @@
 import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router'
 import './styles.css'
 import { i18nReady } from './i18n/index.ts'
 import { readPref } from './lib/prefs.ts'
@@ -8,14 +8,19 @@ import Layout, { type RouteHandle } from './components/Layout.tsx'
 import Home from './pages/Home.tsx'
 import { ErrorPage, NotFound } from './pages/Misc.tsx'
 
-const Simulator = lazy(() => import('./pages/Simulator.tsx'))
-// The v2 screen, built next to v1 until WP-19 swaps it in (unlisted: no nav link).
+// The v2 screen. Since WP-19 it is /sim; v1's pages/Simulator.tsx is no longer routed (WP-20 deletes it).
 const Stage = lazy(() => import('./pages/Stage.tsx'))
 const Teach = lazy(() => import('./pages/Teach.tsx'))
 const Science = lazy(() => import('./pages/Science.tsx'))
 const About = lazy(() => import('./pages/About.tsx'))
 const Privacy = lazy(() => import('./pages/Privacy.tsx'))
 const Stats = lazy(() => import('./pages/Stats.tsx'))
+
+/** /next was the v2 screen's address while it was built (WP-11…18); its links open /sim, with the same query. */
+function ToSim() {
+  const { search, hash } = useLocation()
+  return <Navigate replace to={{ pathname: '/sim', search, hash }} />
+}
 
 const page = (el: React.ReactNode) => <Suspense fallback={<p className="p-10 text-center text-ink-2">…</p>}>{el}</Suspense>
 
@@ -25,8 +30,8 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Home /> },
-      { path: '/sim', element: page(<Simulator />) },
-      { path: '/next', element: page(<Stage />), handle: { fit: true } satisfies RouteHandle },
+      { path: '/sim', element: page(<Stage />), handle: { fit: true } satisfies RouteHandle },
+      { path: '/next', element: <ToSim /> },
       { path: '/teach', element: page(<Teach />) },
       { path: '/science', element: page(<Science />) },
       { path: '/about', element: page(<About />) },

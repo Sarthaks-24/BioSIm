@@ -1,8 +1,12 @@
 import { defineConfig, type PlaywrightTestConfig } from '@playwright/test'
 
-// Set PLAYWRIGHT_BASE_URL to run the gate against a deployed site (WP-22); otherwise the tests
-// build the app and serve the preview locally.
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4173'
+// Set PLAYWRIGHT_BASE_URL to run the gate against a deployed site (WP-22) or a server you started;
+// otherwise the tests build the app and serve the preview locally. That build has the +40 %
+// pseudo-locale (VITE_PSEUDO=1), so it goes to its own folder (dist-e2e) and port: `dist` stays the
+// real build that `npm run budget` measures, and a plain `npm run preview` on 4173 is never
+// mistaken for the test build.
+const E2E_PORT = 4174
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${E2E_PORT}`
 
 // Software WebGL (SwiftShader), so the 3D body draws on CI machines without a GPU.
 const webgl = { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }
@@ -27,12 +31,23 @@ const projects: PlaywrightTestConfig['projects'] = [
       'stats.spec.ts',
       'now.spec.ts',
       'keyboard.spec.ts',
+      'teach.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
   {
     name: 'projector',
-    testMatch: ['gate.spec.ts', 'hindi.spec.ts', 'stage.spec.ts', 'graphs.spec.ts', 'now.spec.ts', 'projector.spec.ts', 'keyboard.spec.ts', 'a11y.spec.ts'],
+    testMatch: [
+      'gate.spec.ts',
+      'hindi.spec.ts',
+      'stage.spec.ts',
+      'graphs.spec.ts',
+      'now.spec.ts',
+      'projector.spec.ts',
+      'keyboard.spec.ts',
+      'a11y.spec.ts',
+      'teach.spec.ts',
+    ],
     use: {
       viewport: { width: 1280, height: 800 },
       launchOptions: webgl,
@@ -81,8 +96,8 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-        url: 'http://localhost:4173',
+        command: `npm run build -- --outDir dist-e2e && npm run preview -- --outDir dist-e2e --port ${E2E_PORT} --strictPort`,
+        url: `http://localhost:${E2E_PORT}`,
         // The +40 % pseudo-locale for hindi.spec.ts (i18n/pseudo.ts). Only this build has it; Vercel never sets it.
         env: { VITE_PSEUDO: '1' },
         reuseExistingServer: !process.env.CI,

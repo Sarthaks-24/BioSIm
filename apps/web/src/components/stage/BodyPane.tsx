@@ -11,6 +11,7 @@ import { useRunStore } from '../../state/run.ts'
 import LayerBar from './LayerBar.tsx'
 import { NowLine } from './NowLine.tsx'
 import ParticleKey from './ParticleKey.tsx'
+import PlayPrompt from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
 import { mealNames } from './mealText.ts'
 
@@ -102,6 +103,11 @@ export default function BodyPane({ run, kept }: { run: Simulation; kept: Simulat
             </div>
           )}
         </div>
+        {/* What to do first (council round 2), while the clock stands at the start: over the legs on a
+            phone, in the empty corner beside them from 1024 px up. Never while "More" covers the body. */}
+        {hasMeal && !open && (
+          <PlayPrompt meal={meal} className="absolute inset-x-0 bottom-1 mx-auto max-w-[calc(100%-1.5rem)] lg:right-4 lg:bottom-2 lg:left-auto lg:mx-0 lg:max-w-[min(28rem,60%)]" />
+        )}
         {/* What the food pieces are (council round 2): over the legs, out of the organs' way. */}
         {hasMeal && <ParticleKey run={run} className="pointer-events-none absolute bottom-1.5 left-4 max-w-[70%] flex-wrap max-lg:hidden" />}
         {open && (

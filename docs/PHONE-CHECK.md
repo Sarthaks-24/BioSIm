@@ -22,7 +22,7 @@ Run it on every WP that changes the body (first in WP-16) and in the release gat
 
    Vite prints a `Network:` address such as `http://192.168.1.23:4173/`.
 
-2. On the phone, open that address followed by `/next?debug=fps`. Close the medical note.
+2. On the phone, open that address followed by `/sim?debug=fps`. Close the medical note.
 3. A small dark box appears in the body's top-right corner, updated every second:
    `31 fps · dpr 2.75 · 3D 31 draws/s · 9 calls · 89.0k tris`.
    - **fps**: frames the browser managed per second. This is the number that counts.
@@ -34,9 +34,9 @@ Run it on every WP that changes the body (first in WP-16) and in the release gat
 4. Play each meal below from the start (Home on the timeline, or reload) and watch the fps for
    at least 20 seconds of playing. Write down the **lowest steady value** (ignore the first
    second after pressing Play):
-   - `/next?v=2&a=cola:1&debug=fps` (a drink: food in the gut quickly)
-   - `/next?v=2&a=roti:2,dal:1,milk:1&debug=fps` (the Indian staple meal)
-   - `/next?v=2&a=cheeseburger:1,fries:1&b=cola:1&debug=fps` (big meal, with a kept run)
+   - `/sim?v=2&a=cola:1&debug=fps` (a drink: food in the gut quickly)
+   - `/sim?v=2&a=roti:2,dal:1,milk:1&debug=fps` (the Indian staple meal)
+   - `/sim?v=2&a=cheeseburger:1,fries:1&b=cola:1&debug=fps` (big meal, with a kept run)
 5. Repeat step 4 in Hindi (`&lang=hi`) for one meal, and once with the phone in landscape.
 6. Pause and leave the page for 30 seconds: the phone should not get warm (a paused body draws
    nothing; the debug box itself keeps the page drawing, so close it with a reload without

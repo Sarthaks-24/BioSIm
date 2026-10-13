@@ -18,7 +18,9 @@ export default defineConfig({
       manifest: {
         name: 'LifePeek — Digestion Simulator',
         short_name: 'LifePeek',
-        description: 'LifePeek: peek inside living things. Compare what happens to two meals inside your body.',
+        description: 'LifePeek: peek inside living things. Watch a meal travel through the body, and compare it with another.',
+        lang: 'en',
+        categories: ['education'],
         theme_color: '#14213d',
         background_color: '#eef3f1',
         display: 'standalone',
@@ -29,12 +31,26 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // The install dialog's pictures of the stage (D-EXTRA, WP-19), made by scripts/make-share-images.mjs.
+        screenshots: [
+          {
+            src: '/screenshots/wide.jpg',
+            sizes: '1280x800',
+            type: 'image/jpeg',
+            form_factor: 'wide',
+            label: 'Cola, with burger and fries kept, on a laptop',
+          },
+          { src: '/screenshots/narrow.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Cola on a phone' },
+        ],
+        shortcuts: [{ name: 'For teachers', short_name: 'Teach', url: '/teach', icons: [{ src: '/icon-192.png', sizes: '192x192' }] }],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         // stats.json changes every week without a new app version, so it is not precached: the
         // network first, and offline the last copy that was fetched (the /stats page).
-        globIgnores: ['**/node_modules/**/*', 'stats.json'],
+        // The share image and the install screenshots are for other sites and the install dialog,
+        // never drawn by the app offline: not precached (precache budget).
+        globIgnores: ['**/node_modules/**/*', 'stats.json', 'og-image.png', 'screenshots/**'],
         runtimeCaching: [
           {
             urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/stats.json',

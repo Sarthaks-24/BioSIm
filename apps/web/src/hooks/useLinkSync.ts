@@ -33,7 +33,7 @@ export function useLinkSync() {
   const ours = useRef(new Set<string>())
   const navigateRef = useRef(navigate)
   navigateRef.current = navigate
-  // The page this hook runs on (/next now, /sim after the swap in WP-19).
+  // The page this hook runs on (/sim since WP-19).
   const pathRef = useRef(location.pathname)
   pathRef.current = location.pathname
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -70,9 +70,9 @@ describe('summary: the ported verdict cases', () => {
 
   it('every ready-made lesson gives a sensible summary', () => {
     for (const p of PRESETS) {
-      const v = pair(encode(p.a), encode(p.b))
+      const v = pair(encode(p.meal), encode(p.kept))
       expect(v.kind, p.key).toBe('pair')
-      expect(compareSummary(sim(encode(p.a)), sim(encode(p.b)), t, 'en')?.headline, p.key).toBeTruthy()
+      expect(compareSummary(sim(encode(p.meal)), sim(encode(p.kept)), t, 'en')?.headline, p.key).toBeTruthy()
     }
   })
 

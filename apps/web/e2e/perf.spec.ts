@@ -3,7 +3,7 @@ import { GATE_ROUTES, gateSteps, measureFps, modeFor, verdict } from './helpers/
 
 // 30 fps gate (roadmap A9): the CPU is slowed 6× (a cheap phone), the body is flat (project perf
 // has no WebGL), and the page plays for 10 s, three times. The median counts.
-// Report mode prints the number and never fails (see GATE_ROUTES.fps for why /next still reports).
+// Report mode prints the number and never fails (see GATE_ROUTES.fps for why /sim still reports).
 // The real 2 GB phone check: docs/PHONE-CHECK.md (first run in WP-16, again in WP-22).
 
 /** v1 has a "Back to the start" button; the v2 stage rewinds with Home on its timeline. */
