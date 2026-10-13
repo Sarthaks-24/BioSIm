@@ -1,10 +1,10 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { PRESETS, presetHref } from '../lib/presets.ts'
+import { DEFAULT_PRESET, PRESETS, presetHref } from '../lib/presets.ts'
 import { KEPT, RUN } from '../lib/colors.ts'
 import { lookupFood } from '../data/foods.ts'
-import { HERO_END_MIN, HERO_STEP_MIN } from '../data/heroShape.ts'
-import hero from '../data/hero.json'
+import { HERO_END_MIN, HERO_STEP_MIN, type Hero } from '../data/heroShape.ts'
 import { mealNames, shortMealNames } from '../components/stage/mealText.ts'
 
 const x = (min: number) => (min / HERO_END_MIN) * 600
@@ -14,19 +14,25 @@ const path = (stomach: number[]) => `M${stomach.map((s, i) => `${x(i * HERO_STEP
 /**
  * The hero: the real model output for cola, with burger + fries kept (the stage's first lesson),
  * drawn the way the stage draws them: this meal solid blue, the kept meal dashed grey. The numbers
- * come precomputed (data/hero.json, checked by hero.test.ts), so Home never runs the model.
+ * come precomputed (data/hero.json, checked by hero.test.ts), so Home never runs the model. They
+ * are fetched after the first paint (a few hundred bytes every page's first download needn't carry;
+ * the stage's budget is tight): the axes and the legend draw at once, the lines as they arrive,
+ * inside the reveal.
  */
 function EmptyingRace() {
   const { t, i18n } = useTranslation()
-  const items = (foods: string[]) => foods.map((foodId) => ({ foodId, servings: 1 }))
+  const [hero, setHero] = useState<Hero | null>(null)
+  useEffect(() => {
+    void import('../data/hero.json').then((m) => setHero(m.default))
+  }, [])
   const lines = [
-    { k: 'meal', d: path(hero.meal.stomach), color: RUN, dash: undefined, name: mealNames(items(hero.meal.foods), i18n.language) },
+    { k: 'meal', d: hero && path(hero.meal.stomach), color: RUN, dash: undefined, name: mealNames(DEFAULT_PRESET.meal, i18n.language) },
     {
       k: 'kept',
-      d: path(hero.kept.stomach),
+      d: hero && path(hero.kept.stomach),
       color: KEPT,
       dash: '14 9',
-      name: t('keep.tag', { meal: mealNames(items(hero.kept.foods), i18n.language) }),
+      name: t('keep.tag', { meal: mealNames(DEFAULT_PRESET.kept ?? [], i18n.language) }),
     },
   ]
 
@@ -50,9 +56,10 @@ function EmptyingRace() {
           <rect x={-10} y={0} width={620} height={300} className="race-reveal" />
         </clipPath>
         <g clipPath="url(#race-reveal)">
-          {lines.map((l) => (
-            <path key={l.k} d={l.d} fill="none" stroke={l.color} strokeWidth={5} strokeLinecap="round" strokeDasharray={l.dash} />
-          ))}
+          {lines.map(
+            (l) =>
+              l.d && <path key={l.k} d={l.d} fill="none" stroke={l.color} strokeWidth={5} strokeLinecap="round" strokeDasharray={l.dash} />,
+          )}
         </g>
       </svg>
       <figcaption className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">

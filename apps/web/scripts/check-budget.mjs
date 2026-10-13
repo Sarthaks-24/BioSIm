@@ -47,10 +47,12 @@
 //   focus and the stricter motion pref were paid for by the Now line's word keys becoming their
 //   JSON text (lib/nowWhere.ts): /next stays 189.2 KB (+2 bytes).
 //   WP-19 (2026-10-13): the swap. /sim is the stage (pages/Stage.tsx), /next redirects to it, and
-//   v1's simulator is no longer routed, so its row went. The first-screen "Press ▶" prompt and the
-//   phone menu: /sim 189.2 (as /next, with FIX-E) → 189.8 KB. Home draws its race from data/hero.json instead
-//   of running the model: 154.0 → 146.0 KB. The e2e build (pseudo-locale) now goes to dist-e2e,
-//   and this script refuses a dist that has it.
+//   v1's simulator is no longer routed, so its row went. The first-screen "Press ▶" prompt, the
+//   phone menu (with the projector switch in it) and the review fixes took /sim to 190.03 KB over
+//   main's /next (189.4 KB with FIX-E, FIX-F and the perf commits). Home now draws its race from
+//   data/hero.json instead of running the model, and fetches that file after its first paint, so
+//   no page's first download carries it: /sim 190.03 → 189.5 KB, Home 154.0 → 145.5 KB. The e2e
+//   build (pseudo-locale) now goes to dist-e2e, and this script refuses a dist that has it.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
