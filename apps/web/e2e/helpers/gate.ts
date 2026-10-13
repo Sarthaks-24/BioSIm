@@ -603,17 +603,17 @@ export const RED_LIST: Record<string, Mode> = {
   // T2 (FP-1) enforces the phone stage: B1, B2, B7, B15. T5 (FP-3) enforces B4; B13 is Hindi, so it
   // reports (R47), and its English + pseudo-locale twin is enforced (invariants.spec.ts, hour labels).
   // T3 (FP-2) enforces the short, wide stage and the projector: B3, B12.
-  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22.
+  // T8 (FP-6) enforces Back, share and links: B6, B11, B21, B22. T4 (FP-5) enforces the overlays: B5, B10.
   B1: 'enforce',
   B2: 'enforce',
   B3: 'enforce',
   B4: 'enforce',
-  B5: 'report',
+  B5: 'enforce',
   B6: 'enforce',
   B7: 'enforce',
   B8: 'report',
   B9: 'report',
-  B10: 'report',
+  B10: 'enforce',
   B11: 'enforce',
   B12: 'enforce',
   B13: 'report',

@@ -22,7 +22,10 @@ export interface OverlayProps {
    * leaves it open, so Play can be pressed while it is read.
    */
   modeless?: boolean
-  /** A sheet's top stays below this box (the body "More" explains), as long as that leaves it 40 % of the window. */
+  /**
+   * The box a sheet keeps clear of (the body "More" explains): the sheet's top stays below it, as long
+   * as that leaves the sheet 40 % of the window; beside it if it is a column of its own (a phone on its side).
+   */
   clear?: RefObject<HTMLElement | null>
 }
 
@@ -111,8 +114,11 @@ export default function Overlay({
     const natural = p.offsetHeight - b.clientHeight + b.scrollHeight
     let next: CSSProperties
     if (!isWide) {
-      const below = clear?.current ? Math.min(clear.current.getBoundingClientRect().bottom, 0.6 * vh) : 0
-      next = { top: 'auto', bottom: 0, left: 0, right: 0, maxHeight: vh - Math.max(top0, below) }
+      const c = clear?.current?.getBoundingClientRect()
+      const vw = document.documentElement.clientWidth
+      // The body in a column of its own (a phone on its side): the sheet takes the other column.
+      if (c && vw - c.right >= 0.4 * vw) next = { top: 'auto', bottom: 0, left: c.right, right: 0, maxHeight: vh - top0 }
+      else next = { top: 'auto', bottom: 0, left: 0, right: 0, maxHeight: vh - Math.max(top0, c ? Math.min(c.bottom, 0.6 * vh) : 0) }
     } else {
       const a = anchor.current?.getBoundingClientRect()
       if (!a) return
@@ -194,7 +200,8 @@ export default function Overlay({
     const onScroll = (e: Event) => {
       if (matchMedia(WIDE).matches && !panelEl.contains(e.target as Node)) finish(false)
     }
-    // A menu: any of its buttons or links did what it does, so it closes (FP-5).
+    // A menu: any of its buttons or links did what it does, so it closes (FP-5). Heard on the window,
+    // after React has run the control's own click (closing first would take the control away).
     const onClick = (e: MouseEvent) => {
       const control = (e.target as Element).closest('button, a')
       if (menu && control && panelEl.contains(control) && !control.closest('[data-stay]')) finish(true)
@@ -203,7 +210,7 @@ export default function Overlay({
     window.addEventListener('keydown', onKey)
     panelEl.addEventListener('keydown', onTab)
     panelEl.addEventListener('focusout', onFocusOut)
-    panelEl.addEventListener('click', onClick)
+    window.addEventListener('click', onClick)
     window.addEventListener('pointerdown', onDown, true)
     window.addEventListener('resize', onResize)
     window.addEventListener('scroll', onScroll, true)
@@ -211,7 +218,7 @@ export default function Overlay({
       window.removeEventListener('keydown', onKey)
       panelEl.removeEventListener('keydown', onTab)
       panelEl.removeEventListener('focusout', onFocusOut)
-      panelEl.removeEventListener('click', onClick)
+      window.removeEventListener('click', onClick)
       window.removeEventListener('pointerdown', onDown, true)
       window.removeEventListener('resize', onResize)
       window.removeEventListener('scroll', onScroll, true)

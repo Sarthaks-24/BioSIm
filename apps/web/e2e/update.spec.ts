@@ -114,6 +114,18 @@ function controllerBuild(page: Page) {
   )
 }
 
+/** Where the update note overlaps the dock in the window ('' if it doesn't). */
+function toastOverDock(page: Page) {
+  return page.evaluate((sel) => {
+    const t = document.querySelector(sel)?.getBoundingClientRect()
+    const d = document.querySelector('[data-dock]')?.getBoundingClientRect()
+    if (!t || !d) return t ? '' : 'no note'
+    const w = Math.min(t.right, d.right) - Math.max(t.left, d.left)
+    const h = Math.min(t.bottom, d.bottom, innerHeight) - Math.max(t.top, d.top, 0)
+    return w > 0 && h > 0 ? `${Math.round(w)}×${Math.round(h)} px` : ''
+  }, TOAST)
+}
+
 async function freshPage(browser: Browser, baseURL: string) {
   const context = await browser.newContext({ baseURL })
   return { context, page: await context.newPage() }
@@ -142,6 +154,16 @@ test('B16 a real update: the note shows, and Reload loads the new version', asyn
     const toast = page.locator(TOAST)
     await expect(toast).toBeVisible({ timeout: 30_000 })
     await expect(toast).toContainText('A new version of LifePeek is ready')
+    // Never over the clock dock (FP-5, B16), on a laptop and on phones.
+    for (const [width, height] of [
+      [1440, 900],
+      [390, 844],
+      [360, 640],
+    ] as const) {
+      await page.setViewportSize({ width, height })
+      await expect.poll(() => toastOverDock(page), `${width}×${height}: the note over the dock`).toBe('')
+    }
+    await page.setViewportSize({ width: 1440, height: 900 })
 
     await Promise.all([page.waitForEvent('load', { timeout: 30_000 }), toast.getByRole('button', { name: 'Reload' }).click()])
     await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30_000 })
