@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 
 /**
- * Which of the stage's two lazy sheets is open (WP-15): the graphs as a table ("Show as table",
- * T) or the keys and settings (?, the dock's settings button). A store, so the key map, the
- * strips' buttons and the dock can open them; pages/Simulator.tsx draws the open one and downloads its code
- * the first time (size budget). `from` is the button to give focus back to when it closes.
+ * Which of the stage's lazy sheets is open (WP-15): the graphs as a table ("Show as table", T),
+ * the settings (?, the dock's settings button), or the key moments a timeline target holds (FP-3:
+ * each "name, time" with its minute). A store, so the key map, the strips' buttons and the dock
+ * can open them; pages/Simulator.tsx draws the open one and downloads its code the first time
+ * (size budget). `from` is the button to give focus back to when it closes.
  */
-export type Sheet = { kind: 'table'; slot: string | null } | { kind: 'help' } | null
+export type Sheet =
+  { kind: 'table'; slot: string | null } | { kind: 'help' } | { kind: 'moments'; moments: [line: string, atMin: number][] } | null
 
 interface SheetState {
   sheet: Sheet

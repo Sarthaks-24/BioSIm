@@ -635,8 +635,7 @@
   },
   "dock": {
     "squeezed": "{{from}} → {{to}} सिकोड़ा गया",
-    "moments": "इस भोजन के मुख्य पल",
-    "keptMoments": "रखे गए भोजन के मुख्य पल",
+    "moments": "मुख्य पल",
     "marker": "{{name}}, {{time}}",
     "keptMarker": "रखा गया भोजन: {{name}}, {{time}}",
     "usually": "{{time}} (आमतौर पर {{low}} से {{high}})"
@@ -677,8 +676,8 @@
     "keptValue": "रखा गया भोजन {{value}}"
   },
   "keys": {
-    "button": "कुंजियाँ और सेटिंग",
-    "title": "कुंजियाँ और सेटिंग",
+    "button": "सेटिंग",
+    "title": "सेटिंग",
     "settings": "सेटिंग",
     "list": "कुंजियाँ",
     "play": "चलाएँ या रोकें",

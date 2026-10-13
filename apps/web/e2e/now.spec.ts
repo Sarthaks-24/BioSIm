@@ -30,29 +30,34 @@ test.describe('timeline key moments', () => {
     await expect(page.locator('[data-marker-tip] > span').first()).toHaveText(/^Half the energy has left the stomach, \d+ min$/)
   })
 
-  test('the kept meal’s markers are hollow and drawn below the bar', async ({ page }) => {
-    // Hollow rings below the bar; nearly coinciding moments share a marker (council round 2).
+  test('the kept meal’s ticks have their own row below the hours, labelled "Kept:"', async ({ page }) => {
+    // This meal's ticks hang under the track; the kept meal's sit in a row of their own (FP-3, U7).
     await page.goto(COLA_KEPT_BURGER)
-    const run = page.locator('[data-marker="run"] [data-dot]')
-    const kept = page.locator('[data-marker="kept"] [data-dot]')
+    const run = page.locator('[data-dot="run"]')
+    const kept = page.locator('[data-dot="kept"]')
     await expect(kept.first()).toBeVisible()
     expect(await kept.count()).toBeGreaterThanOrEqual(2)
     const look = (dot: typeof run) =>
       dot.first().evaluate((el) => {
         const cs = getComputedStyle(el)
-        return { fill: cs.backgroundColor, ring: cs.borderTopColor, y: el.getBoundingClientRect().y }
+        const r = el.getBoundingClientRect()
+        return { ink: cs.backgroundColor === 'rgba(0, 0, 0, 0)' ? cs.borderLeftColor : cs.backgroundColor, top: r.top, bottom: r.bottom }
       })
     const [r, k] = [await look(run), await look(kept)]
-    // Kept: surface-raised inside a grey ring (hollow). This meal: filled with its line's blue.
-    expect(k.fill).not.toBe(r.fill)
-    expect(k.fill).toBe(r.ring)
-    expect(k.y).toBeGreaterThan(r.y)
-    await expect(page.getByRole('button', { name: /^Kept: Half the energy has left the stomach, \d+ h/ })).toBeAttached()
-    // Their targets meet, never overlap: this meal's end 8 px below the bar, the kept meal's start there.
-    const box = async (sel: string) => (await page.locator(sel).first().boundingBox())!
-    const runBox = await box('[data-marker="run"]')
-    const keptBox = await box('[data-marker="kept"]')
-    expect(keptBox.y).toBeGreaterThanOrEqual(runBox.y + runBox.height - 0.5)
+    const hour = (await page.locator('[data-tick]').first().boundingBox())!
+    const track = (await page.getByRole('slider').first().boundingBox())!
+    // Place tells them apart (and the row's label), not only the grey.
+    expect(k.ink).not.toBe(r.ink)
+    expect(r.top).toBeLessThan(track.y + track.height)
+    expect(k.top).toBeGreaterThanOrEqual(hour.y + hour.height - 0.5)
+    await expect(page.locator('[data-stage]').getByText('Kept:', { exact: true }).filter({ visible: true }).last()).toBeVisible()
+    await expect(page.getByRole('button', { name: /(^|; )Kept: Half the energy has left the stomach, \d+ h/ })).toBeAttached()
+    // Each target is as tall as the lane with the kept row: its ticks are inside it.
+    const target = page.locator('[data-marker~="kept"]').first()
+    const box = (await target.boundingBox())!
+    const dot = (await target.locator('[data-dot="kept"]').boundingBox())!
+    expect(dot.y + dot.height).toBeLessThanOrEqual(box.y + box.height + 0.5)
+    expect(box.height).toBeGreaterThanOrEqual(43.5)
   })
 
   test('the squeezed part of the bar says so (English and Hindi)', async ({ page }) => {
