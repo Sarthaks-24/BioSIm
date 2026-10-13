@@ -6,6 +6,21 @@
 @import '@fontsource/noto-sans-devanagari/600.css';
 
 /*
+ * v1's simulator and the parts only it draws are no longer routed (WP-19; WP-20 deletes them): their
+ * classes are not scanned, so every page's stylesheet stops carrying them (size budget, FIX-G).
+ */
+@source not './pages/Simulator.tsx';
+@source not './components/Legend.tsx';
+@source not './components/StagePanel.tsx';
+@source not './components/charts';
+@source not './components/KeyMoments.tsx';
+@source not './components/Timeline.tsx';
+@source not './components/LessonView.tsx';
+@source not './components/MealPicker.tsx';
+@source not './components/Verdict.tsx';
+@source not './components/ShareButton.tsx';
+
+/*
  * Lab-paper palette: cool pale paper, textbook ink, translucent tissue.
  * Light on purpose — classroom projectors wash out dark UIs.
  * Meal A / B and each nutrient also differ by shape or letter, never colour alone.

@@ -4,7 +4,8 @@ import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
 import en from '../i18n/en.json'
 import { lookupFood } from '../data/foods.ts'
 import { PRESETS } from './presets.ts'
-import { compareSummary, singleSummary, summaryData } from './summary.ts'
+import { bloodData, compareSummary, sameFoods, singleSummary, summaryData } from './summary.ts'
+import { formatDuration } from './time.ts'
 
 /**
  * The summary sentence is what students read first, so it must be true for every lesson the app
@@ -96,9 +97,9 @@ describe('summary: the sentences', () => {
   })
 
   it('more calories is the reason only when it is true', () => {
-    const s = compareSummary(sim('roti:1'), sim('roti:4'), t, 'en')!
-    expect(s.headline).toMatch(/^Roti leaves the stomach about [\d.]+× faster than Roti ×4\.$/)
-    expect(s.reason).toMatch(/^Roti ×4 has more food energy \(\d+ vs \d+ kcal\)/)
+    const s = compareSummary(sim('roti:1'), sim('white-rice:1'), t, 'en')!
+    expect(s.headline).toMatch(/^Roti leaves the stomach about [\d.]+× faster than White rice\.$/)
+    expect(s.reason).toMatch(/^White rice has more food energy \(\d+ vs \d+ kcal\)/)
   })
 
   it('meals with the same name become "this meal" and "the kept meal"', () => {
@@ -159,5 +160,47 @@ describe('summary: the key number and "more than" (council round 2 C4; review 14
     expect(compareSummary(neverHalf(sim('cola:1')), neverHalf(sim('apple:1')), t, 'en')!.headline).toMatch(
       /^Half of the food energy in Cola takes more than/,
     )
+  })
+})
+
+describe('summary: the same food in two amounts (council round 3)', () => {
+  const one = sim('cola:1')
+  const four = sim('cola:4')
+  const back = (s: ReturnType<typeof sim>) => s.moments.get('event.glucoseBackToBase')!.atMin!
+
+  it('"One cola or four" is about blood sugar: the same highest point, raised for longer, by as much as the model says', () => {
+    const d = bloodData(one, four)!
+    expect(d).toMatchObject({ more: 'kept', less: 'run', samePeak: true, peak: 121 })
+    expect(d.longerMin).toBe(back(four) - back(one))
+    const s = compareSummary(one, four, t, 'en')!
+    expect(s.headline).toBe(
+      `Blood sugar stays raised about ${formatDuration(d.longerMin, t)} longer after 4 servings of cola than after 1 serving of cola.`,
+    )
+    expect(s.key).toEqual({ text: formatDuration(d.longerMin, t), line: 'kept' })
+    expect(s.reason).toMatch(/^Both reach about the same highest point \(121 mg\/dL\)/)
+    // Kept the other way round: the same sentence, its key number on this meal's line.
+    expect(compareSummary(four, one, t, 'en')).toMatchObject({ headline: s.headline, key: { line: 'run' } })
+  })
+
+  it('never compares a food with itself by name: the same foods in other amounts are named by amount', () => {
+    for (const [a, b] of [
+      ['water:1', 'water:4'],
+      ['roti:2,dal:1', 'roti:1,dal:1'],
+      ['milk:1', 'milk:2'],
+    ] as const) {
+      const s = compareSummary(sim(a), sim(b), t, 'en')!
+      expect(s.headline, `${a} vs ${b}`).toMatch(/\d servings? of /)
+      expect(s.headline, `${a} vs ${b}`).not.toMatch(/×/)
+    }
+    expect(compareSummary(sim('water:1'), sim('water:4'), t, 'en')!.headline).toBe(
+      '1 serving of water and 4 servings of water leave the stomach at about the same speed.',
+    )
+  })
+
+  it('other foods, or the very same meal, keep the stomach sentence', () => {
+    expect(bloodData(sim('cola:1'), sim('cola:1'))).toBeNull()
+    expect(sameFoods(sim('cola:1').meal, sim('cola:1,water:1').meal)).toBe(false)
+    expect(sameFoods(sim('cola:1').meal, sim('cola:1').meal)).toBe(false)
+    expect(bloodData(sim('water:1'), sim('water:4'))).toBeNull()
   })
 })

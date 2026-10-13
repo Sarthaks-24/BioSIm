@@ -32,9 +32,11 @@ export const PRESETS = [
 export const DEFAULT_PRESET: Preset = PRESETS[0]
 
 /**
- * The three ready lessons on the Teach page (council round 2): each opens at its first key
- * moment (`t`, the earliest marker on the timeline of either meal; presets.test.ts recomputes
- * it), on the graph the lesson is about, in projector mode.
+ * The three ready lessons on the Teach page (council round 2): each opens paused at the moment to
+ * talk about (`t`), on the graph the lesson is about, in projector mode. That is its first key
+ * moment (the earliest marker on the timeline of either meal), except for "One cola or four": at
+ * 35 min both lines are at the same highest point, so it opens at the half hour where four colas
+ * keep blood sugar raised furthest above one (council round 3). presets.test.ts recomputes both.
  */
 export interface Lesson extends Preset {
   key: 'stomachRace' | 'rotiDal' | 'colaFour'
@@ -45,7 +47,7 @@ export interface Lesson extends Preset {
 export const LESSONS: readonly Lesson[] = [
   { key: 'stomachRace', meal: one('cola'), kept: one('cheeseburger', 'fries'), strip: 'gut', t: 35 },
   { key: 'rotiDal', meal: one('roti', 'dal'), kept: one('white-rice'), strip: 'blood', t: 57 },
-  { key: 'colaFour', meal: one('cola'), kept: [{ foodId: 'cola', servings: 4 }], strip: 'blood', t: 35 },
+  { key: 'colaFour', meal: one('cola'), kept: [{ foodId: 'cola', servings: 4 }], strip: 'blood', t: 120 },
 ]
 
 /**
@@ -63,6 +65,14 @@ export const TASKS: readonly Task[] = [
   { key: 'bloodAt1h', meal: one('cola') },
   { key: 'energyAt3h', meal: one('cola'), kept: one('cheeseburger', 'fries') },
 ]
+
+/**
+ * Where the Teach page's QR code goes (council round 3): the screen questions 1 to 3 start from,
+ * cola alone at 0 min (presets.test.ts checks it against TASKS). The SVG is made from it, with
+ * SITE_URL in front: `npx --yes qrcode@1.5.4 -t svg -e M -q 4 -o apps/web/src/assets/lifepeek-qr.svg
+ * "https://lifepeek.vercel.app/sim?v=2&a=cola:1"`.
+ */
+export const QR_PATH = '/sim?v=2&a=cola:1'
 
 export const presetHref = (p: Preset) =>
   `/sim?${encodeShareState({ a: p.meal, b: p.kept ?? [], t: p.t ?? 0, ...(p.layer ? { layer: p.layer } : {}) })}`

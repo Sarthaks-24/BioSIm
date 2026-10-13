@@ -22,3 +22,30 @@ for (const route of GATE_ROUTES.offline) {
     await context.setOffline(false)
   })
 }
+
+// A classroom laptop keeps a tab open for days (council round 3): when a new version is waiting,
+// the open page says so and offers a reload, instead of keeping the old app until every tab is
+// closed. The "new version" here is the same worker under another address (a browser can't be
+// handed a new sw.js in a test): the page's update check treats it like one.
+test('a waiting new version offers a reload, from the keyboard too', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim')
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+  const note = page.getByRole('status').filter({ hasText: 'A new version of LifePeek is ready.' })
+  await expect(note).toHaveCount(0)
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/sw.js?next=1')
+  })
+  await expect(note).toBeVisible()
+  const reload = note.getByRole('button', { name: 'Reload' })
+  const later = note.getByRole('button', { name: 'Later' })
+  await expect(reload).toBeVisible()
+  await later.focus()
+  await expect(later).toBeFocused()
+  // Esc, like "Later": the note goes, and the lesson goes on.
+  await page.keyboard.press('Escape')
+  await expect(note).toHaveCount(0)
+  await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+})

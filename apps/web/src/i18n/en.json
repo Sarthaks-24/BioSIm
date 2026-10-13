@@ -11,7 +11,7 @@
     "menu": "Menu"
   },
   "home": {
-    "headline": "Half a can of cola leaves your stomach in about half an hour. Half a burger with fries takes over four hours.",
+    "headline": "Half the food energy in a can of cola leaves your stomach in about half an hour. For a burger with fries, it takes over four hours.",
     "lead": "LifePeek shows why. Pick a meal, press Play and watch it travel through the body: how fast it leaves the stomach, where the sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next.",
     "cta": "Open the simulator",
     "previewCaption": "Food still in the stomach after eating — computed by the LifePeek model",
@@ -201,14 +201,17 @@
       "Every graph has “Show as table” for students using screen readers, and every control works from the keyboard (press ? for the list of keys)."
     ],
     "lessonsTitle": "Ready lessons",
-    "lessonsLead": "Each opens in projector mode on a laptop, paused at its first key moment, on the graph it is about. Press Play, or Page Down for the next key moment.",
+    "lessonsLead": "Each opens in projector mode on a laptop, paused at the moment to talk about, on the graph it is about. Press Play, or Page Down for the next key moment.",
     "lessons": {
       "stomachRace": "Which leaves the stomach first?",
       "rotiDal": "Which raises blood sugar more gently?",
       "colaFour": "One cola or four: what happens to blood sugar?"
     },
+    "lessonNotes": {
+      "colaFour": "What to see: both reach the same highest point, about 121 mg/dL, but after four colas blood sugar stays raised about 3 h 15 min longer."
+    },
     "opensAt": "opens at {{time}} on the {{graph}} graph",
-    "questionsLead": "Students answer on their own phones, with no help, each starting from the link. If four out of five get a question right, the screen teaches it.",
+    "questionsLead": "Use these after the lesson. Students answer on their own phones, without help, each starting from its link. The answers are in the closed box below.",
     "tasks": {
       "halfLeft": "Cola is chosen. When has half of it left the stomach?",
       "faster": "Now compare cola with a burger and fries. Which leaves the stomach faster, and why?",
@@ -216,8 +219,8 @@
       "energyAt3h": "At 3 hours, is more energy coming in from the cola, or is the body using more?"
     },
     "qrTitle": "Open it on students’ phones",
-    "qrCaption": "Students scan this code with the phone camera to open LifePeek. No login, nothing to install.",
-    "qrAlt": "QR code for lifepeek.vercel.app",
+    "qrCaption": "Students scan this code with the phone camera: LifePeek opens with cola chosen, where questions 1 to 3 start. No login, nothing to install.",
+    "qrAlt": "QR code for LifePeek with cola chosen",
     "answersTitle": "Answers for teachers",
     "answers": [
       "About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline.",
@@ -686,6 +689,16 @@
       "keptMeal": "the kept meal"
     }
   },
+  "sameFood": {
+    "amount_one": "{{count}} serving of {{food}}",
+    "amount_other": "{{count}} servings of {{food}}",
+    "bloodLonger": "Blood sugar stays raised about {{time}} longer after {{more}} than after {{less}}.",
+    "reasonSamePeak": "Both reach about the same highest point ({{peak}} mg/dL): the stomach lets only a little sugar through each minute, so more food keeps blood sugar up for longer, not higher.",
+    "oblique": {
+      "amount_one": "{{count}} serving of {{food}}",
+      "amount_other": "{{count}} servings of {{food}}"
+    }
+  },
   "dock": {
     "squeezed": "{{from}} → {{to}} squeezed",
     "moments": "Key moments of this meal",
@@ -753,5 +766,10 @@
     "off": "Off",
     "offNote": "off",
     "typing": "Keys typed in a search box or a form are never taken as shortcuts."
+  },
+  "update": {
+    "ready": "A new version of LifePeek is ready.",
+    "reload": "Reload",
+    "later": "Later"
   }
 }

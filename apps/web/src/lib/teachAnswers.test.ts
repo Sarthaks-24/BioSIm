@@ -3,8 +3,8 @@ import { simulate, valueAt, type ActiveSignalId, type MealItem, type Simulation 
 import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { lookupFood } from '../data/foods.ts'
-import { TASKS } from './presets.ts'
-import { summaryData } from './summary.ts'
+import { LESSONS, TASKS } from './presets.ts'
+import { bloodData, summaryData } from './summary.ts'
 
 // The app's i18n setup needs a browser; the food names only need `localized`.
 vi.mock('../i18n/index.ts', () => ({
@@ -61,5 +61,21 @@ describe('Teach: answers for teachers', () => {
     expect(coming).toBeLessThan(1)
     expect(used).toBeGreaterThan(coming)
     expect(a4).toEqual([Math.round(used)])
+  })
+})
+
+describe('Teach: the note under "One cola or four" (council round 3)', () => {
+  const lesson = LESSONS.find((l) => l.key === 'colaFour')!
+  const d = bloodData(run(lesson.meal), run(lesson.kept!))!
+  const [note] = numbers([en.teach.lessonNotes.colaFour])
+
+  it('both languages give the same numbers', () => {
+    expect(numbers([hi.teach.lessonNotes.colaFour])).toEqual([note])
+  })
+
+  it('the same highest point, and blood sugar raised longer by as much as the model says', () => {
+    expect(d.samePeak).toBe(true)
+    const longer = Math.round(d.longerMin / 5) * 5
+    expect(note).toEqual([d.peak, Math.floor(longer / 60), longer % 60])
   })
 })

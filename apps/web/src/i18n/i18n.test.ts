@@ -70,7 +70,8 @@ describe('translations', () => {
   it('every key used in code exists, and every key in en.json is used', () => {
     const { called, literal, prefixes } = keysInSource()
     for (const k of called) expect(fe.has(k) || [...fe.keys()].some((f) => f.startsWith(`${k}.`)), `missing key ${k}`).toBe(true)
-    const used = (k: string) =>
+    // A plural form (summary.amount_one, _other) is used where its key is (i18next picks the form by `count`).
+    const used = (key: string, k = key.replace(/_(zero|one|two|few|many|other)$/, '')) =>
       built.has(k) || literal.has(k) || [...literal].some((l) => k.startsWith(`${l}.`)) || [...prefixes].some((p) => p && k.startsWith(p))
     const unused = [...fe.keys()].filter((k) => !used(k))
     expect(unused).toEqual([])
