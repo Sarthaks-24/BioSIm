@@ -160,6 +160,26 @@ The gas module turns the energy used into oxygen used, carbon dioxide made and b
 
 **Limits.** Alveolar CO2 is held at 40 mm Hg (no feedback from blood gases); no ventilatory threshold, so hard running is under-breathed (trained runners reach 47–56 breaths, above the 45 guard); sea level; Weir without protein (about 1–2 %); blood fat does not move RQ, so a fatty meal hardly moves it (Gribok's fat shake did, more slowly); breathing changes only during a bout.
 
+## Muscles and skin (model version 3, S-1)
+
+The `effort` module runs after breathing and reads nothing breathing writes, only the energy of moving above rest, `energy.activityRate`. All three signals are *assumption* ("Model estimate"). Their catalog rows are lazy, like breathing's: they load with the engine, not with the first page (`core/catalog/effort.ts`).
+
+**Energy used by muscles** (`muscle.energyRate`, kcal/h). Resting skeletal muscle uses 13 kcal per kg per day (Elia 1992, as quoted by Wang 2012) and is 38.4 % of a man's body mass (Janssen 2000, whole-body MRI). All of the energy of moving is muscle work:
+
+    muscle (kcal/h) = 13 × 0.384 × 65 / 24 + energy.activityRate = 13.5 kcal/h at rest + moving
+
+At rest that is 21.6 % of the reference man's resting use (golden band 18–26 %); in a walk muscle is about 81 % of all energy used, in a run about 92 %.
+
+**Sweat** (`skin.sweatRate` mL/h, `skin.sweatTotal` mL). At rest heat leaves about 60 % by radiation, 15 % by convection, 3 % by conduction and 20 % by evaporation (OpenStax A&P 2e §24.6). In a warm room the model keeps the dry routes at their resting values, so the extra heat of moving leaves as evaporated sweat, 580 kcal per kg (Baker 2019):
+
+    sweat (mL/h) = energy.activityRate / 0.58
+
+A walk gives about 330 mL/h, a run about 980 mL/h. Digesting a meal makes heat too; it leaves by the dry routes, so a meal makes no sweat. Where the heat goes is a helper (`heatLoss` in `modules/effort.ts`), not a signal.
+
+**Golden tests** (`test/effort.test.ts`): resting muscle share 18–26 % of resting use (Wang 2012, Janssen 2000); walk sweat 0.2–0.4 L/h (Baker 2019 calls ~0.3 L/h "the very low end" in exercise; Baker & Wolfe 2020 give walking 0.3–0.6 L/h); run sweat within the reported 0.2–3 L/h (Baker & Wolfe 2020); the resting heat-loss split within ±3 points of 60/15/3/20 (OpenStax §24.6). Pinned: muscle extra = activity extra, resting heat made = resting use, every kcal made leaves, and adding the module leaves every other signal byte-identical.
+
+**Limits.** Core temperature is held at 37 °C; sweating switches on and off with the bout; the room is warm and cannot be chosen; sweat that drips without evaporating is left out, so the sweat rate is a minimum. The muscle share is a man's (women average 30.6 %, Janssen 2000), and the resting muscle rate is an average for young adults of normal weight.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -182,6 +202,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `gas.o2UseRate`, `gas.co2OutRate` | mL/min | assumption | energy used through Weir's equation; CO2 = RQ × O2 (breathing pack row) | Kaiyala 2019, Byrne 2005, Jetté 1990 |
 | `gas.exchangeRatio` | ratio | assumption | RQ from glucose, with an exercise floor (breathing pack row) | Charrière 2016, Gribok 2016, Bosch 1990 (cross-check) |
 | `lungs.breathRate`, `lungs.tidalVolume` | breaths/min, mL | assumption | breaths and depth that carry the CO2 away at 40 mm Hg (breathing pack row) | OpenStax §22.3 |
+| `muscle.energyRate` | kcal/h | assumption | resting muscle (13 kcal/kg/day × 38.4 % × kg ÷ 24) + energy of moving | Wang 2012, Janssen 2000 |
+| `skin.sweatRate`, `skin.sweatTotal` | mL/h, mL | assumption | energy of moving ÷ 0.58 kcal per mL evaporated | Baker 2019, Baker & Wolfe 2020, OpenStax ch. 24 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -239,6 +261,11 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 27. Gribok A, Leger JL, Stevens M, Hoyt R, Buller M, Rumpler W. Measuring the short-term substrate utilization response to high-carbohydrate and high-fat meals in the whole-body indirect calorimeter. *Physiol Rep* 2016;4:e12835.
 28. Spriet LL, Randell R. Regulation of fat metabolism during exercise. *Sports Science Exchange* 2020;29(205). Gatorade Sports Science Institute.
 29. Bosch AN, Goslin BR, Noakes TD, Dennis SC. Physiological differences between black and white runners during a treadmill marathon. *Eur J Appl Physiol* 1990;61:68–72.
+30. Wang Z, et al. Evaluation of specific metabolic rates of major organs and tissues: comparison between nonobese and obese women. *Obesity* 2012;20:95–100.
+31. Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18–88 yr. *J Appl Physiol* 2000;89:81–88.
+32. Baker LB. Physiology of sweat gland function: the roles of sweating and sweat composition in human health. *Temperature* 2019;6:211–259.
+33. Baker LB, Wolfe AS. Physiological mechanisms determining eccrine sweat composition. *Eur J Appl Physiol* 2020;120:719–752.
+34. OpenStax. *Anatomy and Physiology 2e*, ch. 24 (§24.6 Energy and Heat Balance). Rice University.
 
 The food data comes from:
 

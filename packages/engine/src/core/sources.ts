@@ -190,6 +190,69 @@ export const SOURCES = {
     citation:
       'Herrmann SD, et al. 2024 Adult Compendium of Physical Activities: a third update of the energy costs of human activities. J Sport Health Sci 2024;13:6–12.',
   },
+  // ── New in model version 3 (S-1: effort, muscles + skin; V-1) ──
+  /**
+   * Checked 2026-10-14 (V-1, abstract via Europe PMC, PMID 21836642): "Elia (1992) identified the
+   * specific resting metabolic rates (K(i)) of major organs and tissues in young adults with normal
+   * weight: … 13 for skeletal muscle … (all units in kcal/kg per day)." Elia 1992 itself not read.
+   */
+  wang2012: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: "Elia 1992's resting rate of skeletal muscle, 13 kcal per kg per day",
+    url: 'https://doi.org/10.1038/oby.2011.256',
+    citation:
+      'Wang Z, et al. Evaluation of specific metabolic rates of major organs and tissues: comparison between nonobese and obese women. Obesity 2012;20:95–100.',
+  },
+  /**
+   * Checked 2026-10-14 (V-1, abstract via Europe PMC, PMID 10904038): whole-body MRI, 468 adults;
+   * "Men had significantly (P < 0.001) more SM … relative to body mass (38.4 vs. 30.6%)".
+   */
+  janssen2000: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'skeletal muscle is 38.4 % of body mass in men',
+    url: 'https://doi.org/10.1152/jappl.2000.89.1.81',
+    citation:
+      'Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18–88 yr. J Appl Physiol 2000;89:81–88.',
+  },
+  /**
+   * Checked 2026-10-14 (V-1, full text, Europe PMC PMC6773238): "The latent heat of vaporization of
+   * sweat is 580 kcal of heat per 1 kg of evaporated sweat (2426 J per gram of sweat)"; ~0.3 L/h "is
+   * at the very low end of the range of sweating rates expected during exercise/heat stress".
+   */
+  baker2019: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: '580 kcal of heat leaves with each kg of sweat evaporated; ~0.3 L/h is the low end in exercise',
+    url: 'https://doi.org/10.1080/23328940.2019.1632145',
+    citation:
+      'Baker LB. Physiology of sweat gland function: the roles of sweating and sweat composition in human health. Temperature 2019;6:211–259.',
+  },
+  /**
+   * Checked 2026-10-14 (V-1, full text, Europe PMC PMC7125257): whole-body sweating rates "~ 0.2 to 3
+   * L/h across a wide range of individuals, activities, and environmental conditions"; "exercise of
+   * low intensity (e.g., walking) and light sweating (0.3–0.6 L/h)".
+   */
+  bakerwolfe2020: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'sweating rates ~0.2–3 L/h; walking 0.3–0.6 L/h',
+    url: 'https://doi.org/10.1007/s00421-020-04323-7',
+    citation: 'Baker LB, Wolfe AS. Physiological mechanisms determining eccrine sweat composition. Eur J Appl Physiol 2020;120:719–752.',
+  },
+  /**
+   * Checked 2026-10-14 (V-1, §24.6 "Energy and Heat Balance"): at rest about 60 % of heat is lost by
+   * radiation, 15 % by convection, 3 % by conduction and 20 % by evaporation; "Sweating is the
+   * primary means of cooling the body during exercise"; core temperature "around 36.5–37.5 °C".
+   */
+  'openstax-ap2e-24': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'how heat leaves the body at rest (60/15/3/20 %); sweating cools in exercise',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/24-6-energy-and-heat-balance',
+    citation: 'OpenStax. Anatomy and Physiology 2e, ch. 24 (§24.6 Energy and Heat Balance). Rice University.',
+  },
   /**
    * Checked 2026-10-14 (E-3b-eng, full text, Europe PMC PMC524030): "Reported DIT values for separate
    * nutrients are 0 to 3% for fat, 5 to 10% for carbohydrate, 20 to 30% for protein"; "A mixed diet
@@ -412,6 +475,16 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'energy.foodEffect.protein': { sources: ['westerterp2004'], basis: 'measured' },
   'energy.foodEffect.fat': { sources: ['westerterp2004'], basis: 'measured' },
   'energy.foodEffect.tauMin': { sources: ['reed1996'], basis: 'calibrated' },
+
+  // Effort (S-1, V-1): resting muscle = Elia's 13 kcal/kg/day (via Wang 2012) × Janssen's 38.4 %;
+  // sweat carries 0.58 kcal per mL evaporated (Baker 2019); the resting heat-loss shares (OpenStax §24.6).
+  'effort.muscleKcalPerKgDay': { sources: ['wang2012'], basis: 'measured' },
+  'effort.muscleMassShare': { sources: ['janssen2000'], basis: 'measured' },
+  'effort.sweatKcalPerMl': { sources: ['baker2019'], basis: 'measured' },
+  'effort.restHeatLoss.radiation': { sources: ['openstax-ap2e-24'], basis: 'measured' },
+  'effort.restHeatLoss.convection': { sources: ['openstax-ap2e-24'], basis: 'measured' },
+  'effort.restHeatLoss.conduction': { sources: ['openstax-ap2e-24'], basis: 'measured' },
+  'effort.restHeatLoss.evaporation': { sources: ['openstax-ap2e-24'], basis: 'measured' },
 
   // Activity: the 2024 Compendium's MET definition, conversion and rows (V-0 item 1, V-0b).
   'activity.restO2MlPerKgMin': { sources: ['herrmann2024'], basis: 'measured' },

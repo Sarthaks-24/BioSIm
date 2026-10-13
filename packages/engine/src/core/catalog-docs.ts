@@ -6,6 +6,7 @@
  */
 import { SIGNALS, type EventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
 import { BREATHING_SIGNALS } from './catalog/breathing.ts'
+import { EFFORT_SIGNALS } from './catalog/effort.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -201,6 +202,21 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
       'Energy used per hour to digest and store the meal (thermic effect of food): shares of the absorbed carbohydrate, protein and fat energy (Westerterp 2004), through a first-order lag.',
     retired: ['energy.tef', 'energy.dit'],
   },
+  // ── The effort pack (core/catalog/effort.ts; S-1, model §2.7, §2.9) ──
+  'muscle.energyRate': {
+    definition:
+      'Energy used per hour by the skeletal muscles: resting muscle (13 kcal/kg/day, Elia 1992, × 38.4 % of body mass, Janssen 2000) plus all of energy.activityRate.',
+    retired: [],
+  },
+  'skin.sweatRate': {
+    definition:
+      'Sweat made per hour, in mL: in a warm room the extra heat of moving (energy.activityRate) leaves as evaporated sweat, 580 kcal per kg (Baker 2019). 0 at rest.',
+    retired: [],
+  },
+  'skin.sweatTotal': {
+    definition: 'Running total of skin.sweatRate since the meal started, in mL.',
+    retired: [],
+  },
   'blood.insulin': {
     definition: "Plasma insulin as a multiple of the fasting level. NOT today's lagged 'insulin action' term in glucose.ts.",
     retired: ['insulin.relative', 'insulin.action', 'pancreas.insulinAction', 'pancreas.insulinSecretion'],
@@ -288,4 +304,9 @@ export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
 }
 
 /** Every signal row: active, the packs' lazy rows, and reserved (tests and docs). */
-export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = { ...SIGNALS, ...BREATHING_SIGNALS, ...RESERVED_SIGNALS }
+export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
+  ...SIGNALS,
+  ...BREATHING_SIGNALS,
+  ...EFFORT_SIGNALS,
+  ...RESERVED_SIGNALS,
+}

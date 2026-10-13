@@ -64,7 +64,7 @@ export default function HowWeKnow({ title, ...panel }: PanelProps & { title?: st
 
 /**
  * A text read when it is drawn, not when its element is made: for notes passed to the panel whose
- * English (`limits.*`) loads with the panel itself.
+ * English (`limits.*`, the rings' `graph.*Note`) loads with the panel itself.
  */
 export function Say({ k }: { k: string }) {
   const { t } = useTranslation()
@@ -72,7 +72,7 @@ export function Say({ k }: { k: string }) {
 }
 
 /** One labelled part of the panel. */
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section>
       <h4 className="font-semibold text-ink">{title}</h4>

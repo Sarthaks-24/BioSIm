@@ -460,4 +460,14 @@ test.describe('review 15 (FIX-D)', () => {
         .evaluate((el) => getComputedStyle(el).animationName),
     ).toBe('race-reveal')
   })
+
+  // Review FIX-D LOW 6 (test added in T10): only a saved '1' or '0' is a choice. Anything else
+  // (an old or broken value) is no choice: the page follows the device, with no data-motion set.
+  test('a saved Reduce motion value other than 1 or 0 is ignored: the device decides', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => localStorage.setItem('lifepeek:reduceMotion', 'yes'))
+    await page.goto('/')
+    await expect(page.locator('.race-reveal').first()).toBeAttached()
+    expect(await page.locator('html').getAttribute('data-motion')).toBeNull()
+  })
 })

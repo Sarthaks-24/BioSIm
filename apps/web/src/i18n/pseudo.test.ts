@@ -14,7 +14,9 @@ describe('pseudo-locale (+40 %)', () => {
 
   it('keeps what the app fills in or reads: placeholders, bold marks, web addresses', () => {
     expect(pseudoText('{{n}} kcal')).toContain('{{n}}')
-    expect(pseudoText('**Short version:** see https://vercel.com/legal/privacy-policy.')).toMatch(/^⟦\*\*.*\*\*.*https:\/\/vercel\.com\/legal\/privacy-policy\.⟧$/)
+    expect(pseudoText('**Short version:** see https://vercel.com/legal/privacy-policy.')).toMatch(
+      /^⟦\*\*.*\*\*.*https:\/\/vercel\.com\/legal\/privacy-policy\.⟧$/,
+    )
   })
 
   it('every English string keeps its placeholders and list lengths', () => {
@@ -23,7 +25,8 @@ describe('pseudo-locale (+40 %)', () => {
       else if (Array.isArray(a)) {
         expect((b as unknown[]).length, key).toBe(a.length)
         a.forEach((v, i) => walk(v, (b as unknown[])[i], `${key}[${i}]`))
-      } else if (a && typeof a === 'object') for (const [k, v] of Object.entries(a)) walk(v, (b as Record<string, unknown>)[k], `${key}.${k}`)
+      } else if (a && typeof a === 'object')
+        for (const [k, v] of Object.entries(a)) walk(v, (b as Record<string, unknown>)[k], `${key}.${k}`)
     }
     walk(en, pseudoBundle(en), 'en')
   })

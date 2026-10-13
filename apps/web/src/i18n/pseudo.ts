@@ -9,6 +9,8 @@
  */
 export const PSEUDO_LANG = 'en-XA'
 
+// One row per case, as an alphabet reads.
+// prettier-ignore
 const ACCENTS: Record<string, string> = {
   a: 'á', b: 'ƀ', c: 'ç', d: 'đ', e: 'é', f: 'ƒ', g: 'ĝ', h: 'ĥ', i: 'í', j: 'ĵ', k: 'ķ', l: 'ĺ', m: 'ɱ',
   n: 'ñ', o: 'ó', p: 'þ', q: 'ǫ', r: 'ŕ', s: 'š', t: 'ţ', u: 'ú', v: 'ṽ', w: 'ŵ', x: 'ẋ', y: 'ý', z: 'ž',

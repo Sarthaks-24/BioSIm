@@ -28,6 +28,12 @@ const ALLOWED: Record<string, readonly string[]> = {
   table: ['components/graphs/StripTable.tsx'],
   signals: ['components/graphs/HowWeKnowPanel.tsx'],
   link: ['components/stage/LinkNotes.tsx', 'lib/linkNotes.ts', 'components/stage/MealActions.tsx'],
+  // The rings' notes are passed to the panel and read when it draws (Say), like the limits.
+  graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
+  // unitInWords is called by the panel only.
+  units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts'],
+  profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
+  disclaimer: ['pages/Science.tsx'],
 }
 
 function flatKeys(obj: unknown, prefix = '', out = new Set<string>()): Set<string> {

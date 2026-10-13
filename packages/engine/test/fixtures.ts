@@ -6,6 +6,11 @@ import { parseFood, type Food } from '../src/schema.ts'
  */
 export const FULL = process.env.FULL === '1'
 
+/** All of `items` with FULL=1, else every `stride`-th one (the first always in): the same ones every run. */
+export function sample<T>(items: readonly T[], stride: number): readonly T[] {
+  return FULL ? items : items.filter((_, i) => i % stride === 0)
+}
+
 /**
  * The first index where two arrays differ to the byte (−1 = identical): the invariance tests'
  * check. A byte compare instead of a deep `toEqual`, which costs about a second per run of

@@ -286,9 +286,7 @@ export default function SignalStrip({
         </span>
         <span className="[grid-area:info]">{info}</span>
         {/* On a phone with a kept meal, the legend's entries are rows of the header grid (`contents`). */}
-        <span
-          className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${named ? '' : 'max-lg:contents'}`}
-        >
+        <span className={`tabular flex flex-wrap items-center gap-x-4 text-caption [grid-area:read] ${named ? '' : 'max-lg:contents'}`}>
           <span className={`${group} max-lg:[grid-area:read]`}>
             <LineSwatch />
             {/*

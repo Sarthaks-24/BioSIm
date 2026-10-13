@@ -111,6 +111,14 @@
 //   below, Close, Esc + Back) replaces the first-paint Popover; "Report a mistake" leaves the bar's
 //   code (it opens from "⋯"); the no-WebGL note is a Notes line; the phone menu gets a dimmed page:
 //   /sim 188.636 → 188.396 KB on main bef54b1 (−0.24; ledger row planned +0.1), Home +0.18.
+//   T10 / FP-9 (2026-10-14): dead code out (the store's swapKept and setPace, PersonTag, FirstRunNote)
+//   and cold English loaded with its part: the "How we know" panel's own words, the rings' notes,
+//   the units in words and whose body it is with the panel (whose body: the "⋯" panel too), the long
+//   disclaimer with Science (scripts/i18n-sections.mjs); projector mode under 640 px keeps the phone's
+//   type (CSS); Stats, About and Privacy use rules, not cards: /sim 188.396 → 187.998 KB on main
+//   bd0f7b4 (−0.40; ledger row −0.40, planned −0.2), Home 144.66 → 144.27 KB. This script now
+//   enforces the Home ratchet (147 KB, B26), the Track A total (R66: ≤ +1.0 KB over eee16c9, no
+//   slack) and that every lazy chunk is precached.
 //   W-1 (2026-10-14, branch v3): the systems registry (src/systems/: SystemIds, PackIds, SystemDef
 //   with graph slots, SystemUi; digestion's Now line, summary and graph sentences moved into
 //   systems/digestion/; keys 1–3 with S, B, E as digestion's aliases). The catalog's rows left the
@@ -119,17 +127,18 @@
 //   the stage no longer checks a slot's row at run time (registry.test does). The sheets get the
 //   system's words from the stage, so they split no stage code into new chunks: /sim 185.979 →
 //   185.129 KB on v3 b0cc009 (−0.85: rows −1.08, registry +0.24); merged with v3 3924ecb (T4, S-2):
-//   185.397 → 184.557 KB (−0.84), engine chunk 7.4 KB.
+//   185.397 → 184.557 KB (−0.84); with v3 a5988f0 (T10, S-1): 184.233 KB, engine chunk 7.8 KB.
 //   /sim's cap 190 → 194 KB, signed by the council as the LAST raise (R42): if a v3 step would pass
 //   194, the engine worker (W-2) lands first; the cap never moves again. Load on demand (R71):
 //   pack-manifest.json (scripts/pack-manifest.mjs) puts the engine and digestion's pack in the
 //   precache tier and the 3D body, the other packs and Hindi in the lazy tier, which the service
 //   worker keeps on first use ("lp-lazy", scripts/cache-policy.mjs: one policy object, as main's
-//   T12d). The 3D body left the precache: 1791.0 → 823.3 KB raw on v3 3924ecb; the cap 2600 →
-//   1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are enforced; the lazy total is a report.
+//   T12d). The 3D body left the precache: 1791.0 → 823.3 KB raw on v3 3924ecb (828.4 KB with
+//   a5988f0); the cap 2600 → 1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are
+//   enforced; the lazy total is a report. The lazy-chunk check counts the lazy tier as offline.
 //   "reactsToMeal" (a catalog row's field) joins the engine-not-in-/sim guard.
-//   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
-//   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
+//   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
+//   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -140,7 +149,9 @@ const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'd
 const KB = 1000
 
 const BUDGETS = [
+  // 120 KB is the goal (report); 147 KB is the ratchet it may never pass again (B26, plan qa-fixes §0).
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
+  { name: 'Home ratchet', roots: ['index.html'], max: 147 * KB, mode: 'enforce' },
   // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
   // 194 is the LAST raise (R42, W-1): if a v3 step would pass it, the engine worker (W-2) lands first.
   { name: '/sim before 3D', roots: SIM_ROOTS, max: 194 * KB, mode: 'enforce' },
@@ -210,7 +221,9 @@ for (const r of rows) {
 }
 
 // Track A ledger (T0; plan qa-fixes §0): one row per FP, planned gross, claw-back and net, and the
-// net its T-step measured. Report only: the Track A total must stay ≤ +0.5 KB over eee16c9's /sim.
+// net its T-step measured. Enforced since T10: /sim must stay ≤ netLimitKB over eee16c9's /sim
+// (R66: +1.0 KB; it was +0.5 with 0.05 of slack), measured to the byte, no slack.
+let trackAOver = false
 {
   const ledger = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'budget-ledger.json'), 'utf8'))
   const sim = rows.find((r) => r.name.startsWith('/sim'))
@@ -225,9 +238,9 @@ for (const r of rows) {
   const planned = ledger.rows.reduce((s, r) => s + r.plannedNetKB, 0)
   const measured = ledger.rows.filter((r) => r.measuredNetKB != null).reduce((s, r) => s + r.measuredNetKB, 0)
   const now = sim.bytes / KB - ledger.base.simKB
-  const over = now > ledger.netLimitKB + 0.05
+  trackAOver = now > ledger.netLimitKB
   console.log(
-    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${kb(sim.bytes)} = ${sign(now)} KB over the base: ${over ? 'over (report only)' : 'ok'}`,
+    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${(sim.bytes / KB).toFixed(3)} KB = ${now > 0 ? '+' : ''}${now.toFixed(3)} KB over the base: ${trackAOver ? 'OVER (fails)' : 'ok'}`,
   )
   // R61: on v3 the rows above compare against main's T-steps only (v3 also has E-2's lazy engine);
   // this line says where this build stands against main itself. Update `main` when main merges in.
@@ -240,15 +253,18 @@ for (const r of rows) {
 }
 
 // Every lazy chunk works offline (plan qa-fixes §3.2, as R71 changed it): precached at install, or
-// in the pack-manifest's lazy tier, which the service worker keeps on first use ("lp-lazy"). Report only.
+// in the pack-manifest's lazy tier, which the service worker keeps on first use ("lp-lazy").
+// Enforced since T10 (FP-9).
+let unprecached = 0
 {
   const precached = new Set(precacheFiles())
   const lazyTier = new Set(packManifest(manifest).lazy.map((u) => u.slice(1)))
   const lazy = new Set()
   for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
   const missing = [...lazy].filter((f) => !precached.has(f) && !lazyTier.has(f))
+  unprecached = missing.length
   console.log(
-    `\nLazy chunks offline (precached or lazy tier): ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (report only; neither: ${missing.join(', ')})` : ' ok'}`,
+    `\nLazy chunks offline (precached or lazy tier): ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; neither: ${missing.join(', ')})` : ' ok'}`,
   )
 }
 
@@ -325,7 +341,7 @@ if (guardProblems.length) {
   process.exit(1)
 }
 
-if (rows.some((r) => r.failed)) {
+if (rows.some((r) => r.failed) || trackAOver || unprecached) {
   console.error('\nAn enforced size budget is over. See apps/web/scripts/check-budget.mjs.')
   process.exit(1)
 }

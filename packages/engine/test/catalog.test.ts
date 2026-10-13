@@ -17,7 +17,15 @@ import {
   type EventMeta,
   type SignalMeta,
 } from '../src/index.ts'
-import { BREATHING_SIGNALS, BREATHING_SIGNAL_IDS, HUMAN_PROVIDES, RUN_SIGNAL_IDS, RUN_SIGNALS } from '../src/run.ts'
+import {
+  BREATHING_SIGNALS,
+  BREATHING_SIGNAL_IDS,
+  EFFORT_SIGNALS,
+  EFFORT_SIGNAL_IDS,
+  HUMAN_PROVIDES,
+  RUN_SIGNAL_IDS,
+  RUN_SIGNALS,
+} from '../src/run.ts'
 import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/core/catalog-docs.ts'
 
 /**
@@ -28,7 +36,7 @@ import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/c
 
 const signals: SignalMeta[] = Object.values(ALL_SIGNALS)
 const events: EventMeta[] = Object.values(EVENTS)
-const allIds = [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
+const allIds = [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
 const allRows: (SignalMeta | EventMeta)[] = [...signals, ...events]
 
 /** Dotted, at least two segments, each camelCase starting with a lowercase letter. */
@@ -74,6 +82,10 @@ const FROZEN: Record<string, string> = {
   'gas.co2OutRate': 'mL/min',
   'gas.exchangeRatio': 'ratio',
   'lungs.tidalVolume': 'mL',
+  // S-1, the effort pack (core/catalog/effort.ts).
+  'muscle.energyRate': 'kcal/h',
+  'skin.sweatRate': 'mL/h',
+  'skin.sweatTotal': 'mL',
   'event.stomachHalfEmpty': 'min',
   'event.glucosePeak': 'min',
   'event.glucoseBackToBase': 'min',
@@ -97,7 +109,10 @@ describe('catalog IDs', () => {
     expect(Object.keys(RESERVED_SIGNALS).sort()).toEqual([...RESERVED_SIGNAL_IDS].sort())
     expect(Object.keys(EVENTS).sort()).toEqual([...EVENT_IDS].sort())
     expect(Object.keys(BREATHING_SIGNALS).sort()).toEqual([...BREATHING_SIGNAL_IDS].sort())
-    expect(Object.keys(SIGNAL_DOCS).sort()).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort())
+    expect(Object.keys(EFFORT_SIGNALS).sort()).toEqual([...EFFORT_SIGNAL_IDS].sort())
+    expect(Object.keys(SIGNAL_DOCS).sort()).toEqual(
+      [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort(),
+    )
     expect(Object.keys(EVENT_DOCS).sort()).toEqual([...EVENT_IDS].sort())
     for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(EVENTS)]) expect(row.id).toBe(key)
   })
@@ -126,6 +141,29 @@ describe('catalog IDs', () => {
       expect(allIds, name).not.toContain(name)
       for (const id of allIds) expect(id.startsWith(`${name}.`), `retired ${name} prefixes ${id}`).toBe(false)
     }
+  })
+})
+
+describe('pack rows (architecture §1.3 lazy rows)', () => {
+  const src = resolve(dirname(fileURLToPath(import.meta.url)), '../src')
+  const read = (f: string) => readFileSync(resolve(src, f), 'utf8')
+
+  it('the main entry never loads a pack row: catalog.ts names core/catalog/* as types only, index.ts not at all', () => {
+    const imports = read('core/catalog.ts').match(/^import .*$/gm) ?? []
+    for (const line of imports.filter((l) => l.includes('./catalog/'))) expect(line).toMatch(/^import type /)
+    expect(read('index.ts')).not.toMatch(/catalog\//)
+  })
+
+  it('S-1 adds the effort rows as Model estimates, never reacting to the meal, each with a validRange', () => {
+    expect(EFFORT_SIGNALS['muscle.energyRate']).toMatchObject({ unit: 'kcal/h', kind: 'rate', status: 'assumption', reactsToMeal: false })
+    expect(EFFORT_SIGNALS['skin.sweatRate']).toMatchObject({ unit: 'mL/h', kind: 'rate', status: 'assumption', reactsToMeal: false })
+    expect(EFFORT_SIGNALS['skin.sweatTotal']).toMatchObject({ unit: 'mL', kind: 'runningTotal', status: 'assumption', reactsToMeal: false })
+    for (const id of EFFORT_SIGNAL_IDS) {
+      expect(ACTIVE_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(isChartable(EFFORT_SIGNALS[id]), id).toBe(true)
+      expect(EFFORT_SIGNALS[id].validRange!.low, id).toBeLessThan(EFFORT_SIGNALS[id].validRange!.high)
+    }
+    expect(EFFORT_SIGNALS['skin.sweatRate'].validRange).toMatchObject({ low: 0, high: 3000, basis: 'cited' })
   })
 })
 

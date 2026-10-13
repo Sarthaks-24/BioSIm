@@ -6,12 +6,12 @@ import i18next from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { describe, expect, it } from 'vitest'
 import en from '../../i18n/en.json'
-import { Dock, FoodChip, IconButton, PersonTag, PlayButton, PlusIcon, Segmented, StatusTag } from './index.ts'
+import { Dock, FoodChip, IconButton, PlayButton, PlusIcon, Segmented, StatusTag } from './index.ts'
 
 // The web unit tests have no DOM, so the kit is rendered to HTML on the server and the markup is
 // checked. Interaction is covered by the /next e2e specs once the stage uses the kit (WP-11 on).
 
-// The status and profile words arrive with the catalog keys (WP-10); stand-ins keep this test
+// The status words arrive with the catalog keys (WP-10); stand-ins keep this test
 // independent of that.
 const i18n = i18next.createInstance()
 void i18n.use(initReactI18next).init({
@@ -25,7 +25,6 @@ void i18n.use(initReactI18next).init({
           assumption: { label: 'Model estimate', help: 'Worked out by the maths, not measured.' },
           illustration: { label: 'Drawing only', help: 'A picture to show the idea.' },
         },
-        profiles: { 'adult-ref': { tag: 'Typical adult', desc: 'ICMR-NIN 2020 reference adult man.' } },
       },
     },
   },
@@ -95,13 +94,6 @@ describe('component kit', () => {
       shapes.add(html.match(/<svg[\s\S]*<\/svg>/)![0])
     }
     expect(shapes.size).toBe(3)
-  })
-
-  it('PersonTag is text, or a button when it can open "How we know"', () => {
-    expect(render(h(PersonTag, { profile: 'adult-ref' }))).toMatch(/^<span[^>]*>Typical adult<\/span>$/)
-    const button = render(h(PersonTag, { profile: 'adult-ref', onInfo: noop }))
-    expect(button).toMatch(/^<button type="button"/)
-    expect(button).toContain('title="ICMR-NIN 2020 reference adult man."')
   })
 
   it('Dock is a named region holding play, clock, pace and track', () => {

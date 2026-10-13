@@ -160,35 +160,12 @@ describe('keep, unkeep, swap', () => {
     expect(run().kept).toBeNull()
   })
 
-  it('Keep keeps the activity plan with the meal, and swap exchanges the plans too (E-3b-eng)', () => {
+  it('Keep keeps the activity plan with the meal (E-3b-eng)', () => {
     const walk = [{ kind: 'walk' as const, startMin: 30, durMin: 20 }]
     run().loadLink('v=2&a=cola:1')
     useRunStore.setState({ activity: walk })
     run().keep()
     expect(run().kept).toEqual({ items: one('cola'), profile: DEFAULT_RUN_PROFILE, activity: walk })
-    useRunStore.setState({ activity: [] })
-    run().swapKept()
-    expect(run().activity).toEqual(walk)
-    expect(run().kept?.activity).toEqual([])
-  })
-
-  it('swap exchanges the meal and the kept run; twice is back where it started', () => {
-    run().loadLink('v=2&a=cola:1&b=cheeseburger:1,fries:1')
-    run().swapKept()
-    expect(run().meal).toEqual(one('cheeseburger', 'fries'))
-    expect(run().kept?.items).toEqual(one('cola'))
-    run().swapKept()
-    expect(run().meal).toEqual(one('cola'))
-    expect(run().kept?.items).toEqual(one('cheeseburger', 'fries'))
-  })
-
-  it('swap with an empty meal leaves nothing kept; swap with nothing kept does nothing', () => {
-    run().loadLink('v=2&b=water:1')
-    run().swapKept()
-    expect(run().meal).toEqual(one('water'))
-    expect(run().kept).toBeNull()
-    run().swapKept()
-    expect(run().meal).toEqual(one('water'))
   })
 })
 
@@ -229,12 +206,11 @@ describe('meal cap (same rules as v1)', () => {
     expect(run().setServings('cheeseburger', 5)).toBe(false)
   })
 
-  it('the cap only guards the meal: keeping or swapping is never blocked', () => {
+  it('the cap only guards the meal: keeping is never blocked', () => {
     nearCap()
     run().keep()
     run().removeFood('fries')
-    run().swapKept()
-    expect(run().meal).toEqual([
+    expect(run().kept?.items).toEqual([
       { foodId: 'cheeseburger', servings: 2 },
       { foodId: 'fries', servings: 2 },
     ])

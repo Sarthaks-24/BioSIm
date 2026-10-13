@@ -1,12 +1,12 @@
 {
-  "about": "Track A (v2.1) size ledger, plan qa-fixes §0 and §1 (V8 frozen table). /sim first download, KB gzip (1 KB = 1000 bytes, as check-budget prints). Each FP's T-step fills `measuredNet` (its merged /sim minus the /sim before it) and `measuredAt` when it merges. An FP over its planned net goes lazy before merging. check-budget prints this table and the Track A total so far.",
+  "about": "Track A (v2.1) size ledger, plan qa-fixes §0 and §1 (V8 frozen table). /sim first download, KB gzip (1 KB = 1000 bytes, as check-budget prints). Each FP's T-step fills `measuredNet` (its merged /sim minus the /sim before it) and `measuredAt` when it merges. An FP over its planned net goes lazy before merging. check-budget prints this table and fails when /sim is more than netLimitKB over the base (R66: +1.0 KB, from T10).",
   "base": { "commit": "eee16c9", "simKB": 188.2 },
   "main": {
-    "commit": "bd0f7b4",
-    "simKB": 188.396,
+    "commit": "868a248",
+    "simKB": 187.998,
     "about": "v3 only (R61, W-1): main's own /sim, for check-budget's v3 vs main line. Update it when main merges into v3."
   },
-  "netLimitKB": 0.5,
+  "netLimitKB": 1.0,
   "rows": [
     {
       "fp": "FP-10",
@@ -95,8 +95,8 @@
       "grossKB": -0.1,
       "clawbackKB": -0.1,
       "plannedNetKB": -0.2,
-      "measuredNetKB": null,
-      "measuredAt": null
+      "measuredNetKB": -0.4,
+      "measuredAt": "2026-10-14"
     },
     {
       "fp": "FP-5",

@@ -54,7 +54,8 @@ export default function About() {
         <h2 id="medical" className={h2}>
           {t('about.medicalTitle')}
         </h2>
-        <p className="rounded-xl border border-border bg-surface-raised px-4 py-3">{t('about.medical')}</p>
+        {/* A rule at its side, not a card (ui-audit #5, T10). */}
+        <p className="border-l-2 border-ink py-1 pl-4">{t('about.medical')}</p>
       </section>
 
       <section className="max-w-[68ch]">

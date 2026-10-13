@@ -141,7 +141,7 @@ describe('meal clock: play and pause', () => {
   })
 
   it('advances at a steady speed along the bar (same knee as v1)', () => {
-    clock().setPace(60)
+    useClock.setState({ pace: 60 })
     clock().play()
     // 0.1 s of 60 s for the whole bar = 1/600 of the bar.
     clock().advance(0.1)

@@ -21,7 +21,7 @@ import {
   windowOf,
   type RunResult,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
+import { BREATHING_SIGNAL_IDS, EFFORT_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
 
 /**
  * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
@@ -52,19 +52,22 @@ describe('signal table', () => {
       const sim = run(`${f.id}:1`)
       const content = sim.signals.get('gut.stomach.contentG')!.values
       expect(content).toHaveLength(sim.length)
+      // The largest miss and where, one assertion per food (an assertion per minute was 2 s, R68).
+      let worst = { miss: 0, at: 0 }
       for (let i = 0; i < sim.length; i++) {
-        expect(
-          Math.abs(content[i]! - (sim.signals.get('gut.stomach.liquidG')!.values[i]! + sim.signals.get('gut.stomach.solidG')!.values[i]!)),
-          `${f.id} @${i}`,
-        ).toBeLessThanOrEqual(0.1)
+        const miss = Math.abs(
+          content[i]! - (sim.signals.get('gut.stomach.liquidG')!.values[i]! + sim.signals.get('gut.stomach.solidG')!.values[i]!),
+        )
+        if (miss > worst.miss) worst = { miss, at: i }
       }
+      expect(worst.miss, `${f.id} @${worst.at}`).toBeLessThanOrEqual(0.1)
     }
   })
 
   it('every series is a Float32 copy of the array its module wrote, and its band of the band', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
     const out = modulesOf(sim)
-    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS])
+    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!
       expect(s.meta.id).toBe(id)

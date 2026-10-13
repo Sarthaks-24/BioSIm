@@ -111,10 +111,10 @@ interface TileProps {
   children?: React.ReactNode
 }
 
-/** One headline number: what it counts, the number, and what it covers. */
+/** One headline number: what it counts, the number, and what it covers. A rule over it, not a card (ui-audit #5, T10). */
 function Tile({ label, value, note, wide, children }: TileProps) {
   return (
-    <div className={`rounded-xl border border-border bg-surface-raised px-4 py-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
+    <div className={`border-t border-border pt-3 ${wide ? 'col-span-2 sm:col-span-1' : ''}`}>
       <dt className="text-sm font-semibold text-ink-muted">{label}</dt>
       <dd className="mt-1 text-4xl font-extrabold tracking-tight">{value}</dd>
       {note && <dd className="mt-1 text-sm text-ink-muted">{note}</dd>}
@@ -137,7 +137,8 @@ export default function Stats() {
 
   const h2 = 'mt-10 mb-3 text-h2 font-extrabold'
   const link = 'underline underline-offset-2 hover:text-ink'
-  const message = 'rounded-xl border border-dashed border-border px-4 py-3'
+  // Notes are set off by a rule at their side, as on the stage: rules, not cards (ui-audit #5, T10).
+  const message = 'border-l-2 border-dashed border-border py-1 pl-4'
   const stats = state.status === 'ready' ? state.stats : null
   const weeks = stats?.weeks.length ?? 12
   // Facts about this build. The last release is only known from the weekly file.
@@ -157,7 +158,7 @@ export default function Stats() {
       <h1 className="text-display font-extrabold tracking-tight">{t('stats.title')}</h1>
       <p className="mt-4 max-w-[68ch] text-lg text-ink-muted">{t('stats.lead')}</p>
 
-      <p className="mt-6 max-w-[68ch] rounded-xl border border-border bg-surface-raised px-4 py-3 text-lg">
+      <p className="mt-6 max-w-[68ch] border-l-2 border-ink py-1 pl-4 text-lg">
         <RichText text={t('stats.noTracking')} />
       </p>
 
