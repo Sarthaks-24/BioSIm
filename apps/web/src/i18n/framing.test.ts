@@ -43,13 +43,47 @@ const BANNED_EN = [
   'burn it off',
   'burn them off',
   'work it off',
+  // Activity (model §2.1 lint, E-3b-eng): moving is described ("energy used by moving"), never
+  // something food is "burned" by, "worked off" or "earned" with.
+  'burn',
+  'burns',
+  'burned',
+  'burnt',
+  'burning',
+  'calories burned',
+  'calories burnt',
+  'work off',
+  'works off',
+  'worked off',
+  'working off',
+  'earn',
+  'earns',
+  'earned',
+  'earning',
+  'fat-burning',
+  'fat burning',
 ]
 
 /**
- * Hindi: bad, harmful, dangerous (with and without the nukta) until the Hindi reviewer adds the
- * rest of the list (03 WP-13; i18n/REVIEW.md asks for it).
+ * Hindi: bad, harmful, dangerous (with and without the nukta) and "burn", until the Hindi reviewer
+ * adds the rest of the list (03 WP-13; i18n/REVIEW.md asks for it).
  */
-const BANNED_HI = ['खराब', 'ख़राब', 'हानिकारक', 'खतरनाक', 'ख़तरनाक']
+const BANNED_HI = [
+  'खराब',
+  'ख़राब',
+  'हानिकारक',
+  'खतरनाक',
+  'ख़तरनाक',
+  // "burn" (calories): जलाना and its forms (model §2.1 lint "also Hindi"; for the reviewer to extend).
+  'जलाना',
+  'जलाने',
+  'जलाता',
+  'जलाती',
+  'जलाते',
+  'जलाएँ',
+  'जलाओ',
+  'जलाई',
+]
 
 /**
  * A word or phrase as a whole-word, case-insensitive pattern. `\b` only knows ASCII letters, so
@@ -69,8 +103,7 @@ function bannedPattern(phrase: string): RegExp {
 function strings(value: unknown, path = ''): [string, string][] {
   if (typeof value === 'string') return [[path, value]]
   if (Array.isArray(value)) return value.flatMap((v, i) => strings(v, `${path}[${i}]`))
-  if (value && typeof value === 'object')
-    return Object.entries(value).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k))
+  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k))
   return []
 }
 

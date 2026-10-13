@@ -8,6 +8,7 @@ import {
   decodeShareState,
   encodeShareState,
   mealKcal,
+  type ActivityBout,
   type MealItem,
   type ProfileId,
   type ShareLang,
@@ -30,14 +31,17 @@ import { useClock } from './clock.ts'
  * Time lives in the meal clock (state/clock.ts); `loadLink` sets it from the link's `t`.
  */
 
-/** A kept run: what to recompute, not what came out. */
+/** A kept run: what to recompute, not what came out. Its activity plan is kept with it (E-3b-eng; link `bact`). */
 export interface KeptRun {
   items: MealItem[]
   profile: ProfileId
+  activity: ActivityBout[]
 }
 
 export interface RunState {
   meal: MealItem[]
+  /** The activity bouts with the meal, in start order (link `act`); empty = resting. */
+  activity: ActivityBout[]
   kept: KeptRun | null
   /** The stated person for the meal (URL `who`). */
   profile: ProfileId
@@ -79,12 +83,14 @@ export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.meal
 
 const fitsCap = (items: MealItem[]) => mealKcal(items, lookupFood) <= PARAMS.maxMealKcal
 const isLayer = (id: string | undefined): id is SystemId => ORGANISMS[DEFAULT_ORGANISM].systems.some((s) => s.id === id)
-/** A kept run with no food is no kept run. */
-const keptOf = (items: MealItem[], profile: ProfileId): KeptRun | null => (items.length ? { items, profile } : null)
+/** A kept run with no food and no activity is no kept run. */
+const keptOf = (items: MealItem[], profile: ProfileId, activity: ActivityBout[] = []): KeptRun | null =>
+  items.length || activity.length ? { items, profile, activity } : null
 
 /** Everything a fresh page starts with (also used by tests to reset the store). */
 export const INITIAL_RUN = {
   meal: [] as MealItem[],
+  activity: [] as ActivityBout[],
   kept: null as KeptRun | null,
   profile: DEFAULT_RUN_PROFILE,
   layer: DEFAULT_LAYER,
@@ -125,15 +131,15 @@ export const useRunStore = create<RunState>((set, get) => ({
   removeFood: (foodId) => set({ meal: get().meal.filter((i) => i.foodId !== foodId), capBlocked: false }),
 
   keep: () => {
-    const { meal, profile } = get()
-    if (meal.length) set({ kept: keptOf(meal, profile) })
+    const { meal, profile, activity } = get()
+    if (meal.length || activity.length) set({ kept: keptOf(meal, profile, activity) })
   },
   unkeep: () => set({ kept: null }),
   swapKept: () => {
-    const { meal, profile, kept } = get()
+    const { meal, profile, activity, kept } = get()
     if (!kept) return
     // A meal over the cap (from an old link) may come back as the meal: the cap only stops growing it.
-    set({ meal: kept.items, profile: kept.profile, kept: keptOf(meal, profile), capBlocked: false })
+    set({ meal: kept.items, profile: kept.profile, activity: kept.activity, kept: keptOf(meal, profile, activity), capBlocked: false })
   },
   setLayer: (layer) => set({ layer }),
 
@@ -149,6 +155,8 @@ export const useRunStore = create<RunState>((set, get) => ({
     const profile = s.who ?? DEFAULT_RUN_PROFILE
     set({
       meal,
+      // The link's activity (`act`, `bact`) is read by the codec step of E-3b-eng; until then a link opens resting.
+      activity: [],
       kept: keptOf(keptItems, profile),
       profile,
       layer: isLayer(s.layer) ? s.layer : DEFAULT_LAYER,

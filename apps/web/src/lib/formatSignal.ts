@@ -37,6 +37,7 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   g: 'g',
   kcal: 'kcal',
   'kcal/h': 'kcalPerH',
+  'g/min': 'gPerMin',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */

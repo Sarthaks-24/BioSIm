@@ -1,23 +1,37 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
-import type { MealItem, ProfileId, RunResult } from '@lifepeek/engine'
+import type { ActivityBout, MealItem, ProfileId, RunResult } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 import { useRunStore } from '../state/run.ts'
 import { useClock } from '../state/clock.ts'
 import { runMoments } from '../lib/moments.ts'
 
+/** A stable empty plan, so a selector without a kept run returns the same value each time. */
+const NO_ACTIVITY: readonly ActivityBout[] = []
+
 /** Dots for the body picture. Only the current run is drawn; the kept run is a ghost line (no dots). */
 const CURRENT_PARTICLES = 56
 
-/** One run's inputs as a string, so equal meals reuse the result whatever the array identity. */
-export const runKey = (items: readonly MealItem[], profile: ProfileId) =>
-  `${profile}|${items.map((i) => `${i.foodId}:${i.servings}`).join(',')}`
+/**
+ * One run's inputs as a string, so equal runs reuse the result whatever the array identity. The
+ * activity plan (in start order, as the store keeps it) is added only when there is one, so a
+ * resting run's key is what it was before activity (E-3b-eng).
+ */
+export const runKey = (items: readonly MealItem[], profile: ProfileId, activity: readonly ActivityBout[] = []) =>
+  `${profile}|${items.map((i) => `${i.foodId}:${i.servings}`).join(',')}` +
+  (activity.length ? `|${activity.map((b) => `${b.kind}.${b.startMin}.${b.durMin}`).join(',')}` : '')
 
 /** What the stage needs from the engine entry (`@lifepeek/engine/run`). */
 export type Engine = Pick<typeof import('@lifepeek/engine/run'), 'simulate'>
 
-/** Runs the model for one meal (a 48 h run takes a few milliseconds, once the engine is here). */
-export function computeRun(engine: Engine, items: MealItem[], profile: ProfileId, which: 'current' | 'kept'): RunResult {
-  return engine.simulate({ items, profile }, { lookup: lookupFood, particles: which === 'current' ? CURRENT_PARTICLES : 0 })
+/** Runs the model for one meal and activity plan (a 48 h run takes a few milliseconds, once the engine is here). */
+export function computeRun(
+  engine: Engine,
+  items: MealItem[],
+  profile: ProfileId,
+  which: 'current' | 'kept',
+  activity: readonly ActivityBout[] = [],
+): RunResult {
+  return engine.simulate({ items, profile, activity }, { lookup: lookupFood, particles: which === 'current' ? CURRENT_PARTICLES : 0 })
 }
 
 /**
@@ -90,8 +104,9 @@ export function useRun(which: 'current' | 'kept'): { run: RunResult | null; pend
   // Both selectors return values already in the store, so the component re-renders only when they change.
   const items = useRunStore((s) => (which === 'current' ? s.meal : (s.kept?.items ?? null)))
   const profile = useRunStore((s) => (which === 'current' ? s.profile : (s.kept?.profile ?? s.profile)))
-  const key = items ? runKey(items, profile) : null
-  const run = useMemo(() => (engine && items ? computeRun(engine, items, profile, which) : null), [engine, key, which]) // eslint-disable-line react-hooks/exhaustive-deps
+  const activity = useRunStore((s) => (which === 'current' ? s.activity : (s.kept?.activity ?? NO_ACTIVITY)))
+  const key = items ? runKey(items, profile, activity) : null
+  const run = useMemo(() => (engine && items ? computeRun(engine, items, profile, which, activity) : null), [engine, key, which]) // eslint-disable-line react-hooks/exhaustive-deps
   return { run, pending: !engine && !failed }
 }
 

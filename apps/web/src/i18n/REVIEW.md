@@ -729,6 +729,8 @@ summary, so those sentences are worded to fit feminine (इडली, दाल,
 | `sameFood.reasonSamePeak` | Both reach about the same highest point ({{peak}} mg/dL): the stomach lets only a little sugar through each minute, so more food keeps blood sugar up for longer, not higher. | दोनों बार सबसे ऊँचा स्तर लगभग बराबर ({{peak}} mg/dL) रहता है: आमाशय हर मिनट थोड़ी-सी शर्करा ही आगे जाने देता है, इसलिए ज़्यादा भोजन से रक्त शर्करा ज़्यादा ऊपर नहीं जाती, बल्कि ज़्यादा देर तक बढ़ी रहती है। | draft |
 | `sameFood.oblique.amount_one` | {{count}} serving of {{food}} | {{food}} के {{count}} हिस्से | draft |
 | `sameFood.oblique.amount_other` | {{count}} servings of {{food}} | {{food}} के {{count}} हिस्सों | draft |
+| `units.gPerMin` | {{n}} g/min | {{n}} ग्राम/मिनट | draft |
+| `units.words.gPerMin` | grams each minute | हर मिनट में ग्राम | draft |
 
 ## Sign-off
 

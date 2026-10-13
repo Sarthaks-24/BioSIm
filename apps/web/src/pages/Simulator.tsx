@@ -36,10 +36,10 @@ void loadEngine()
  * meal kept, or why nothing was (no food yet, or this meal is already the one kept).
  */
 function keep() {
-  const { meal, profile, kept } = useRunStore.getState()
+  const { meal, profile, activity, kept } = useRunStore.getState()
   const t = i18n.t.bind(i18n)
   if (!meal.length) return announce(t('stage.empty'))
-  if (kept && runKey(kept.items, kept.profile) === runKey(meal, profile)) return announce(t('keep.already'))
+  if (kept && runKey(kept.items, kept.profile, kept.activity) === runKey(meal, profile, activity)) return announce(t('keep.already'))
   useRunStore.getState().keep()
   announce(t('keep.tag', { meal: mealNames(meal, i18n.language) }))
 }

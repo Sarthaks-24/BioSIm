@@ -26,7 +26,7 @@ export function catalogKeys(): KeyUse {
     if (row.limitKey) required.add(row.limitKey)
   }
   for (const row of Object.values(EVENTS)) {
-    if (row.shipsIn !== 'v2.0') continue
+    if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0') continue
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }

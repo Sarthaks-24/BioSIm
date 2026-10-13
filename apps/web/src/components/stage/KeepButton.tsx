@@ -19,10 +19,11 @@ export default function KeepButton() {
   const { t } = useTranslation()
   const meal = useRunStore((s) => s.meal)
   const profile = useRunStore((s) => s.profile)
+  const activity = useRunStore((s) => s.activity)
   const kept = useRunStore((s) => s.kept)
   const why = useId()
   const keysOff = useKeys((s) => s.off)
-  const same = !!kept && runKey(kept.items, kept.profile) === runKey(meal, profile)
+  const same = !!kept && runKey(kept.items, kept.profile, kept.activity) === runKey(meal, profile, activity)
   const off = meal.length === 0 || same
   const reason = same ? t('keep.already') : meal.length === 0 ? t('stage.empty') : t('keep.help')
   return (

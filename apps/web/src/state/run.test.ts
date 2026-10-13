@@ -27,7 +27,7 @@ describe('opening links', () => {
     const meal = known(link.a)
     const kept = known(link.b)
     expect(run().meal).toEqual(meal)
-    expect(run().kept).toEqual(kept.length ? { items: kept, profile: DEFAULT_RUN_PROFILE } : null)
+    expect(run().kept).toEqual(kept.length ? { items: kept, profile: DEFAULT_RUN_PROFILE, activity: [] } : null)
     expect(run().droppedFoods).toBe(link.a.length + link.b.length - meal.length - kept.length)
     expect(run().linkModelVersion).toBe(link.modelVersion)
     expect(run().unknownOrganism).toBeNull()
@@ -116,7 +116,7 @@ describe('keep, unkeep, swap', () => {
     run().loadLink('v=2&a=cola:1')
     const before = written()
     run().keep()
-    expect(run().kept).toEqual({ items: one('cola'), profile: DEFAULT_RUN_PROFILE })
+    expect(run().kept).toEqual({ items: one('cola'), profile: DEFAULT_RUN_PROFILE, activity: [] })
     // Keeping copies: the meal stays, and changing it later leaves the kept run alone.
     expect(run().meal).toEqual(one('cola'))
     expect(written()).toBe(`v=${MODEL_VERSION}&a=cola%3A1&b=cola%3A1`)
@@ -142,6 +142,18 @@ describe('keep, unkeep, swap', () => {
   it('an empty meal is not kept', () => {
     run().keep()
     expect(run().kept).toBeNull()
+  })
+
+  it('Keep keeps the activity plan with the meal, and swap exchanges the plans too (E-3b-eng)', () => {
+    const walk = [{ kind: 'walk' as const, startMin: 30, durMin: 20 }]
+    run().loadLink('v=2&a=cola:1')
+    useRunStore.setState({ activity: walk })
+    run().keep()
+    expect(run().kept).toEqual({ items: one('cola'), profile: DEFAULT_RUN_PROFILE, activity: walk })
+    useRunStore.setState({ activity: [] })
+    run().swapKept()
+    expect(run().activity).toEqual(walk)
+    expect(run().kept?.activity).toEqual([])
   })
 
   it('swap exchanges the meal and the kept run; twice is back where it started', () => {
@@ -247,5 +259,20 @@ describe('runs (hooks/useRun.ts)', () => {
   it('keys on contents and person, not on array identity', () => {
     expect(runKey(one('cola'), 'adult-ref')).toBe(runKey(one('cola'), 'adult-ref'))
     expect(runKey(one('cola'), 'adult-ref')).not.toBe(runKey([{ foodId: 'cola', servings: 2 }], 'adult-ref'))
+  })
+
+  it('keys on the activity plan too; a resting run keeps its old key (E-3b-eng)', () => {
+    const walk = [{ kind: 'walk', startMin: 30, durMin: 20 }] as const
+    expect(runKey(one('cola'), 'adult-ref', [])).toBe('adult-ref|cola:1')
+    expect(runKey(one('cola'), 'adult-ref', [...walk])).toBe('adult-ref|cola:1|walk.30.20')
+    expect(runKey(one('cola'), 'adult-ref', [{ ...walk[0], durMin: 30 }])).not.toBe(runKey(one('cola'), 'adult-ref', [...walk]))
+  })
+
+  it('a run with a walk uses more energy than the same meal at rest, and the kept run carries its plan', () => {
+    const walk = [{ kind: 'walk' as const, startMin: 30, durMin: 20 }]
+    const moving = computeRun(engine, one('cola'), DEFAULT_RUN_PROFILE, 'kept', walk)
+    expect(moving.activity).toEqual(walk)
+    expect(moving.signals.get('energy.activityTotal')!.values[100]).toBeGreaterThan(0)
+    expect(computeRun(engine, one('cola'), DEFAULT_RUN_PROFILE, 'kept').signals.get('energy.activityTotal')!.values[100]).toBe(0)
   })
 })

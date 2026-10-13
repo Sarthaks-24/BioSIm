@@ -6,4 +6,5 @@ export const UNIT_KEYS: Partial<Record<Unit, string>> = {
   'mg/dL': 'units.mgdl',
   kcal: 'units.kcal',
   'kcal/h': 'units.kcalPerH',
+  'g/min': 'units.gPerMin',
 }

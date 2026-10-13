@@ -214,11 +214,13 @@
     "g": "{{n}} g",
     "mgdl": "{{n}} mg/dL",
     "kcalPerH": "{{n}} kcal/h",
+    "gPerMin": "{{n}} g/min",
     "words": {
       "mgdl": "milligrams of sugar in each decilitre (a tenth of a litre) of blood",
       "g": "grams (1000 g = 1 kg)",
       "kcal": "kilocalories of food energy",
-      "kcalPerH": "kilocalories of energy per hour"
+      "kcalPerH": "kilocalories of energy per hour",
+      "gPerMin": "grams each minute"
     }
   },
   "anatomy": {
@@ -446,6 +448,28 @@
         "name": "Left the body",
         "short": "Left",
         "desc": "Grams from the meal that have left the body so far, mostly fibre and water."
+      },
+      "absorbRate": {
+        "carbs": {
+          "name": "Carbohydrate absorbed each minute",
+          "short": "Carbohydrate",
+          "desc": "Grams of the meal's carbohydrate taken into the body each minute (fibre not included)."
+        },
+        "protein": {
+          "name": "Protein absorbed each minute",
+          "short": "Protein",
+          "desc": "Grams of the meal's protein taken into the body each minute."
+        },
+        "fat": {
+          "name": "Fat absorbed each minute",
+          "short": "Fat",
+          "desc": "Grams of the meal's fat taken into the body each minute."
+        },
+        "water": {
+          "name": "Water absorbed each minute",
+          "short": "Water",
+          "desc": "Grams of the meal's water taken into the body each minute, in the small and large intestine."
+        }
       }
     },
     "blood": {
@@ -481,6 +505,21 @@
         "name": "Energy used so far",
         "short": "Used so far",
         "desc": "Energy the resting body has used since the meal started. It is the same for every meal."
+      },
+      "activityRate": {
+        "name": "Energy used by moving",
+        "short": "Moving",
+        "desc": "Extra energy the body uses each hour while walking or running, on top of what it uses at rest. 0 while resting."
+      },
+      "activityTotal": {
+        "name": "Energy used by moving so far",
+        "short": "Moving so far",
+        "desc": "Extra energy the body has used for walking or running since the meal started."
+      },
+      "foodEffectRate": {
+        "name": "Energy used to digest",
+        "short": "Digesting",
+        "desc": "Energy the body uses each hour to digest the meal and store what it took in. It rises a little after eating and slowly settles back."
       }
     },
     "event": {
@@ -500,6 +539,12 @@
         "name": "Leftovers start leaving the body",
         "desc": "Depends mostly on the person, not the meal"
       },
+      "activityStart": {
+        "name": "Activity starts"
+      },
+      "activityEnd": {
+        "name": "Activity ends"
+      },
       "never": "Not within 48 h"
     }
   },
@@ -510,7 +555,9 @@
     "energyUsedResting": "This is a formula for a resting adult (the ICMR-NIN 2020 reference adult, 65 kg), not a measurement. It does not change with the meal.",
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
     "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people.",
-    "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still."
+    "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still.",
+    "activityMet": "Each activity uses an average value from the 2024 Compendium of Physical Activities for a 65 kg adult. Real people differ with speed, fitness and size. The extra energy used after stopping is not shown.",
+    "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals."
   },
   "profiles": {
     "adult-ref": {
