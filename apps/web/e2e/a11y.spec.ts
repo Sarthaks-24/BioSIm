@@ -219,7 +219,7 @@ test.describe('a "How we know" panel whose code does not load', () => {
     await expect(page.getByRole('slider', { name: 'Timeline' })).toBeVisible()
     online = true
     await panel.getByRole('button', { name: 'Try again' }).click()
-    await expect(panel.getByRole('heading', { level: 3 })).toBeVisible()
+    await expect(panel.getByRole('heading', { name: 'How sure we are' })).toBeVisible()
     await expect(panel.getByRole('alert')).toHaveCount(0)
   })
 })

@@ -151,9 +151,10 @@ export default function Overlay({
   }, [])
   useLayoutEffect(sayFade, [place])
   const placed = place !== null
-  // Focus the panel once it is visible (a hidden element can't take focus).
+  // Focus the panel once it is placed, unless a control in it took the focus as it came (the link
+  // to copy by hand). Until then it is see-through, not hidden: a hidden control can't take focus.
   useEffect(() => {
-    if (placed) panel.current?.focus({ preventScroll: true })
+    if (placed && !panel.current?.contains(document.activeElement)) panel.current?.focus({ preventScroll: true })
   }, [placed])
 
   useEffect(() => {
@@ -245,7 +246,7 @@ export default function Overlay({
         tabIndex={-1}
         data-overlay={wide ? 'popover' : 'sheet'}
         style={{
-          ...(place ?? { top: 0, left: 0, visibility: 'hidden' }),
+          ...(place ?? { top: 0, left: 0, opacity: 0 }),
           ...(wide ? {} : { borderRadius: 'var(--radius-frame) var(--radius-frame) 0 0', paddingBottom: 'env(safe-area-inset-bottom)' }),
         }}
         className={`fixed z-40 flex flex-col overflow-hidden border-border bg-surface-raised text-ink focus:outline-none ${
