@@ -114,11 +114,26 @@ function trackA(): NonNullable<PlaywrightTestConfig['projects']> {
       ? [
           { name: 'webkit-desktop', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['Desktop Safari'], viewport: desktop } },
           { name: 'webkit-phone', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['iPhone 13'] } },
-          { name: 'firefox-desktop', testMatch: [...invariants, 'smoke.spec.ts'], use: { ...devices['Desktop Firefox'], viewport: desktop } },
+          {
+            name: 'firefox-desktop',
+            testMatch: [...invariants, 'smoke.spec.ts'],
+            use: { ...devices['Desktop Firefox'], viewport: desktop },
+          },
         ]
       : []),
     ...(process.env.E2E_VISUAL
-      ? [{ name: 'visual', testMatch: ['visual.spec.ts'], use: { viewport: desktop, launchOptions: noWebgl, reducedMotion: 'reduce' as const } }]
+      ? [
+          {
+            name: 'visual',
+            testMatch: ['visual.spec.ts'],
+            use: { viewport: desktop, launchOptions: noWebgl, reducedMotion: 'reduce' as const },
+          },
+          {
+            name: 'visual-3d',
+            testMatch: ['visual.spec.ts'],
+            use: { viewport: desktop, launchOptions: webgl, reducedMotion: 'reduce' as const },
+          },
+        ]
       : []),
   ]
 }

@@ -58,3 +58,7 @@ apps/web/public/stats.json
 
 # The Hindi reviewer's export (apps/web/scripts/hi-review.mjs); REVIEW.md is the list that is kept
 apps/web/hi-review.csv
+
+# Visual baselines are Linux only (qa-fixes §3.3; the visual-baselines workflow makes them)
+apps/web/e2e/*-snapshots/*-win32.png
+apps/web/e2e/*-snapshots/*-darwin.png

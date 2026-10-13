@@ -1,0 +1,33 @@
+name: Visual baselines
+
+# Makes the Linux baselines of the visual shots (qa-fixes §3.3; apps/web/e2e/visual.spec.ts) and
+# uploads them as an artifact. The user looks at them and commits them to
+# apps/web/e2e/visual.spec.ts-snapshots/ (a labelled PR). Run it by hand from the Actions tab,
+# again whenever a step changes the look on purpose.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Shots (update the baselines)
+        run: npm run e2e -w @lifepeek/web -- --project=visual --project=visual-3d --update-snapshots
+        env:
+          CI: 'true'
+          E2E_VISUAL: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: apps/web/e2e/visual.spec.ts-snapshots/
