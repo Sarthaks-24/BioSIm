@@ -217,9 +217,9 @@ html[data-contrast='high'] {
   }
 }
 /* The projector's graph column is wider: one big graph, its header on fewer lines. The dock's
-   timeline follows (it shares the stage's columns). On a 4:3 projector the summary goes under the
-   graph (Simulator), so the body has more of its column's height (FP-2, B12); from 1280 px up
-   row 4 stays empty. */
+   timeline follows (it shares the stage's columns). On a small projector window (1024×768,
+   1366×768) the summary goes under the graph (Simulator), so the body has more of its column's
+   height (FP-2, B12); at 1280×800 row 4 stays empty. */
 @media (width >= 64rem) {
   html[data-contrast='high'] [data-stage] {
     grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 1fr);

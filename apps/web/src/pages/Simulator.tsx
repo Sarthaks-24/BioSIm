@@ -79,7 +79,7 @@ const ACTIONS: Record<KeyAction, () => void> = {
  * the stage grows past the screen instead of squeezing the body to nothing (FP-1, bug B1).
  * The phone's rows are in styles.css, and so is the short, wide window's layout (a phone on its
  * side, a laptop at 200 %: FP-2): the notes and the body down the left, the meal bar, graph and dock
- * on the right, nothing scrolling. On a 4:3 projector the summary sits under the graph (FP-2).
+ * on the right, nothing scrolling. On a small projector window the summary sits under the graph (FP-2).
  * The graphs and the dock's timeline share one x scale and one left and right edge (WP-12), so
  * the playhead on every graph stands straight above the timeline's thumb, like a chart recorder.
  */
@@ -113,8 +113,9 @@ export default function Simulator() {
   const slots = useSlots(run)
   const [attempt, setAttempt] = useState(0)
   const short = useMedia(SHORT_PHONE)
-  // A 4:3 projector (1024 to 1279 px): the summary goes under the graph, so the body has more of its
-  // column (FP-2, B12). From 1280 px up it fits under the body, and the graph keeps its 250 px plot.
+  // A projector under 1280 px wide or 800 px tall (1024×768, 1366×768): the summary goes under the
+  // graph, so the body has more of its column (FP-2, B12). At 1280×800 it fits under the body, and
+  // the graph keeps its 250 px plot (WP-17).
   const narrow = useMedia(NARROW)
   const projector = useProjector() && narrow
   const [words, setWords] = useState<HTMLElement | null>(null)
@@ -182,8 +183,8 @@ export default function Simulator() {
 
 /** A phone under 680 px tall (FP-1): its stage is the first screen, the summary sentence past it. */
 const SHORT_PHONE = '(max-width: 63.99rem) and (max-height: 42.49rem)'
-/** A 4:3 projector's width, in projector mode (FP-2). */
-const NARROW = '(min-width: 64rem) and (max-width: 79.99rem)'
+/** A projector window too small for the summary under the body (FP-2). */
+const NARROW = '(min-width: 64rem) and (max-width: 79.99rem), (min-width: 64rem) and (max-height: 49.99rem)'
 
 /** Whether a media query matches; re-renders when that changes. */
 function useMedia(query: string) {
