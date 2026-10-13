@@ -173,11 +173,7 @@ export const useRunStore = create<RunState>((set, get) => ({
  * `layer` only when they are not the default, then lang. A one-profile kept run can't carry its
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
-export function linkQuery(
-  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer'>,
-  simMin: number,
-  lang?: string,
-): string {
+export function linkQuery(run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer'>, simMin: number, lang?: string): string {
   return encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],

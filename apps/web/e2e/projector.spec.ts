@@ -182,7 +182,10 @@ test.describe('while the stage loads', () => {
     onlyIn('projector')
     let release!: () => void
     const held = new Promise<void>((r) => (release = r))
-    await page.route(/\/Stage-[\w-]+\.js$/, async (route) => {
+    // The stage's lazy chunk (pages/Simulator.tsx). If it is renamed, `caught` stays false and the test fails.
+    let caught = false
+    await page.route(/\/Simulator-[\w-]+\.js$/, async (route) => {
+      caught = true
       await held
       await route.continue()
     })
@@ -190,6 +193,7 @@ test.describe('while the stage loads', () => {
     await expect(page.locator('html')).toHaveAttribute('data-fit', '')
     await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
     expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')
+    await expect.poll(() => caught, { message: 'the stage chunk (Simulator-*.js) was requested and held' }).toBe(true)
     release()
     await expect(page.getByRole('img', { name: 'The body, digesting Cola' })).toBeVisible()
     expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')

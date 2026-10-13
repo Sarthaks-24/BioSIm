@@ -14,14 +14,27 @@ teacher, on the deployed site) comes again at the release gate (WP-22).
 
 ## Start the screens on your laptop
 
-Before the swap is merged, `main` still has both screens: the old one at `/sim` and the new one
-at `/next`, so students can try both. (Once the swap is merged, the new screen is `/sim` and the
-old one is gone; then use `/sim` in every link below.) In Git Bash:
+The new screen is `/sim` on `main`. In Git Bash:
 
 ```bash
 cd /e/BioSim && npm run build -w @lifepeek/web
 cd /e/BioSim && npm run preview -w @lifepeek/web -- --host --port 4173
 ```
+
+The old screen was deleted with the swap (WP-20); it lives on only at the local git tag
+`v1-final` (`main` just before the swap), whose build has both screens: the old one at `/sim`, the
+new one at `/next`. To run it, check the tag out in a worktree of its own, then build and preview
+there (a different port, so both can run at once):
+
+```bash
+git -C /e/BioSim worktree add /e/BioSim/.claude/worktrees/v1-check v1-final
+cd /e/BioSim/.claude/worktrees/v1-check && npm ci
+cd /e/BioSim/.claude/worktrees/v1-check && npm run build -w @lifepeek/web
+cd /e/BioSim/.claude/worktrees/v1-check && npm run preview -w @lifepeek/web -- --host --port 4180
+```
+
+When you are done, stop that preview and remove the worktree:
+`git -C /e/BioSim worktree remove /e/BioSim/.claude/worktrees/v1-check`.
 
 Vite prints a `Network:` address such as `http://192.168.1.23:4173/`. On each phone open that
 address followed by a question's link (below). Close the medical note ("Got it") before you start
@@ -33,7 +46,8 @@ Open each question's link on the phone, read the question aloud, start the timer
 help: don't point at the screen, don't name a button, don't say "look at the graph". Stop the
 timer when the student answers (after 2 minutes it counts as wrong). Note what they tapped by
 mistake or said out loud. Each question starts from the laptop's address followed by its link: the new screen's links are
-below (before the merge, write `/next` for `/sim`); the old screen's are in the private kit.
+below (on the `v1-final` build, write `/next` for `/sim`); the old screen's are in the private kit
+and open on the `v1-final` build (port 4180).
 
 | # | Say | Link | A right answer |
 |---|---|---|---|

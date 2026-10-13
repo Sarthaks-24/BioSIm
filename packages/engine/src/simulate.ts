@@ -48,7 +48,10 @@ export interface SimOptions {
  * then derives key moments (events.ts) and the particles for the picture (particles.ts).
  *
  * New code reads `signals` (catalog ID → Series) and `moments` (event ID → EventPoint), built by
- * core/table.ts. The raw arrays and `events` below stay for v1 and are removed in bundle B.
+ * core/table.ts. The raw arrays and `events` below are still read by stomachFraction / mealLocation
+ * (core/derive.ts, the Home race in data/hero.ts, the stage's now-line) and by the graph marks and
+ * summaries (`events`, for a meal with no nutrients and the first exit); they stay until those move to
+ * signals and moments.
  */
 export interface Simulation extends SignalTable {
   modelVersion: number

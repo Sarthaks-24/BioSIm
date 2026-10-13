@@ -513,10 +513,10 @@ The Now line says where the meal is from the model (how much is in which organ, 
 | `graph.squeezed` | time squeezed | समय सिकोड़ा गया | draft |
 | `limits.steadyEmptying` | The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the tinted part on the right), which makes the fall look steeper still. | मॉडल में आमाशय भोजन को एक समान गति से आगे भेजता है, जब तक वह खाली न हो जाए। इसलिए बड़े भोजन के बाद आमाशय का भोजन सीधी रेखा में घटता है, और रक्त शर्करा व आने वाली ऊर्जा घंटों तक एक-सी रहती हैं, फिर लगभग एक घंटे में गिर जाती हैं। असली आमाशय आमतौर पर अंत में धीमा हो जाता है, इसलिए यह गिरावट धीमी होती है। 6 घंटे के बाद समय-अक्ष सिकोड़ा गया है (दाईं ओर का हल्का रंगा भाग), इसलिए गिरावट और भी तीखी दिखती है। | draft |
 
-## Older strings (v1 screen and site pages, listed by WP-18)
+## Older strings (site pages and shared text, listed by WP-18)
 
-Strings from before this list existed (the v1 simulator, Home, Teach, Science). Many go with v1 in
-WP-20; until then they ship and need the same check.
+Strings from before this list existed (Home, Teach, Science, and the v1 simulator). WP-20 deleted
+v1 and the keys only it used; the ones left here all ship and need the same check.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
@@ -632,8 +632,6 @@ WP-20; until then they ship and need the same check.
 | `units.min` | {{n}} min | {{n}} मिनट | draft |
 | `units.h` | {{n}} h | {{n}} घंटे | draft |
 | `units.hm` | {{h}} h {{m}} min | {{h}} घंटे {{m}} मिनट | draft |
-| `units.minutes` | {{n}} min | {{n}} मिनट | draft |
-| `units.seconds` | {{n}} s | {{n}} सेकंड | draft |
 | `units.hShort` | {{n}}h | {{n}} घं | draft |
 | `units.kcal` | {{n}} kcal | {{n}} किलो कैलोरी | draft |
 | `anatomy.liver` | Liver | यकृत | draft |

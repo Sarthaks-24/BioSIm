@@ -31,8 +31,8 @@ export function formatNumber(value: number, meta: Pick<SignalMeta, 'round'>, lan
   return numberFormat(lang).format(roundTo(value, meta.round ?? 1))
 }
 
-/** The i18n key of each unit: `units.<key>` = "{{n}} mg/dL", `units.words.<key>` = the unit in words. */
-const UNIT_KEY: Partial<Record<Unit, string>> = {
+/** The i18n key of each unit: `units.<key>` = "{{n}} mg/dL", `units.words.<key>` = the unit in words. i18n.test.ts counts these keys as used. */
+export const UNIT_KEY: Partial<Record<Unit, string>> = {
   'mg/dL': 'mgdl',
   g: 'g',
   kcal: 'kcal',

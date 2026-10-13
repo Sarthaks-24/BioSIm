@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import en from './en.json'
 import hi from './hi.json'
 import { catalogKeys, registryKeys } from '../registry/i18nKeys.ts'
+import { UNIT_KEY } from '../lib/formatSignal.ts'
 import { REVIEW_FILE, STATUS, reviewRows, syncReview } from '../../scripts/hi-review.mjs'
 
 /** Flatten to "a.b.c" → value, with arrays as a single entry holding their length. */
@@ -60,7 +61,9 @@ describe('translations', () => {
   // Keys built at run time from the catalog and the registry (`${i18nKey}.name` …).
   const catalog = catalogKeys()
   const registry = registryKeys()
-  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional])
+  // formatSignal builds `units.${key}` and `units.words.${key}` from its own table: those keys exactly, not all of units.*.
+  const units = Object.values(UNIT_KEY).flatMap((k) => [`units.${k}`, `units.words.${k}`])
+  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional, ...units])
 
   it('every catalog and registry key exists as text', () => {
     const missing = [...catalog.required, ...registry.required].filter((k) => typeof fe.get(k) !== 'string')
@@ -69,6 +72,8 @@ describe('translations', () => {
 
   it('every key used in code exists, and every key in en.json is used', () => {
     const { called, literal, prefixes } = keysInSource()
+    prefixes.delete('units.')
+    prefixes.delete('units.words.')
     for (const k of called) expect(fe.has(k) || [...fe.keys()].some((f) => f.startsWith(`${k}.`)), `missing key ${k}`).toBe(true)
     const used = (k: string) =>
       built.has(k) || literal.has(k) || [...literal].some((l) => k.startsWith(`${l}.`)) || [...prefixes].some((p) => p && k.startsWith(p))

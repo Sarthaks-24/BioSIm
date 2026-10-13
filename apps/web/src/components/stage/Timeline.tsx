@@ -234,7 +234,11 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
         >
           <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-control bg-ink/20">
             {/* The filled part: a full-width bar slid in from the left, clipped by the track. */}
-            <span ref={fill} className="block size-full rounded-control bg-ink will-change-transform" style={{ transform: 'translateX(-100%)' }} />
+            <span
+              ref={fill}
+              className="block size-full rounded-control bg-ink will-change-transform"
+              style={{ transform: 'translateX(-100%)' }}
+            />
           </span>
           {/* A track-wide box slid right by the clock's share of the track; the thumb sits at its left edge. */}
           <span aria-hidden="true" ref={thumb} className="pointer-events-none absolute inset-0 will-change-transform">

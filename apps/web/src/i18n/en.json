@@ -202,8 +202,6 @@
     "min": "{{n}} min",
     "h": "{{n}} h",
     "hm": "{{h}} h {{m}} min",
-    "minutes": "{{n}} min",
-    "seconds": "{{n}} s",
     "hShort": "{{n}}h",
     "kcal": "{{n}} kcal",
     "g": "{{n}} g",
