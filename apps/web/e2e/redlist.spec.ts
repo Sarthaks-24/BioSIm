@@ -2,11 +2,20 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from '@playwright/test'
-import { interactiveOverlaps, linkRoundTripProblems, measureBody, overlayProblems, redCheck, returningVisitor, watchConsole } from './helpers/gate.ts'
+import {
+  interactiveOverlaps,
+  linkRoundTripProblems,
+  measureBody,
+  overlayProblems,
+  redCheck,
+  returningVisitor,
+  skipWithoutHindi,
+  watchConsole,
+} from './helpers/gate.ts'
 
 // The red list (T0; plan qa-fixes §0, §1.1). One report test per QA-sweep bug (cache/plans/v3/qa/
 // bug-sweep.md §3) that was seen failing on eee16c9; e2e/red-list.md lists them, what was measured,
-// and the ones not reproduced (B16, B17: device lab; B26: the budget and perf reports). Each test
+// and the ones not reproduced (B14, B16, B17) or checked elsewhere (B26: the budget ledger and perf reports). Each test
 // measures, then `redCheck` records "reproduced" or "not seen" and, while its RED_LIST mode is
 // "report", passes either way. The T-step whose FP fixes a bug flips it to "enforce".
 // Project: redlist (Chromium, software WebGL). Each block sets its own window.
@@ -52,7 +61,8 @@ test.describe('Android 360×640', () => {
         await stageReady(page)
         const m = await measureBody(page)
         if (m.visibleHeight < 160) problems.push(`${w}×${h} ${url}: body ${m.visibleHeight} px tall`)
-        if (m.covered > 0.1) problems.push(`${w}×${h} ${url}: ${Math.round(100 * m.covered)} % covered (${m.coveredBy.slice(0, 2).join(', ')})`)
+        if (m.covered > 0.1)
+          problems.push(`${w}×${h} ${url}: ${Math.round(100 * m.covered)} % covered (${m.coveredBy.slice(0, 2).join(', ')})`)
       }
     }
     redCheck('B1', problems)
@@ -71,7 +81,9 @@ test.describe('Android 360×640', () => {
           .map((e) => Math.round(e.getBoundingClientRect().top / 8))
         return new Set(tops).size
       })
-      const height = await page.locator('section[aria-labelledby="meal-bar-title"]').evaluate((e) => Math.round(e.getBoundingClientRect().height))
+      const height = await page
+        .locator('section[aria-labelledby="meal-bar-title"]')
+        .evaluate((e) => Math.round(e.getBoundingClientRect().height))
       if (rows > 2) problems.push(`${w} px: the meal bar has ${rows} rows of controls, ${height} px tall`)
     }
     redCheck('B2', problems)
@@ -80,7 +92,11 @@ test.describe('Android 360×640', () => {
   test('B5 "How we know" has a close button and stays on screen', async ({ page }) => {
     await page.goto('/sim')
     await stageReady(page)
-    await page.getByRole('button', { name: /^How we know/ }).filter({ visible: true }).first().click()
+    await page
+      .getByRole('button', { name: /^How we know/ })
+      .filter({ visible: true })
+      .first()
+      .click()
     const dialog = page.getByRole('dialog', { name: /^How we know/ })
     await expect(dialog).toBeVisible()
     redCheck('B5', await overlayProblems(page, dialog))
@@ -91,6 +107,7 @@ test.describe('Android 360×640', () => {
     for (const w of [360, 320]) {
       await page.setViewportSize({ width: w, height: 640 })
       await page.goto('/sim?lang=hi')
+      await skipWithoutHindi(page)
       await stageReady(page)
       const h = await page.locator('header').evaluate((e) => Math.round(e.getBoundingClientRect().height))
       if (h > 56) problems.push(`${w} px Hindi: header ${h} px tall`)
@@ -104,12 +121,19 @@ test.describe('Android 360×640', () => {
     await expect(svg).toBeVisible()
     const heights = await svg.locator('text').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height).filter((h) => h > 0))
     const small = heights.filter((h) => h < 12)
-    redCheck('B8', small.length ? [`${small.length} of ${heights.length} chart labels draw under 12 px (smallest ${Math.min(...small).toFixed(1)} px)`] : [])
+    redCheck(
+      'B8',
+      small.length
+        ? [`${small.length} of ${heights.length} chart labels draw under 12 px (smallest ${Math.min(...small).toFixed(1)} px)`]
+        : [],
+    )
   })
 
   test('B9 Hindi Home: "Open the simulator" is in the first screen at 360×640', async ({ page }) => {
-    await page.goto('/?lang=hi')
-    await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
+    // Home reads the saved language (a ?lang= link is the stage's).
+    await page.addInitScript(() => localStorage.setItem('lifepeek:lang', 'hi'))
+    await page.goto('/')
+    await skipWithoutHindi(page)
     const cta = page.locator('main a[href="/sim"]').first()
     await expect(cta).toBeVisible()
     const box = (await cta.boundingBox())!
@@ -184,7 +208,9 @@ test.describe('phone 390×844', () => {
         let right = vw
         for (let p = e.parentElement; p; p = p.parentElement)
           if (getComputedStyle(p).overflowX !== 'visible') right = Math.min(right, p.getBoundingClientRect().right)
-        return r.right > right + 1 || e.scrollWidth > e.clientWidth + 1 ? `${e.textContent?.trim()} ends at ${Math.round(r.right)} of ${Math.round(right)}` : ''
+        return r.right > right + 1 || e.scrollWidth > e.clientWidth + 1
+          ? `${e.textContent?.trim()} ends at ${Math.round(r.right)} of ${Math.round(right)}`
+          : ''
       }, vw)
       if (clip) problems.push(`tab clipped: ${clip}`)
     }
@@ -229,7 +255,8 @@ test.describe('projector', () => {
         await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
         await stageReady(page)
         const m = await measureBody(page)
-        if (m.stageShare < 0.4) problems.push(`${w}×${h} ${url.endsWith('hi') ? 'HI' : 'EN'}: body ${Math.round(100 * m.stageShare)} % of the stage`)
+        if (m.stageShare < 0.4)
+          problems.push(`${w}×${h} ${url.endsWith('hi') ? 'HI' : 'EN'}: body ${Math.round(100 * m.stageShare)} % of the stage`)
       }
     }
     redCheck('B12', problems)
@@ -237,15 +264,14 @@ test.describe('projector', () => {
 
   test('B13 Hindi projector timeline ticks are ≥ 8 px apart', async ({ page }) => {
     await page.goto(`${KEPT}&lang=hi`)
+    await skipWithoutHindi(page)
     await stageReady(page)
-    const boxes = await page
-      .locator('[data-tick]')
-      .evaluateAll((els) =>
-        els
-          .filter((e) => getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden')
-          .map((e) => ({ text: e.textContent ?? '', l: e.getBoundingClientRect().left, r: e.getBoundingClientRect().right }))
-          .sort((a, b) => a.l - b.l),
-      )
+    const boxes = await page.locator('[data-tick]').evaluateAll((els) =>
+      els
+        .filter((e) => getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden')
+        .map((e) => ({ text: e.textContent ?? '', l: e.getBoundingClientRect().left, r: e.getBoundingClientRect().right }))
+        .sort((a, b) => a.l - b.l),
+    )
     const problems: string[] = []
     for (let i = 1; i < boxes.length; i++) {
       const gap = boxes[i]!.l - boxes[i - 1]!.r
@@ -257,30 +283,6 @@ test.describe('projector', () => {
 
 test.describe('desktop', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
-
-  test('B14 the energy graph label misses the kept line', async ({ page }) => {
-    await page.goto(`${KEPT}&t=300`)
-    await stageReady(page)
-    const label = page.getByText('The same for every meal (resting body)').filter({ visible: true }).first()
-    await expect(label).toBeVisible()
-    const hits = await label.evaluate((el) => {
-      const box = el.getBoundingClientRect()
-      const fig = el.closest('figure')
-      const lines = [...(fig?.querySelectorAll<SVGGeometryElement>('[data-line="kept"]') ?? [])]
-      let n = 0
-      for (const line of lines) {
-        const m = line.getScreenCTM()
-        if (!m || !line.getTotalLength) continue
-        const len = line.getTotalLength()
-        for (let s = 0; s <= len; s += 2) {
-          const p = line.getPointAtLength(s).matrixTransform(m)
-          if (p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom) n++
-        }
-      }
-      return { n, lines: lines.length }
-    })
-    redCheck('B14', hits.n ? [`${hits.n} samples of the kept line (${hits.lines} path(s)) fall inside the label`] : [])
-  })
 
   test('B15 with 6 foods every chip is visible or counted', async ({ page }) => {
     const problems: string[] = []
@@ -296,7 +298,10 @@ test.describe('desktop', () => {
         })
       })
       const shown = chips.filter(Boolean).length
-      const counted = await page.locator('section[aria-labelledby="meal-bar-title"]').getByText(/^\+\d+$/).count()
+      const counted = await page
+        .locator('section[aria-labelledby="meal-bar-title"]')
+        .getByText(/^\+\d+$/)
+        .count()
       if (chips.length !== 6) problems.push(`${w} px: ${chips.length} chips for 6 foods`)
       else if (shown < 6 && !counted) problems.push(`${w} px: ${shown} of 6 chips wholly visible, no "+n" count`)
     }
@@ -336,7 +341,14 @@ test.describe('desktop', () => {
     const normal = await advance(false)
     const slow = await advance(true)
     const ratio = slow / normal
-    redCheck('B18', ratio < 0.9 ? [`with 250 ms frames the clock runs at ${Math.round(100 * ratio)} % of its pace (${slow.toFixed(1)} vs ${normal.toFixed(1)} sim min/s)`] : [])
+    redCheck(
+      'B18',
+      ratio < 0.9
+        ? [
+            `with 250 ms frames the clock runs at ${Math.round(100 * ratio)} % of its pace (${slow.toFixed(1)} vs ${normal.toFixed(1)} sim min/s)`,
+          ]
+        : [],
+    )
   })
 
   test('B19 no console errors or warnings on /sim', async ({ page }) => {
@@ -389,7 +401,8 @@ test.describe('desktop', () => {
     const t = new URL((await lesson.getAttribute('href'))!, 'http://x').searchParams.get('t')
     const step2 = await page.locator('main ol > li').nth(1).innerText()
     const problems: string[] = []
-    if (t && Number(t) > 0 && !/Home/.test(step2)) problems.push(`the lesson opens at ${t} min, but step 2 ("${step2.slice(0, 60)}…") says only "press Play"`)
+    if (t && Number(t) > 0 && !/Home/.test(step2))
+      problems.push(`the lesson opens at ${t} min, but step 2 ("${step2.slice(0, 60)}…") says only "press Play"`)
     redCheck('B23', problems)
   })
 

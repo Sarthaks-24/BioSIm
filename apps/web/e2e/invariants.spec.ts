@@ -3,11 +3,13 @@ import {
   checkBody,
   expectInFirstScreen,
   expectNoPageScroll,
+  gateSteps,
   interactiveOverlaps,
   linkRoundTripProblems,
   onlyIn,
   overlayProblems,
   returningVisitor,
+  skipWithoutHindi,
   verdict,
   watchConsole,
   type BodyLimits,
@@ -97,6 +99,8 @@ async function open(page: Page, url: string, firstVisit = false) {
   await page.goto(url)
   await page.locator('[data-stage]').waitFor()
   await page.waitForLoadState('networkidle')
+  // The body picture (none in the empty state, before FP-1); 3D replaces the flat one once loaded.
+  await page.waitForTimeout(300)
   await page.evaluate(() => document.fonts.ready)
 }
 
@@ -108,6 +112,7 @@ for (const l of ['en', 'hi'] as const) {
       for (const [w, h] of SIZES[project] ?? [[0, 0]]) {
         if (w) await page.setViewportSize({ width: w, height: h })
         await open(page, lang(url, l), firstVisit)
+        if (l === 'hi') await skipWithoutHindi(page)
         const size = page.viewportSize()!
         const where = `${size.width}×${size.height} ${state} ${l}`
         await checkBody(page, limitsFor(project), { mode, label: where })
@@ -140,15 +145,27 @@ test('overlays stay on screen, below the header, with a Close button; Esc closes
   const mode = INVARIANTS[test.info().project.name]!
   await open(page, KEPT)
   const overlays = [
-    { name: 'How we know', button: page.getByRole('button', { name: /^How we know/ }), dialog: page.getByRole('dialog', { name: /^How we know/ }) },
-    { name: 'Typical adult', button: page.getByRole('button', { name: /^Typical adult/ }), dialog: page.getByRole('dialog', { name: /^Typical adult/ }) },
+    {
+      name: 'How we know',
+      button: page.getByRole('button', { name: /^How we know/ }),
+      dialog: page.getByRole('dialog', { name: /^How we know/ }),
+    },
+    {
+      name: 'Typical adult',
+      button: page.getByRole('button', { name: /^Typical adult/ }),
+      dialog: page.getByRole('dialog', { name: /^Typical adult/ }),
+    },
   ]
   for (const o of overlays) {
     const problems: string[] = []
     const button = o.button.filter({ visible: true }).first()
     if (!(await button.count())) continue
-    await button.click()
-    if (!(await o.dialog.isVisible().catch(() => false))) {
+    const opened = await button
+      .click({ timeout: 5_000 })
+      .then(() => o.dialog.waitFor({ timeout: 5_000 }))
+      .then(() => true)
+      .catch(() => false)
+    if (!opened) {
       problems.push('did not open')
     } else {
       problems.push(...(await overlayProblems(page, o.dialog)))
@@ -163,25 +180,28 @@ test('Back closes a sheet and keeps the meal', async ({ page }) => {
   onlyIn('phone-small', 'webkit-phone')
   const mode = INVARIANTS[test.info().project.name]!
   await open(page, '/sim')
-  const problems: string[] = []
-  await page.getByRole('button', { name: 'Add food' }).click()
-  const sheet = page.getByRole('dialog', { name: 'Add food' })
-  await expect(sheet).toBeVisible()
-  await sheet.getByRole('combobox').fill('fries')
-  await sheet.getByRole('combobox').press('Enter')
-  await expect(sheet).toBeHidden()
-  await page.goBack()
-  await page.waitForTimeout(500)
-  if (!new URL(page.url()).pathname.startsWith('/sim')) problems.push(`Back after adding a food left the stage, to ${page.url()}`)
-  else if (!new URL(page.url()).searchParams.get('a')?.includes('fries')) problems.push('Back after adding a food took the food away')
-  verdict('Back keeps the meal', mode, problems)
+  await gateSteps('Back keeps the meal', mode, async () => {
+    await page.getByRole('button', { name: 'Add food' }).click()
+    const sheet = page.getByRole('dialog', { name: 'Add food' })
+    await expect(sheet).toBeVisible()
+    await sheet.getByRole('combobox').fill('fries')
+    await sheet.getByRole('combobox').press('Enter')
+    await expect(sheet).toBeHidden()
+    await page.goBack()
+    await page.waitForTimeout(500)
+    expect(new URL(page.url()).pathname, 'Back after adding a food stays on the stage').toBe('/sim')
+    expect(new URL(page.url()).searchParams.get('a'), 'Back after adding a food keeps it').toContain('fries')
+  })
 })
 
 test('no console errors or warnings', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
   const console = watchConsole(page)
   await open(page, KEPT)
-  await page.getByRole('button', { name: 'Play' }).click()
+  await page
+    .getByRole('button', { name: 'Play' })
+    .click({ timeout: 5_000 })
+    .catch(() => {})
   await page.waitForTimeout(1500)
   verdict('console', mode, [...new Set(console.problems())])
 })
@@ -189,12 +209,10 @@ test('no console errors or warnings', async ({ page }) => {
 test('the stage plays', async ({ page }) => {
   const mode = INVARIANTS[test.info().project.name]!
   await open(page, '/sim')
-  const problems: string[] = []
-  const slider = page.getByRole('slider').first()
-  await page.getByRole('button', { name: 'Play' }).click()
-  await page.waitForTimeout(1500)
-  if ((await slider.getAttribute('aria-valuenow')) === '0') problems.push('the clock did not move after Play')
-  verdict('plays', mode, problems)
+  await gateSteps('plays', mode, async () => {
+    await page.getByRole('button', { name: 'Play' }).click({ timeout: 5_000 })
+    await expect(page.getByRole('slider').first()).not.toHaveAttribute('aria-valuenow', '0')
+  })
 })
 
 test('links survive a load (round trip)', async ({ page }) => {

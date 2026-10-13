@@ -254,6 +254,18 @@ export async function returningVisitor(page: Page) {
   await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
 }
 
+/**
+ * Hindi is paused (R47): only a VITE_HINDI=1 build has it (the e2e build does). After opening a
+ * Hindi page, this skips the running test on a build without it (a deployed site).
+ */
+export async function skipWithoutHindi(page: Page) {
+  const hindi = await page
+    .waitForFunction(() => document.documentElement.lang === 'hi', null, { timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false)
+  test.skip(!hindi, 'Hindi is paused (R47): this build has none')
+}
+
 /** What the body picture gets of the first screen (`measureBody`). */
 export interface BodyMeasure {
   /** A body picture (`[data-body]`, flat or 3D) is on the page and laid out. */
@@ -289,10 +301,13 @@ export async function measureBody(page: Page): Promise<BodyMeasure> {
       const s = getComputedStyle(el)
       return s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity) > 0
     }
-    const body = [...document.querySelectorAll('[data-body]')].find((el) => {
-      const r = el.getBoundingClientRect()
-      return shown(el) && r.width > 0 && r.height > 0
-    })
+    // The one drawn (3D replaces the flat body once it loads); else any, even squeezed to 0 px.
+    const all = [...document.querySelectorAll('[data-body]')]
+    const body =
+      all.find((el) => {
+        const r = el.getBoundingClientRect()
+        return shown(el) && r.width > 0 && r.height > 0
+      }) ?? all[0]
     const out = {
       found: !!body,
       visibleWidth: 0,
@@ -440,7 +455,8 @@ export function interactiveOverlaps(page: Page): Promise<string[]> {
     }
     const name = (el: Element) =>
       `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40)}"`
-    const SELECTOR = 'a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=slider], [role=tab], [role=switch]'
+    const SELECTOR =
+      'a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=slider], [role=tab], [role=switch]'
     const els = [...document.body.querySelectorAll(SELECTOR)].filter((el) => {
       if (!visible(el) || el.closest('.sr-only')) return false
       const r = el.getBoundingClientRect()
@@ -482,8 +498,11 @@ export async function overlayProblems(page: Page, overlay: Locator): Promise<str
   return problems
 }
 
-/** Console lines that are not the app's fault. Empty: B19's THREE.Clock and preload warnings are its own. */
-export const CONSOLE_ALLOW: RegExp[] = []
+/** Console lines that are not the app's fault (B19's THREE.Clock and preload warnings are its own). */
+export const CONSOLE_ALLOW: RegExp[] = [
+  // The storage-blocked project blocks the service worker on purpose (Playwright says so).
+  /Service Worker registration blocked by Playwright/,
+]
 
 /** Collects console errors and warnings and page errors; `problems()` lists those not allowed. */
 export function watchConsole(page: Page, allow: RegExp[] = CONSOLE_ALLOW) {
@@ -535,7 +554,6 @@ export const RED_LIST: Record<string, Mode> = {
   B11: 'report',
   B12: 'report',
   B13: 'report',
-  B14: 'report',
   B15: 'report',
   B18: 'report',
   B19: 'report',
