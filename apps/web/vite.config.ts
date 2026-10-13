@@ -2,7 +2,11 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'node:fs'
+import path from 'node:path'
 import i18nSections from './scripts/i18n-sections.mjs'
+import { workboxPolicy } from './scripts/cache-policy.mjs'
+import { packManifest } from './scripts/pack-manifest.mjs'
 
 /**
  * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
@@ -10,12 +14,32 @@ import i18nSections from './scripts/i18n-sections.mjs'
  */
 const HINDI = loadEnv('production', process.cwd(), 'VITE_').VITE_HINDI === '1'
 
+/** The pack-manifest's lazy tier (URLs), known once the bundle is written: kept out of the precache. */
+const LAZY = new Set<string>()
+/** The caching policy (R71, scripts/cache-policy.mjs); its globIgnores get the lazy tier's files too. */
+const WORKBOX = workboxPolicy({ hindi: HINDI, lazy: LAZY })
+
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
     // English page texts load with their pages, not with every page (scripts/i18n-sections.mjs).
     i18nSections(),
+    // dist/pack-manifest.json (scripts/pack-manifest.mjs, W-1): the engine's, the 3D body's and each
+    // pack's files in two tiers. Written before the service worker is made, which leaves the lazy tier
+    // out of the precache (R71) and precaches this file (/teach reads it offline).
+    {
+      name: 'lifepeek-pack-manifest',
+      apply: 'build',
+      writeBundle(options) {
+        const dir = options.dir!
+        const packs = packManifest(JSON.parse(fs.readFileSync(path.join(dir, '.vite', 'manifest.json'), 'utf8')))
+        LAZY.clear()
+        for (const url of packs.lazy) LAZY.add(url)
+        WORKBOX.globIgnores!.push(...packs.lazy.map((url) => url.slice(1)))
+        fs.writeFileSync(path.join(dir, 'pack-manifest.json'), `${JSON.stringify(packs, null, 2)}\n`)
+      },
+    },
     VitePWA({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
@@ -53,41 +77,8 @@ export default defineConfig({
         ],
         shortcuts: [{ name: 'For teachers', short_name: 'Teach', url: '/teach', icons: [{ src: '/icon-192.png', sizes: '192x192' }] }],
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
-        // stats.json changes every week without a new app version, so it is not precached: the
-        // network first, and offline the last copy that was fetched (the /stats page).
-        // The share image and the install screenshots are for other sites and the install dialog,
-        // never drawn by the app offline: not precached (precache budget).
-        // Without Hindi, Hindi's font (about 138 KB) is not even in the build; this keeps it out
-        // should anything bring it back.
-        globIgnores: [
-          '**/node_modules/**/*',
-          'stats.json',
-          'og-image.png',
-          'screenshots/**',
-          ...(HINDI ? [] : ['**/noto-sans-devanagari*']),
-        ],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/stats.json',
-            handler: 'NetworkFirst',
-            options: { cacheName: 'stats', networkTimeoutSeconds: 5, expiration: { maxEntries: 1 } },
-          },
-        ],
-        // The 3D chunk is large; still cache it so the app works offline in class.
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        // Plain files that must reach the server, not the app shell.
-        navigateFallbackDenylist: [
-          /^\/api\//,
-          /^\/THIRD_PARTY_NOTICES\.txt$/,
-          /^\/robots\.txt$/,
-          /^\/sitemap\.xml$/,
-          /^\/stats\.json$/,
-          /^\/og-image\.png$/,
-          /^\/screenshots\//,
-        ],
-      },
+      // The caching policy (R71): scripts/cache-policy.mjs. The lazy tier is the pack-manifest's, filled below.
+      workbox: WORKBOX,
     }),
   ],
   resolve: {
