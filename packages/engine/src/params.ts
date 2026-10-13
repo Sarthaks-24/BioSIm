@@ -166,6 +166,28 @@ export const PARAMS = {
     },
   },
 
+  /**
+   * Effort: muscles and skin (model §2.7, §2.9; S-1). Resting skeletal muscle uses 13 kcal per kg
+   * per day (Elia 1992, via Wang 2012) and is 38.4 % of a man's body mass (Janssen 2000, MRI), so
+   * 13 × 0.384 × 65 kg = 325 kcal/day, 21.6 % of the reference man's resting use; all of the
+   * activity extra goes to muscle. In a warm room the extra heat of moving leaves as evaporated
+   * sweat, 580 kcal per kg (Baker 2019): 0.58 kcal per mL. At rest heat leaves by radiation,
+   * convection, conduction and evaporation, "about" 60/15/3/20 % (OpenStax A&P 2e §24.6; the four
+   * add up to 98 %, so they are used as shares of their sum). In moving, the dry routes keep their
+   * resting values and sweat carries the rest (the warm-room assumption).
+   */
+  effort: {
+    muscleKcalPerKgDay: 13,
+    muscleMassShare: 0.384,
+    sweatKcalPerMl: 0.58,
+    restHeatLoss: {
+      radiation: 60,
+      convection: 15,
+      conduction: 3,
+      evaporation: 20,
+    },
+  },
+
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,

@@ -19,6 +19,7 @@
  *        (WP-20 deleted the v1 files it used to skip; its `V1_EXEMPT` list is empty).
  */
 import type { SourceId } from './sources.ts'
+import type { EffortSignalId } from './catalog/effort.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
@@ -26,7 +27,20 @@ export type SignalStatus = 'simulated' | 'assumption' | 'illustration'
 /** 'sim' = the run's own clock (humans: the "meal clock", 0–48 h). 'real' = real seconds, whatever the sim speed. */
 export type Clock = 'sim' | 'real'
 export type Unit =
-  'g' | 'g/min' | 'g/h' | 'kcal' | 'kcal/h' | 'kcal/min' | 'mg/dL' | 'xFasting' | 'beats/min' | 'breaths/min' | 'mL/min' | 'min'
+  | 'g'
+  | 'g/min'
+  | 'g/h'
+  | 'kcal'
+  | 'kcal/h'
+  | 'kcal/min'
+  | 'mg/dL'
+  | 'xFasting'
+  | 'beats/min'
+  | 'breaths/min'
+  | 'mL/min'
+  | 'min'
+  | 'mL'
+  | 'mL/h'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
 /** Which release produces the signal: 'v2.0' and 'v3.0' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
@@ -86,7 +100,15 @@ export const EVENT_IDS = [
 
 export type ActiveSignalId = (typeof ACTIVE_SIGNAL_IDS)[number]
 export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
-export type SignalId = ActiveSignalId | ReservedSignalId
+/**
+ * Pack rows (architecture §1.3 "lazy rows"): IDs a system pack's module produces. Typed here, so
+ * links, goldens and the run's table can name them; their rows are in core/catalog/<pack>.ts and
+ * load with the run chunk or the pack, never with this file. One line per pack.
+ */
+export type PackSignalId = EffortSignalId
+/** Every ID a run can produce: this file's active rows and the pack rows. */
+export type ProducedSignalId = ActiveSignalId | PackSignalId
+export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId
 export type EventId = (typeof EVENT_IDS)[number]
 export type CatalogId = SignalId | EventId
 

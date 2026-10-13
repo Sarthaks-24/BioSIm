@@ -23,7 +23,7 @@ const report = goldenCoverage(calls)
  * Ratchet: the number of calls never goes down, so unwrapping a test (golden → plain it) fails here
  * even when other tests still cover its IDs. Raise these when you add tests.
  */
-const AT_LEAST = { golden: 31, fails: 4, pinned: 17 }
+const AT_LEAST = { golden: 35, fails: 4, pinned: 23 }
 
 describe('golden coverage', () => {
   it('the scan finds the wrapped physiology tests', () => {

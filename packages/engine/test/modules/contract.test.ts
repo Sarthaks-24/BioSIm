@@ -2,10 +2,11 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { ACTIVE_SIGNAL_IDS, PARAMS, PROFILES, buildMeal, decodeMeal, type ModelModule } from '../../src/index.ts'
+import { PARAMS, PROFILES, buildMeal, decodeMeal, type ModelModule } from '../../src/index.ts'
 import { HUMAN_MODEL, HUMAN_MODULES, PROVIDES, runModules, simulate } from '../../src/run.ts'
 import { MODULE_ORDER, SYSTEM_IDS, moduleGraphErrors } from '../../src/core/module.ts'
 import { lookup } from '../fixtures.ts'
+import { PRODUCED_SIGNAL_IDS } from '../../src/core/catalog/index.ts'
 import { N } from './ctx.ts'
 
 /**
@@ -23,7 +24,7 @@ describe('module order (DAG)', () => {
   })
 
   it('the human modules follow it, and every need is written by an earlier module', () => {
-    expect(HUMAN_MODULES.map((m) => m.id)).toEqual(['activity', 'gut', 'energy', 'bloodSugar'])
+    expect(HUMAN_MODULES.map((m) => m.id)).toEqual(['activity', 'gut', 'energy', 'bloodSugar', 'effort'])
     expect(moduleGraphErrors(HUMAN_MODULES)).toEqual([])
     expect(HUMAN_MODEL.modules).toBe(HUMAN_MODULES)
   })
@@ -47,9 +48,9 @@ describe('one module per ID', () => {
     expect(written.filter((id, i) => written.indexOf(id) !== i)).toEqual([])
   })
 
-  it('PROVIDES.human is derived from the modules and covers every active catalog signal', () => {
+  it('PROVIDES.human is derived from the modules and covers every active catalog signal and pack row', () => {
     expect(PROVIDES.human).toEqual(HUMAN_MODULES.flatMap((m) => m.provides))
-    expect([...PROVIDES.human].sort()).toEqual([...ACTIVE_SIGNAL_IDS].sort())
+    expect([...PROVIDES.human].sort()).toEqual([...PRODUCED_SIGNAL_IDS].sort())
   })
 
   it('internal arrays are x.* and never reach the signal table', () => {
@@ -168,7 +169,7 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
 
   it('every module names the system that shows it', () => {
     for (const m of HUMAN_MODULES) expect(SYSTEM_IDS, m.id).toContain(m.system)
-    expect(HUMAN_MODULES.map((m) => m.system)).toEqual(['digestion', 'digestion', 'digestion', 'digestion'])
+    expect(HUMAN_MODULES.map((m) => m.system)).toEqual(['digestion', 'digestion', 'digestion', 'digestion', 'muscles'])
   })
 })
 
@@ -179,7 +180,7 @@ describe('no global PARAMS', () => {
 
   it('no module file names PARAMS: modules read ctx.params only', () => {
     const files = readdirSync(modulesDir).filter((f) => f.endsWith('.ts'))
-    expect(files.sort()).toEqual(['activity.ts', 'bloodSugar.ts', 'energy.ts', 'gut.ts', 'index.ts'])
+    expect(files.sort()).toEqual(['activity.ts', 'bloodSugar.ts', 'effort.ts', 'energy.ts', 'gut.ts', 'index.ts'])
     for (const f of files) expect(readFileSync(join(modulesDir, f), 'utf8'), f).not.toMatch(/\bPARAMS\b/)
   })
 

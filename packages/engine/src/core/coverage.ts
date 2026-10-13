@@ -7,7 +7,8 @@
  *   - every active 'assumption' signal needs a `golden()` or a `pinned()`, and a limitKey;
  *   - IDs and sources named in tests must exist.
  */
-import { EVENTS, EVENT_IDS, SIGNALS, isActiveSignal, isEventId, isSignalId, type ActiveSignalId, type EventId } from './catalog.ts'
+import { EVENTS, EVENT_IDS, isActiveSignal, isEventId, isSignalId, type EventId, type ProducedSignalId } from './catalog.ts'
+import { PRODUCED_SIGNALS, isPackSignal } from './catalog/index.ts'
 import type { OrganismId } from './organism.ts'
 import { PROVIDES } from '../modules/index.ts'
 import { isRegisteredSource, sourceById } from './sources.ts'
@@ -25,11 +26,11 @@ export interface GoldenCall {
 
 export interface CoverageReport {
   /** Active simulated signals/events with no sourced `golden()` — contract test fails. */
-  missingSourced: (ActiveSignalId | EventId)[]
+  missingSourced: (ProducedSignalId | EventId)[]
   /** Active assumption signals with neither golden() nor pinned() — fails. */
-  missingAny: ActiveSignalId[]
+  missingAny: ProducedSignalId[]
   /** Active assumption signals without limitKey — fails. */
-  missingLimit: ActiveSignalId[]
+  missingLimit: ProducedSignalId[]
   /** Not in SIGNALS/EVENTS — fails. */
   unknownIds: string[]
   /** Tests on reserved IDs — warning only (allowed while a bundle is being built). */
@@ -55,7 +56,7 @@ export function goldenCoverage(calls: readonly GoldenCall[], organism: OrganismI
 
   for (const c of calls) {
     for (const id of c.ids) {
-      if (!isSignalId(id) && !isEventId(id)) unknownIds.push(id)
+      if (!isSignalId(id) && !isPackSignal(id) && !isEventId(id)) unknownIds.push(id)
       else if (isSignalId(id) && !isActiveSignal(id)) reservedTested.push(id)
     }
     for (const s of c.sources) if (!isKnownSource(s)) unknownSources.push(s)
@@ -68,16 +69,16 @@ export function goldenCoverage(calls: readonly GoldenCall[], organism: OrganismI
   }
 
   const provided = PROVIDES[organism]
-  const simulated = provided.filter((id) => SIGNALS[id].status === 'simulated')
-  const assumption = provided.filter((id) => SIGNALS[id].status === 'assumption')
+  const simulated = provided.filter((id) => PRODUCED_SIGNALS[id].status === 'simulated')
+  const assumption = provided.filter((id) => PRODUCED_SIGNALS[id].status === 'assumption')
 
-  const cited = [...provided.flatMap((id) => SIGNALS[id].sourceIds), ...EVENT_IDS.flatMap((id) => EVENTS[id].sourceIds)]
+  const cited = [...provided.flatMap((id) => PRODUCED_SIGNALS[id].sourceIds), ...EVENT_IDS.flatMap((id) => EVENTS[id].sourceIds)]
   const toVerifySources = cited.filter((s) => sourceById(s)?.check === 'toVerify')
 
   return {
     missingSourced: [...simulated, ...EVENT_IDS].filter((id) => !sourced.has(id)),
     missingAny: assumption.filter((id) => !any.has(id)),
-    missingLimit: assumption.filter((id) => !SIGNALS[id].limitKey),
+    missingLimit: assumption.filter((id) => !PRODUCED_SIGNALS[id].limitKey),
     unknownIds: uniqueSorted(unknownIds),
     reservedTested: uniqueSorted(reservedTested),
     unknownSources: uniqueSorted(unknownSources),

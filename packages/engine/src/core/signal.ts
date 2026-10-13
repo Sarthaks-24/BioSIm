@@ -4,7 +4,7 @@
  * instead of the engine's raw arrays, so every number on screen carries its ID, unit and sources.
  * Built by core/table.ts. The draft is in plans/v2 04-CATALOG-DRAFT §2.
  */
-import type { ActiveSignalId, ChartableMeta, EventId, EventMeta, SignalId, SignalMeta } from './catalog.ts'
+import type { ActiveSignalId, ChartableMeta, EventId, EventMeta, ProducedSignalId, SignalId, SignalMeta } from './catalog.ts'
 import type { SourceId } from './sources.ts'
 
 /** One sim-clock signal for one run. Index i = minute i·stepMin. */
@@ -38,7 +38,8 @@ export interface EventPoint<Id extends EventId = EventId> {
 
 /** Added to today's Simulation by WP-04 (old fields stay, @deprecated, until bundle B / A7). */
 export interface SignalTable {
-  readonly signals: ReadonlyMap<ActiveSignalId, Series>
+  /** Every produced row the run wrote: the lean catalog's, then the packs' (core/catalog/index.ts). */
+  readonly signals: ReadonlyMap<ProducedSignalId, Series>
   readonly moments: ReadonlyMap<EventId, EventPoint>
   /** Empty in v2.0. */
   readonly rhythms: ReadonlyMap<SignalId, Rhythm>

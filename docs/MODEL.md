@@ -142,6 +142,26 @@ Walk 3.8 (17190), brisk walk 4.8 (17200), run 9.3 (12050), from the 2024 Adult C
 
 **Limits.** METs are averages for a 65 kg adult; the extra energy used after stopping is left out. Two known limits are marked in the tests: 60 g glucose peaks at about 115 min, not 50–60 min (the stomach lets the drink through at a steady rate, so absorption is flat for 2 h), and roti or idli with dal gives under half of its 6 h effect by 3 h (solids leave the stomach slowly in this model).
 
+## Muscles and skin (model version 3, S-1)
+
+The `effort` module runs after blood sugar (and after breathing, once it exists) and reads only the energy of moving above rest, `energy.activityRate`. All three signals are *assumption* ("Model estimate"). Their catalog rows load with the engine, not with the first page (`core/catalog/effort.ts`).
+
+**Energy used by muscles** (`muscle.energyRate`, kcal/h). Resting skeletal muscle uses 13 kcal per kg per day (Elia 1992, as quoted by Wang 2012) and is 38.4 % of a man's body mass (Janssen 2000, whole-body MRI). All of the energy of moving is muscle work:
+
+    muscle (kcal/h) = 13 × 0.384 × 65 / 24 + energy.activityRate = 13.5 kcal/h at rest + moving
+
+At rest that is 21.6 % of the reference man's resting use (golden band 18–26 %); in a walk muscle is about 81 % of all energy used, in a run about 92 %.
+
+**Sweat** (`skin.sweatRate` mL/h, `skin.sweatTotal` mL). At rest heat leaves about 60 % by radiation, 15 % by convection, 3 % by conduction and 20 % by evaporation (OpenStax A&P 2e §24.6). In a warm room the model keeps the dry routes at their resting values, so the extra heat of moving leaves as evaporated sweat, 580 kcal per kg (Baker 2019):
+
+    sweat (mL/h) = energy.activityRate / 0.58
+
+A walk gives about 330 mL/h, a run about 980 mL/h. Digesting a meal makes heat too; it leaves by the dry routes, so a meal makes no sweat. Where the heat goes is a helper (`heatLoss` in `modules/effort.ts`), not a signal.
+
+**Golden tests** (`test/effort.test.ts`): resting muscle share 18–26 % of resting use (Wang 2012, Janssen 2000); walk sweat 0.2–0.4 L/h (Baker 2019 calls ~0.3 L/h "the very low end" in exercise; Baker & Wolfe 2020 give walking 0.3–0.6 L/h); run sweat within the reported 0.2–3 L/h (Baker & Wolfe 2020); the resting heat-loss split within ±3 points of 60/15/3/20 (OpenStax §24.6). Pinned: muscle extra = activity extra, resting heat made = resting use, every kcal made leaves, and adding the module leaves every other signal byte-identical.
+
+**Limits.** Core temperature is held at 37 °C; sweating switches on and off with the bout; the room is warm and cannot be chosen; sweat that drips without evaporating is left out, so the sweat rate is a minimum. The muscle share is a man's (women average 30.6 %, Janssen 2000), and the resting muscle rate is an average for young adults of normal weight.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -161,6 +181,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `blood.glucose` | mg/dL | simulated (band: assumption) | typical curve; band 0.65×–1.45× | Freckmann 2007, Bergman 1979, Brouns 2005, Atkinson 2008, Moghaddam 2006 |
 | `energy.inRate`, `energy.inTotal` | kcal/h, kcal | simulated | 4·carbs + 4·protein + 9·fat of the absorbed grams | FAO 2003, OpenStax |
 | `energy.usedRate`, `energy.usedTotal` | kcal/h, kcal | assumption | resting use of the run's person ÷ 24 (adult model: 62.7 kcal/h), same for every meal | FAO/WHO/UNU 2004, ICMR-NIN 2020 |
+| `muscle.energyRate` | kcal/h | assumption | resting muscle (13 kcal/kg/day × 38.4 % × kg ÷ 24) + energy of moving | Wang 2012, Janssen 2000 |
+| `skin.sweatRate`, `skin.sweatTotal` | mL/h, mL | assumption | energy of moving ÷ 0.58 kcal per mL evaporated | Baker 2019, Baker & Wolfe 2020, OpenStax ch. 24 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -212,6 +234,11 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 21. Westerterp KR. Diet induced thermogenesis. *Nutr Metab (Lond)* 2004;1:5.
 22. Charrière N, Montani JP, Dulloo AG. Postprandial thermogenesis and respiratory quotient in response to galactose: comparison with glucose and fructose in healthy young adults. *J Nutr Sci* 2016;5:e4.
 23. Reed GW, Hill JO. Measuring the thermic effect of food. *Am J Clin Nutr* 1996;63:164–169.
+24. Wang Z, et al. Evaluation of specific metabolic rates of major organs and tissues: comparison between nonobese and obese women. *Obesity* 2012;20:95–100.
+25. Janssen I, Heymsfield SB, Wang ZM, Ross R. Skeletal muscle mass and distribution in 468 men and women aged 18–88 yr. *J Appl Physiol* 2000;89:81–88.
+26. Baker LB. Physiology of sweat gland function: the roles of sweating and sweat composition in human health. *Temperature* 2019;6:211–259.
+27. Baker LB, Wolfe AS. Physiological mechanisms determining eccrine sweat composition. *Eur J Appl Physiol* 2020;120:719–752.
+28. OpenStax. *Anatomy and Physiology 2e*, ch. 24 (§24.6 Energy and Heat Balance). Rice University.
 
 The food data comes from:
 

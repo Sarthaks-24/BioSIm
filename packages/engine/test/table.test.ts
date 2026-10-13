@@ -22,6 +22,7 @@ import {
   type RunResult,
 } from '../src/index.ts'
 import { HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
+import { PRODUCED_SIGNAL_IDS } from '../src/core/catalog/index.ts'
 
 /**
  * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
@@ -64,7 +65,9 @@ describe('signal table', () => {
   it('every series is a Float32 copy of the array its module wrote, and its band of the band', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
     const out = modulesOf(sim)
-    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS])
+    // The lean catalog's rows in catalog order, then the pack rows (core/catalog/index.ts).
+    expect([...sim.signals.keys()]).toEqual([...PRODUCED_SIGNAL_IDS])
+    expect([...sim.signals.keys()].slice(0, ACTIVE_SIGNAL_IDS.length)).toEqual([...ACTIVE_SIGNAL_IDS])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!
       expect(s.meta.id).toBe(id)

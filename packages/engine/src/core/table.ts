@@ -5,18 +5,19 @@
  */
 import type { Meal } from '../meal.ts'
 import type { SimEvents } from '../events.ts'
-import { ACTIVE_SIGNAL_IDS, EVENTS, SIGNALS, type ActiveSignalId, type EventId } from './catalog.ts'
+import { EVENTS, type EventId, type ProducedSignalId, type SignalMeta } from './catalog.ts'
+import { PRODUCED_SIGNALS, PRODUCED_SIGNAL_IDS } from './catalog/index.ts'
 import type { SignalStore } from './module.ts'
 import type { SourceId } from './sources.ts'
 import type { EventPoint, Series } from './signal.ts'
 
-function series<Id extends ActiveSignalId>(
+function series<Id extends ProducedSignalId>(
   meal: Meal,
   id: Id,
   values: ArrayLike<number>,
   band?: { low: ArrayLike<number>; high: ArrayLike<number> },
 ): Series<Id> {
-  const meta = SIGNALS[id]
+  const meta: SignalMeta<Id> = PRODUCED_SIGNALS[id]
   const foodSources: SourceId[] = meta.reactsToMeal ? meal.items.map((it) => `food:${it.food.id}` as const) : []
   return {
     meta,
@@ -26,14 +27,18 @@ function series<Id extends ActiveSignalId>(
   }
 }
 
-/** One Series per catalog signal the modules wrote (internal `x.*` arrays are never rows). */
-export function buildSignalTable(meal: Meal, store: SignalStore): Map<ActiveSignalId, Series> {
+/**
+ * One Series per catalog signal the modules wrote (internal `x.*` arrays are never rows): the lean
+ * catalog's rows first, then the pack rows (core/catalog/index.ts), so an added row never moves an
+ * earlier one.
+ */
+export function buildSignalTable(meal: Meal, store: SignalStore): Map<ProducedSignalId, Series> {
   const list: Series[] = []
-  for (const id of ACTIVE_SIGNAL_IDS) {
+  for (const id of PRODUCED_SIGNAL_IDS) {
     const w = store.get(id)
     if (w) list.push(series(meal, id, w.values, w.band))
   }
-  return new Map(list.map((s) => [s.meta.id as ActiveSignalId, s]))
+  return new Map(list.map((s) => [s.meta.id as ProducedSignalId, s]))
 }
 
 /** One EventPoint per catalog event; atMin null when it does not happen within the run. */
