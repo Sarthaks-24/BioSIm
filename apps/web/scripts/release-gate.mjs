@@ -18,12 +18,15 @@
 //      only for a release with Hindi (VITE_HINDI=1, as for the build): Hindi is paused (R47), and
 //      without the flag hi.json does not ship, so check 1 skips it too;
 //   5. GOVERNANCE.md exists;
-//   6. CHANGELOG.md's newest entry is not marked "unreleased" and has no `<…>` left in it.
+//   6. CHANGELOG.md's newest entry is not marked "unreleased" and has no `<…>` left in it;
+//   7. the model version is sealed (MODEL_SEALED in packages/engine/src/params.ts, MODEL D12):
+//      model version 3 stays unsealed on the `v3` branch until E-3b and S-1…S-4 are in.
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readTexts, reviewRows, syncReview, REVIEW_FILE } from './hi-review.mjs'
+import { PARAMS_FILE, readSeal, sealProblem } from './model-seal.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 const rel = (file) => path.relative(root, file).replace(/\\/g, '/')
@@ -175,6 +178,12 @@ check(
   for (const [m] of entry.matchAll(/<(?!https?:\/\/)[^<>]+>/g))
     problems.push(`newest entry still has "${m.length > 60 ? `${m.slice(0, 57)}…` : m}"`)
   check('CHANGELOG.md has a finished entry for this release (fps and task-test line filled in)', problems)
+}
+
+// 7. The model seal (MODEL D12): no release carries a version whose numbers may still move.
+{
+  const problem = sealProblem(readSeal(fs.readFileSync(PARAMS_FILE, 'utf8')), true)
+  check('The model version is sealed (MODEL_SEALED in packages/engine/src/params.ts)', problem ? [problem] : [])
 }
 
 // Report.

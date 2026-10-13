@@ -72,7 +72,7 @@ test('B17 no broken frames while the stage loads (1, 3 and 6 s)', async ({ page 
   const anchors: Anchors = Object.fromEntries(Object.entries(CALLOUTS).map(([k, c]) => [k, [c.anchor.x, c.anchor.y, c.anchor.z]]))
   const problems: string[] = []
   const asked = Date.now()
-  void page.goto('/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60').catch(() => undefined)
+  void page.goto('/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=60').catch(() => undefined)
   for (const at of [1000, 3000, 6000]) {
     await page.waitForTimeout(Math.max(0, asked + at - Date.now()))
     const found = await brokenFrames(page, anchors).catch((e) => [`could not look: ${String(e).split('\n')[0]}`])
@@ -98,7 +98,7 @@ test.describe('the engine arriving late, or not at all', () => {
       await held
       await route.continue()
     })
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     await expect(page.getByRole('button', { name: 'Add food' })).toBeVisible()
     await expect(page.getByRole('status').filter({ hasText: 'Working it out…' })).toBeVisible()
     await expect(page.locator('[data-stage]')).toHaveCount(0)
@@ -113,7 +113,7 @@ test.describe('the engine arriving late, or not at all', () => {
     await page.addInitScript(() => window.addEventListener('vite:preloadError', (e) => e.stopImmediatePropagation()))
     let online = false
     await page.route(ENGINE, (route) => (online ? route.continue() : route.abort()))
-    await page.goto('/sim?v=2&a=cola:1')
+    await page.goto('/sim?v=3&a=cola:1')
     const failed = page.getByRole('alert').filter({ hasText: 'This didn’t load' })
     await expect(failed).toHaveText('This didn’t load. Check the internet connection and try again.')
     await expect(page.getByRole('heading', { level: 1, name: 'Something didn’t load' })).toHaveCount(0)

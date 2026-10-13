@@ -34,7 +34,7 @@ test('a cold start offline runs the engine (a new tab after one visit)', async (
   })
   await context.setOffline(true)
   const cold = await context.newPage()
-  await cold.goto('/sim?v=2&a=cola:1&t=60')
+  await cold.goto('/sim?v=3&a=cola:1&t=60')
   await expect(cold.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
   await expect(cold.getByRole('slider', { name: 'Timeline' })).toBeVisible()
   await expect(cold.locator('[data-stage] figure svg[role="img"]').first()).toBeVisible()

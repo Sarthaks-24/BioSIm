@@ -12,8 +12,11 @@ const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), 
  */
 describe('where the meal is now', () => {
   it('cola at 40 min: about half still in the stomach, and the rest is named (not "Stomach" alone)', () => {
+    // Model version 3 (E-3a, water 0.9 absorbed): by 40 min a little more is already in the body
+    // (102 g) than in the small intestine (95 g); at 35 min, where the first lesson opens, it is
+    // still the other way round (82 g vs 90 g).
     const w = nowWhere(sim('cola:1'), 40)
-    expect(w).toEqual({ kind: 'gut', stage: 'stomach', here: 'half', also: { place: 'smallIntestine', amount: 'some' } })
+    expect(w).toEqual({ kind: 'gut', stage: 'stomach', here: 'half', also: { place: 'body', amount: 'some' } })
   })
 
   it('cola at 5 min: almost all of it is in the stomach, nothing else worth naming', () => {

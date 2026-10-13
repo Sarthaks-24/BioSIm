@@ -62,14 +62,14 @@ function modeOf(owner?: keyof typeof LATER): Mode {
   return INVARIANTS[project]!
 }
 
-const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60'
+const KEPT = '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=60'
 /** The stage states of FP-1's acceptance: default, kept, first visit, empty, 6 foods. */
 const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   default: { url: '/sim' },
   kept: { url: KEPT },
   'first visit': { url: '/sim', firstVisit: true },
-  empty: { url: '/sim?v=2&a=' },
-  '6 foods': { url: '/sim?v=2&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1' },
+  empty: { url: '/sim?v=3&a=' },
+  '6 foods': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1' },
 }
 
 /** The window sizes each project checks (the project's own first). */
@@ -295,14 +295,14 @@ test('links survive a load (round trip)', async ({ page }) => {
     return problems
   }
   const links = [
-    '/sim?v=2&a=cola:1',
-    '/sim?v=2&a=roti:2,dal:1,milk:1&b=cheeseburger:1,fries:1&t=90',
-    '/sim?v=2&a=cola:999',
-    '/sim?v=2&a=cola:1&t=99999',
+    '/sim?v=3&a=cola:1',
+    '/sim?v=3&a=roti:2,dal:1,milk:1&b=cheeseburger:1,fries:1&t=90',
+    '/sim?v=3&a=cola:999',
+    '/sim?v=3&a=cola:1&t=99999',
   ]
   verdict('link round trip', mode, await roundTrip(links))
   // A Hindi link (R47: Hindi is paused; it opens in English, with a note): report only, whatever the project's mode.
-  verdict('link round trip (lang=hi)', 'report', await roundTrip(['/sim?v=2&a=cola:1&lang=hi']))
+  verdict('link round trip (lang=hi)', 'report', await roundTrip(['/sim?v=3&a=cola:1&lang=hi']))
 })
 
 test('switches language with storage blocked', async ({ page }) => {

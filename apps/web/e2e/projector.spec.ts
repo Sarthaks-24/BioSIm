@@ -78,7 +78,7 @@ for (const lang of ['en', 'hi'] as const) {
 for (const lang of ['en', 'hi'] as const) {
   test(`projector lesson view (${lang}): summary, Now line and a ≥ 250 px plot on every tab, no scroll`, async ({ page }) => {
     onlyIn('projector')
-    await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
+    await page.goto(`/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=40&lang=${lang}`)
     const group = page.getByRole('group', { name: /^(Graphs|ग्राफ)/ })
     await expect(group).toBeVisible()
     const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
@@ -108,7 +108,7 @@ for (const lang of ['en', 'hi'] as const) {
 for (const lang of ['en', 'hi'] as const) {
   test(`projector at 0 min (${lang}): the summary and the Now line are there from the start`, async ({ page }) => {
     onlyIn('projector')
-    await page.goto(`/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=0&lang=${lang}`)
+    await page.goto(`/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=0&lang=${lang}`)
     await page.locator('figure [data-line="run"]').first().waitFor()
     const ok = page.getByRole('button', { name: /^(Got it|ठीक है)$/ })
     if (await ok.isVisible()) await ok.click()
@@ -191,7 +191,7 @@ test.describe('while the stage loads', () => {
       await held
       await route.continue()
     })
-    await page.goto('/sim?v=2&a=cola:1', { waitUntil: 'commit' })
+    await page.goto('/sim?v=3&a=cola:1', { waitUntil: 'commit' })
     await expect(page.locator('html')).toHaveAttribute('data-fit', '')
     await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high')
     expect(await page.locator('html').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')

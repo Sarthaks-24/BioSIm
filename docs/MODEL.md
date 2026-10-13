@@ -59,13 +59,15 @@ Each nutrient that reaches the small intestine is absorbed first-order, at its o
 
 | Nutrient | Time constant | Share absorbed in small intestine |
 |---|---|---|
-| Sugars / starch | 10 min | 95 % |
-| Protein | 40 min | 90 % |
+| Sugars / starch | 10 min | 97 % |
+| Protein | 40 min | 95 % |
 | Fat | 60 min | 95 % |
-| Water | 20 min | 80 % |
+| Water | 20 min | 90 % |
 | Fibre | — | 0 % |
 
 So most absorption happens early, in the jejunum, and fat later, after bile has worked on it (OpenStax §23.7). The carbohydrate time constant is calibrated with the glucose curve; the others are modelling assumptions.
+
+The shares (model version 3) are from OpenStax §23.7: "About 90 percent of this water is absorbed in the small intestine", protein "95 to 98 percent" (the low end is used), "About 95 percent of lipids". OpenStax says all normally digested carbohydrate is absorbed without a number, so carbohydrate uses the mixed-diet coefficient of 97 % from USDA Agriculture Handbook No. 74 (Merrill & Watt 1955, p. 9). That handbook gives protein 92 %, but it measures the whole gut (what does not come out in the faeces, including the body's own protein lost there), so the small-intestine figure from OpenStax is used for protein. Version 2 used 95 / 90 / 95 / 80 %; docs/MODEL-V3-DIFF.md lists what changed.
 
 The large intestine absorbs 90 % of the water that reaches it, slowly. Whatever is left eventually leaves the body.
 
@@ -82,7 +84,7 @@ A food's GI already includes how slowly that food leaves the stomach. One correc
 
 **Golden tests:**
 
-- 50 g glucose peaks at +30–60 mg/dL within 30–60 min and is near baseline by 2 h.
+- 50 g glucose peaks at +30–60 mg/dL within 30–60 min and is near baseline by 2 h. The sample curves of the GI method (FAO/WHO 1998, ch. 4, Table 1: 50 g carbohydrate, one subject) peak at 30 min, 2.7–3.9 mmol/L (49–70 mg/dL) above fasting, and are within 0.6 mmol/L of fasting at 120 min.
 - A starchy solid meal peaks later, but within 75 min. Meal studies peak at ~46–50 min (Freckmann et al. 2007); the model gives ~60 min.
 - Fat and protein flatten the curve.
 
@@ -115,7 +117,7 @@ The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 
 - Schofield at 65 kg = 1671 kcal/day (±1); with ICMR's −10 %, 1504 kcal/day (±1).
 - × the sedentary physical activity level of 1.40 gives 2105 kcal/day, within 0.5 % of ICMR-NIN 2020's 2110 kcal/day for the sedentary 65 kg man.
 - Energy in equals the Atwater sum of the absorbed grams at every minute (±0.01 kcal), and the hourly rate adds up to the total.
-- After 48 h, 85–100 % of each food's Atwater energy has come in (most carbohydrate, protein and fat is absorbed: OpenStax §23.7). The model gives 93–95 %.
+- After 48 h, 85–100 % of each food's Atwater energy has come in (most carbohydrate, protein and fat is absorbed: OpenStax §23.7). The model gives 95–97 %.
 - Energy used is identical for every meal.
 
 **Limits.**
@@ -188,6 +190,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 15. FAO/WHO/UNU. *Human energy requirements.* Report of a Joint FAO/WHO/UNU Expert Consultation. FAO Food and Nutrition Technical Report Series 1. Rome, 2004.
 16. ICMR-National Institute of Nutrition. *Nutrient Requirements for Indians: Recommended Dietary Allowances and Estimated Average Requirements.* Hyderabad, 2020.
 17. FAO. *Food energy – methods of analysis and conversion factors.* FAO Food and Nutrition Paper 77. Rome, 2003.
+18. Merrill AL, Watt BK. *Energy value of foods: basis and derivation.* Agriculture Handbook No. 74. US Department of Agriculture, Washington DC, 1955.
+19. FAO/WHO. *Carbohydrates in human nutrition.* Report of a Joint FAO/WHO Expert Consultation. FAO Food and Nutrition Paper 66. Rome, 1998.
 
 The food data comes from:
 

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "notices": "node scripts/third-party-notices.mjs --check",
-    "build": "npm run notices && node scripts/fetch-stats.mjs && vite build",
+    "build": "npm run notices && node scripts/model-seal.mjs && node scripts/fetch-stats.mjs && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

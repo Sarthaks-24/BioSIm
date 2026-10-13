@@ -48,7 +48,7 @@ describe('share links', () => {
 
   it('a v1-style state is written exactly as v1 wrote it (no new parameters appear)', () => {
     const p = encodeShareState({ a: [{ foodId: 'cola', servings: 1 }], b: [{ foodId: 'water', servings: 1 }], t: 90, lang: 'hi' })
-    expect(p.toString()).toBe('v=2&a=cola%3A1&b=water%3A1&t=90&lang=hi')
+    expect(p.toString()).toBe(`v=${MODEL_VERSION}&a=cola%3A1&b=water%3A1&t=90&lang=hi`)
   })
 })
 
@@ -75,7 +75,7 @@ describe('share links: v2 parameters (o, who, layer, in)', () => {
   it('who, layer and in round-trip', () => {
     const state = { a: meal, b: [], t: 60, who: 'adult-ref' as const, layer: 'digestion', inside: 'villus', lang: 'en' as const }
     const p = encodeShareState(state)
-    expect(p.toString()).toBe('v=2&a=cola%3A1&t=60&who=adult-ref&layer=digestion&in=villus&lang=en')
+    expect(p.toString()).toBe(`v=${MODEL_VERSION}&a=cola%3A1&t=60&who=adult-ref&layer=digestion&in=villus&lang=en`)
     expect(decodeShareState(p)).toEqual({ modelVersion: MODEL_VERSION, organism: 'human', ...state })
   })
 
