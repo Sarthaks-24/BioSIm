@@ -1,6 +1,7 @@
 import { MAX_ITEMS, clampServings, type MealItem } from './meal.ts'
 import { MODEL_VERSION, PARAMS } from './params.ts'
 import { DEFAULT_ORGANISM, ORGANISM_PROFILES, isOrganismId, type OrganismId, type ProfileId } from './core/organism.ts'
+import { decodeActivity, encodeActivity, type ActivityBout } from './core/activity.ts'
 
 /**
  * Everything a teacher sets up lives in the URL, so a link IS a saved lesson:
@@ -17,6 +18,11 @@ import { DEFAULT_ORGANISM, ORGANISM_PROFILES, isOrganismId, type OrganismId, typ
  *   layer  the body-system layer shown, e.g. `digestion`.
  *   in     the inside view that is open (`inside` in ShareState).
  *   bo     RESERVED for the kept run's organism: read and ignored, never written.
+ *
+ * Added with model version 3 (E-3b-eng, architecture §2):
+ *   act    the activity bouts with the meal, `kind.startMin.durMin,…` (`walk.30.20,run.240.10`).
+ *   bact   the kept run's bouts, same form. Absent or empty ⇒ resting. Bouts that cannot be shown
+ *          (a hidden or unknown kind, outside the limits, overlapping, past the eighth) are dropped.
  */
 
 export const SHARE_LANGS = ['en', 'hi'] as const
@@ -38,6 +44,10 @@ export interface ShareState {
   /** An inside-view ID (URL `in`); the registry checks that it exists for `organism`. */
   inside?: string
   lang?: ShareLang
+  /** The meal's activity bouts (URL `act`), in start order; absent = resting. */
+  act?: ActivityBout[]
+  /** The kept run's activity bouts (URL `bact`), in start order; absent = resting. */
+  bact?: ActivityBout[]
 }
 
 /** What a caller writes: the organism may be left out (human). */
@@ -66,8 +76,8 @@ export function decodeMeal(raw: string | null | undefined): MealItem[] {
 }
 
 /**
- * Writes v, then o (only if not human), a, b, t, who, layer, in, lang. A link with only the v1
- * parameters is byte-for-byte what v1 wrote.
+ * Writes v, then o (only if not human), a, b, t, who, layer, in, lang, act, bact. A link with
+ * only the v1 parameters is byte-for-byte what v1 wrote; a resting run writes no act or bact.
  */
 export function encodeShareState(s: ShareInput): URLSearchParams {
   const p = new URLSearchParams()
@@ -81,6 +91,8 @@ export function encodeShareState(s: ShareInput): URLSearchParams {
   if (s.layer) p.set('layer', s.layer)
   if (s.inside) p.set('in', s.inside)
   if (s.lang) p.set('lang', s.lang)
+  if (s.act?.length) p.set('act', encodeActivity(s.act))
+  if (s.bact?.length) p.set('bact', encodeActivity(s.bact))
   return p
 }
 
@@ -102,6 +114,9 @@ export function decodeShareState(params: URLSearchParams): ShareState {
   const layer = unknownOrganism ? undefined : viewId(params.get('layer'))
   const inside = unknownOrganism ? undefined : viewId(params.get('in'))
   // `bo` (the kept run's organism) is reserved: never read into the state, never written.
+  // Activity belongs to the human: an unknown organism's bouts are not read.
+  const act = unknownOrganism ? [] : decodeActivity(params.get('act'), 'act')
+  const bact = unknownOrganism ? [] : decodeActivity(params.get('bact'), 'bact')
   return {
     modelVersion: Number.isInteger(v) && v > 0 ? v : MODEL_VERSION,
     organism,
@@ -113,5 +128,7 @@ export function decodeShareState(params: URLSearchParams): ShareState {
     ...(layer ? { layer } : {}),
     ...(inside ? { inside } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
+    ...(act.length ? { act } : {}),
+    ...(bact.length ? { bact } : {}),
   }
 }

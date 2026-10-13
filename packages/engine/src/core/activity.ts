@@ -85,3 +85,48 @@ export const activityKey = (bouts: readonly ActivityBout[]): string =>
   sortBouts(bouts)
     .map((b) => `${b.kind}.${b.startMin}.${b.durMin}`)
     .join(',')
+
+/** One part of a link that could not be shown as written (the shape of share.ts's LinkChange). */
+export interface ActivityLinkChange {
+  param: string
+  asked: string
+  shown?: string
+}
+
+const BOUT_RE = /^([a-zA-Z]{1,20})\.(\d{1,5})\.(\d{1,4})$/
+const MAX_ASKED = 40
+
+/**
+ * Reads a link's `act` or `bact` ("walk.30.20,run.240.10"; architecture §2). Every bout that is
+ * dropped goes into `changes` with the link's own text, so the stage can name it (R21, bug B21):
+ * a part that can't be read, a kind this version does not know or does not show yet (the hidden
+ * four), a bout outside the limits, one that overlaps an earlier bout, and any past the eighth.
+ * The plan comes back in start order. Only public kinds are read: a hidden kind's MET is not yet
+ * verified, so it would fail the release gate.
+ */
+export function decodeActivity(raw: string | null | undefined, param = 'act', changes: ActivityLinkChange[] = []): ActivityBout[] {
+  if (!raw) return []
+  const L = ACTIVITY_LIMITS
+  const drop = (asked: string) => changes.push({ param, asked: asked.slice(0, MAX_ASKED) })
+  const parts = raw.split(',')
+  // A huge link is not read part by part (so it can't make us loop for long): the rest is one part.
+  const read: { bout: ActivityBout; text: string }[] = []
+  for (const part of [...parts.slice(0, L.maxBouts * 2), parts.slice(L.maxBouts * 2).join(',')]) {
+    const text = part.trim()
+    if (!text) continue
+    const m = BOUT_RE.exec(text)
+    const bout = m && isPublicActivityKind(m[1]!) ? { kind: m[1]!, startMin: Number(m[2]), durMin: Number(m[3]) } : null
+    if (bout && boutInLimits(bout)) read.push({ bout, text })
+    else drop(text)
+  }
+  const kept: ActivityBout[] = []
+  for (const { bout, text } of read.sort((x, y) => x.bout.startMin - y.bout.startMin)) {
+    const last = kept.at(-1)
+    if (kept.length >= L.maxBouts || (last && bout.startMin < last.startMin + last.durMin)) drop(text)
+    else kept.push(bout)
+  }
+  return kept
+}
+
+/** The link form of a plan (`act` / `bact`): `walk.30.20,run.240.10`, in start order; '' = rest. */
+export const encodeActivity = activityKey
