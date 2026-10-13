@@ -106,8 +106,8 @@
 //   and cold English loaded with its part: the "How we know" panel's own words, the rings' notes,
 //   the units in words and whose body it is with the panel (whose body: the "⋯" panel too), the long
 //   disclaimer with Science (scripts/i18n-sections.mjs); projector mode under 640 px keeps the phone's
-//   type (CSS): /sim 189.079 → 188.668 KB on main 647a379 (−0.41; ledger row −0.41, planned −0.2),
-//   Home 144.92 → 144.52 KB. This script now enforces the Home ratchet (147 KB, B26), the
+//   type (CSS); Stats, About and Privacy use rules, not cards: /sim 188.636 → 188.226 KB on main
+//   bef54b1 (−0.41; ledger row −0.41, planned −0.2), Home 144.48 → 144.09 KB. This script now enforces the Home ratchet (147 KB, B26), the
 //   Track A total (R66: ≤ +1.0 KB over eee16c9, no slack) and that every lazy chunk is precached.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
