@@ -307,7 +307,9 @@ for (const size of [
           if (tab) await tabs.getByRole('button', { name: tab, exact: true }).click()
           const where = `${size.width}px, ${lang}, ${meal}${tab ? `, ${tab}` : ''}`
           // Labels are placed before paint, and re-placed when a font arrives: poll until none touches a line.
-          await expect.poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), { message: where }).toEqual([])
+          await expect
+            .poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), { message: where })
+            .toEqual([])
           // The legend says which line is which meal: never a bare "Kept" or a word at a line's end.
           const kept = lang === 'en' ? /^Kept: / : /^रखा गया भोजन: /
           await expect(page.locator('figure figcaption').filter({ visible: true }).first().getByText(kept)).toBeVisible()
@@ -388,7 +390,12 @@ test('projector mode on a 360 and 390 px phone: no words on a graph touch a line
   test.setTimeout(90_000)
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 800 })
-    for (const meal of ['cola:1&b=cheeseburger:1,fries:1', 'cheeseburger:1,fries:1&b=cola:1', 'roti:2,dal:1&b=white-rice:1', 'cola:4&b=cola:1']) {
+    for (const meal of [
+      'cola:1&b=cheeseburger:1,fries:1',
+      'cheeseburger:1,fries:1&b=cola:1',
+      'roti:2,dal:1&b=white-rice:1',
+      'cola:4&b=cola:1',
+    ]) {
       await page.goto(`/sim?v=2&a=${meal}`)
       await page.locator('figure [data-line="run"]').first().waitFor()
       await page.evaluate(() => document.fonts.ready)
@@ -396,7 +403,9 @@ test('projector mode on a 360 and 390 px phone: no words on a graph touch a line
       for (const tab of await tabs.getByRole('button').allTextContents()) {
         await tabs.getByRole('button', { name: tab, exact: true }).click()
         await expect
-          .poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), { message: `${width}px, ${meal}, ${tab}` })
+          .poll(() => page.locator('figure').filter({ visible: true }).evaluateAll(wordsOnLines), {
+            message: `${width}px, ${meal}, ${tab}`,
+          })
           .toEqual([])
       }
     }

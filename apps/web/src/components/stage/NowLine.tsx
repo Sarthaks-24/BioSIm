@@ -178,7 +178,10 @@ export function NowLine({
   // The kept meal's row holds its longest version the same way (it goes from "being eaten" to
   // "the gut is finished with it", and may wrap differently in Hindi or on the projector).
   const keptName = keptItems ? t('now.kept', { meal: shortMealNames(keptItems, i18n.language) }) : ''
-  const keptVersions = useMemo(() => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []), [kept, keptDrink, t])
+  const keptVersions = useMemo(
+    () => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []),
+    [kept, keptDrink, t],
+  )
   const cell = 'col-start-1 row-start-1'
   return (
     <div data-now={w.stage} className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>

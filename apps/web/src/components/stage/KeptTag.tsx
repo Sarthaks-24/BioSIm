@@ -38,7 +38,9 @@ export default function KeptTag() {
       {/* Never cut short: the words wrap when the meal bar is full (on a phone the tag has its own
           row). Its kcal is for the wider screens: a phone's first screen has no room for it (WP-18). */}
       <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{t('keep.tag', { meal: names })}</span>
-      <span className="tabular shrink-0 whitespace-nowrap text-ink-muted max-lg:sr-only">{t('units.kcal', { n: mealKcalRounded(kept.items) })}</span>
+      <span className="tabular shrink-0 whitespace-nowrap text-ink-muted max-lg:sr-only">
+        {t('units.kcal', { n: mealKcalRounded(kept.items) })}
+      </span>
       <UnkeepButton meal={names} className="rounded-r-control lg:size-9" />
     </span>
   )

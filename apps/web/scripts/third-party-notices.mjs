@@ -10,9 +10,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const webDir = process.env.WEB_DIR ? path.resolve(process.env.WEB_DIR) : path.resolve(here, '..')
-const outFile = process.env.OUT_FILE
-  ? path.resolve(process.env.OUT_FILE)
-  : path.join(webDir, 'public', 'THIRD_PARTY_NOTICES.txt')
+const outFile = process.env.OUT_FILE ? path.resolve(process.env.OUT_FILE) : path.join(webDir, 'public', 'THIRD_PARTY_NOTICES.txt')
 const CHECK = process.argv.includes('--check')
 
 // Licences that are fine to ship in an Apache-2.0 app. Anything else stops the build in --check mode.
@@ -71,12 +69,19 @@ function walk(name, fromDir) {
   const pkg = JSON.parse(fs.readFileSync(pj, 'utf8'))
   const own = pkg.name.startsWith('@lifepeek/')
   const license = pkg.license ?? KNOWN[pkg.name] ?? (Array.isArray(pkg.licenses) ? pkg.licenses.map((l) => l.type).join(' OR ') : 'UNKNOWN')
-  const files = fs.readdirSync(root).filter((f) => LICENSE_FILE.test(f)).sort()
+  const files = fs
+    .readdirSync(root)
+    .filter((f) => LICENSE_FILE.test(f))
+    .sort()
   const texts = files.map((f) => fs.readFileSync(path.join(root, f), 'utf8').trim())
   if (texts.length === 0 && FALLBACK[license]) texts.push(FALLBACK[license](pkg))
   seen.set(root, { name: pkg.name, version: pkg.version, license, texts, own, repo: pkg.homepage ?? pkg.repository?.url ?? pkg.repository })
   if (!own) {
-    const ok = license.split(/\s+OR\s+|[()]/).map((s) => s.trim()).filter(Boolean).some((l) => ALLOWED.has(l))
+    const ok = license
+      .split(/\s+OR\s+|[()]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .some((l) => ALLOWED.has(l))
     if (!ok) problems.push(`${pkg.name}@${pkg.version}: licence "${license}" is not on the allow-list`)
     // No LICENSE file in the package: fine for MIT and Apache-2.0 (standard text added below),
     // anything else needs a human to add the text.
@@ -132,8 +137,12 @@ console.log(`third-party notices: ${pkgs.length} packages -> ${path.relative(pro
 
 if (CHECK) {
   if (!/SIL OPEN FONT LICENSE/i.test(out)) problems.push('SIL Open Font License text for the fonts is missing')
-  for (const dep of SHIPPED_BUILD_DEPS) if (!out.includes(`
-${dep} `)) problems.push(`${dep}: notice missing`)
+  for (const dep of SHIPPED_BUILD_DEPS)
+    if (
+      !out.includes(`
+${dep} `)
+    )
+      problems.push(`${dep}: notice missing`)
   if (problems.length) {
     console.error('Licence check failed:\n- ' + problems.join('\n- '))
     process.exit(1)

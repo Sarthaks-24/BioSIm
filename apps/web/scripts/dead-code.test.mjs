@@ -10,11 +10,17 @@ describe('dead code (B25)', () => {
       { name: 'Tag', target: 'kit/Tag.tsx', component: true },
       { name: 'TagProps', target: 'kit/Tag.tsx', component: false },
     ])
-    expect(exportsOf('export default function Card() {}\nexport function Row() {}', 'x/Card.tsx')[0]).toEqual({ name: 'Row', component: true })
+    expect(exportsOf('export default function Card() {}\nexport function Row() {}', 'x/Card.tsx')[0]).toEqual({
+      name: 'Row',
+      component: true,
+    })
   })
 
   it('reads the store actions of a …State interface', () => {
-    expect(actionsOf('export interface RunState {\n  meal: string[]\n  keep: () => void\n  swap?: (a: number) => void\n}\n')).toEqual(['keep', 'swap'])
+    expect(actionsOf('export interface RunState {\n  meal: string[]\n  keep: () => void\n  swap?: (a: number) => void\n}\n')).toEqual([
+      'keep',
+      'swap',
+    ])
   })
 
   it('finds an export nothing uses, a component only tests render, and a store action only tests call', () => {
@@ -25,7 +31,8 @@ describe('dead code (B25)', () => {
       'kit/Chip.tsx': 'export default function Chip() {}',
       'kit/kit.test.ts': 'Tag; Chip',
       'pages/Page.tsx': 'used; Chip; run().keep()',
-      'state/run.ts': 'export interface RunState {\n  keep: () => void\n  swapKept: () => void\n}\nconst s: RunState = { keep() {}, swapKept() {} }\n',
+      'state/run.ts':
+        'export interface RunState {\n  keep: () => void\n  swapKept: () => void\n}\nconst s: RunState = { keep() {}, swapKept() {} }\n',
       'state/run.test.ts': 'run().swapKept()',
       '../e2e/x.spec.ts': '',
     }

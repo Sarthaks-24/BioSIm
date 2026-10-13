@@ -62,9 +62,7 @@ describe('opening links', () => {
       const q = search(link.href)
       run().loadLink(q ? `${q}&o=frog` : 'o=frog')
       expect(run().unknownOrganism, link.href).toBe('frog')
-      expect(run().meal.length + (run().kept?.items.length ?? 0), link.href).toBe(
-        link.a.length + link.b.length - run().droppedFoods,
-      )
+      expect(run().meal.length + (run().kept?.items.length ?? 0), link.href).toBe(link.a.length + link.b.length - run().droppedFoods)
     }
     // The next link without `o` clears it.
     run().loadLink('v=2&a=cola:1')

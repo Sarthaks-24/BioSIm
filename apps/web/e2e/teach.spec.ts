@@ -148,7 +148,10 @@ test('a ready lesson opens with nothing over its graph: marker names show only w
 // WP-19 review LOW 4 (T10): a lesson opened elsewhere (Ctrl/Cmd-click: a new tab) leaves this tab
 // as it is, projector mode off; a question opened after a lesson starts on the first graph, not on
 // the lesson's (which would point at the answer).
-test('a lesson opened in a new tab changes nothing here; a question after a lesson starts on the first graph', async ({ page, context }) => {
+test('a lesson opened in a new tab changes nothing here; a question after a lesson starts on the first graph', async ({
+  page,
+  context,
+}) => {
   onlyIn('projector')
   await page.addInitScript(() => localStorage.removeItem('lifepeek:projector'))
   await page.goto('/teach')

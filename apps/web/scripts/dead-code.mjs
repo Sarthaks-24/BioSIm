@@ -28,7 +28,9 @@ const COMPONENT = /^[A-Z][a-z]\w*$/
  */
 export function exportsOf(text, file) {
   const out = []
-  for (const m of text.matchAll(/^export\s+(?:declare\s+)?(?:async\s+)?(function\*?|const|let|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm))
+  for (const m of text.matchAll(
+    /^export\s+(?:declare\s+)?(?:async\s+)?(function\*?|const|let|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm,
+  ))
     out.push({ name: m[2], component: m[1] === 'function' && COMPONENT.test(m[2]) && file.endsWith('.tsx') })
   for (const m of text.matchAll(/^export\s+(type\s+)?\{([^}]*)\}(?:\s*from\s*'([^']+)')?/gm)) {
     const target = m[3]?.startsWith('.') ? path.posix.join(path.posix.dirname(file), m[3]) : undefined
@@ -36,7 +38,11 @@ export function exportsOf(text, file) {
       const [from, name = from] = part.trim().split(/\s+as\s+/)
       if (!from) continue
       const type = Boolean(m[1]) || from.startsWith('type ')
-      out.push({ name: name.replace(/^type\s+/, ''), target, component: !type && from === 'default' && Boolean(target?.endsWith('.tsx')) && COMPONENT.test(name) })
+      out.push({
+        name: name.replace(/^type\s+/, ''),
+        target,
+        component: !type && from === 'default' && Boolean(target?.endsWith('.tsx')) && COMPONENT.test(name),
+      })
     }
   }
   return out
@@ -72,7 +78,8 @@ export function findDeadCode(files, keep = KEEP) {
     // Its own file names an action twice (the interface and the store); a third is a call.
     if (file.startsWith('state/'))
       for (const action of actionsOf(text))
-        if (count(text, action) <= 2 && !appUsers([file], action).length) found.push(`${file}: store action ${action} is never called by the app`)
+        if (count(text, action) <= 2 && !appUsers([file], action).length)
+          found.push(`${file}: store action ${action} is never called by the app`)
   }
   return found
 }

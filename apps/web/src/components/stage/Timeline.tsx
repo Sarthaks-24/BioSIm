@@ -283,7 +283,11 @@ export default function Timeline({ run, kept }: { run: Simulation; kept: Simulat
           </span>
         ))}
         {kept && (
-          <span aria-hidden="true" data-kept-lane="" className="absolute top-(--lane) right-full mr-1.5 text-caption leading-none text-ink-muted">
+          <span
+            aria-hidden="true"
+            data-kept-lane=""
+            className="absolute top-(--lane) right-full mr-1.5 text-caption leading-none text-ink-muted"
+          >
             {t('now.keptShort')}
           </span>
         )}

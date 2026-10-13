@@ -20,4 +20,3 @@ export default function MedicalNote({ text, className = '' }: { text: 'short' | 
     </p>
   )
 }
-

@@ -69,8 +69,7 @@ function bannedPattern(phrase: string): RegExp {
 function strings(value: unknown, path = ''): [string, string][] {
   if (typeof value === 'string') return [[path, value]]
   if (Array.isArray(value)) return value.flatMap((v, i) => strings(v, `${path}[${i}]`))
-  if (value && typeof value === 'object')
-    return Object.entries(value).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k))
+  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k))
   return []
 }
 
