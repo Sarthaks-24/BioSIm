@@ -163,7 +163,8 @@ describe('the summary sentence in Hindi (FIX-F)', () => {
   /** The meal as the sentence names it ("रोटी ×2 + दाल"); a meal of three foods is "this meal" instead. */
   const nameOf = (meal: string) => shortMealNames(decodeMeal(meal), 'hi')
 
-  it('a meal name never has a verb or adjective agreeing with it, whether it is the faster or the slower meal', () => {
+  // About 35 full runs: seconds on a busy machine (R68), so a longer timeout.
+  it('a meal name never has a verb or adjective agreeing with it, whether it is the faster or the slower meal', { timeout: 20_000 }, () => {
     const problems: string[] = []
     const check = (texts: string[], name: string, other = '') => {
       for (const text of texts) for (const p of agreementProblems(text, name, [other])) problems.push(`${p}: "${text}"`)

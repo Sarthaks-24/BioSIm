@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MODEL_VERSION, buildMeal, decodeActivity, decodeMeal, decodeShareState, encodeShareState } from '../src/index.ts'
-import { lookup } from './fixtures.ts'
+import { FULL, lookup } from './fixtures.ts'
 
 describe('share links', () => {
   it('round-trips a comparison, including language', () => {
@@ -229,7 +229,7 @@ describe('share links: what changed on load (changes)', () => {
    * canon() is how a link reads: the parameters this version knows, numbers as numbers, a food
    * listed twice summed, `t` in whole minutes, `o=human` and empty values as absent.
    */
-  it('fuzz: every link that comes back different has a note', () => {
+  it('fuzz: every link that comes back different has a note', { timeout: 30_000 }, () => {
     const ITEM = /^([a-z0-9-]{1,40}):(\d+(?:\.\d+)?)$/
     const meal = (raw: string | null) => {
       const sum = new Map<string, number>()
@@ -301,8 +301,10 @@ describe('share links: what changed on load (changes)', () => {
     // The high bits of the LCG: its low bits repeat with a short period.
     const rand = (n: number) => ((seed = (seed * 1103515245 + 12345) % 2 ** 31), Math.floor((seed / 2 ** 31) * n))
     const pick = ([good, odd]: [string[], string[]]) => (odd.length && !rand(25) ? odd[rand(odd.length)]! : good[rand(good.length)]!)
+    // 2500 links in a normal run, 10000 with FULL=1 (R68); the same seed, so the first 2500 are the same.
+    const LINKS = FULL ? 10000 : 2500
     let changed = 0
-    for (let i = 0; i < 10000; i++) {
+    for (let i = 0; i < LINKS; i++) {
       const q = new URLSearchParams()
       for (const [k, pool] of Object.entries(POOL)) if (rand(2)) q.set(k, pick(pool))
       for (const k of ['a', 'b']) if (rand(3)) q.set(k, Array.from({ length: rand(12) }, () => pick(PARTS)).join(','))
@@ -312,6 +314,6 @@ describe('share links: what changed on load (changes)', () => {
       const noted = !!s.changes?.length || !!s.unknownOrganism || s.modelVersion !== MODEL_VERSION
       expect(noted, `?${q} came back as ?${encodeShareState(s)} with no note`).toBe(true)
     }
-    expect(changed).toBeGreaterThan(2000)
+    expect(changed).toBeGreaterThan(LINKS / 5)
   })
 })

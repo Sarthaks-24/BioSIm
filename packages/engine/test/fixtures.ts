@@ -1,5 +1,24 @@
 import { parseFood, type Food } from '../src/schema.ts'
 
+/**
+ * FULL=1 (the nightly run) gives the slow invariance and fuzz suites their full case counts; a
+ * normal `npm test` runs a fixed-seed subset, so it does not depend on machine load (R68).
+ */
+export const FULL = process.env.FULL === '1'
+
+/**
+ * The first index where two arrays differ to the byte (−1 = identical): the invariance tests'
+ * check. A byte compare instead of a deep `toEqual`, which costs about a second per run of
+ * series on a busy machine; same meaning (NaN = NaN, 0 ≠ −0, the array types must match).
+ */
+export function firstDiff(a: Float32Array | Float64Array, b: Float32Array | Float64Array | undefined): number {
+  if (!b || a.constructor !== b.constructor || a.length !== b.length) return 0
+  const bytes = (x: Float32Array | Float64Array) => Buffer.from(x.buffer, x.byteOffset, x.byteLength)
+  if (bytes(a).equals(bytes(b))) return -1
+  for (let i = 0; i < a.length; i++) if (!Object.is(a[i], b[i])) return i
+  return -1
+}
+
 /** Reference test meals used in clinical studies — not shipped as app content. */
 const src = [
   { label: 'test fixture', citation: 'Synthetic reference meal for calibration', fields: ['nutrients', 'glycemicIndex'] as const },
