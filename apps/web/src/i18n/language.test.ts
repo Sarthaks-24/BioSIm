@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildMeal, decodeMeal, simulate } from '@lifepeek/engine'
 import en from './en.json'
-import { HINDI, linkLanguage, pickLanguage } from './language.ts'
+import { HINDI, langPrefToSave, linkLanguage, pickLanguage } from './language.ts'
 import { lookupFood } from '../data/foods.ts'
 import LanguageButton from '../components/LanguageButton.tsx'
 import Notes from '../components/stage/Notes.tsx'
@@ -35,6 +35,16 @@ describe('Hindi paused (VITE_HINDI off)', () => {
   it('opens in English whatever was saved or the browser says', () => {
     for (const saved of ['hi', 'en', null, 'pseudo'])
       for (const browser of ['hi-IN', 'hi', 'en-IN', undefined]) expect(pickLanguage(saved, browser)).toBe('en')
+  })
+
+  it('a saved Hindi choice is ignored but kept, for when Hindi comes back', () => {
+    // Opening in English must not write "en" over it.
+    expect(langPrefToSave('en', 'hi')).toBeNull()
+    expect(langPrefToSave('en', 'en')).toBe('en')
+    expect(langPrefToSave('en', null)).toBe('en')
+    // With Hindi on, every change is saved, as before.
+    expect(langPrefToSave('en', 'hi', true)).toBe('en')
+    expect(langPrefToSave('hi', 'en', true)).toBe('hi')
   })
 
   it('with Hindi on, the saved choice wins, then the browser', () => {

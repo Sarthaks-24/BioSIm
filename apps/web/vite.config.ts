@@ -1,8 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import i18nSections from './scripts/i18n-sections.mjs'
+
+/**
+ * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
+ * it the app never loads Hindi's font (i18n/index.ts), and its files are kept out of the precache too.
+ */
+const HINDI = loadEnv('production', process.cwd(), 'VITE_').VITE_HINDI === '1'
 
 export default defineConfig({
   plugins: [
@@ -53,7 +59,15 @@ export default defineConfig({
         // network first, and offline the last copy that was fetched (the /stats page).
         // The share image and the install screenshots are for other sites and the install dialog,
         // never drawn by the app offline: not precached (precache budget).
-        globIgnores: ['**/node_modules/**/*', 'stats.json', 'og-image.png', 'screenshots/**'],
+        // Without Hindi, Hindi's font (about 138 KB) is not even in the build; this keeps it out
+        // should anything bring it back.
+        globIgnores: [
+          '**/node_modules/**/*',
+          'stats.json',
+          'og-image.png',
+          'screenshots/**',
+          ...(HINDI ? [] : ['**/noto-sans-devanagari*']),
+        ],
         runtimeCaching: [
           {
             urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/stats.json',

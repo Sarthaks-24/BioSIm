@@ -67,6 +67,9 @@
 //   links. Vite's lazy-import helper, which had ridden in the i18n chunk with the hi.json import,
 //   is kept there by a chunk group (vite.config.ts) rather than becoming a file of its own:
 //   /sim stays 188.2 KB, Home 144.9 → 144.8 KB.
+//   FIX-H (2026-10-13): Hindi's font (Noto Sans Devanagari, 6 woff2 files) only in a Hindi build
+//   (i18n/devanagari.css), and the English texts that named Hindi swapped for English-only ones
+//   (scripts/i18n-sections.mjs): precache 1871.1 → 1730.4 KB, /sim 188.2 → 188.0 KB, Home 144.8 → 144.5 KB.
 //   Home stays "report": React, the router and i18next alone are about 100 KB, and every page
 //   shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'

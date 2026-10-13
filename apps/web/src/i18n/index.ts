@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next'
 // en.json without the texts of the pages that bring their own (scripts/i18n-sections.mjs).
 import en from 'virtual:lifepeek-en/core'
 import { readPref, writePref } from '../lib/prefs.ts'
-import { HINDI, pickLanguage, type Language } from './language.ts'
+import { HINDI, langPrefToSave, pickLanguage, type Language } from './language.ts'
 import { PSEUDO_LANG, pseudoBundle, pseudoText } from './pseudo.ts'
 
 export { HINDI, type Language }
@@ -19,8 +19,7 @@ const PSEUDO = import.meta.env.VITE_PSEUDO === '1'
 function initialLanguage(): Language {
   const saved = readPref('lang')
   if (PSEUDO && (saved === PSEUDO_LANG || new URLSearchParams(location.search).get('lang') === 'pseudo')) return PSEUDO_LANG as Language
-  // A Hindi choice saved before Hindi was paused goes back to English, so it can't come back by itself.
-  if (saved === 'hi' && !HINDI) writePref('lang', 'en')
+  // A Hindi choice saved before Hindi was paused is ignored, and kept (langPrefToSave).
   return pickLanguage(saved, navigator.language)
 }
 
@@ -49,8 +48,7 @@ const locales: BackendModule = {
 
 const first = initialLanguage()
 
-/** Resolves once the first language is ready; main.tsx draws the app after it (never in a half-loaded language). */
-export const i18nReady = i18n
+const initialized = i18n
   .use(locales)
   .use(initReactI18next)
   .init({
@@ -62,10 +60,19 @@ export const i18nReady = i18n
     returnObjects: true,
   })
 
+/**
+ * Resolves once the first language is ready; main.tsx draws the app after it (never in a half-loaded
+ * language). A Hindi build also waits for Hindi's font (i18n/devanagari.css). The flag is written out,
+ * as in `locales`: a build without Hindi has neither the font's CSS nor its files (R47).
+ */
+export const i18nReady =
+  import.meta.env.VITE_HINDI === '1' ? Promise.all([initialized, import('./devanagari.css')]).then(([t]) => t) : initialized
+
 document.documentElement.lang = first
 i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
-  writePref('lang', lng)
+  const pref = langPrefToSave(lng, readPref('lang'))
+  if (pref) writePref('lang', pref)
 })
 
 /**
