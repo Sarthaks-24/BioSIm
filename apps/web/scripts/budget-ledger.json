@@ -147,6 +147,15 @@
         "engineKB": 12.47,
         "simRatchetKB": 189.382,
         "simEngineRatchetKB": 201.952
+      },
+      {
+        "wp": "release/3.1 (R120)",
+        "at": "2026-10-14",
+        "on": "release/3.1 (v3.1-rc a544648, /sim 189.187, engine 12.471 measured) + the final audit's fixes that apply to 3.1: FIX-F1 #1 (lp-saved), #16, #7, #10, the flagship save list (#2) and the text fixes #8, #13, #14, #20. /sim 189.187 -> 189.240 (+0.053: hooks/useRun.ts sends only the newest run of each lane, #7); engine 12.471 -> 12.626 (+0.155: the worker's one-run-at-a-time queue in the run chunk, as FIX-F1 measured on v3). The cache, save, CSP and text changes are in the service worker, Teach (lazy), vite.config and lazy text. Under W-2's ratchets, which stay as they are (not raised).",
+        "simKB": 189.24,
+        "engineKB": 12.626,
+        "simRatchetKB": 189.382,
+        "simEngineRatchetKB": 201.952
       }
     ]
   },

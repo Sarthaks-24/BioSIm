@@ -207,6 +207,10 @@
 //   first use, saved with the stage's lesson, never precached) and enforced at ≤ 45 KB gz / 150 raw.
 //   /sim takes only its address and the page side of the async run; the wire format and the worker's
 //   page side (toWire / fromWire, connectWorker) ride in the engine chunk. Ledger row W-2.
+//   release/3.1 (2026-10-14, from v3.1-rc a544648; R120): the final audit's fixes that apply to 3.1
+//   (lp-saved, save during an update, the worker's one run in flight, CSP, the flagship save list,
+//   text). /sim 189.187 -> 189.240 KB (+0.053, useRun's newest-run-only send), engine +0.155 (the
+//   worker's queue): under W-2's ratchets, kept. Ledger row release/3.1 (R120).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
