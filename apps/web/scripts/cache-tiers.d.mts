@@ -11,6 +11,8 @@ export const HINDI: string
 export const SIM_ROOTS: string[]
 export const LESSON_PACKS: Record<string, { webgl?: boolean; roots: string[] }>
 export const LAZY_CACHE: string
+export const LAZY_MAX_ENTRIES: number
+export const SAVED_CACHE: string
 export const LAZY_URL: RegExp
 export interface Tiers {
   core: Set<string>
@@ -24,5 +26,10 @@ export function packManifest(tiers: Tiers): {
   cache: string
   entries: { id: string; tier: 'precache' | 'lazy'; webgl?: boolean; urls: string[] }[]
 }
-export function tierProblems(tiers: Pick<Tiers, 'core' | 'lazy'>, precached: string[], exists?: (file: string) => boolean): string[]
+export function tierProblems(
+  tiers: Pick<Tiers, 'core' | 'lazy'> & { packs?: Tiers['packs'] },
+  precached: string[],
+  exists?: (file: string) => boolean,
+  maxEntries?: number,
+): string[]
 export default function cacheTiersPlugin(): Plugin & { manifestTransform: ManifestTransform; ignoreLazyIn(list: string[]): void }

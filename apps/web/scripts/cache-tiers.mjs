@@ -116,8 +116,23 @@ export const LESSON_PACKS = {
  */
 const layers3d = (manifest) => Object.keys(manifest).filter((k) => manifest[k].isDynamicEntry && k.startsWith('src/three/layers/'))
 
-/** The runtime cache for lazy files (scripts/cache-policy.mjs, lib/offlineSave.ts through pack-manifest.json). */
+/** The runtime cache for lazy files on first use (scripts/cache-policy.mjs): bounded, emptied first when space runs short. */
 export const LAZY_CACHE = 'lp-lazy'
+
+/**
+ * How many files lp-lazy keeps (scripts/cache-policy.mjs): two versions of the whole lazy tier, so
+ * casual use never pushes out a part opened this week; older versions age out. tierProblems checks
+ * that the lazy tier fits twice (R120 #1: at 40, one lesson's save alone overflowed it).
+ */
+export const LAZY_MAX_ENTRIES = 150
+
+/**
+ * The cache Teach's "Save for class offline" writes to (lib/offlineSave.ts, through
+ * pack-manifest.json's `cache`), which the service worker reads before lp-lazy (cache-policy.mjs).
+ * No expiration and no entry limit: casual use never pushes a saved lesson out (R120 #1). The Teach
+ * page removes the files no current pack names (a past version's) when it checks or saves.
+ */
+export const SAVED_CACHE = 'lp-saved'
 
 /**
  * What lp-lazy keeps (scripts/cache-policy.mjs): hashed build files under /assets/ (a new version
@@ -216,13 +231,14 @@ export function tiersOf(dir) {
 }
 
 /**
- * dist/pack-manifest.json: each entry tiered precache or lazy (R71), with its URLs. The Teach page
- * reads it (precached, so offline too) to save a lesson's lazy files and to say whether it is saved.
+ * dist/pack-manifest.json: each entry tiered precache or lazy (R71), with its URLs, and `cache`, where
+ * Teach saves a lesson (lp-saved). The Teach page reads it (precached, so offline too) to save a
+ * lesson's lazy files and to say whether it is saved.
  */
 export function packManifest({ core, packs }) {
   const urls = (files) => [...files].sort().map((f) => `/${f}`)
   return {
-    cache: LAZY_CACHE,
+    cache: SAVED_CACHE,
     entries: [
       // The app shell too: offline, every page is drawn from it.
       { id: 'core', tier: 'precache', urls: ['/index.html', ...urls(core)] },
@@ -234,9 +250,12 @@ export function packManifest({ core, packs }) {
 /**
  * The tier checks (R71): the precache is the core exactly (every core file in it, no lazy file, no
  * other hashed file), nothing is in both tiers, and every lazy file is saveable (a hashed /assets/
- * file that lp-lazy keeps, which exists). `precached`: the service worker's URLs; `exists(file)`: on disk.
+ * file that the lazy route keeps and reads from lp-saved first, which exists). Every file a lesson
+ * saves is such a lazy file; lp-saved has no limit, so nothing pushes a saved file out, and lp-lazy
+ * holds the lazy tier twice (`maxEntries`), so casual use keeps what it opened (R120 #1).
+ * `precached`: the service worker's URLs; `exists(file)`: on disk.
  */
-export function tierProblems({ core, lazy }, precached, exists = () => true) {
+export function tierProblems({ core, lazy, packs = {} }, precached, exists = () => true, maxEntries = LAZY_MAX_ENTRIES) {
   const have = new Set(precached.map((u) => u.replace(/^\//, '')))
   const problems = []
   for (const f of core) if (!have.has(f)) problems.push(`${f} (core) is not precached`)
@@ -247,6 +266,11 @@ export function tierProblems({ core, lazy }, precached, exists = () => true) {
     if (!LAZY_URL.test(`/${f}`)) problems.push(`${f} (lazy) is not a hashed /assets/ file: lp-lazy would not keep it`)
     else if (!exists(f)) problems.push(`${f} (lazy) is not in the build`)
   }
+  for (const [id, p] of Object.entries(packs))
+    for (const f of p.files)
+      if (!lazy.has(f)) problems.push(`${f} (saved with ${id}) is not a lazy file: lp-saved would not be read for it`)
+  if (lazy.size * 2 > maxEntries)
+    problems.push(`the lazy tier (${lazy.size} files) does not fit twice in lp-lazy (${maxEntries} files): raise LAZY_MAX_ENTRIES`)
   return problems
 }
 

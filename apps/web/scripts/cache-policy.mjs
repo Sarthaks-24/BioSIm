@@ -6,13 +6,16 @@
 //     the bundle is written, and `manifestTransform`, which keeps of the hashed files only the core),
 //     and nothing over 512 KB gets in (a tripwire).
 //   - "lp-lazy" (CacheFirst on first use): the 3D body, the stage's on-use parts, the "new version"
-//     note, the latin-ext fonts, every other system pack, Hindi; or ahead of class by Teach's "Save
-//     for class offline". Hashed /assets/ files only, so a kept file is never stale; ≈ 40 files,
-//     90 days, emptied first when the device runs short of space.
+//     note, the latin-ext fonts, every other system pack, Hindi. Hashed /assets/ files only, so a
+//     kept file is never stale; two versions of the lazy tier (LAZY_MAX_ENTRIES, 150 files), 90
+//     days, emptied first when the device runs short of space.
+//   - "lp-saved" (read first by the same route): what Teach's "Save for class offline" saved ahead
+//     of class. No expiration and no limit, so casual use never pushes a saved lesson out (R120 #1);
+//     the Teach page removes a past version's files (lib/offlineSave.ts).
 //   - "stats" (NetworkFirst): stats.json, which changes weekly without a new app version.
 //   - never cached: the share image, the install screenshots, robots, sitemap, notices, /api, the
 //     per-page HTML and the 404 page (for the server; offline, index.html serves every page).
-import { LAZY_CACHE } from './cache-tiers.mjs'
+import { LAZY_CACHE, LAZY_MAX_ENTRIES } from './cache-tiers.mjs'
 
 /**
  * Workbox's options. `tiers`: the cache-tiers plugin (scripts/cache-tiers.mjs), which knows the
@@ -62,8 +65,17 @@ export function workboxPolicy({ hindi, tiers }) {
           // (vite preview does): a copy saved by Teach's "Save for class offline" (no Origin)
           // must still match. Same-origin files with hashed names: one answer per name.
           matchOptions: { ignoreVary: true },
-          // About 40 files: two versions of every lazy part; old versions age out.
-          expiration: { maxEntries: 40, maxAgeSeconds: 90 * 24 * 60 * 60, purgeOnQuotaError: true },
+          // Two versions of every lazy part (cache-tiers.mjs checks the lazy tier fits twice); old versions age out.
+          expiration: { maxEntries: LAZY_MAX_ENTRIES, maxAgeSeconds: 90 * 24 * 60 * 60, purgeOnQuotaError: true },
+          // After the expiration plugin (plugins run in this order): a file Teach saved for class
+          // (lp-saved, cache-tiers.mjs SAVED_CACHE) is used first, then lp-lazy's copy, then the
+          // network. Workbox copies the function's text into sw.js, so the cache's name is written out.
+          plugins: [
+            {
+              cachedResponseWillBeUsed: async ({ request, cachedResponse }) =>
+                (await (await caches.open('lp-saved')).match(request, { ignoreVary: true })) || cachedResponse,
+            },
+          ],
         },
       },
     ],
