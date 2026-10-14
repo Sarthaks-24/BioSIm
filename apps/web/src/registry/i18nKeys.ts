@@ -1,5 +1,6 @@
 import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalStatus } from '@lifepeek/engine'
 import { ORGANISMS } from './index.ts'
+import type { SystemDef } from '../systems/registry.ts'
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -37,13 +38,16 @@ export function catalogKeys(): KeyUse {
   return { required, optional }
 }
 
-/** Organisms, their profiles, systems (with life process, known limits and graph slots) and organs. */
-export function registryKeys(): KeyUse {
+/**
+ * Organisms, their profiles, systems (with life process, known limits and graph slots) and organs.
+ * `system`: only the systems it accepts (the public ones need Hindi, a hidden one English first).
+ */
+export function registryKeys(system: (s: SystemDef) => boolean = () => true): KeyUse {
   const required = new Set<string>()
   for (const { organism, systems, organs } of Object.values(ORGANISMS)) {
     required.add(`${organism.i18nKey}.name`)
     for (const p of organism.profiles) for (const sub of ['tag', 'desc']) required.add(`${PROFILES[p].i18nKey}.${sub}`)
-    for (const s of systems) {
+    for (const s of systems.filter(system)) {
       required.add(`${s.i18nKey}.name`)
       required.add(`lifeProcess.${s.lifeProcess}`)
       for (const k of s.knownLimits) required.add(k)

@@ -94,6 +94,13 @@ function drawn(curve: Spline3, radius: (u: number) => number) {
 /** Hands the limbs the body base (anatomy/human/limbs.ts `LimbKit`); the stage calls it as it loads this chunk. */
 export const takeKit = (k: LimbKit) => setLimbKit(k)
 
+/**
+ * The posed limbs and the body base it was handed, for a system's layer that follows the pose (the
+ * lymph map's vessels, A-11a): it gets them from this chunk once loaded (flat/layerKit.ts
+ * `loadLimbs`) instead of importing anatomy/human/limbs.ts, which would split it into a chunk of its own.
+ */
+export { legRadius, limbKit, posedLimbs }
+
 export interface Figure {
   /** Arms drawn under the torso, the torso with both legs, then arms drawn over it (scene units). */
   under: Outline[]

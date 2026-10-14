@@ -22,13 +22,23 @@ export interface PackDef {
   drawing?: Loader<{ readonly [S in SystemId]?: LayerComponent }>
 }
 
+const lymph = () => import('./lymph/pack.ts')
+
 /**
  * The packs built so far besides `core` (each U-n adds its own here): `loadPack` loads one when one
  * of its systems is first lit. systems/packs.ts lists them with `core` for the tests and scripts.
  * `core` is not here: the screen never loads its rows (they ride the run chunk), and an `import()`
  * of them in screen code would split the run chunk in two.
  */
-export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {}
+export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
+  // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
+  lymph: {
+    rows: async () => ({ default: [] }),
+    ui: () => lymph().then((m) => ({ default: m.ui })),
+    text: () => import('virtual:lifepeek-en/sys.lymph'),
+    drawing: () => lymph().then((m) => ({ default: m.drawing })),
+  },
+}
 
 const loading = new Map<PackId, Promise<void>>()
 const ready = new Set<PackId>(['core'])

@@ -4,6 +4,7 @@ import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, RunResu
 import type { Moment } from '../lib/moments.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
+import { LYMPH } from './lymph/def.ts'
 
 /**
  * The systems registry (W-1, architecture §0, §5.1 and §5.2): every body system the stage can
@@ -108,6 +109,8 @@ export interface SystemUi {
   stripSummary: (id: ActiveSignalId, run: RunResult, t: TFunction, lang: string) => string | null
   /** The run's key moments, in catalog order: the dock's markers and Page Up / Down. */
   moments: (run: RunResult) => Moment[]
+  /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
+  card?: ComponentType
 }
 
 /** What a system's inputs are: the meal, the activity bouts. */
@@ -155,7 +158,7 @@ export interface SystemDef {
 }
 
 /** The human's systems, in picker order. Only built systems are here: the others are SystemIds with no row yet. */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, LYMPH]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 

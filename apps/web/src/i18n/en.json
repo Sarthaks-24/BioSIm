@@ -585,10 +585,14 @@
   "systems": {
     "digestion": {
       "name": "Digestion"
+    },
+    "lymph": {
+      "name": "Lymph & germ defence"
     }
   },
   "lifeProcess": {
-    "nutrition": "Nutrition"
+    "nutrition": "Nutrition",
+    "transport": "Transportation"
   },
   "stage": {
     "meal": "Meal",
@@ -833,5 +837,47 @@
     "addActivity": "Add activity",
     "loading": "Getting the activities ready…",
     "slow": "Slow connection, still loading. Digestion works meanwhile."
+  },
+  "sys": {
+    "lymph": {
+      "now": "Lymph vessels take the fluid that leaks out round the cells back to the blood, through the lymph nodes.",
+      "map": {
+        "vessels": "Lymph vessels",
+        "nodes": "Lymph nodes",
+        "mainDuct": "Main lymph duct",
+        "spleen": "Spleen",
+        "rightDuct": "Right lymph duct",
+        "thymus": "Thymus",
+        "neckVein": "Neck vein"
+      },
+      "card": {
+        "title": "Germ defence",
+        "step": "{{n}} of {{total}}",
+        "back": "Back",
+        "next": "Next",
+        "barrier": {
+          "title": "Keeping germs out",
+          "text": "Skin covers the body like a wall, and mucus in the nose traps germs. Stomach acid kills many germs, not all, so washing hands and clean water still matter.",
+          "picture": "Germs stopped at the skin, and acid in the stomach."
+        },
+        "cut": {
+          "title": "A cut lets germs in",
+          "text": "A cut or a thorn breaks the skin, and germs get in under it.",
+          "picture": "Germs getting in through a cut in the skin."
+        },
+        "fight": {
+          "title": "White cells fight",
+          "text": "Blood brings white cells to the cut, which gets warm, red and swollen. Some white cells swallow germs and break them down. Lymph carries germs to the lymph nodes.",
+          "picture": "White cells round the cut, one swallowing a germ."
+        },
+        "memory": {
+          "title": "Antibodies and memory",
+          "text": "In the lymph nodes, white cells make antibodies that fit this germ and stick to it. Some white cells remember it, so next time the body answers faster. Vaccines teach this memory without the illness.",
+          "picture": "Y-shaped antibodies stuck to germs, beside a lymph node."
+        },
+        "cells": "About 5,000–10,000 white cells per µL of blood (a µL is one millionth of a litre); labs differ.",
+        "source": "Source: OpenStax Anatomy and Physiology 2e, sections 18.4 (white cells) and 21.2 (stomach acid)."
+      }
+    }
   }
 }
