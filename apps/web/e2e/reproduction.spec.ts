@@ -174,10 +174,13 @@ test('Teach (v3.2 Teach step, R117): off, no chapter and no worksheet; on, its l
   // A teacher switches it on in Settings (this tab only).
   await goto(page, '/sim?v=3&a=roti:1')
   await page.locator('[data-stage]').waitFor()
-  const { toggle } = await growingUpSwitch(page)
+  const { sheet: settings, toggle } = await growingUpSwitch(page)
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-checked', 'true')
   await page.keyboard.press('Escape')
+  // The sheet closes by going Back in history: wait for it, or that Back can land after the next page load.
+  await expect(settings).toBeHidden()
+  await expect(page).toHaveURL(/\/sim\?v=3&a=roti:1$/)
 
   await goto(page, '/teach')
   const chapter = page.locator('[data-chapter="reproduction"]')
