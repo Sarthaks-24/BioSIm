@@ -171,7 +171,7 @@ function Thermometer() {
         <circle cx="5" cy="15" r="2.2" fill="#3f6f99" />
         <path d="M5 13V6" stroke="#3f6f99" strokeWidth="1.4" strokeLinecap="round" />
       </svg>
-      <strong className="font-semibold text-ink">{t('sys.effort.skin.thermo.title')}:</strong>
+      <strong className="font-semibold text-ink">{t('sys.effort.skin.thermo.title')}:</strong>{' '}
       <span>{t('sys.effort.skin.thermo.text')}</span>
       <button
         type="button"

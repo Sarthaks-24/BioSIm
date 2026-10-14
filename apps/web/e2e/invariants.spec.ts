@@ -76,6 +76,11 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   // U-2's gate per system (ui-ux §12): Breathing (a preview until the v3.0 gate), its title and rhythm
   // chip over the body, in a walk with a kept plan at rest.
   'breathing, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=breathing&preview=1' },
+  // U-1's: Muscles in a run with a kept plan at rest, Skin (its thermometer card over the body) in a
+  // walk, and the Bones card (Drawing only, the card in the graphs' place), each in the full framing.
+  'muscles, run, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=run.30.20&layer=muscles&preview=1' },
+  'skin, walk': { url: '/sim?v=3&a=roti:1&t=40&act=walk.30.20&layer=skin&preview=1' },
+  'bones, run': { url: '/sim?v=3&a=roti:1&t=40&act=run.30.20&layer=bones&preview=1' },
 }
 
 /** The window sizes each project checks (the project's own first). */
