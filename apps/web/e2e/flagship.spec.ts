@@ -43,17 +43,17 @@ async function expectPause(page: Page, p: (typeof PAUSES)[number]) {
   if (tabbed()) await expect(front(page, p.graph)).toBeVisible()
 }
 
-test('a ?preview=1 visit shows what a plain one does: the lesson card, the systems, five chapters, eight Science sections', async ({
+test('a ?preview=1 visit shows what a plain one does: the lesson card, the systems, five chapters, nine Science sections', async ({
   page,
 }) => {
   await goto(page, '/?preview=1')
   await expect(page.locator('[data-flagship]')).toBeVisible()
-  await expect(page.locator('[data-systems] [data-system]')).toHaveCount(8)
+  await expect(page.locator('[data-systems] [data-system]')).toHaveCount(9)
   await goto(page, '/teach?preview=1')
   await expect(page.locator('[data-flagship]')).toBeVisible()
   await expect(page.locator('[data-chapter]')).toHaveCount(5)
   await goto(page, '/science?preview=1')
-  await expect(page.locator('section[data-system]')).toHaveCount(8)
+  await expect(page.locator('section[data-system]')).toHaveCount(9)
 })
 
 test('Home: the lesson is the first call to action, then a static list of the systems', async ({ page }) => {
@@ -68,7 +68,7 @@ test('Home: the lesson is the first call to action, then a static list of the sy
   ])
   expect(cardTop).toBeLessThan(simTop)
   const systems = page.locator('[data-systems] [data-system]')
-  await expect(systems).toHaveCount(8)
+  await expect(systems).toHaveCount(9)
   await expect(systems.first()).toContainText('Digestion')
   await shot(page, 'home')
   if (test.info().project.name === 'desktop') await checkAxe(page)
@@ -185,7 +185,7 @@ test('Teach: the lesson on top, then the lessons by NCERT chapter, each with its
 test('Science: one section per system, each with the sources its rows cite', async ({ page }) => {
   await goto(page, '/science')
   const sections = page.locator('section[data-system]')
-  await expect(sections).toHaveCount(8)
+  await expect(sections).toHaveCount(9)
   await expect(page.locator('section[data-system="breathing"] li')).toHaveCount(7)
   // Lymph cites its rows' sources since U-5 (v3.1); Bones stays Drawing only.
   await expect(page.locator('section[data-system="lymph"] li').first()).toBeVisible()

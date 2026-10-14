@@ -120,6 +120,15 @@
         "engineKB": 11.974,
         "simRatchetKB": 188.874,
         "simEngineRatchetKB": 200.948
+      },
+      {
+        "wp": "U-7",
+        "at": "2026-10-14",
+        "on": "v3 d6ed16f + U-7: Brain & nerves' row in the clock chunk group (alone it was a 0.2 KB chunk of its own), the control pack's loader entry (its lazy files' names), the row's picker tag (SystemDef.tag), its name in the core text; the demo, its numbers (@lifepeek/engine/demo), words and flat brain are the lazy control pack (10.5 KB gz): /sim 188.674 -> 188.832 (+0.158), engine 11.974 -> 11.975",
+        "simKB": 188.832,
+        "engineKB": 11.975,
+        "simRatchetKB": 189.032,
+        "simEngineRatchetKB": 201.107
       }
     ]
   },

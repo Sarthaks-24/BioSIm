@@ -82,6 +82,9 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // signal texts) and the lymph map with its fat dots, one lazy module under systems/lymph/
   // (cache-tiers.mjs: lazy tier). Drawing only until S-5; Model estimate since (R3).
   lymph: onePack(() => import('./lymph/pack.ts')),
+  // U-7: Brain & nerves (the nerve demo, its words, English and flat brain), one lazy module under
+  // systems/nerves/ (cache-tiers.mjs: lazy tier). U-6's Hormones joins the same `control` module.
+  control: onePack(() => import('./nerves/pack.ts')),
 }
 
 const loading = new Map<PackId, Promise<void>>()

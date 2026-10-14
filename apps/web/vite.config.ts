@@ -138,9 +138,10 @@ export default defineConfig({
             // The breathing pack and the picker read the clock; left to itself the bundler then cut
             // the registry into a chunk of its own (+0.18 KB gz on /sim, measured). Only these modules.
             // U-4: the kidneys row too (alone it was a 0.2 KB chunk of its own on /sim, measured).
+            // U-7: the nerves row too (the same 0.2 KB chunk of its own, measured).
             {
               name: 'clock',
-              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|kidneys[\\/]row|lymph[\\/]def|muscles[\\/]row))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|kidneys[\\/]row|lymph[\\/]def|muscles[\\/]row|nerves[\\/]row))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
               includeDependenciesRecursively: false,
             },
           ],

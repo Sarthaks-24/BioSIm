@@ -41,6 +41,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'activity.spec.ts',
       'screen-reader.spec.ts',
       'lymph.spec.ts',
+      'nerves.spec.ts',
       'breathing.spec.ts',
       'circulation.spec.ts',
       'effort.spec.ts',
@@ -93,6 +94,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'overlays.spec.ts',
       'activity.spec.ts',
       'lymph.spec.ts',
+      'nerves.spec.ts',
       'breathing.spec.ts',
       'circulation.spec.ts',
       'effort.spec.ts',
@@ -107,6 +109,7 @@ const projects: PlaywrightTestConfig['projects'] = [
     name: 'reduced',
     testMatch: [
       'motion.spec.ts',
+      'nerves.spec.ts',
       'stage.spec.ts',
       'breathing.spec.ts',
       'circulation.spec.ts',

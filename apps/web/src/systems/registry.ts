@@ -11,6 +11,7 @@ import type {
   RunResult,
   Series,
   SignalMeta,
+  SignalStatus,
   Unit,
 } from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
@@ -22,6 +23,7 @@ import { CIRCULATION } from './circulation/row.ts'
 import { KIDNEYS } from './kidneys/row.ts'
 import { LYMPH } from './lymph/def.ts'
 import { BONES, MUSCLES, SKIN } from './muscles/row.ts'
+import { NERVES } from './nerves/row.ts'
 
 /**
  * The systems registry (W-1, architecture §0, §5.1 and §5.2): every body system the stage can
@@ -233,6 +235,11 @@ export interface SystemDef {
   public: boolean
   /** Shown only when a teacher switches it on (reproduction, v3.2+). */
   teacherSwitch?: boolean
+  /**
+   * A row with no graphs: the tag the picker shows for it. Without one a row with no inputs is
+   * "Drawing only" (lymph's map); the nerve demo is a "Model estimate" (U-7, model §2.6).
+   */
+  tag?: SignalStatus
 }
 
 /**
@@ -241,7 +248,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, KIDNEYS, LYMPH, MUSCLES, BONES, SKIN]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, KIDNEYS, LYMPH, NERVES, MUSCLES, BONES, SKIN]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 

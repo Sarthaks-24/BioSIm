@@ -250,6 +250,9 @@ const BUDGETS = [
   // U-1: the effort pack (muscles, skin, the bones card: rows, words, English, three flat layers), one
   // lazy module (systems/muscles/pack.ts); a system pack is at most 20 KB gz (ui-ux §9, anatomy plan §8).
   { name: 'effort pack (lazy)', roots: ['src/systems/muscles/pack.ts'], minus: SIM_ROOTS, max: 20 * KB, mode: 'enforce' },
+  // U-7: the control pack (Brain & nerves: the nerve demo with its numbers, words, English and flat
+  // brain), one lazy module (systems/nerves/pack.ts); at most 20 KB gz like every system pack.
+  { name: 'control pack (lazy)', roots: ['src/systems/nerves/pack.ts'], minus: SIM_ROOTS, max: 20 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
