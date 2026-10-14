@@ -30,13 +30,27 @@ interface Answer {
 const TAGS = ['b', 'k', 'm'] as const
 
 /**
- * Empty axes to sketch on: time across (0 to `span`, a tick every `step`: hours, or ms for the nerve
- * demo), the lesson's graph up the side. Black on white.
+ * Empty axes to sketch on: time across (`from` to `to`, a tick at each of `ticks`: hours, ms for the
+ * nerve demo, or days of one cycle for the hormone panel), the lesson's graph up the side. Black on white.
  */
-function Axes({ span, step, y, x: across, label }: { span: number; step: number; y: string; x: string; label: string }) {
+function Axes({
+  from = 0,
+  to,
+  ticks,
+  y,
+  x: across,
+  label,
+}: {
+  from?: number
+  to: number
+  ticks: readonly number[]
+  y: string
+  x: string
+  label: string
+}) {
   // The graph's name over the side axis, the time under the bottom one: both read across.
   const [w, h, left, top, bottom] = [300, 160, 10, 20, 34]
-  const x = (at: number) => left + (at / span) * (w - left - 10)
+  const x = (at: number) => left + ((at - from) / (to - from)) * (w - left - 10)
   const rows = [1, 2, 3].map((i) => top + ((h - bottom - top) * i) / 4)
   return (
     <figure className="ws-axes">
@@ -44,11 +58,11 @@ function Axes({ span, step, y, x: across, label }: { span: number; step: number;
         <text x={left} y={12}>
           {y}
         </text>
-        {Array.from({ length: Math.floor(span / step) + 1 }, (_, i) => (
-          <g key={i}>
-            <line x1={x(i * step)} x2={x(i * step)} y1={top} y2={h - bottom} className="ws-grid" />
-            <text x={x(i * step)} y={h - bottom + 13} textAnchor="middle">
-              {i * step}
+        {ticks.map((at) => (
+          <g key={at}>
+            <line x1={x(at)} x2={x(at)} y1={top} y2={h - bottom} className="ws-grid" />
+            <text x={x(at)} y={h - bottom + 13} textAnchor="middle">
+              {at}
             </text>
           </g>
         ))}
@@ -63,6 +77,9 @@ function Axes({ span, step, y, x: across, label }: { span: number; step: number;
     </figure>
   )
 }
+
+/** 0, `step`, 2 × `step`, … up to `span`. */
+const every = (span: number, step: number) => Array.from({ length: Math.floor(span / step) + 1 }, (_, i) => i * step)
 
 /** The lines a student writes an answer on (paper only: nothing is typed or kept). */
 const Lines = ({ n }: { n: number }) => (
@@ -105,13 +122,25 @@ export default function Worksheet({
   const sheet: Sheet = SHEETS[lesson]
   /** This lesson's own words (`sheet.lessons.<lesson>.<part>`). */
   const own = <T = string,>(part: string, objects = false) => t(`sheet.lessons.${lesson}.${part}`, { returnObjects: objects }) as T
+  /** This lesson's own words for a part every sheet has (`sheet.<part>`), when it has them. */
+  const ownOr = (part: string) => (i18n.exists(`sheet.lessons.${lesson}.${part}`, { lng: 'en' }) ? own(part) : t(`sheet.${part}`))
   const tasks = own<Answer[]>('tasks', true)
-  // Hours after eating, or milliseconds after the touch (the nerve demo: a tick every 50 ms).
+  // Hours after eating, milliseconds after the touch (the nerve demo: a tick every 50 ms), or the days
+  // of one cycle (the hormone panel, v3.2: day 1, then every week, as the panel's own axis).
   const y = own('y')
+  const sk = sheet.sketch
   const axes =
-    'ms' in sheet.sketch
-      ? { span: sheet.sketch.ms, step: 50, x: t('sheet.timeMs'), label: t('sheet.axesMs', { y, ms: sheet.sketch.ms }) }
-      : { span: sheet.sketch.hours, step: 1, x: t('sheet.time'), label: t('sheet.axes', { y, hours: sheet.sketch.hours }) }
+    'ms' in sk
+      ? { to: sk.ms, ticks: every(sk.ms, 50), x: t('sheet.timeMs'), label: t('sheet.axesMs', { y, ms: sk.ms }) }
+      : 'days' in sk
+        ? {
+            from: 1,
+            to: sk.days,
+            ticks: [1, ...every(sk.days, 7).slice(1)],
+            x: t('sheet.timeDays'),
+            label: t('sheet.axesDays', { y, days: sk.days }),
+          }
+        : { to: sk.hours, ticks: every(sk.hours, 1), x: t('sheet.time'), label: t('sheet.axes', { y, hours: sk.hours }) }
   const exit = own<Answer>('exit', true)
   const link = SITE_URL + sheet.link
   // "Class 6 · Class 7 · Class 10 — NCERT Class 10, Life Processes: Respiration".
@@ -198,10 +227,11 @@ export default function Worksheet({
 
         {/* The "Why does the model differ from the book?" card (X-4) is not printed here: its rows are in the
             packs' text sections (sys.<pack>.why), which Teach does not load. */}
-        {answers && <p className="ws-key">{t('sheet.tagKey')}</p>}
+        {/* A lesson may say its own (the hormone panel's "Model" is a study's values, not one grown-up's). */}
+        {answers && <p className="ws-key">{ownOr('tagKey')}</p>}
 
         <footer className="ws-foot">
-          <span>{t('sheet.footer')}</span>
+          <span>{ownOr('footer')}</span>
           <span>{t('sheet.version', { version: MODEL_VERSION, date })}</span>
         </footer>
       </article>

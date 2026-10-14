@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Segmented, StatusTag } from '../../components/kit/index.ts'
+import WhyCard from '../../components/WhyCard.tsx'
 import {
   ANCHOR_DAYS,
   CYCLE_DAYS,
@@ -31,6 +32,12 @@ import {
  */
 
 type Tab = 'cycle' | 'height'
+
+/**
+ * The hormone panel's "Why does the model differ from the book?" card (components/WhyCard.tsx), by its
+ * book line (NCERT Class 9 Exploration ch 11 p. 221; Class 10 ch 7 p. 124): its rows, in this pack's section.
+ */
+const WHY = 'sys.reproduction.why'
 
 /** The pack's words (`sys.reproduction.*`). */
 function useSay() {
@@ -129,9 +136,13 @@ function CyclePanel() {
           <Swatch dash="2 3" thin /> {say('cycle.egg')}
         </li>
       </ul>
-      <p className="text-control font-semibold" data-differ="">
-        {say('cycle.differ')}
-      </p>
+      {/* The book line, and its "Why different?" card (X-4; v3.2 Teach step): the books' cycle and days of menstruation. */}
+      <div className="flex flex-wrap items-center gap-x-3">
+        <p className="text-control font-semibold" data-differ="" data-book="">
+          {say('cycle.differ')}
+        </p>
+        <WhyCard text={WHY} />
+      </div>
       <p className="text-caption text-ink-muted">
         {say('cycle.relative')} {say('cycle.lhWho')} {say('cycle.clock')}
       </p>

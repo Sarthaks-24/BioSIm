@@ -148,11 +148,13 @@ const SCOPED: readonly { phrase: string; allowed: (path: string) => boolean }[] 
   { phrase: 'dehydrat*', allowed: (path) => path.startsWith('science.') || /(^|\.)limits\./.test(path) },
   // U-4: the kidneys' graph and moment texts too (their keys are fixed by the engine's catalog).
   { phrase: 'flush', allowed: (path) => !/^(sys\.kidneys|signals\.kidney|signals\.water)\./.test(path) },
-  // R-1: in Reproduction's words (its pack and its lesson), nothing that tracks, predicts or dates a
-  // cycle, and no fertility at all ("tracker" stays allowed in the privacy page's "any other tracker").
+  // R-1: in Reproduction's words (its pack, its lesson and, since the v3.2 Teach step, its worksheet),
+  // nothing that tracks, predicts or dates a cycle, and no fertility at all ("tracker" stays allowed
+  // in the privacy page's "any other tracker").
   ...['fertil*', 'track*', 'predict*', 'calculat*', 'calendar*', 'date', 'dates', 'safe', 'unsafe', 'remind*'].map((phrase) => ({
     phrase,
-    allowed: (path: string) => !/^(sys\.reproduction\.|teach\.(lessons|lessonQuestions)\.cycleHormones$|keys\.growingUp)/.test(path),
+    allowed: (path: string) =>
+      !/^(sys\.reproduction\.|teach\.(lessons|lessonQuestions)\.cycleHormones$|sheet\.lessons\.cycleHormones\.|keys\.growingUp)/.test(path),
   })),
 ]
 

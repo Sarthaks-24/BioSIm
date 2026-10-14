@@ -11,7 +11,14 @@ import { checkAxe, onlyIn } from './helpers/gate.ts'
 // is at least 25 mm on paper and holds exactly the lesson's link on this site. Desktop project.
 // Every built system's lessons are public since H-1 (R103); these links keep `?preview=1`, so that path stays tested.
 
-test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
+// The teacher switch on in this tab, as for a teacher printing the reproduction sheet (v3.2, R117):
+// Teach lists that sheet only then (reproduction.spec checks it is absent while the switch is off).
+test.beforeEach(({ page }) =>
+  page.addInitScript(() => {
+    localStorage.setItem('lifepeek:medicalNoteSeen', '1')
+    sessionStorage.setItem('lifepeek:growingUp', '1')
+  }),
+)
 
 const KEYS = Object.keys(SHEETS) as SheetKey[]
 /** The site address of the build under test: the planned one unless VITE_SITE_URL was set. */

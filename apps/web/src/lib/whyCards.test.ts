@@ -3,13 +3,21 @@ import { PARAMS, valueAt, type RunResult } from '@lifepeek/engine'
 import { PACK_PARAMS, simulate } from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import { lookupFood } from '../data/foods.ts'
-import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
+import { BREATHING_LESSON, FOOTBALL_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
 import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import type { SystemLesson } from '../systems/registry.ts'
 import { brainRoute, reflexTime } from '@lifepeek/engine/demo'
+import {
+  CYCLE_DAYS,
+  CYCLE_RANGE,
+  MENSTRUATION_DRAWN,
+  MENSTRUATION_RANGE,
+  OVULATION_DAY,
+  STUDY_OVULATION,
+} from '../systems/reproduction/data.ts'
 
 /**
  * "Why does the model differ from the book?" cards (X-4; content-i18n §8.5, ui-ux §8.4, R9, R54,
@@ -36,6 +44,7 @@ const CARDS: Record<string, Card> = {
   'sys.lymph.why': en.sys.lymph.why,
   'sys.control.why': en.sys.control.why,
   'sys.control.nerves.why': en.sys.control.nerves.why,
+  'sys.reproduction.why': en.sys.reproduction.why,
 }
 const rowsOf = (card: Card) => Object.entries(card).filter((e): e is [string, Row] => typeof e[1] === 'object')
 
@@ -67,7 +76,8 @@ describe('the cards’ words (R9)', () => {
     for (const [key, card] of Object.entries(CARDS))
       for (const [name, row] of rowsOf(card)) {
         if (/^no (number|time)/.test(row.book) || row.book.includes('(same page)')) continue
-        expect(row.book, `${key}.${name}`).toMatch(/\((older )?NCERT Class (6|7|10)\b.*\bCh \d+, p\. \d+\)$/)
+        // Classes 8 and 9 since v3.2 (reproduction: Class 9 Exploration, R117).
+        expect(row.book, `${key}.${name}`).toMatch(/\((older )?NCERT Class (6|7|8|9|10)\b.*\bCh \d+, p\. \d+\)$/)
       }
   })
 })
@@ -104,10 +114,41 @@ describe('Breathing (older NCERT Class 7 book, Ch 6, pp. 60, 64; R54, R56)', () 
     )
   })
 
+  it('in the Games lesson (v3.2): football and the kept walk at the lesson’s time, their minutes, and the Compendium’s values', () => {
+    const l = FOOTBALL_LESSON
+    const [game, walk] = [plan(l), plan(l, true)]
+    expect(Object.keys(card)).toEqual(['rest', 'run', 'games', 'exhaled', 'ask'])
+    expect(card.games.book).toBe('up to 25 a minute in heavy exercise (same page)')
+    expect(numbers(card.games.model)).toEqual([
+      Math.round(at(game, 'lungs.breathRate', l.t)),
+      l.activity[0]!.durMin,
+      Math.round(at(walk, 'lungs.breathRate', l.t)),
+      l.keptActivity[0]!.durMin,
+    ])
+    expect(numbers(card.games.why)).toEqual([2024, PARAMS.activity.met.football, PARAMS.activity.met.walk])
+  })
+
   it('the air breathed out: the book’s 16.4 % and 4.4 % only; no model number (R54)', () => {
     expect(numbers(card.exhaled.book).slice(0, 2)).toEqual([16.4, 4.4])
     expect(numbers(card.exhaled.model)).toEqual([])
     expect(numbers(card.exhaled.why)).toEqual([])
+  })
+})
+
+describe('Reproduction (NCERT Class 9 Exploration, Ch 11, p. 221; Class 10, Ch 7, p. 124; read for R-1, v3.2 Teach step)', () => {
+  const card = en.sys.reproduction.why
+  it('the cycle: the book’s range and usual length as read; the panel’s 28 days and egg day; the study’s cycle it was moved from', () => {
+    expect(numbers(card.cycle.book)).toEqual([...CYCLE_RANGE, CYCLE_DAYS, 9, 11, 221])
+    expect(numbers(card.cycle.model)).toEqual([CYCLE_DAYS, OVULATION_DAY])
+    expect(numbers(card.cycle.why)).toEqual([29, STUDY_OVULATION, CYCLE_DAYS, 2021])
+  })
+
+  it('menstruation: the two books’ ranges (they differ), and the diagram’s shaded days', () => {
+    expect(numbers(card.menstruation.book)).toEqual([...MENSTRUATION_RANGE, 9, 11, 221, 10, 7, 124])
+    // Class 10 p. 124: "about two to eight days", in words.
+    expect(card.menstruation.book).toContain('about two to eight days (NCERT Class 10, Ch 7, p. 124)')
+    expect(numbers(card.menstruation.model)).toEqual([...MENSTRUATION_DRAWN, 9])
+    expect(card.ask).toContain('Why can both be right?')
   })
 })
 

@@ -44,10 +44,12 @@ test('Breathing: rest, a run and the air breathed out, whose numbers are the boo
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, `${RUN}&layer=breathing`, 'breathing')
-  const { link, card } = await openCard(graphs(page), 'sys.breathing.why', 3)
+  // Rest, the run, the Games lesson's football (v3.2) and the air breathed out.
+  const { link, card } = await openCard(graphs(page), 'sys.breathing.why', 4)
   await expect(card.locator('[data-why-row="rest"] [data-why-book]')).toContainText('older NCERT Class 7 book, 2024-25, Ch 6, p. 60')
   await expect(card.locator('[data-why-row="run"] [data-why-model]')).toContainText('about 33 a minute in a 10-minute run')
   await expect(card.locator('[data-why-row="run"]')).toContainText('Blackie 1991')
+  await expect(card.locator('[data-why-row="games"] [data-why-model]')).toContainText('about 30 a minute in 20 minutes of casual football')
   const exhaled = card.locator('[data-why-row="exhaled"]')
   await expect(exhaled.locator('[data-why-book]')).toContainText('16.4 % oxygen and 4.4 % carbon dioxide')
   await expect(exhaled.locator('[data-why-model]')).toHaveText('This model says: not shown')

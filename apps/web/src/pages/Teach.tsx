@@ -3,9 +3,8 @@ import { Link, useLocation } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
 import { TASKS, presetHref, type Lesson } from '../lib/presets.ts'
-import { shownChapters, type TeachLesson } from '../lib/lessons.ts'
+import { flagshipPacks, shownChapters, type TeachLesson } from '../lib/lessons.ts'
 import { FLAGSHIP, LESSON_STATE, flagshipHref, flagshipShown, isPreview } from '../lib/flagship.ts'
-import { systemOf } from '../systems/registry.ts'
 import { QR_PATH } from '../lib/qrPath.ts'
 import { SITE_URL } from '../lib/site.ts'
 import { setProjector } from '../hooks/useProjector.ts'
@@ -18,7 +17,7 @@ import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'
 import type { SheetKey } from '../lib/worksheets.ts'
-import { LESSON_PACKS, canSave, isSaved, save } from '../lib/offlineSave.ts'
+import { canSave, isSaved, save } from '../lib/offlineSave.ts'
 
 // A lesson's printable worksheet (X-3): its code, words, print CSS and QR codes load when one is opened.
 const Worksheet = lazy(() => import('../components/Worksheet.tsx'))
@@ -98,17 +97,6 @@ function useOffline(lessons: readonly { key: string; packs: readonly string[] }[
   }
   return { state, run }
 }
-
-/** The packs the guided lesson needs offline: the stage's parts, 3D, and each system it pauses on (skin's once public). */
-const flagshipPacks = (preview: boolean) => [
-  ...LESSON_PACKS,
-  'breathing',
-  'circulation',
-  'kidneys',
-  ...(preview || systemOf('skin')?.public ? ['effort'] : []),
-  // v3.1: the insulin pause (R38).
-  ...(preview || systemOf('hormones')?.public ? ['control'] : []),
-]
 
 const SAVE_BUTTON = 'min-h-11 shrink-0 rounded-full border border-border px-4 font-semibold hover:bg-surface-sunk lg:min-h-9'
 
@@ -258,7 +246,8 @@ export default function Teach() {
           </button>
         </div>
       )}
-      {/* By NCERT chapter (R15): Class 10's Life Processes in its order, then moving and body heat. */}
+      {/* By NCERT chapter (R15): Class 10's Life Processes in its order, then control and coordination,
+          reproduction (only while the teacher switch is on in this tab: R117), and moving and body heat. */}
       {chapters.map((c, i) => (
         <section key={c.key} aria-labelledby={`chapter-${c.key}`} data-chapter={c.key} className="mt-6">
           {c.c10 && !chapters[i - 1]?.c10 && <p className="mb-2 text-sm font-semibold text-ink-muted">{t('teach.chapters.c10')}</p>}
@@ -275,10 +264,12 @@ export default function Teach() {
                       {l.preset ? meals(l.preset) : t(`teach.lessonQuestions.${l.key}`)} ·{' '}
                       {l.preset
                         ? t('teach.opensAt', { time: time(l.t), graph: t(`stage.strips.${l.slot}`) })
-                        : // The nerve demo (v3.1) has no meal clock to pause on: it opens on the demo.
+                        : // The nerve demo (v3.1) and the hormone panel (v3.2) have no meal clock to pause on: each opens on itself.
                           l.slot === 'demo'
                           ? t('teach.opensDemo')
-                          : t('teach.opensAtTime', { time: time(l.t) })}
+                          : l.slot === 'cycle'
+                            ? t('teach.opensPanel')
+                            : t('teach.opensAtTime', { time: time(l.t) })}
                     </span>
                     <span className="block text-sm text-ink-muted">{classes(l.classes)}</span>
                     {/* What the class should see, where the graph alone could mislead (council round 3). */}
