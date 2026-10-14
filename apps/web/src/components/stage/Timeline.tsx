@@ -8,6 +8,7 @@ import { posAt } from '../../lib/axis.ts'
 import { boutMoments, groupClose, hasPlan, hitAreas, momentNameKey, type Moment } from '../../lib/moments.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useBoutMarks } from './boutMarks.ts'
+import { systemOf } from '../../systems/registry.ts'
 import { useSystemUi } from '../../systems/ui.ts'
 
 /**
@@ -219,9 +220,8 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
 
   const knee = `${KNEE_FRACTION * 100}%`
   // A system's shorter window (ui-ux §4): "0–12 h shown · 48 h ›" at the bar's end, the knee's words left of its line.
-  const windowMin = useClock((s) => s.windowMin)
-  const wide = useClock((s) => s.wide)
-  const windowed = windowMin < HORIZON_MIN
+  const own = systemOf(useRunStore((s) => s.layer))?.graphWindowMin ?? HORIZON_MIN
+  const windowed = own < HORIZON_MIN
   const kneeLeft = useKneeSide(kneeLabel, width) || windowed
   return (
     <div className="relative select-none">
@@ -243,10 +243,11 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
         <button
           type="button"
           data-window={end}
-          onClick={() => useClock.getState().setWindow(windowMin, !wide)}
-          className="absolute top-0 right-0 z-10 h-6 rounded-control px-1 text-caption leading-6 whitespace-nowrap text-ink-muted hover:text-ink"
+          onClick={() => useClock.getState().setWindow(end < HORIZON_MIN ? HORIZON_MIN : own)}
+          // On a phone the clock's words take this row: its hour labels end at 12 h.
+          className="absolute top-0 right-0 z-10 h-6 rounded-control px-1 text-caption leading-6 whitespace-nowrap text-ink-muted hover:text-ink max-sm:hidden"
         >
-          {t(wide ? 'dock.windowAll' : 'dock.window', { to: formatDuration(windowMin, t), all: formatDuration(HORIZON_MIN, t) })}
+          {t(end < HORIZON_MIN ? 'dock.window' : 'dock.windowAll', { to: formatDuration(own, t), all: formatDuration(HORIZON_MIN, t) })}
         </button>
       )}
       {/* The dotted line, through the track only: the clock's words above it (phones) stay clear. */}
@@ -303,7 +304,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
             aria-hidden="true"
             data-tick=""
             className={`tabular absolute top-[calc(var(--lane)-2px)] -translate-y-full text-caption leading-none whitespace-nowrap text-ink-muted ${
-              m === 0 ? '' : m === end ? '-translate-x-full' : '-translate-x-1/2'
+              m === 0 ? '' : m === end ? '-translate-x-full' : m > end ? 'hidden' : '-translate-x-1/2'
             }`}
             style={{ left: `${timeToPos(m) * 100}%` }}
           >

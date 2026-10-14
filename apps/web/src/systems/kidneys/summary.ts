@@ -99,7 +99,7 @@ export function kidneysSummary(run: RunResult, kept: RunResult | null, t: TFunct
   if (sweat) return { headline: sweatText, reason: half != null ? t('sys.kidneys.summary.half', { time: time(half) }) : undefined }
   if (isFlat(urine, run.stepMin, WINDOW_MIN, FLAT_ML_PER_H) || peak.value < BACKGROUND_ML_PER_H + FLAT_ML_PER_H) {
     return {
-      headline: t('sys.kidneys.summary.flat', { n: n(Math.round(BACKGROUND_ML_PER_H)) }),
+      headline: t('sys.kidneys.summary.flat', { n: n(Math.round(BACKGROUND_ML_PER_H / 5) * 5) }),
       reason: t('sys.kidneys.summary.flatReason'),
     }
   }
@@ -108,7 +108,7 @@ export function kidneysSummary(run: RunResult, kept: RunResult | null, t: TFunct
     headline: t('sys.kidneys.summary.peak', {
       n: text,
       time: time(peak.atMin),
-      base: t('units.mLPerH', { n: n(Math.round(BACKGROUND_ML_PER_H)) }),
+      base: t('units.mLPerH', { n: n(Math.round(BACKGROUND_ML_PER_H / 5) * 5) }),
     }),
     key: { text, line: 'run' },
     reason: half != null ? t('sys.kidneys.summary.half', { time: time(half) }) : undefined,

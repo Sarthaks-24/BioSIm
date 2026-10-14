@@ -111,7 +111,8 @@ function NowLine({ run, kept, className = '' }: NowProps) {
 /**
  * The lines under each kidneys graph (ui-ux §6, R10, R13): what moves it; under the urine graph the
  * filtering constant card (a value the same all day here, why, and its source line: no fourth tag);
- * under the body-water graph what below zero means (R84). A short window keeps its plot.
+ * under the body-water graph what below zero means (R84). A short window keeps its plot, and a phone's
+ * one graph too: there both are in the graph's "How we know" (limits.gfrFixed, the signal's description).
  */
 function StripNote({ slot }: { slot: GraphSlotDef }) {
   const { t } = useTranslation()
@@ -119,12 +120,14 @@ function StripNote({ slot }: { slot: GraphSlotDef }) {
     <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.kidneys.moves')}</p>
       {slot.id === 'urine' ? (
-        <p data-constant="filtration" className="[@media(height<42.5rem)]:hidden">
+        <p data-constant="filtration" className="max-lg:hidden [@media(height<42.5rem)]:hidden">
           <span className="text-ink">{t('sys.kidneys.filter.value')}</span> {t('sys.kidneys.filter.back')}{' '}
           <span data-source="">{t('sys.kidneys.filter.source')}</span>
         </p>
       ) : (
-        <p data-below-zero="">{t('sys.kidneys.below')}</p>
+        <p data-below-zero="" className="max-lg:hidden">
+          {t('sys.kidneys.below')}
+        </p>
       )}
     </div>
   )

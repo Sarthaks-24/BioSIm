@@ -8,7 +8,7 @@ import { loadEngine, runKey, useEngineState, useMomentsOnClock, useRun } from '.
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
 import { boutMoments, hasPlan } from '../lib/moments.ts'
-import { shownEnd, useClock, useMealClock } from '../state/clock.ts'
+import { useClock, useMealClock } from '../state/clock.ts'
 import { useRunStore } from '../state/run.ts'
 import { useSheet } from '../state/sheet.ts'
 import { useStripTab } from '../state/stripTab.ts'
@@ -119,7 +119,7 @@ export default function Simulator() {
   // drawn again for a new one, so they keep one x scale.
   const layer = useRunStore((s) => s.layer)
   useEffect(() => useClock.getState().setWindow(systemOf(layer)?.graphWindowMin ?? HORIZON_MIN), [layer])
-  const end = useClock(shownEnd)
+  const end = useClock((s) => s.windowMin)
 
   // The key map (lib/keys.ts): keyboard and presentation clicker. Keys a focused control uses
   // itself (typing, Space on a button, arrows on the slider) are left to it.

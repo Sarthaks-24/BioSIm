@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MAX_GAP_SEC, shownEnd, startMealClock, useClock, type FrameSource } from './clock.ts'
+import { MAX_GAP_SEC, startMealClock, useClock, type FrameSource } from './clock.ts'
 import { DEFAULT_PACE, HORIZON_MIN, KNEE_MIN, posToTime, timeToPos, windowEnd } from '../lib/time.ts'
 
 const initial = useClock.getState()
@@ -180,13 +180,13 @@ describe('meal clock: play and pause', () => {
 })
 
 describe('meal clock: a system’s shorter graph window (ui-ux §4, Kidneys & water 0–12 h)', () => {
-  afterEach(() => clock().setWindow(HORIZON_MIN, false))
+  afterEach(() => clock().setWindow(HORIZON_MIN))
 
   it('the bar ends at the window: the first 6 h keep 60 %, the tail is 6–12 h; the clock stays inside it', () => {
     clock().setSimMin(1000)
     clock().setWindow(720)
     expect(windowEnd()).toBe(720)
-    expect(shownEnd(clock())).toBe(720)
+    expect(clock().windowMin).toBe(720)
     expect(clock().simMin).toBe(720)
     expect(timeToPos(KNEE_MIN)).toBeCloseTo(0.6, 10)
     expect(timeToPos(720)).toBe(1)
@@ -206,16 +206,14 @@ describe('meal clock: a system’s shorter graph window (ui-ux §4, Kidneys & wa
     expect(clock().simMin).toBe(0)
   })
 
-  it('“48 h ›” widens it to the whole bar and back; the next system keeps the choice', () => {
+  it('“48 h ›” widens it to the whole bar, and back to the window', () => {
     clock().setWindow(720)
-    clock().setWindow(720, true)
+    clock().setWindow(HORIZON_MIN)
     expect(windowEnd()).toBe(HORIZON_MIN)
     clock().setSimMin(2000)
     expect(clock().simMin).toBe(2000)
-    clock().setWindow(720, false)
+    clock().setWindow(720)
     expect(clock().simMin).toBe(720)
-    clock().setWindow(HORIZON_MIN)
-    expect(windowEnd()).toBe(HORIZON_MIN)
   })
 })
 

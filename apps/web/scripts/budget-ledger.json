@@ -21,6 +21,15 @@
         "engineKB": 10.662,
         "simRatchetKB": 187.076,
         "simEngineRatchetKB": 197.838
+      },
+      {
+        "wp": "U-4",
+        "at": "2026-10-14",
+        "on": "v3 6201885 + U-4 (/sim +0.440: the 0–12 h graph window on the graphs, dock and clock with its \"48 h ›\" button, the kidneys row in the clock group, the background-line hook, systems.kidneys and dock words; engine +0.367: the kidneys catalog rows become a chunk shared with the kidneys pack, as breathing's)",
+        "simKB": 187.316,
+        "engineKB": 11.029,
+        "simRatchetKB": 187.516,
+        "simEngineRatchetKB": 198.645
       }
     ]
   },

@@ -20,9 +20,8 @@ export interface ClockState {
   pace: Pace
   /** Key-moment times (sorted, unique) for stepToMoment; set by the page from the run's moments. */
   moments: readonly number[]
-  /** The lit system's graph window (`graphWindowMin`), and whether the dock's "48 h ›" widened it to the whole bar. */
+  /** The bar's end (lib/time.ts windowEnd): the lit system's `graphWindowMin`, or 48 h once the dock's "48 h ›" widens it. */
   windowMin: number
-  wide: boolean
 
   /** Moves the clock (clamped). Does not pause: scrubbing code pauses first if it wants to. */
   setSimMin: (min: number) => void
@@ -38,14 +37,11 @@ export interface ClockState {
   setMoments: (atMin: readonly (number | null | undefined)[]) => void
   /** One playback step of `dtSec` real seconds along the bar (called by the playback loop). */
   advance: (dtSec: number) => void
-  /** Sets the bar's end (ui-ux §4): the system's window, or 48 h when `wide`; the clock stays inside it. */
-  setWindow: (windowMin: number, wide?: boolean) => void
+  /** Sets the bar's end (ui-ux §4); the clock stays inside it. */
+  setWindow: (windowMin: number) => void
 }
 
 export const clampSimMin = (min: number) => (Number.isFinite(min) ? Math.min(Math.max(min, 0), windowEnd()) : 0)
-
-/** The bar's end a window and its "48 h ›" make (the components re-drawn when it changes key on it). */
-export const shownEnd = (s: Pick<ClockState, 'windowMin' | 'wide'>) => (s.wide ? HORIZON_MIN : Math.min(s.windowMin, HORIZON_MIN))
 
 /** Moments closer than this to "now" count as "here", so stepping never lands on the same one twice. */
 const SAME_MOMENT_MIN = 0.5
@@ -65,7 +61,6 @@ export const useClock = create<ClockState>()(
     pace: DEFAULT_PACE,
     moments: [],
     windowMin: HORIZON_MIN,
-    wide: false,
 
     setSimMin: (min) => set({ simMin: clampSimMin(min) }),
     play: () => {
@@ -98,9 +93,9 @@ export const useClock = create<ClockState>()(
       if (next >= windowEnd()) set({ simMin: windowEnd(), playing: false })
       else set({ simMin: next })
     },
-    setWindow: (windowMin, wide = get().wide) => {
-      setWindowEnd(shownEnd({ windowMin, wide }))
-      set({ windowMin, wide, simMin: clampSimMin(get().simMin) })
+    setWindow: (windowMin) => {
+      setWindowEnd(windowMin)
+      set({ windowMin, simMin: clampSimMin(get().simMin) })
     },
   })),
 )

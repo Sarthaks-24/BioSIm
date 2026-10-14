@@ -21,7 +21,6 @@ import {
   EMPTIES_ML,
   FILTER_ML_PER_MIN,
   URGE_ML,
-  backgroundOf,
   momentAt,
   seriesOf,
   stepMl,
@@ -149,7 +148,7 @@ describe('words and graphs (ui-ux §6, §7)', () => {
   it('a glass of water: more urine than a steady day for a while, then back; half its water leaves by about 1.5 h', () => {
     const r = run(water(1))
     const s = kidneysSummary(r, null, t, 'en')!
-    expect(s.headline).toMatch(/^Most urine: about 2\d0 mL an hour, at 1 h( \d+ min)? \(a day without this meal: 63 mL an hour\)\.$/)
+    expect(s.headline).toMatch(/^Most urine: about 2\d0 mL an hour, at 1 h( \d+ min)? \(a day without this meal: 65 mL an hour\)\.$/)
     expect(s.reason).toMatch(/^Half the meal’s water has left as urine by 1 h \d+ min\.$/)
     expect(kidneysStripSummary('kidney.urineRate' as never, r, t, 'en')).toMatch(
       /^Urine made per hour: 65 mL an hour at the start, 2\d0 mL an hour at the most/,
