@@ -144,3 +144,26 @@ test('the picker offers Brain & nerves with its Model estimate tag; Science list
   await expect(section).toContainText('Kiernan JA')
   await expect(section).toContainText('Mergenthaler')
 })
+
+test('the hot-pan lesson on Teach (v3.1, R109): first under Control and coordination, its worksheet; it opens on the demo', async ({
+  page,
+}) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  await goto(page, '/teach')
+  const chapter = page.locator('[data-chapter="control"]')
+  await expect(chapter.locator('[data-lesson]').evaluateAll((els) => els.map((e) => e.getAttribute('data-lesson')))).resolves.toEqual([
+    'reflexHotPan',
+    'insulinCola',
+  ])
+  const row = chapter.locator('[data-lesson="reflexHotPan"]')
+  await expect(row).toHaveAttribute('data-release', 'v3.1')
+  await expect(row).toContainText('Why do you pull your hand back before you feel the pain?')
+  await expect(row).toContainText('opens on the hot-pan demo')
+  await expect(row).toContainText('Class 10')
+  await expect(
+    row.getByRole('link', { name: 'Worksheet to print: Why do you pull your hand back before you feel the pain?' }),
+  ).toBeVisible()
+  await row.locator('a').first().click()
+  await expect(page.locator('[data-card="nerves"]')).toBeVisible()
+  await expect(page.locator('[data-system-title="nerves"]')).toBeAttached()
+})

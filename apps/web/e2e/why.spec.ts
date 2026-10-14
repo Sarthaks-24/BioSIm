@@ -3,7 +3,7 @@ import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
 // "Why does the model differ from the book?" cards (X-4; ui-ux §8.4, content-i18n §8.5, R9, R54):
 // "Why different? ›" by a system's book line opens its card (the book's value with its page, the
-// model's, why, and the exam line), in Breathing, Skin & temperature and Lymph, and by the guided
+// model's, why, and the exam line), in Breathing, Skin & temperature, Lymph and the nerve demo, and by the guided
 // lesson's book line (its first pause's system's card). The cards come with their packs: a plain digestion visit never
 // fetches one. Projects desktop and phone. E2E_SHOTS=1 saves pictures to .shots/ (git-ignored).
 
@@ -93,6 +93,17 @@ test('Lymph (U-5): the book’s road, NCERT Class 10 p. 94, and the burger’s b
   await expect(card.locator('[data-why-row="road"] [data-why-model]')).toContainText('from 80 to about 101 mg/dL')
   await expect(card.locator('[data-why-row="before"]')).toContainText('116 mg/dL')
   await shot(page, 'lymph')
+})
+
+test('Brain & nerves (v3.1, R109): by the demo’s book line, NCERT Class 10 p. 102; the two routes in ms', async ({ page }) => {
+  await open(page, '/sim?v=3&a=roti:1&layer=nerves', 'nerves')
+  const sources = page.locator('[data-card="nerves"] details')
+  await sources.locator('summary').click()
+  const { card } = await openCard(sources, 'sys.control.nerves.why', 1)
+  await expect(card.locator('[data-why-row="speed"] [data-why-book]')).toContainText('(NCERT Class 10, Ch 6, p. 102)')
+  await expect(card.locator('[data-why-row="speed"] [data-why-model]')).toContainText('about 64 ms')
+  await expect(card.locator('[data-why-row="speed"] [data-why-model]')).toContainText('about 214 ms')
+  await shot(page, 'nerves')
 })
 
 test('the cards are lazy: a plain digestion visit fetches no card', async ({ page }) => {

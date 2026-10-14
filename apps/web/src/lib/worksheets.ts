@@ -12,8 +12,11 @@
  */
 export interface Sheet {
   link: string
-  /** The question (0-based) printed with empty axes, and the hours they span. */
-  sketch: { task: number; hours: number }
+  /**
+   * The question (0-based) printed with empty axes, and the time they span: hours after eating, or
+   * (the nerve demo, v3.1: a reflex takes thousandths of a second) milliseconds after the touch.
+   */
+  sketch: { task: number; hours: number } | { task: number; ms: number }
 }
 
 export const SHEETS = {
@@ -28,6 +31,7 @@ export const SHEETS = {
   insulinCola: { link: '/sim?a=cola:1&b=water:1&t=27&layer=hormones', sketch: { task: 0, hours: 4 } },
   musclesRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=muscles&act=run.30.10', sketch: { task: 3, hours: 2 } },
   sweatRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=skin&act=run.30.10', sketch: { task: 3, hours: 2 } },
+  reflexHotPan: { link: '/sim?a=roti:1&layer=nerves', sketch: { task: 1, ms: 250 } },
 } as const satisfies Record<string, Sheet>
 
 export type SheetKey = keyof typeof SHEETS

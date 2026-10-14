@@ -15,6 +15,8 @@ import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { HORMONES_LESSON } from '../systems/hormones/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { FILTER_ML_PER_MIN } from '../systems/kidneys/water.ts'
+import { NERVES_LESSON } from '../systems/nerves/lesson.ts'
+import { NERVE_PARAMS, brainRoute, reflexTime } from '@lifepeek/engine/demo'
 
 // The app's i18n setup needs a browser; nothing here draws.
 vi.mock('../i18n/index.ts', () => ({ localized: () => '' }))
@@ -76,9 +78,10 @@ describe('worksheets: one per Teach lesson, its QR code opening the lesson', () 
       expect(tasks.length + 1, key).toBeGreaterThanOrEqual(3)
       expect(tasks.length + 1, key).toBeLessThanOrEqual(5)
       expect([setup, book, y, exit.q].every(Boolean), key).toBe(true)
-      const { task, hours } = SHEETS[key].sketch
-      expect(tasks[task]?.q, key).toMatch(/^Sketch /)
-      expect(tasks[task]?.q, key).toContain(`to ${hours} h`)
+      const sketch = SHEETS[key].sketch
+      expect(tasks[sketch.task]?.q, key).toMatch(/^Sketch /)
+      // Hours after eating; the nerve demo's in milliseconds after the touch (v3.1).
+      expect(tasks[sketch.task]?.q, key).toContain('ms' in sketch ? `to ${sketch.ms} ms` : `to ${sketch.hours} h`)
       for (const a of [...tasks, exit]) expect(a.b || a.k || a.m, `${key}: ${a.q}`).toBeTruthy()
     }
   })
@@ -215,6 +218,27 @@ describe('worksheets: the numbers the answers say are the model’s', () => {
     const sweat = peak(r, 'skin.sweatRate')
     expect(numbers(skin[3]!.m)).toEqual([sweat.min, round(sweat.v, 10)])
     expect(sweat.min).toBe(end)
+  })
+
+  it('why you pull your hand back (U-7, v3.1): the reflex and the brain route, its slow leg, myelin off; from @lifepeek/engine/demo', () => {
+    expect(NERVES_LESSON.key).toBe('reflexHotPan')
+    const [reflex, brain, slow] = [reflexTime('hotPan'), brainRoute('hotPan'), reflexTime('hotPan', { myelin: 0 })]
+    const { tasks, exit, book } = text('reflexHotPan')
+    expect(book).toContain('NCERT Class 10 (Ch 6, p. 102)')
+    // Both routes end inside the sketch's axes.
+    const sketch = SHEETS.reflexHotPan.sketch
+    expect(numbers(tasks[1]!.q)).toEqual([0, sketch.ms])
+    expect(brain.totalMs).toBeLessThan(sketch.ms)
+    expect(numbers(tasks[1]!.m)).toEqual([round(reflex.totalMs), round(brain.totalMs)])
+    expect(Math.round(brain.totalMs / reflex.totalMs)).toBe(3)
+    expect(tasks[1]!.m).toContain('about three times as long')
+    // The way in is most of the reflex's time, on the fibres' own speeds (Kiernan's table).
+    expect(reflex.inMs / reflex.totalMs).toBeGreaterThan(0.5)
+    expect(numbers(tasks[2]!.k)).toEqual([NERVE_PARAMS.fibreSpeedMPerS.aDelta, NERVE_PARAMS.fibreSpeedMPerS.aAlpha, 2003])
+    expect(numbers(tasks[2]!.m)).toEqual([round(reflex.inMs), round(reflex.totalMs)])
+    expect(numbers(tasks[3]!.m)).toEqual([round(slow.totalMs), round(slow.totalMs / reflex.totalMs)])
+    expect(numbers(exit.m)).toEqual([round(reflex.totalMs), NERVE_PARAMS.thinkingMs])
+    expect(brain.thinkingMs).toBe(NERVE_PARAMS.thinkingMs)
   })
 
   it('how fat reaches the blood (U-5): each meal’s highest blood fat, the burger’s for hours (R90), and the fat each brings', () => {

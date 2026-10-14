@@ -5,14 +5,15 @@ import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
 import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { HORMONES_LESSON } from '../systems/hormones/lesson.ts'
+import { NERVES_LESSON } from '../systems/nerves/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { LESSONS, presetHref, type Lesson } from './presets.ts'
 import { LESSON_PACKS } from './offlineSave.ts'
 
 /**
  * Teach's lessons by NCERT chapter (X-1, R15): Class 10's Life Processes in its order (nutrition,
- * respiration, transportation, excretion), then Class 10's Control and coordination (U-6: the insulin
- * lesson, v3.1, R18), then moving and body heat (Classes 6 and 9). Each row is a
+ * respiration, transportation, excretion), then Class 10's Control and coordination (v3.1, R18: the
+ * hot-pan reflex, then the insulin lesson, in the chapter's order), then moving and body heat (Classes 6 and 9). Each row is a
  * ready lesson with its classes (content-i18n §8.1) and its release (R18). A system's lessons show
  * once the system is public, or in a `?preview=1` session (R30): a lesson for a hidden system is
  * never listed, and needs no change to appear when the gate (H-1) makes its system public.
@@ -81,7 +82,12 @@ export const CHAPTERS: readonly Chapter[] = [
     lessons: [fromSystem(CIRCULATION_LESSON, [7, 10], 'circulation'), fromSystem(LYMPH_LESSON, [10], 'lymph')],
   },
   { key: 'excretion', c10: true, lessons: [fromSystem(KIDNEYS_LESSON, [10], 'kidneys')] },
-  { key: 'control', c10: false, lessons: [fromSystem(HORMONES_LESSON, [10], 'control')] },
+  {
+    key: 'control',
+    c10: false,
+    // v3.1 (R109, R112): NCERT Class 10 Ch 6's order, nerves (6.1, the reflex) then hormones (6.3). One pack, `control`.
+    lessons: [fromSystem(NERVES_LESSON, [10], 'control'), fromSystem(HORMONES_LESSON, [10], 'control')],
+  },
   {
     key: 'movement',
     c10: false,

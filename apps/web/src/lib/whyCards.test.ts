@@ -9,6 +9,7 @@ import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
 import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import type { SystemLesson } from '../systems/registry.ts'
+import { brainRoute, reflexTime } from '@lifepeek/engine/demo'
 
 /**
  * "Why does the model differ from the book?" cards (X-4; content-i18n §8.5, ui-ux §8.4, R9, R54,
@@ -34,6 +35,7 @@ const CARDS: Record<string, Card> = {
   'sys.effort.why': en.sys.effort.why,
   'sys.lymph.why': en.sys.lymph.why,
   'sys.control.why': en.sys.control.why,
+  'sys.control.nerves.why': en.sys.control.nerves.why,
 }
 const rowsOf = (card: Card) => Object.entries(card).filter((e): e is [string, Row] => typeof e[1] === 'object')
 
@@ -158,6 +160,18 @@ describe('Hormones: what insulin does (NCERT Class 10, Ch 6, p. 111, read for U-
     expect(card.feedback.model).toContain('does not pull blood sugar down')
     // The same page, word for word where the stage quotes it (the insulin graph's book line, the lesson's pause and worksheet).
     for (const line of [en.sys.control.book, en.sheet.lessons.insulinCola.book]) expect(line).toMatch(/pancreas makes more insulin/)
+  })
+})
+
+describe('Brain & nerves: the hot pan (NCERT Class 10, Ch 6, p. 102, read for U-7; v3.1 Teach step, R109)', () => {
+  const card = en.sys.control.nerves.why
+  it('the book’s words as read (no number); the model’s two routes are reflexTime’s, as the demo’s counters', () => {
+    expect(card.speed.book).toContain('“the thinking process of the brain is not fast enough”')
+    expect(numbers(card.speed.book)).toEqual([10, 6, 102])
+    // The demo's own book line quotes the same page.
+    expect(en.sys.control.nerves.demo.book).toContain('the thinking process of the brain is not fast enough')
+    expect(numbers(card.speed.model)).toEqual([Math.round(reflexTime('hotPan').totalMs), Math.round(brainRoute('hotPan').totalMs)])
+    expect(numbers(card.ask)).toEqual([Math.round(reflexTime('hotPan').totalMs)])
   })
 })
 

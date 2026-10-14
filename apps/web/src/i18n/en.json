@@ -42,10 +42,12 @@
         "breathing": "Breaths a minute, air per breath, oxygen used.",
         "circulation": "Heart beats a minute, blood pumped, where the blood goes.",
         "kidneys": "Urine made, and the water from the meal.",
-        "lymph": "A drawing of the lymph vessels, and how the body fights germs.",
+        "lymph": "Fat from the meal on its way to the blood, blood fat, and how the body fights germs.",
         "muscles": "Energy the muscles use.",
         "bones": "A drawing of the skeleton.",
-        "skin": "Sweat made."
+        "skin": "Sweat made.",
+        "nerves": "A hot pan: the reflex against the route through the brain, in thousandths of a second.",
+        "hormones": "Insulin after the meal, and what other hormones do."
       }
     }
   },
@@ -241,6 +243,7 @@
     },
     "classTag": "Class {{n}}",
     "opensAtTime": "opens at {{time}}",
+    "opensDemo": "opens on the hot-pan demo",
     "worksheet": "Worksheet to print",
     "worksheetFor": "Worksheet to print: {{lesson}}"
   },
@@ -264,6 +267,8 @@
     "exit": "Exit question",
     "time": "Time (hours after eating)",
     "axes": "Empty axes to sketch on: {{y}} against time, 0 to {{hours}} hours.",
+    "timeMs": "Time (ms after the touch)",
+    "axesMs": "Empty axes to sketch on: {{y}} against time, 0 to {{ms}} milliseconds.",
     "tags": {
       "b": "Book",
       "k": "Fixed value",
@@ -577,6 +582,35 @@
         "exit": {
           "q": "Does a walk lower blood sugar in this model?",
           "m": "Not yet in this model: moving does not change blood sugar here."
+        }
+      },
+      "reflexHotPan": {
+        "setup": "The hot-pan demo: the same touch twice, slowed down. ● is the reflex through the spinal cord, ○ the route through the brain. Press “Touch the hot pan”; the counters show the real time.",
+        "book": "NCERT Class 10 (Ch 6, p. 102): reflex arcs have evolved because “the thinking process of the brain is not fast enough”.",
+        "y": "Signal on its way (● reflex, ○ through the brain)",
+        "tasks": [
+          {
+            "q": "In a reflex, where does the signal pass from the nerve that senses the heat to the nerve that moves the muscle?",
+            "b": "NCERT Class 10 (Ch 6, p. 102): in the spinal cord itself; the information also goes on to reach the brain."
+          },
+          {
+            "q": "Sketch both routes from 0 to 250 ms: mark when the reflex reaches the arm muscle, and when the command through the brain does.",
+            "m": "The reflex at about 64 ms; the route through the brain at about 214 ms, about three times as long."
+          },
+          {
+            "q": "Which part of the reflex takes most of its time?",
+            "k": "Heat goes in on a thin fibre at about 15 m/s; the command comes out on a thick one at about 95 m/s (Kiernan 2003).",
+            "m": "The way in, from the fingertip to the spinal cord: about 58 of the 64 ms."
+          },
+          {
+            "q": "Turn on “Myelin off (thin fibres)” (beyond class 10). How long does the reflex take now?",
+            "m": "About 883 ms, about 14 times as long. A what-if: real motor nerves always have myelin."
+          }
+        ],
+        "exit": {
+          "q": "Why do you pull your hand back before you have thought about the pain?",
+          "b": "NCERT Class 10 (Ch 6, p. 102): thinking it all through takes time, too long when we touch a hot object; a reflex arc is quicker.",
+          "m": "The reflex turns round in the spinal cord and reaches the arm muscle in about 64 ms; thinking adds about 150 ms."
         }
       }
     }
@@ -1895,6 +1929,15 @@
       "nerves": {
         "sugar": "The brain uses about {{g}} g of sugar an hour, about the same all day, whatever the meal.",
         "now": "Nerves carry signals in thousandths of a second: try the hot pan.",
+        "why": {
+          "speed": {
+            "what": "Reflex or thinking: which is faster",
+            "book": "reflex arcs have evolved because “the thinking process of the brain is not fast enough” (NCERT Class 10, Ch 6, p. 102)",
+            "model": "the reflex reaches the arm muscle in about 64 ms; the route through the brain takes about 214 ms (model estimate)",
+            "why": "They agree: the reflex is faster. The book gives no times; the model’s come from measured nerve speeds, arm lengths and reaction times (Kiernan 2003; Khosrawi 2018; Jain 2015)."
+          },
+          "ask": "The reflex takes about 64 ms. Why is it not zero?"
+        },
         "map": {
           "brain": "Brain",
           "cord": "Spinal cord",

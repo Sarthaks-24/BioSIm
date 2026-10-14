@@ -5,7 +5,7 @@ import { MODEL_VERSION } from '@lifepeek/engine'
 import sheetText from 'virtual:lifepeek-en/sheet'
 import { addEnglish } from '../i18n/index.ts'
 import { SITE_URL } from '../lib/site.ts'
-import { SHEETS, type SheetKey } from '../lib/worksheets.ts'
+import { SHEETS, type Sheet, type SheetKey } from '../lib/worksheets.ts'
 import type { Chapter } from '../lib/lessons.ts'
 // Print CSS (A4, the app's header and footer hidden): with this lazy part only, never the pages'.
 import './worksheet.css'
@@ -29,11 +29,14 @@ interface Answer {
 }
 const TAGS = ['b', 'k', 'm'] as const
 
-/** Empty axes to sketch on: time across (0 to `hours` h), the lesson's graph up the side. Black on white. */
-function Axes({ hours, y, x: across, label }: { hours: number; y: string; x: string; label: string }) {
+/**
+ * Empty axes to sketch on: time across (0 to `span`, a tick every `step`: hours, or ms for the nerve
+ * demo), the lesson's graph up the side. Black on white.
+ */
+function Axes({ span, step, y, x: across, label }: { span: number; step: number; y: string; x: string; label: string }) {
   // The graph's name over the side axis, the time under the bottom one: both read across.
   const [w, h, left, top, bottom] = [300, 160, 10, 20, 34]
-  const x = (hr: number) => left + (hr / hours) * (w - left - 10)
+  const x = (at: number) => left + (at / span) * (w - left - 10)
   const rows = [1, 2, 3].map((i) => top + ((h - bottom - top) * i) / 4)
   return (
     <figure className="ws-axes">
@@ -41,11 +44,11 @@ function Axes({ hours, y, x: across, label }: { hours: number; y: string; x: str
         <text x={left} y={12}>
           {y}
         </text>
-        {Array.from({ length: hours + 1 }, (_, i) => (
+        {Array.from({ length: Math.floor(span / step) + 1 }, (_, i) => (
           <g key={i}>
-            <line x1={x(i)} x2={x(i)} y1={top} y2={h - bottom} className="ws-grid" />
-            <text x={x(i)} y={h - bottom + 13} textAnchor="middle">
-              {i}
+            <line x1={x(i * step)} x2={x(i * step)} y1={top} y2={h - bottom} className="ws-grid" />
+            <text x={x(i * step)} y={h - bottom + 13} textAnchor="middle">
+              {i * step}
             </text>
           </g>
         ))}
@@ -99,10 +102,16 @@ export default function Worksheet({
   const { i18n } = useTranslation()
   const t = i18n.getFixedT('en')
   const [answers, setAnswers] = useState(false)
-  const sheet = SHEETS[lesson]
+  const sheet: Sheet = SHEETS[lesson]
   /** This lesson's own words (`sheet.lessons.<lesson>.<part>`). */
   const own = <T = string,>(part: string, objects = false) => t(`sheet.lessons.${lesson}.${part}`, { returnObjects: objects }) as T
   const tasks = own<Answer[]>('tasks', true)
+  // Hours after eating, or milliseconds after the touch (the nerve demo: a tick every 50 ms).
+  const y = own('y')
+  const axes =
+    'ms' in sheet.sketch
+      ? { span: sheet.sketch.ms, step: 50, x: t('sheet.timeMs'), label: t('sheet.axesMs', { y, ms: sheet.sketch.ms }) }
+      : { span: sheet.sketch.hours, step: 1, x: t('sheet.time'), label: t('sheet.axes', { y, hours: sheet.sketch.hours }) }
   const exit = own<Answer>('exit', true)
   const link = SITE_URL + sheet.link
   // "Class 6 · Class 7 · Class 10 — NCERT Class 10, Life Processes: Respiration".
@@ -177,14 +186,7 @@ export default function Worksheet({
           {tasks.map((task, i) => (
             <li key={i} className={i === sheet.sketch.task ? 'ws-sketch' : undefined}>
               <span className="ws-q">{task.q}</span>
-              {i === sheet.sketch.task && (
-                <Axes
-                  hours={sheet.sketch.hours}
-                  y={own('y')}
-                  x={t('sheet.time')}
-                  label={t('sheet.axes', { y: own('y'), hours: sheet.sketch.hours })}
-                />
-              )}
+              {i === sheet.sketch.task && <Axes {...axes} y={y} />}
               {answer(task, 2)}
             </li>
           ))}

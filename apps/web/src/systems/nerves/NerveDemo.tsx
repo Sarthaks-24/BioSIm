@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NERVE_PARAMS, NERVE_SOURCES, type NerveSourceId, type NerveTiming } from '@lifepeek/engine/demo'
 import { PauseIcon, PlayIcon, StatusTag } from '../../components/kit/index.ts'
+import WhyCard from '../../components/WhyCard.tsx'
 import { NERVE_TONE } from '../../anatomy/tones/nerves.ts'
 import { onTick } from '../../lib/ticker.ts'
 import { useMotion } from '../../state/motion.ts'
@@ -32,6 +33,12 @@ export const DEMO_SOURCES: readonly NerveSourceId[] = [
   'jain2015',
   'isoardo2026',
 ]
+
+/**
+ * The demo's "Why does the model differ from the book?" card (X-4, components/WhyCard.tsx; v3.1 Teach
+ * step, R109), by its book line (NCERT Class 10, Ch 6, p. 102): its rows, in the control pack's section.
+ */
+const WHY = 'sys.control.nerves.why'
 
 /** The demo's words (`sys.control.nerves.demo.*`, with the pack's English). */
 function useSay() {
@@ -266,7 +273,12 @@ export default function NerveDemo() {
 
       <details className="border-t border-border text-caption text-ink-muted" style={{ paddingTop: '0.5rem' }}>
         <summary className="cursor-pointer font-semibold text-ink">{say('sourcesTitle')}</summary>
-        <p className="text-ink">{say('book')}</p>
+        <div className="flex flex-wrap items-center gap-x-3">
+          <p data-book="" className="text-ink">
+            {say('book')}
+          </p>
+          <WhyCard text={WHY} />
+        </div>
         <p>
           {say('limits', {
             in: usual.reflex.inSpeedMPerS,

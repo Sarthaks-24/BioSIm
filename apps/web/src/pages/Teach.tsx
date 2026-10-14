@@ -275,7 +275,10 @@ export default function Teach() {
                       {l.preset ? meals(l.preset) : t(`teach.lessonQuestions.${l.key}`)} ·{' '}
                       {l.preset
                         ? t('teach.opensAt', { time: time(l.t), graph: t(`stage.strips.${l.slot}`) })
-                        : t('teach.opensAtTime', { time: time(l.t) })}
+                        : // The nerve demo (v3.1) has no meal clock to pause on: it opens on the demo.
+                          l.slot === 'demo'
+                          ? t('teach.opensDemo')
+                          : t('teach.opensAtTime', { time: time(l.t) })}
                     </span>
                     <span className="block text-sm text-ink-muted">{classes(l.classes)}</span>
                     {/* What the class should see, where the graph alone could mislead (council round 3). */}
