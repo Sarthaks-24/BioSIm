@@ -10,8 +10,11 @@ interface Props {
   name: string
   /** A food's servings; a bout has none (and no chip shows kcal, ui-ux §2.1). */
   servings?: number
-  /** Opens the servings picker (a bout: the activity sheet on it). Without it the chip's words are plain text. */
-  onEdit?: () => void
+  /**
+   * Opens the servings picker (a bout: the activity sheet on it, a dialog), given the chip's button
+   * (the focus goes back to it). Without it the chip's words are plain text.
+   */
+  onEdit?: (button: HTMLButtonElement) => void
   /** Whether the picker `onEdit` opens is showing. */
   expanded?: boolean
   onRemove: () => void
@@ -45,8 +48,9 @@ export default function FoodChip({ kind = 'food', emoji, name, servings, onEdit,
       {onEdit ? (
         <button
           type="button"
-          onClick={onEdit}
+          onClick={(e) => onEdit(e.currentTarget)}
           aria-expanded={expanded}
+          aria-haspopup={kind === 'bout' ? 'dialog' : undefined}
           aria-label={kind === 'bout' ? t('activity.edit', { bout: name }) : `${name}, ${t('sim.servings')} ${servings}`}
           className={`${part} min-w-0 rounded-l-control pr-1.5 pl-2.5 hover:bg-surface-sunk-hover`}
         >

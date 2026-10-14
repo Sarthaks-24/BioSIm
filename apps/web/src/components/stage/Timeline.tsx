@@ -73,7 +73,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
   const kneeLabel = useRef<HTMLSpanElement>(null)
   const width = useTrackWidth(track)
   // The activity bouts' bars on the track (E-3b-ui), from the lazy BoutMarks once there are any.
-  const marks = useBoutMarks(run.activity.length + (kept?.activity.length ?? 0) > 0)
+  const marks = useBoutMarks(run.activity.length + (kept?.activity.length ?? 0) > 0, run)
   // "after eating" with a meal, "from the start" with activity only (ui-ux §4).
   const since = useRunStore((s) => (s.meal.length || !s.activity.length ? 'sim.afterEating' : 'sim.fromStart'))
 

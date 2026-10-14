@@ -12,7 +12,7 @@ import mealSheetText from 'virtual:lifepeek-en/mealSheet'
 // The sheets' own English comes with them (the stage keeps only the buttons' names).
 addEnglish(keysText, tableText, mealSheetText)
 
-export { default as FoodSearch } from './FoodSearch.tsx'
+export { default as FoodSearch, focusBack } from './FoodSearch.tsx'
 
 /**
  * The stage's sheets in one file, downloaded together the first time one is opened: the table,

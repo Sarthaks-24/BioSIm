@@ -30,6 +30,9 @@ import { useProjector } from '../../hooks/useProjector.ts'
  * lymph model in v3.0; S-5 adds the fat road in v3.1). It is drawn again only when the picture's
  * size, the pose or the projector look changes. The vessels of the arms and legs follow the band's
  * still pose (the limb curves, loaded with the legs), so a walk never leaves a vessel in the air.
+ * Until the legs' chunk is here (or if it can't arrive: offline, never saved) the map is drawn on
+ * the body the flat body draws then, the resting one with no legs: the trunk's and the resting
+ * arms' vessels, never a blank picture (R93 #6). It asks for the legs again when the internet is back.
  *
  * It imports nothing from the stage's chunk: the flat body hands it what it needs (`kit`, flat/layerKit.ts),
  * and the few lines of the flat body's maths it shares are copied here (`frame`, the outline shade).
@@ -39,7 +42,7 @@ export default function LymphLayer({ view, band, width, height, kit }: LayerProp
   const { t } = useTranslation()
   const canvas = useRef<HTMLCanvasElement>(null)
   const projector = useProjector()
-  const posed = usePosedLimbs(band, kit)
+  const { posed, failed } = usePosedLimbs(band, kit)
   const [drawn, setDrawn] = useState(false)
 
   // The parts' names (anatomy plan §6): the first three on a narrow picture, the rest with room.
@@ -59,7 +62,7 @@ export default function LymphLayer({ view, band, width, height, kit }: LayerProp
 
   useEffect(() => {
     const el = canvas.current
-    if (!el || !posed || width === 0 || height === 0) return
+    if (!el || width === 0 || height === 0) return
     // The flat body's pixel-ratio cap (three/quality.ts: 1.5 device pixels per CSS px at most).
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
     el.width = Math.round(width * dpr)
@@ -67,9 +70,10 @@ export default function LymphLayer({ view, band, width, height, kit }: LayerProp
     const ctx = el.getContext('2d')
     if (!ctx) return
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    paintLymph(ctx, width, height, view, posed, projector)
-    setDrawn(true)
-  }, [width, height, view, posed, projector])
+    paintLymph(ctx, width, height, view, kit.base, posed, projector)
+    // Drawn: whole, or as whole as it can be (the legs did not arrive).
+    setDrawn(!!posed || failed)
+  }, [width, height, view, kit, posed, failed, projector])
 
   return (
     <>
@@ -78,6 +82,7 @@ export default function LymphLayer({ view, band, width, height, kit }: LayerProp
         aria-hidden="true"
         data-layer="lymph"
         data-drawn={drawn ? '' : undefined}
+        data-limbs={posed ? '' : undefined}
         className="absolute inset-0"
         style={{ width, height }}
       />
@@ -99,27 +104,39 @@ const LABEL_ORDER: readonly (readonly [LymphLabel, CalloutSpec['tone'], boolean]
 
 /**
  * The band's posed limbs, once the legs' chunk is here (the flat body loads it for the `full`
- * framing too, so this waits on the same promise); null until then, and the map waits with the legs.
+ * framing too, so this waits on the same promise); null until then. `failed`: the chunk did not
+ * arrive; it is asked for again when the internet comes back.
  */
-function usePosedLimbs(band: ActivityBand, kit: LayerKit): Posed | null {
+function usePosedLimbs(band: ActivityBand, kit: LayerKit): { posed: Posed | null; failed: boolean } {
   const [posed, setPosed] = useState<Posed | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [tries, setTries] = useState(0)
   useEffect(() => {
     let live = true
+    const again = () => setTries((n) => n + 1)
     kit.loadLimbs().then(
-      (m) => live && setPosed({ limbs: m.posedLimbs(band), base: m.limbKit(), legRadius: m.legRadius }),
-      () => {},
+      (m) => {
+        if (!live) return
+        setFailed(false)
+        setPosed({ limbs: m.posedLimbs(band), legRadius: m.legRadius })
+      },
+      () => {
+        if (!live) return
+        setFailed(true)
+        window.addEventListener('online', again, { once: true })
+      },
     )
     return () => {
       live = false
+      window.removeEventListener('online', again)
     }
-  }, [band, kit])
-  return posed?.limbs.band === band ? posed : null
+  }, [band, kit, tries])
+  return { posed: posed?.limbs.band === band ? posed : null, failed }
 }
 
-/** A pose's limbs, the body base the legs' chunk was handed, and the legs' radius (all from that chunk). */
+/** A pose's limbs and the legs' radius (both from the legs' chunk). */
 interface Posed {
   limbs: PosedLimbs
-  base: LimbKit
   legRadius: (u: number) => number
 }
 
@@ -150,13 +167,17 @@ const VEIN = 'rgba(61,76,107,0.45)'
 /** A node cluster's main node on a side (NODES: armpit 3rd, groin 8th). */
 const node = (i: number, side: number): Pt => [NODES[i]!.x * side, NODES[i]!.y]
 
-/** Paints the map in CSS pixels of a `w` × `h` picture of `view`, the limbs' vessels in their pose. */
+/**
+ * Paints the map in CSS pixels of a `w` × `h` picture of `view`, the limbs' vessels in their pose;
+ * with no `posed` limbs (not loaded), on the resting body without legs: the trunk and resting arms.
+ */
 export function paintLymph(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   view: View,
-  { limbs, base, legRadius }: Posed,
+  base: LimbKit,
+  posed: Posed | null,
   projector: boolean,
 ) {
   const { scale, X, Y } = frame(w, h, view)
@@ -177,18 +198,22 @@ export function paintLymph(
     const right = pts.map(([x, y]) => [x, y] as Pt)
     return mirror ? [right, right.map(([x, y]) => [-x, y] as Pt)] : [right]
   })
-  for (const { side, curve } of limbs.legs) {
-    // The inside of the leg is towards the midline: −x on the viewer's right leg.
-    const inner = (u: number) => -side * 0.3 * legRadius(u)
-    vessels.push([...along(curve, 0.93, 0.06, 40, inner), node(7, side)])
-    vessels.push(along(curve, 0.78, 0.5, 12, (u) => legRadius(u) * side * (0.45 - 0.75 * ((0.78 - u) / 0.28))))
-  }
-  for (const { side, curve } of limbs.arms) {
-    // A posed arm is one curve, shoulder (0) to fingertips (1) (U-1a): its vessel runs from the
-    // hand up to the armpit, as the resting arm's does along ARM.
-    const pts = limbs.band === 'rest' ? along(base.ARM, 0.9, 0.16, 30).map(([x, y]) => [x * side, y] as Pt) : along(curve, 0.9, 0.07, 30)
-    vessels.push([...pts, node(2, side)])
-  }
+  const resting = (side: number) => along(base.ARM, 0.9, 0.16, 30).map(([x, y]) => [x * side, y] as Pt)
+  if (posed) {
+    const { limbs, legRadius } = posed
+    for (const { side, curve } of limbs.legs) {
+      // The inside of the leg is towards the midline: −x on the viewer's right leg.
+      const inner = (u: number) => -side * 0.3 * legRadius(u)
+      vessels.push([...along(curve, 0.93, 0.06, 40, inner), node(7, side)])
+      vessels.push(along(curve, 0.78, 0.5, 12, (u) => legRadius(u) * side * (0.45 - 0.75 * ((0.78 - u) / 0.28))))
+    }
+    for (const { side, curve } of limbs.arms) {
+      // A posed arm is one curve, shoulder (0) to fingertips (1) (U-1a): its vessel runs from the
+      // hand up to the armpit, as the resting arm's does along ARM.
+      const pts = limbs.band === 'rest' ? resting(side) : along(curve, 0.9, 0.07, 30)
+      vessels.push([...pts, node(2, side)])
+    }
+  } else for (const side of [1, -1]) vessels.push([...resting(side), node(2, side)])
 
   ctx.clearRect(0, 0, w, h)
   ctx.lineCap = 'round'

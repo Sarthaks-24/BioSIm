@@ -16,7 +16,7 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { DEFAULT_SYSTEM, defaultSystemFor, systemForLink, systemOf, type SystemId } from '../systems/registry.ts'
+import { DEFAULT_SYSTEM, systemForLink, systemOf, type SystemId } from '../systems/registry.ts'
 import { loadPack } from '../systems/load.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
@@ -222,8 +222,9 @@ export const useRunStore = create<RunState>((set, get) => ({
 }))
 
 /**
- * The query string that reopens exactly this run: v, a (meal), b (kept), t, then `who` and
- * `layer` only when they are not the default, then lang, then `act` / `bact` when there are bouts
+ * The query string that reopens exactly this run: v, a (meal), b (kept), t, then `who` when it is
+ * not the default, `layer` when it is not Digestion or the run has bouts (a link with bouts and no
+ * `layer` would open Heart & blood once that row is public, R39), then lang, then `act` / `bact` when there are bouts
  * (and `preview=1` in a preview session). A one-profile kept run can't carry its
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
@@ -232,13 +233,15 @@ export function linkQuery(
   simMin: number,
   lang?: string,
 ): string {
+  const wanted = run.switching?.to ?? run.layer
   const query = encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
-    // The system asked for, while its pack loads or after it failed to (a reload asks for it again).
-    ...((run.switching?.to ?? run.layer) !== defaultSystemFor(run.activity, run.preview) ? { layer: run.switching?.to ?? run.layer } : {}),
+    // The system asked for, while its pack loads or after it failed to (a reload asks for it again);
+    // with bouts always, as the system such a link opens by default will change (R39, R93 #5).
+    ...(wanted !== DEFAULT_SYSTEM || run.activity.length || run.kept?.activity.length ? { layer: wanted } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
     act: run.activity,
     bact: run.kept?.activity ?? [],

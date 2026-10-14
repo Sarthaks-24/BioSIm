@@ -105,6 +105,18 @@ describe('writing links', () => {
     expect(written()).toBe(`v=${MODEL_VERSION}&t=90`)
   })
 
+  it('writes the layer whenever the run has bouts (its own or the kept run’s), even the default one (R93 #5)', () => {
+    run().loadLink('v=2&a=cola:1')
+    expect(new URLSearchParams(written()).has('layer')).toBe(false)
+    useRunStore.setState({ activity: [{ kind: 'walk', startMin: 30, durMin: 20 }] })
+    expect(new URLSearchParams(written()).get('layer')).toBe(DEFAULT_LAYER)
+    run().keep()
+    useRunStore.setState({ activity: [] })
+    expect(new URLSearchParams(written()).get('layer')).toBe(DEFAULT_LAYER)
+    run().unkeep()
+    expect(new URLSearchParams(written()).has('layer')).toBe(false)
+  })
+
   it('never writes the organism, even for a link that had an unknown one', () => {
     run().loadLink('v=2&o=frog&a=cola:1')
     expect(new URLSearchParams(written()).has('o')).toBe(false)
@@ -147,9 +159,10 @@ describe('keep, unkeep, swap', () => {
       { kind: 'run', startMin: 240, durMin: 10 },
     ])
     expect(run().kept?.activity).toEqual([{ kind: 'walkBrisk', startMin: 0, durMin: 60 }])
-    // No Heart & blood row yet, so an `act` link with no `layer` opens the default and writes none (R39).
+    // No Heart & blood row yet, so an `act` link with no `layer` opens the default (R39); written
+    // back, it names that layer, so it keeps opening Digestion once Heart & blood is the default (R93 #5).
     expect(run().layer).toBe(DEFAULT_LAYER)
-    expect(written()).toBe(q)
+    expect(written()).toBe(q.replace('&act=', `&layer=${DEFAULT_LAYER}&act=`))
     // A kept run of activity alone is still a kept run.
     run().loadLink(`v=${MODEL_VERSION}&bact=run.0.30`)
     expect(run().kept).toEqual({ items: [], profile: DEFAULT_RUN_PROFILE, activity: [{ kind: 'run', startMin: 0, durMin: 30 }] })

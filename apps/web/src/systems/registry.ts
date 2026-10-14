@@ -234,7 +234,8 @@ const isPublic = (id: SystemId) => !!systemOf(id)?.public
 /**
  * The system a link with no `layer` opens: Heart & blood when it carries activity (R39), once that
  * row is public, or already in a preview session (`?preview=1`, where hidden built rows open); until
- * then Digestion. linkQuery writes `layer` only when it differs from this.
+ * then Digestion. So linkQuery writes `layer` whenever a run has bouts (R93): a link made today keeps
+ * opening what it showed once this default changes.
  */
 export const defaultSystemFor = (activity: readonly ActivityBout[], preview = false): SystemId =>
   activity.length && (isPublic('circulation') || (preview && !!systemOf('circulation'))) ? 'circulation' : DEFAULT_SYSTEM
