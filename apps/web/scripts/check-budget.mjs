@@ -196,6 +196,9 @@
 //   144.6 → 145.0 KB. The bundler split the codec's meal and activity modules out of the entry when a
 //   lazy chunk imported the codec without lib/presets.ts (+1.3 KB measured): the lesson's link goes
 //   through presetHref (lib/flagship.ts).
+//   release/3.0 (2026-10-14, from v3.0-rc d86eb96; R120): the final audit's fixes that apply to 3.0
+//   (lp-saved, CSP, the "typical healthy body" and "model estimate" text). /sim 188.481 -> 188.484 KB
+//   (+0.003, routeMeta's home description): under H-1's ratchets, kept. Ledger row release/3.0 (R120).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'

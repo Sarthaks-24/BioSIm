@@ -84,6 +84,15 @@
         "engineKB": 10.685,
         "simRatchetKB": 188.681,
         "simEngineRatchetKB": 199.466
+      },
+      {
+        "wp": "release/3.0 (R120)",
+        "at": "2026-10-14",
+        "on": "release/3.0 (v3.0-rc d86eb96, /sim 188.481 measured) + the final audit's fixes that apply to 3.0: FIX-F1 #1 (lp-saved), #10 (CSP) and the text fixes #13, #14. /sim 188.481 -> 188.484 (+0.003: lib/routeMeta.ts's home description says a typical healthy body (a model, not yours), #13); engine 10.685 -> 10.684. The cache, save and CSP changes are in the service worker, Teach (lazy) and vite.config. Under H-1's ratchets, which stay as they are (not raised).",
+        "simKB": 188.484,
+        "engineKB": 10.684,
+        "simRatchetKB": 188.681,
+        "simEngineRatchetKB": 199.466
       }
     ]
   },
