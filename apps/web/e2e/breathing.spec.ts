@@ -117,12 +117,12 @@ test('a plain link opens breathing (public since H-1), and a ?preview=1 link sti
   for (const url of ['/sim?v=3&a=roti:1&layer=breathing', '/sim?v=3&a=roti:1&layer=breathing&preview=1']) {
     await goto(page, url)
     await page.locator('[data-stage]').waitFor()
-    await expect(page.locator('[data-layer="breathing"]')).toBeAttached()
+    await expect(page.locator('[data-layer="breathing"]').first()).toBeAttached()
     await expect(page.locator('[data-system-title="breathing"]')).toBeVisible()
   }
   // The plain one stays plain: nothing adds preview=1 to it.
   await goto(page, '/sim?v=3&a=roti:1&layer=breathing')
-  await page.locator('[data-layer="breathing"]').waitFor({ state: 'attached' })
+  await page.locator('[data-layer="breathing"]').first().waitFor({ state: 'attached' })
   expect(new URL(page.url()).searchParams.get('preview')).toBeNull()
 })
 

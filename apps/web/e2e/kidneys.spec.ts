@@ -155,7 +155,7 @@ test('scrubbing the clock fast: the bladder’s drawn size changes at most once 
 test('a ?preview=1 link still opens kidneys & water; Digestion has no 0–12 h window', async ({ page }) => {
   await goto(page, '/sim?v=3&a=water:1&layer=kidneys&preview=1')
   await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="kidneys"]')).toBeAttached()
+  await expect(page.locator('[data-layer="kidneys"]').first()).toBeAttached()
   await expect(page.locator('[data-window="720"]')).toBeAttached()
   await goto(page, '/sim?v=3&a=water:1')
   await page.locator('[data-stage]').waitFor()
