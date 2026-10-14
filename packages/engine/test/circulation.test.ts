@@ -88,7 +88,7 @@ describe('the heart at rest and in a bout', () => {
 
   pinned(
     ['heart.output', 'heart.rate', 'heart.strokeVolume', 'blood.flow.muscle', 'blood.flow.gut'],
-    'worked values (model §2.3): rest CO 4.31, HR 66, SV 65; walk 7.9 / 94 / 84; run 14.8 / 162 / 91; muscle 905 → 4136 mL/min; gut 1034',
+    'worked values (model §2.3): rest CO 4.31, HR 66, SV 65; walk 7.9 / 94 / 84; run 14.8 / 162 / 91; muscle 905 → 4298 mL/min; gut 1034 → 872 (walk) → 562 (run)',
     () => {
       const at = (sim: RunResult, id: RunSignalId, i: number) => values(sim, id)[i]!
       const rest = run('')
@@ -101,11 +101,13 @@ describe('the heart at rest and in a bout', () => {
       expect(at(w, 'heart.output', IN_BOUT)).toBeCloseTo(7.9, 1)
       expect(Math.round(at(w, 'heart.rate', IN_BOUT))).toBe(94)
       expect(Math.round(at(w, 'heart.strokeVolume', IN_BOUT))).toBe(84)
-      expect(Math.abs(at(w, 'blood.flow.muscle', IN_BOUT) - 4136)).toBeLessThan(5)
+      expect(Math.abs(at(w, 'blood.flow.muscle', IN_BOUT) - 4298)).toBeLessThan(5)
+      expect(Math.abs(at(w, 'blood.flow.gut', IN_BOUT) - 872)).toBeLessThan(5)
       const r = run('', [runBout])
       expect(at(r, 'heart.output', IN_BOUT)).toBeCloseTo(14.8, 1)
       expect(Math.round(at(r, 'heart.rate', IN_BOUT))).toBe(162)
       expect(Math.round(at(r, 'heart.strokeVolume', IN_BOUT))).toBe(91)
+      expect(Math.abs(at(r, 'blood.flow.gut', IN_BOUT) - 562)).toBeLessThan(5)
     },
   )
 
@@ -200,7 +202,7 @@ describe('the heart at rest and in a bout', () => {
 describe('after a meal (model D7)', () => {
   pinned(
     'heart.output',
-    'C (gut-flow K, circulation.gutHalfKcalPerMin): a 1526 kcal mixed meal raises cardiac output by 1.0–1.6 L/min (Eriksen 1994: ~1.3 for 1400–1600 kcal), peaking 30–90 min after it starts',
+    'C (gut-flow K, circulation.gutHalfKcal): a 1526 kcal mixed meal raises cardiac output by 1.0–1.6 L/min (Eriksen 1994: ~1.3 for 1400–1600 kcal), peaking 30–90 min after it starts',
     () => {
       const co = values(run(BIG), 'heart.output')
       const peak = max(co)
@@ -214,11 +216,11 @@ describe('after a meal (model D7)', () => {
   )
 
   // The peak minute does not depend on K or the 3 L/min ceiling (the rise is a monotone map of the
-  // weighted absorption), so the calibration above cannot place it: a hold-out.
+  // lagged food in the gut); the 20 min lag (circulation.gutRiseTauMin) was picked for it (R80).
   golden(
     'event.gutFlowPeak',
     ['waaler1991'],
-    'S hold-out: after a mixed meal with a sweet drink the gut flow, and so cardiac output, peaks 30–90 min after the meal starts (Waaler 1991: "a maximum level 30 to 60 min after end of the meal")',
+    'C (gut-rise lag, circulation.gutRiseTauMin): after a mixed meal with a sweet drink the gut flow, and so cardiac output, peaks 30–90 min after the meal starts (Waaler 1991: "a maximum level 30 to 60 min after end of the meal")',
     () => {
       for (const m of [BIG, 'cheeseburger:1,fries:1,cola:1', 'cola:1']) {
         const sim = run(m)
@@ -234,7 +236,7 @@ describe('after a meal (model D7)', () => {
     'event.gutFlowPeak',
     ['waaler1991'],
     'a solid meal (roti and dal; a 1400 kcal fatty meal) also peaks within 30–90 min',
-    'solids leave the stomach at a steady rate for hours in this model (deferred emptying change, R45/R67), so gut flow rises to a plateau',
+    'roti and dal peaks at 68 min, but the big fatty meal fills the gut slowly (solids leave the stomach at a steady rate for hours, deferred emptying change R45/R67) and peaks at ~97 min',
     () => {
       for (const m of ['roti:2,dal:1', 'fatty-meal:2']) expect(run(m).moments.get('event.gutFlowPeak')!.atMin!, m).toBeLessThanOrEqual(90)
     },
@@ -266,6 +268,53 @@ describe('after a meal (model D7)', () => {
     expect(co[120]! / co[0]!).toBeLessThanOrEqual(1.1)
   })
 
+  pinned('heart.rate', 'G (R80): a drink of at most 200 kcal raises the heart rate by at most 5 beats a minute', () => {
+    const drinks = foods.filter((f) => f.phase === 'liquid' && f.nutrients.energyKcal > 0)
+    expect(drinks.length).toBeGreaterThanOrEqual(3)
+    for (const f of drinks) {
+      const servings = Math.max(0.25, Math.floor((200 / f.nutrients.energyKcal) * 4) / 4)
+      if (f.nutrients.energyKcal * servings > 200) continue
+      const hr = values(run(`${f.id}:${servings}`), 'heart.rate')
+      expect(max(hr) - hr[0]!, `${f.id}:${servings}`).toBeLessThanOrEqual(5)
+    }
+    for (const m of ['glucose-50:1', 'cola:1'])
+      expect(max(values(run(m), 'heart.rate')) - values(run(m), 'heart.rate')[0]!, m).toBeLessThanOrEqual(5)
+  })
+
+  pinned(
+    'heart.rate',
+    'G (R80): a meal alone, up to the 1500 kcal cap (and the 1526 kcal Eriksen meal), raises the heart rate by at most 10 beats a minute',
+    () => {
+      for (const f of foods.filter((x) => x.nutrients.energyKcal > 0)) {
+        const servings = Math.min(5, Math.floor((1500 / f.nutrients.energyKcal) * 4) / 4)
+        if (servings < 0.25) continue
+        const hr = values(run(`${f.id}:${servings}`), 'heart.rate')
+        expect(max(hr) - hr[0]!, `${f.id}:${servings}`).toBeLessThanOrEqual(10)
+      }
+      for (const m of [BIG, 'fatty-meal:2'])
+        expect(max(values(run(m), 'heart.rate')) - values(run(m), 'heart.rate')[0]!, m).toBeLessThanOrEqual(10)
+    },
+  )
+
+  pinned(
+    ['heart.rate', 'heart.output'],
+    'P (R80): for the same food mix, a bigger meal never raises the heart rate or cardiac output less (Waaler 1991: the larger meal’s rise "was considerably larger and lasted for longer")',
+    () => {
+      for (const mix of [['cola'], ['roti', 'dal'], ['cheeseburger', 'fries', 'cola'], ['white-rice', 'dal'], ['milk']]) {
+        let last = { hr: 0, co: 0 }
+        for (const n of [0.5, 1, 2, 3]) {
+          const sim = run(mix.map((id) => `${id}:${n}`).join(','))
+          const hr = values(sim, 'heart.rate')
+          const co = values(sim, 'heart.output')
+          const now = { hr: max(hr) - hr[0]!, co: max(co) - co[0]! }
+          expect(now.hr, `${mix} ×${n}`).toBeGreaterThanOrEqual(last.hr)
+          expect(now.co, `${mix} ×${n}`).toBeGreaterThanOrEqual(last.co)
+          last = now
+        }
+      }
+    },
+  )
+
   golden(
     ['heart.output', 'heart.rate'],
     ['eriksen1994'],
@@ -286,21 +335,25 @@ describe('after a meal (model D7)', () => {
     ['sieber1992'],
     'P: per kcal absorbed the gut flow rises most for fat and protein and least for carbohydrate: fat ≥ protein > carbohydrate (Sieber 1992: "similar after … fat, and protein, but … significantly … less for carbohydrates")',
     () => {
-      const meal = mealOf('')
+      const base = mealOf('')
       const flat = (x: number) => ({ values: new Float64Array(N).fill(x) })
-      // The same 1 kcal/min absorbed as each nutrient alone (4, 4, 9 kcal per g), at rest.
+      // The same 100 kcal of each nutrient alone (4, 4, 9 kcal per g) in the gut, none absorbed yet.
       const gutFlow = (g: { carbs: number; protein: number; fat: number }) =>
-        runAlone(circulationModule, meal, {
-          'gas.o2UseRate': flat(215),
-          'energy.foodEffectRate': flat(0),
-          'gut.absorbRate.carbs': flat(g.carbs),
-          'gut.absorbRate.protein': flat(g.protein),
-          'gut.absorbRate.fat': flat(g.fat),
-          'x.activity.met': flat(1),
-        }).get('blood.flow.gut')!.values[100]!
-      const carbs = gutFlow({ carbs: 0.25, protein: 0, fat: 0 })
-      const protein = gutFlow({ carbs: 0, protein: 0.25, fat: 0 })
-      const fat = gutFlow({ carbs: 0, protein: 0, fat: 1 / 9 })
+        runAlone(
+          circulationModule,
+          { ...base, eatingMin: 0, total: { ...base.total, carbsG: g.carbs, proteinG: g.protein, fatG: g.fat } },
+          {
+            'gas.o2UseRate': flat(215),
+            'energy.foodEffectRate': flat(0),
+            'gut.absorbed.carbsG': flat(0),
+            'gut.absorbed.proteinG': flat(0),
+            'gut.absorbed.fatG': flat(0),
+            'x.activity.met': flat(1),
+          },
+        ).get('blood.flow.gut')!.values[100]!
+      const carbs = gutFlow({ carbs: 25, protein: 0, fat: 0 })
+      const protein = gutFlow({ carbs: 0, protein: 25, fat: 0 })
+      const fat = gutFlow({ carbs: 0, protein: 0, fat: 100 / 9 })
       const none = gutFlow({ carbs: 0, protein: 0, fat: 0 })
       expect(fat).toBeGreaterThanOrEqual(protein)
       expect(protein).toBeGreaterThan(carbs)
@@ -321,8 +374,8 @@ describe('after a meal (model D7)', () => {
   )
 
   pinned(
-    ['heart.output', 'blood.flow.gut', 'heart.strokeVolume', 'blood.flow.muscle'],
-    'I (D7, no food-effect oxygen counted twice): without a bout, CO − resting CO = the gut’s rise exactly, though the meal raises O2 use; stroke volume and muscle flow stay at rest',
+    ['heart.output', 'blood.flow.gut', 'heart.strokeVolume', 'heart.rate', 'blood.flow.muscle'],
+    'I (D7, no food-effect oxygen counted twice): without a bout, CO − resting CO = the gut’s rise exactly, though the meal raises O2 use; heart rate takes 27 % of the rise (in logs) and stroke volume the rest (R80); muscle flow stays at rest',
     () => {
       for (const m of meals) {
         const sim = run(m)
@@ -331,7 +384,9 @@ describe('after a meal (model D7)', () => {
         const o2 = values(sim, 'gas.o2UseRate')
         for (let i = 0; i < N; i += 7) {
           expect(co[i]! - co[0]!, `${m} @${i}`).toBeCloseTo((gut[i]! - gut[0]!) / 1000, 4)
-          expect(values(sim, 'heart.strokeVolume')[i]).toBe(values(sim, 'heart.strokeVolume')[0])
+          const r = co[i]! / co[0]!
+          expect(values(sim, 'heart.rate')[i]! / values(sim, 'heart.rate')[0]!, `${m} @${i}`).toBeCloseTo(Math.pow(r, 0.27), 5)
+          expect((values(sim, 'heart.rate')[i]! * values(sim, 'heart.strokeVolume')[i]!) / 1000 / co[i]!).toBeCloseTo(1, 5)
           expect(values(sim, 'blood.flow.muscle')[i]).toBe(values(sim, 'blood.flow.muscle')[0])
         }
         if (m === BIG) expect(max(o2) - o2[0]!).toBeGreaterThan(30)
@@ -377,15 +432,23 @@ describe('insertion and rest invariance (model D13 iii, iv)', () => {
     }
   })
 
-  it('a walk changes the heart only during the bout, and never the gut flow (nothing carries over: no EPOC)', () => {
+  it('a walk changes the heart from its start, eases back in a few minutes after it (on/off kinetics, R82; no slow EPOC) and takes blood from the gut only while it lasts (R83)', () => {
     for (const m of ['', BIG]) {
       const rest = run(m, [])
       const moving = run(m, [walk])
       for (const id of CIRCULATION_SIGNAL_IDS) {
-        expect(values(moving, id)[29], id).toBe(values(rest, id)[29])
-        expect(values(moving, id)[51], id).toBe(values(rest, id)[51])
+        expect(values(moving, id)[30], id).toBe(values(rest, id)[30])
+        expect(firstDiff(values(moving, id).subarray(90), values(rest, id).subarray(90)), id).toBe(-1)
       }
-      expect(firstDiff(values(moving, 'blood.flow.gut'), values(rest, 'blood.flow.gut')), m).toBe(-1)
+      const hr = (sim: RunResult, i: number) => values(sim, 'heart.rate')[i]!
+      const rise = hr(moving, 50) - hr(rest, 50)
+      // In the first minute after the end the rise falls by a third or more, after three nearly all of it.
+      expect(hr(moving, 51) - hr(rest, 51), m).toBeLessThan(0.75 * rise)
+      expect(hr(moving, 51) - hr(rest, 51), m).toBeGreaterThan(0.1 * rise)
+      expect(hr(moving, 53) - hr(rest, 53), m).toBeLessThan(0.1 * rise)
+      // The first minute of the bout is on the way up, not at the bout's value yet.
+      expect(hr(moving, 31) - hr(rest, 31), m).toBeLessThan(0.9 * rise)
+      expect(values(moving, 'blood.flow.gut')[IN_BOUT]!, m).toBeLessThan(values(rest, 'blood.flow.gut')[IN_BOUT]!)
     }
   })
 })
@@ -426,7 +489,7 @@ describe('contract: status, ranges, speed', () => {
       HUMAN_MODULES.filter((m) => m.id !== 'circulation'),
       setup(BIG, [walk]),
     ).signals
-    const ids = ['gas.o2UseRate', 'energy.foodEffectRate', 'gut.absorbRate.carbs', 'gut.absorbRate.protein', 'gut.absorbRate.fat'] as const
+    const ids = ['gas.o2UseRate', 'energy.foodEffectRate', 'gut.absorbed.carbsG', 'gut.absorbed.proteinG', 'gut.absorbed.fatG'] as const
     const upstream: ModelModule = {
       id: 'gas',
       system: 'breathing',
@@ -438,7 +501,7 @@ describe('contract: status, ranges, speed', () => {
         ctx.put('x.activity.met', store.get('x.activity.met')!.values)
       },
     }
-    const s = setup('')
+    const s = setup(BIG)
     const times: number[] = []
     for (let k = 0; k < 21; k++) {
       let ms = 0

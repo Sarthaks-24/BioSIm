@@ -67,6 +67,8 @@ const UMIN_H = 21
 
 const walk60: ActivityBout = { kind: 'walk', startMin: 60, durMin: 60 }
 const run60: ActivityBout = { kind: 'run', startMin: 300, durMin: 60 }
+/** The app's hardest plan (R81): three 60-min runs back to back, about 3 L of sweat. */
+const MAX_PLAN: ActivityBout[] = [0, 60, 120].map((startMin) => ({ kind: 'run', startMin, durMin: 60 }))
 /** 1 L of water: four 250 mL glasses (Maughan's drink); 1.25 L: five (the app's most). */
 const LITRE = 'water:4'
 const LITRE_AND_A_QUARTER = 'water:5'
@@ -114,13 +116,13 @@ describe('calibration and hold-outs: a drink of water (model §2.4)', () => {
   )
 
   golden(
-    ['kidney.urineTotal', 'event.mostMealWaterPassed'],
+    ['kidney.urineTotal', 'event.halfMealWaterPassed'],
     ['crowe1987'],
     'hold-out: 1.25 L of water (≈ 19 mL/kg) → at least 70 % of it passed as extra urine within 2 h (Crowe 1987: 100.7 % in well-watered young men, 70 % when short of water)',
     () => {
       const sim = run(LITRE_AND_A_QUARTER)
       expect(extraUrine(sim, 120) / 1250).toBeGreaterThanOrEqual(0.7)
-      expect(sim.moments.get('event.mostMealWaterPassed')!.atMin!).toBeLessThanOrEqual(120)
+      expect(sim.moments.get('event.halfMealWaterPassed')!.atMin!).toBeLessThanOrEqual(120)
     },
   )
 
@@ -174,7 +176,7 @@ describe('a whole day: background, metabolic water, other meals', () => {
   )
 
   golden(
-    'water.mealExtraMl',
+    'water.bodyExtraMl',
     ['iom2005', 'openstax-ap2e-26'],
     'resting metabolic water 0.12 mL/kcal × 1504 kcal = 180 mL a day, inside 140–350 (IOM 2005 p80 “+250 to +350 mL/d”, p85 15/10.5/11.1 g per 100 kcal; OpenStax §26.2 “about 230 mL”); part of the steady background',
     () => {
@@ -188,7 +190,7 @@ describe('a whole day: background, metabolic water, other meals', () => {
   )
 
   pinned(
-    'water.mealExtraMl',
+    'water.bodyExtraMl',
     'a meal adds a little metabolic water through its food effect (0.12 mL per kcal above rest), and all of it is accounted for at 48 h',
     () => {
       const sim = run('cheeseburger:1')
@@ -197,7 +199,7 @@ describe('a whole day: background, metabolic water, other meals', () => {
       for (let i = 0; i < N; i++) made += 0.12 * (total[i]! - R)
       expect(made).toBeGreaterThan(1)
       expect(made).toBeLessThan(20)
-      expect(extraUrine(sim, N - 1) + values(sim, 'water.mealExtraMl')[N - 1]!).toBeCloseTo(
+      expect(extraUrine(sim, N - 1) + values(sim, 'water.bodyExtraMl')[N - 1]!).toBeCloseTo(
         values(sim, 'gut.absorbed.waterG')[N - 1]! + made,
         2, // the table's Float32 rows
       )
@@ -222,15 +224,40 @@ describe('a whole day: background, metabolic water, other meals', () => {
 })
 
 describe('sweat and moving', () => {
-  pinned(['kidney.urineRate', 'kidney.urineTotal'], 'a walk with sweating → less urine than resting, for the same meal', () => {
-    for (const m of ['water:1', 'cola:1', '']) {
-      const rest = run(m)
-      const walk = run(m, [walk60])
-      expect(values(walk, 'kidney.urineTotal')[720]!, m).toBeLessThan(values(rest, 'kidney.urineTotal')[720]!)
-      // Before the walk nothing differs.
-      expect(values(walk, 'kidney.urineRate')[60]).toBe(values(rest, 'kidney.urineRate')[60])
-    }
+  pinned(
+    ['kidney.urineRate', 'kidney.urineTotal'],
+    'a walk with sweating → less urine than resting at its end, for the same meal; the sweat is drunk back (R81), so by 24 h the urine is back to the resting rate',
+    () => {
+      for (const m of ['water:1', 'cola:1', '']) {
+        const rest = run(m)
+        const walk = run(m, [walk60])
+        expect(values(walk, 'kidney.urineRate')[120]!, m).toBeLessThan(values(rest, 'kidney.urineRate')[120]!)
+        expect(Math.abs(values(walk, 'kidney.urineRate')[1440]! / values(rest, 'kidney.urineRate')[1440]! - 1), m).toBeLessThanOrEqual(0.01)
+        // Before the walk nothing differs.
+        expect(values(walk, 'kidney.urineRate')[60]).toBe(values(rest, 'kidney.urineRate')[60])
+      }
+    },
+  )
+
+  pinned('kidney.urineRate', 'G (R81): a 20-min walk never takes urine down to its least (21 mL/h), fasting or after a drink', () => {
+    for (const m of ['', 'cola:1', 'water:1'])
+      for (const startMin of [0, 30, 240]) {
+        const rate = values(run(m, [{ kind: 'walk', startMin, durMin: 20 }]), 'kidney.urineRate')
+        expect(Math.min(...rate), `${m} @${startMin}`).toBeGreaterThan(UMIN_H + 1)
+      }
   })
+
+  pinned(
+    ['kidney.urineRate', 'water.bodyExtraMl'],
+    'G (R81): after the app’s hardest plan (3 × 60 min run, about 3 L of sweat) urine is within 10 % of the background by 24 h',
+    () => {
+      for (const m of ['', 'cola:1']) {
+        const sim = run(m, MAX_PLAN)
+        expect(Math.abs(values(sim, 'kidney.urineRate')[1440]! / U0h - 1), m).toBeLessThanOrEqual(0.1)
+        expect(Math.min(...values(sim, 'water.bodyExtraMl')), m).toBeLessThan(-500)
+      }
+    },
+  )
 
   golden(
     'kidney.urineRate',
@@ -247,12 +274,13 @@ describe('sweat and moving', () => {
   )
 
   pinned(
-    'water.mealExtraMl',
-    'sweat that the meal did not cover leaves the body short (no thirst, D5 C8), and the steady day makes it up within 48 h',
+    'water.bodyExtraMl',
+    'sweat leaves the body short for a while (no thirst, D5 C8); the steady day drinks it back over about 90 min (R81 assumption, "always well watered")',
     () => {
       const sim = run('', [walk60])
-      const extra = values(sim, 'water.mealExtraMl')
-      expect(extra[121]!).toBeLessThan(-250)
+      const extra = values(sim, 'water.bodyExtraMl')
+      expect(extra[121]!).toBeLessThan(-150)
+      expect(Math.abs(extra[600]!)).toBeLessThan(5)
       expect(Math.abs(extra[N - 1]!)).toBeLessThan(1)
     },
   )
@@ -280,35 +308,36 @@ describe('bladder and moments', () => {
   golden(
     'kidney.bladderMl',
     ['openstax-ap2e-25'],
-    'guard: the bladder never holds more than 600 mL (“nearly zero to 500–600 mL”, OpenStax §25.2); it never holds 300',
+    'guard: the bladder never holds more than 600 mL (“nearly zero to 500–600 mL”, OpenStax §25.2); it never holds more than 300',
     () => {
       for (const m of [LITRE_AND_A_QUARTER, 'water:5,cola:5', ...meals]) {
         const b = values(run(m, [walk60]), 'kidney.bladderMl')
-        expect(Math.max(...b), m).toBeLessThan(300)
+        expect(Math.max(...b), m).toBeLessThanOrEqual(300)
         expect(Math.min(...b), m).toBeGreaterThanOrEqual(0)
       }
     },
   )
 
   golden(
-    'event.mostMealWaterPassed',
+    'event.halfMealWaterPassed',
     ['maughan2016', 'crowe1987'],
     'half of a drink’s absorbed water has left as extra urine within 2 h (Crowe 1987: all of 20 mL/kg out in 2 h; Maughan 2016: most of 1 L in 4 h); none without water',
     () => {
       for (const m of ['water:1', LITRE, 'cola:1']) {
-        const at = run(m).moments.get('event.mostMealWaterPassed')!.atMin!
+        const at = run(m).moments.get('event.halfMealWaterPassed')!.atMin!
         expect(at, m).toBeGreaterThan(20)
         expect(at, m).toBeLessThanOrEqual(120)
       }
-      expect(run('').moments.get('event.mostMealWaterPassed')!.atMin).toBeNull()
+      expect(run('').moments.get('event.halfMealWaterPassed')!.atMin).toBeNull()
     },
   )
 
-  pinned('event.mostMealWaterPassed', 'equal drinks pass at the same minute; sweat can keep it from happening', () => {
-    expect(run('water:1').moments.get('event.mostMealWaterPassed')!.atMin).toBe(
-      run('water-test:1').moments.get('event.mostMealWaterPassed')!.atMin,
+  pinned('event.halfMealWaterPassed', 'equal drinks pass at the same minute; sweat delays it', () => {
+    const still = run('water:1').moments.get('event.halfMealWaterPassed')!.atMin!
+    expect(still).toBe(run('water-test:1').moments.get('event.halfMealWaterPassed')!.atMin)
+    expect(run('water:1', [{ kind: 'run', startMin: 5, durMin: 60 }]).moments.get('event.halfMealWaterPassed')!.atMin!).toBeGreaterThan(
+      still + 30,
     )
-    expect(run('water:1', [{ kind: 'run', startMin: 5, durMin: 60 }]).moments.get('event.mostMealWaterPassed')!.atMin).toBeNull()
   })
 })
 
@@ -350,18 +379,22 @@ describe('the water balance and drift (model §5)', () => {
   }
 
   pinned(
-    ['water.mealExtraMl', 'kidney.urineTotal'],
-    'body balance every minute: absorbed + extra metabolic water = (urine − background) + sweat + water still in the body (±0.5 mL)',
+    ['water.bodyExtraMl', 'kidney.urineTotal'],
+    'body balance every minute: absorbed + extra metabolic water + sweat drunk back = (urine − background) + sweat + body water above normal (±0.5 mL); the sweat not yet drunk back decays with τ 90 min (R81)',
     () => {
+      const keep = Math.exp(-1 / HUMAN_MODEL.params.water.sweatDrinkBackTauMin)
       for (const m of meals) {
-        for (const plan of [[], [walk60, run60]] as ActivityBout[][]) {
+        for (const plan of [[], [walk60, run60], MAX_PLAN] as ActivityBout[][]) {
           const out = runModules(HUMAN_MODULES, setupOf(m, plan)).signals
           const get = (id: RunSignalId) => out.get(id)!.values
           const made = madeBy(m, plan)
           let worst = 0
+          let owed = 0
           for (let i = 0; i < N; i++) {
-            const inn = get('gut.absorbed.waterG')[i]! + made[i]!
-            const outs = get('kidney.urineTotal')[i]! - U0 * i + get('skin.sweatTotal')[i]! + get('water.mealExtraMl')[i]!
+            owed = (owed + get('skin.sweatRate')[i]! / 60) * keep
+            const drunk = get('skin.sweatTotal')[i]! - owed
+            const inn = get('gut.absorbed.waterG')[i]! + made[i]! + drunk
+            const outs = get('kidney.urineTotal')[i]! - U0 * i + get('skin.sweatTotal')[i]! + get('water.bodyExtraMl')[i]!
             worst = Math.max(worst, Math.abs(inn - outs))
           }
           expect(worst, `${m} ${activityKey(plan)}`).toBeLessThanOrEqual(0.5)
@@ -371,7 +404,7 @@ describe('the water balance and drift (model §5)', () => {
   )
 
   pinned(
-    ['kidney.urineRate', 'kidney.urineTotal', 'kidney.bladderMl', 'water.mealExtraMl', 'kidney.filtrationRate'],
+    ['kidney.urineRate', 'kidney.urineTotal', 'kidney.bladderMl', 'water.bodyExtraMl', 'kidney.filtrationRate'],
     '48 h drift test (empty plan, rest): urine stays U0, nothing is extra, the bladder saw-tooth repeats every 288 min, totals are linear, only bladder moments',
     () => {
       const out = runModules(HUMAN_MODULES, setupOf('')).signals
@@ -381,25 +414,47 @@ describe('the water balance and drift (model §5)', () => {
         for (let i = 1; i < N; i++) expect(Math.abs(v[i]! - v[0]!) / v[0]!, `${id} @${i}`).toBeLessThanOrEqual(1e-9)
       }
       expect(get('kidney.urineRate')[0]).toBeCloseTo(U0h, 12)
-      expect(get('water.mealExtraMl').every((v) => v === 0)).toBe(true)
+      expect(get('water.bodyExtraMl').every((v) => v === 0)).toBe(true)
       const total = get('kidney.urineTotal')
       for (const i of [0, 1, 600, 1440, N - 1]) expect(total[i]!).toBeCloseTo(U0 * i, 6)
       const b = get('kidney.bladderMl')
       for (let i = 288; i < N; i++) expect(Math.abs(b[i]! - b[i - 288]!), `bladder @${i}`).toBeLessThanOrEqual(1e-6)
       const sim = run('')
       expect(sim.moments.get('event.bladderFirstUrge')!.atMin).toBe(144)
-      expect(sim.moments.get('event.mostMealWaterPassed')!.atMin).toBeNull()
+      expect(sim.moments.get('event.halfMealWaterPassed')!.atMin).toBeNull()
     },
   )
 
   pinned(
-    ['water.mealExtraMl', 'kidney.urineRate'],
+    ['kidney.urineRate', 'kidney.urineTotal', 'kidney.bladderMl', 'water.bodyExtraMl'],
+    '48 h drift test, the app’s hardest plan (3 × 60 min run, R81): everything is finite, the body water is back to normal and urine back to U0 well before 48 h, and the last day’s bladder saw-tooth repeats every 288 min',
+    () => {
+      for (const m of ['', 'cola:1']) {
+        const out = runModules(HUMAN_MODULES, setupOf(m, MAX_PLAN)).signals
+        const get = (id: RunSignalId) => out.get(id)!.values
+        for (const id of ['kidney.urineRate', 'kidney.urineTotal', 'kidney.bladderMl', 'water.bodyExtraMl'] as const)
+          expect(
+            get(id).every((v) => Number.isFinite(v)),
+            `${m} ${id}`,
+          ).toBe(true)
+        for (const i of [1440, N - 1]) {
+          expect(Math.abs(get('water.bodyExtraMl')[i]!), `${m} @${i}`).toBeLessThan(i === 1440 ? 20 : 1)
+          expect(Math.abs(get('kidney.urineRate')[i]! / U0h - 1), `${m} @${i}`).toBeLessThanOrEqual(i === 1440 ? 0.1 : 0.001)
+        }
+        const b = get('kidney.bladderMl')
+        for (let i = N - 288 * 3; i < N; i++) expect(Math.abs(b[i]! - b[i - 288]!), `${m} bladder @${i}`).toBeLessThanOrEqual(0.5)
+      }
+    },
+  )
+
+  pinned(
+    ['water.bodyExtraMl', 'kidney.urineRate'],
     'after a meal (no activity) the extra water at 48 h is within 2 % of what was absorbed, and urine within 1 % of resting',
     () => {
       for (const m of meals.filter((x) => x !== '')) {
         const sim = run(m)
         const absorbed = values(sim, 'gut.absorbed.waterG')[N - 1]!
-        expect(Math.abs(values(sim, 'water.mealExtraMl')[N - 1]!), m).toBeLessThanOrEqual(0.02 * absorbed)
+        expect(Math.abs(values(sim, 'water.bodyExtraMl')[N - 1]!), m).toBeLessThanOrEqual(0.02 * absorbed)
         expect(Math.abs(values(sim, 'kidney.urineRate')[N - 1]! - U0h) / U0h, m).toBeLessThanOrEqual(0.01)
       }
     },
@@ -452,7 +507,7 @@ describe('contract: status, params, ranges, speed', () => {
       expect(RUN_SIGNALS[id].status, id).toBe('assumption')
       expect(RANK[RUN_SIGNALS[id].status], id).toBeLessThanOrEqual(weakest)
     }
-    // Every water parameter says what it rests on; kx and τ are the only calibrated ones.
+    // Every water parameter says what it rests on; kx, the deficit gain (R81) and τ are the only calibrated ones.
     const own = Object.entries(PARAM_SOURCES).filter(([path]) => path.startsWith('water.'))
     expect(own.map(([path]) => path).sort()).toEqual(
       Object.keys(HUMAN_MODEL.params.water)
@@ -464,7 +519,7 @@ describe('contract: status, params, ranges, speed', () => {
         .filter(([, e]) => e!.basis === 'calibrated')
         .map(([path]) => path)
         .sort(),
-    ).toEqual(['water.adhTauMin', 'water.urinePerExtraMlPerMin'])
+    ).toEqual(['water.adhTauMin', 'water.urinePerDeficitMlPerMin', 'water.urinePerExtraMlPerMin'])
   })
 
   it('reads ctx.params: a 2 L background day doubles the resting urine; a slower ADH lag delays the peak', () => {

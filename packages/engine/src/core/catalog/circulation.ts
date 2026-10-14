@@ -66,17 +66,19 @@ export const CIRCULATION_SIGNALS: { readonly [Id in CirculationSignalId]: Signal
     status: 'assumption',
     clock: 'sim',
     kind: 'level',
-    sourceIds: SV_SOURCES,
+    sourceIds: [...SV_SOURCES, 'kelbaek1989'],
     i18nKey: k('heart.strokeVolume'),
-    reactsToMeal: false,
+    reactsToMeal: true,
     shipsIn: 'v3.0',
     displayRange: [0, 130],
     round: 1,
     limitKey: 'limits.heartSplit',
-    // OpenStax §19.4: "Normal range for SV would be 55–100 mL."
-    validRange: { low: 55, high: 100, basis: 'cited' },
+    // OpenStax §19.4: "Normal range for SV would be 55–100 mL" at rest; "SV can also increase from
+    // 70 to approximately 130 mL" (a bout after a meal: 1.4× for moving and the meal's share, R80).
+    validRange: { low: 55, high: 130, basis: 'cited' },
   },
-  // 24 % of resting CO (OpenStax Table 20.3) + the meal's rise (Sieber weights, Eriksen size).
+  // 24 % of resting CO (OpenStax Table 20.3) + the meal's rise (Sieber weights, Eriksen size, R80),
+  // less what it gives the muscles in a bout (Table 20.3: down to 600 of 1400 mL/min, R83).
   'blood.flow.gut': {
     id: 'blood.flow.gut',
     unit: 'mL/min',
@@ -90,10 +92,11 @@ export const CIRCULATION_SIGNALS: { readonly [Id in CirculationSignalId]: Signal
     displayRange: [0, 5000],
     round: 10,
     limitKey: 'limits.gutFlow',
-    // Fasting about 1 L/min, at most 3 L/min more: a design guard.
-    validRange: { low: 500, high: 4500, basis: 'guard' },
+    // Fasting about 1 L/min, at most 3 L/min more, at least 43 % of it in the hardest bout: a design guard.
+    validRange: { low: 400, high: 4500, basis: 'guard' },
   },
-  // 21 % of resting CO + 90 % of the moving rise (OpenStax Table 20.3); a meal does not change it.
+  // 21 % of resting CO + 90 % of the moving rise + what the gut gives up in a bout (OpenStax Table
+  // 20.3, R83); a meal does not change it.
   'blood.flow.muscle': {
     id: 'blood.flow.muscle',
     unit: 'mL/min',

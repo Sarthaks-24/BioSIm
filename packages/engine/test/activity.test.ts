@@ -74,9 +74,12 @@ describe('the activity plan (core/activity.ts)', () => {
     expect(PUBLIC_ACTIVITY_KINDS).toEqual(['walk', 'walkBrisk', 'run'])
   })
 
-  it('≤ 8 bouts, start 0–2880, 5–120 min, whole minutes, no overlap (a bout may start as another ends)', () => {
+  it('≤ 8 bouts, from minute 0 and ending by 2880 (R84), 5–120 min, whole minutes, no overlap (a bout may start as another ends)', () => {
     const b = (kind: ActivityBout['kind'], startMin: number, durMin: number): ActivityBout => ({ kind, startMin, durMin })
-    expect(activityProblems([b('walk', 0, 5), b('run', 5, 120), b('walk', 2880, 5)])).toEqual([])
+    expect(activityProblems([b('walk', 0, 5), b('run', 5, 120), b('walk', 2875, 5)])).toEqual([])
+    expect(activityProblems([b('walk', 2880, 5)])).toHaveLength(1)
+    expect(activityProblems([b('walk', 2876, 5)])).toHaveLength(1)
+    expect(activityProblems([b('run', 2800, 81)])).toHaveLength(1)
     expect(activityProblems([b('walk', 0, 4)])).toHaveLength(1)
     expect(activityProblems([b('walk', 0, 121)])).toHaveLength(1)
     expect(activityProblems([b('walk', 2881, 5)])).toHaveLength(1)
@@ -130,16 +133,21 @@ describe('activity: Compendium METs and the cost of moving', () => {
   golden(
     ['energy.activityRate', 'energy.activityTotal', 'event.activityStart', 'event.activityEnd'],
     ['herrmann2024'],
-    'a 20-min walk at 65 kg adds (3.8 − 1)·3.5·65/200 = 3.185 kcal/min above rest, from its start moment to its end moment: 63.7 kcal',
+    'a 20-min walk at 65 kg adds (3.8 − 1)·3.5·65/200 = 3.185 kcal/min above rest once the body has caught up (on/off kinetics, R82): 63.7 kcal plus 3.185 × (50 − 35) s = 0.8 kcal of fast oxygen debt',
     () => {
       const sim = run('cola:1', [walk20])
       const rate = values(sim, 'energy.activityRate')
       expect(sim.moments.get('event.activityStart')?.atMin).toBe(30)
       expect(sim.moments.get('event.activityEnd')?.atMin).toBe(50)
       expect(rate[30]).toBe(0)
-      for (const i of [31, 40, 50]) expect(rate[i]!).toBeCloseTo(3.185 * 60, 3)
-      expect(rate[51]).toBe(0)
-      expect(values(sim, 'energy.activityTotal')[2880]!).toBeCloseTo(63.7, 3)
+      for (const i of [40, 50]) expect(rate[i]!).toBeCloseTo(3.185 * 60, 3)
+      // The first minute is on the way up (τ_on 35 s), the first minute after on the way down (τ_off 50 s).
+      expect(rate[31]!).toBeGreaterThan(0.3 * 3.185 * 60)
+      expect(rate[31]!).toBeLessThan(0.6 * 3.185 * 60)
+      expect(rate[51]!).toBeGreaterThan(0.4 * 3.185 * 60)
+      expect(rate[51]!).toBeLessThan(0.7 * 3.185 * 60)
+      expect(rate[90]).toBe(0)
+      expect(values(sim, 'energy.activityTotal')[2880]!).toBeCloseTo(3.185 * (20 + (50 - 35) / 60), 3)
     },
   )
 
@@ -425,7 +433,7 @@ describe('fuzz: meals × activity plans', () => {
       const sim = run(pick(menu), plan)
       for (const [id, s] of sim.signals) {
         // The meal's water still in the body goes below 0 when sweat took more (S-4; its validRange).
-        if (id === 'water.mealExtraMl') continue
+        if (id === 'water.bodyExtraMl') continue
         // Not below 0 beyond rounding: energy.inRate dips by 1e-12 where nothing is absorbed.
         const bad = s.values.findIndex((v) => !Number.isFinite(v) || v < -1e-6)
         expect(bad, `${id} with ${activityKey(plan)}`).toBe(-1)

@@ -10,6 +10,19 @@ import type { Widen } from './params.ts'
 
 export const PACK_PARAMS = {
   /**
+   * How fast the body follows a change of activity (R82; model §2.1). The MET every module reads
+   * moves towards the bout's MET as a first-order lag, faster on the way up than on the way down:
+   * oxygen-uptake phase II time constants in moderate exercise, 35 ± 14 s at the start and
+   * 50 ± 13 s at the end (Rossiter 2002; Poole & Jones 2012 review the kinetics). The energy the
+   * lag holds back at the start is used after the bout ends (the fast part of the oxygen debt);
+   * the slow part (EPOC) is a stated limit.
+   */
+  kinetics: {
+    metTauOnS: 35,
+    metTauOffS: 50,
+  },
+
+  /**
    * Breathing (model §2.2, S-2; sources read in V-2). Oxygen used and carbon dioxide made come from
    * the energy used (x.energy.total) through Weir's equation without protein, kcal = (3.941 +
    * 1.106·RQ) per L O2 (Kaiyala 2019, Eq 1). RQ starts at the fasting value, rises with blood
@@ -61,9 +74,9 @@ export const PACK_PARAMS = {
   },
 
   /**
-   * Water and kidneys (model §2.4, D17; S-4). The meal's water sits on a steady background day: the
-   * usual drinks balance the usual 1.5 L of urine a day (OpenStax A&P 2e §26.2) and the unnoticed
-   * losses, so only the meal's extra water E moves (Model estimate). Extra metabolic water = 0.12 mL
+   * Water and kidneys (model §2.4, D17; S-4). The run sits on a steady background day: the usual
+   * drinks balance the usual 1.5 L of urine a day (OpenStax A&P 2e §26.2) and the unnoticed losses,
+   * so only the body water above that day, E, moves (Model estimate). Extra metabolic water = 0.12 mL
    * per kcal above rest (IOM 2005 p85: 15, 10.5, 11.1 g per 100 kcal of carbohydrate, protein,
    * fat). The kidney follows E through an ADH lag S (dS/dt = (E − S)/τ; τ 10 min = AVP half-life
    * 6.9 min, inside Calvi 2024's 5–20 min) and sends out urine U = U0 + kx·S, between the least
@@ -72,7 +85,9 @@ export const PACK_PARAMS = {
    * capped by the 0.9 L the gut has absorbed by then) with kx·τ = 0.3, about critically damped, so
    * urine never dips below the background after a drink; Crowe 1987 is the hold-out. The bladder
    * starts empty, the urge is felt at 150 mL (§25.2) and it empties at 300 mL (hand-picked inside
-   * §25.2's "300 to 400 mL"). Filtration is a constant 125 mL/min (§25.5).
+   * §25.2's "300 to 400 mL"). Filtration is a constant 125 mL/min (§25.5). Always well watered
+   * (R81): sweat is drunk back over the background day with a 90 min lag (an assumption), and below
+   * normal the kidney's gain is a fifth of kx (calibrated so a 20-min walk keeps urine above 21 mL/h).
    */
   water: {
     metabolicMlPerKcal: 0.12,
@@ -81,25 +96,35 @@ export const PACK_PARAMS = {
     maxUrineMlPerH: 750,
     adhTauMin: 10,
     urinePerExtraMlPerMin: 0.03,
+    urinePerDeficitMlPerMin: 0.006,
+    sweatDrinkBackTauMin: 90,
     bladderUrgeMl: 150,
     bladderEmptyMl: 300,
     filtrationMlPerMin: 125,
   },
 
   /**
-   * Heart and blood flow (model §2.3, D7, D8; S-3; sources read in V-3). Resting cardiac output is
-   * the resting O2 use at the fasting RQ over a resting a–v O2 difference of 50 mL per L (Klabunde's
-   * worked example; Higginbotham 1986 measured 58 at rest: a calibration that keeps CO 4.3 L/min,
-   * inside OpenStax's 4–8, R49). Moving adds 5.5 L/min of blood per L/min of extra O2 (Stringer
-   * 2005 "approximately 5-6"; Cook 2005 5.8). Digesting adds the gut's extra flow, a saturating
-   * function of the absorbed energy weighted fat 1, protein 1, carbohydrate 0.6 (Sieber 1992: fat
-   * and protein alike, carbohydrate "significantly less"; 0.6 is a calibration, V-3), with the rise
-   * at most 3 L/min (about Sidery 1994's largest, 3.15) and K fitted so a 1526 kcal mixed meal
-   * raises CO by 1.3 L/min (Eriksen 1994). The food effect's O2 is not counted again (D7): the
-   * wider extraction of the gut covers it. Stroke volume rises with the moving part of CO up to
-   * 1.4× at 5 L/min, then stays (Higginbotham 1986, R50); heart rate = CO / SV, at most
-   * 220 − 29 = 191 (OpenStax §19.4). Muscle and gut take 21 % and 24 % of resting CO, and muscle
-   * 90 % of the moving rise (OpenStax Table 20.3).
+   * Heart and blood flow (model §2.3, D7, D8; S-3, FIX-S; sources read in V-3 and V-FIXS). Resting
+   * cardiac output is the resting O2 use at the fasting RQ over a resting a–v O2 difference of 50 mL
+   * per L (Klabunde's worked example; Higginbotham 1986 measured 58 at rest: a calibration that
+   * keeps CO 4.3 L/min, inside OpenStax's 4–8, R49). Moving adds 5.5 L/min of blood per L/min of
+   * extra O2 (Stringer 2005 "approximately 5-6"; Cook 2005 5.8). Digesting adds the gut's extra
+   * flow (R80): it follows the food still being digested, the meal's absorbable energy eaten but not
+   * yet absorbed, weighted fat 1, protein 1, carbohydrate 0.6 (Sieber 1992: fat and protein alike,
+   * carbohydrate "significantly less"; 0.6 is a calibration, V-3). A big meal holds more food in the
+   * gut for longer, so it raises CO more and for longer than a small drink (Waaler 1991). The rise
+   * builds up through a 20 min lag (a calibration: "a maximum level 30 to 60 min after end of the
+   * meal", Waaler 1991), saturates at 3 L/min (about Sidery 1994's largest, 3.15) with K fitted so
+   * a 1526 kcal mixed meal raises CO by 1.3 L/min (Eriksen 1994). The food effect's O2 is not
+   * counted again (D7). Heart rate carries 27 % of the meal's rise (in logs) and stroke volume the
+   * rest (Kelbaek 1989: stroke volume +23 %, heart rate +8 % half an hour after a meal). In a bout
+   * stroke volume rises with the moving part of CO up to 1.4× at 5 L/min, then stays (Higginbotham
+   * 1986, R50); heart rate = CO / SV, at most 220 − 29 = 191 (OpenStax §19.4). Muscle and gut take
+   * 21 % and 24 % of resting CO; in a bout muscle takes 90 % of the moving rise. The gut gives up
+   * blood to the muscles in proportion to how hard the heart works, the moving rise over the most
+   * it can add (191 beats × 91 mL − CO_rest): at the top it keeps 600 of its 1400 mL/min (R83,
+   * OpenStax Table 20.3 maximal exercise, 57 % given up); the mild column (1100 of 1400 while CO
+   * rises 3700 of a possible 11 700 mL/min) is the check. CO is unchanged.
    */
   circulation: {
     restAvdo2MlPerL: 50,
@@ -111,13 +136,16 @@ export const PACK_PARAMS = {
     gutRestShare: 0.24,
     muscleRestShare: 0.21,
     muscleShareOfRise: 0.9,
+    gutGiveUpAtMax: 0.57,
     gutWeight: {
       carbs: 0.6,
       protein: 1,
       fat: 1,
     },
     gutRiseMaxLPerMin: 3,
-    gutHalfKcalPerMin: 2.5,
+    gutHalfKcal: 1370,
+    gutRiseTauMin: 20,
+    hrShareOfMealRise: 0.27,
     /** event.gutFlowPeak only when gut flow rises at least this much (mL/min): a display choice. */
     gutPeakMinRiseMlPerMin: 10,
   },
