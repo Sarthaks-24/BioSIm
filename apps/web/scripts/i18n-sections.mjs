@@ -85,6 +85,11 @@ export const PAGE_SECTIONS = {
   units: ['min', 'h', 'hm', 'hShort', 'kcal', 'g', 'mgdl', 'kcalPerH', 'gPerMin'],
   profiles: [],
   disclaimer: ['short', 'firstRun', 'graph', 'more'],
+  // E-3b-ui: the meal sheet's "Food | Activity" switch comes with the sheets (Sheets.tsx); the
+  // activity sheet's own words with it (components/ActivitySheet.tsx, lazy tier). The stage keeps
+  // a bout's chip words and the "Try:" hint.
+  mealSheet: [],
+  activity: ['kinds', 'bout', 'edit', 'try'],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

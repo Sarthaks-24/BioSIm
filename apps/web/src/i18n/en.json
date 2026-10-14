@@ -46,6 +46,7 @@
     "needsInternet": "This part needs internet once. Open it once with internet.",
     "failed3d": "Couldn’t load the 3D body. Check internet and tap Try again.",
     "afterEating": "after eating",
+    "fromStart": "from the start",
     "capReached": "That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big."
   },
   "stages": {
@@ -800,5 +801,37 @@
     "overCap": "{{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough.",
     "shareTo": "Share",
     "shareManual": "Copy this link"
+  },
+  "activity": {
+    "kinds": {
+      "walk": "Walk",
+      "walkBrisk": "Brisk walk",
+      "run": "Run"
+    },
+    "bout": "{{kind}} {{min}} min, from {{start}}",
+    "edit": "Change {{bout}}",
+    "try": "Try: {{bout}}",
+    "plans": "Ready plans",
+    "home": "Brisk walk home {{min}} min, from {{start}}",
+    "own": "Make your own",
+    "what": "What",
+    "from": "From",
+    "howLong": "How long (minutes)",
+    "addButton": "Add",
+    "save": "Save",
+    "remove": "Remove",
+    "yours": "Your plan",
+    "resting": "Resting: no walk or run yet.",
+    "full": "At most {{n}} walks or runs. Remove one to add another.",
+    "overlap": "That overlaps {{bout}}. Pick another time.",
+    "fromLink": "Made by a link. You can remove it here, not change it.",
+    "moves": "In this model, walking and running change breathing, the heart and blood, the muscles and the skin. Muscles and skin change only with them. The food’s journey, blood sugar and energy taken in stay the same."
+  },
+  "mealSheet": {
+    "food": "Food",
+    "activity": "Activity",
+    "addActivity": "Add activity",
+    "loading": "Getting the activities ready…",
+    "slow": "Slow connection, still loading. Digestion works meanwhile."
   }
 }

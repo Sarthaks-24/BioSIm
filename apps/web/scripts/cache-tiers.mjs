@@ -75,6 +75,9 @@ export const LESSON_PACKS = {
       'src/components/Overlay.tsx',
       'src/components/stage/MealActions.tsx',
       'src/components/FeedbackDialog.tsx',
+      // E-3b-ui: the meal sheet's Activity half and the bouts' marks on the graphs and the dock.
+      'src/components/ActivitySheet.tsx',
+      'src/components/stage/BoutMarks.tsx',
     ],
   },
 }

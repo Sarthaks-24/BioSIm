@@ -3,7 +3,8 @@ import { activeStage, buildMeal, decodeMeal } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN } from './time.ts'
-import { groupClose, hitAreas, momentNameKey, runMoments } from './moments.ts'
+import { boutMoments, groupClose, hasPlan, hitAreas, momentNameKey, runMoments } from './moments.ts'
+import { activityBandAt } from './bouts.ts'
 
 const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 })
 
@@ -83,5 +84,28 @@ describe('markers that nearly coincide are merged into one (council round 2)', (
     const [a, b] = hitAreas([0, 30], 44)
     expect(a!.after + b!.before).toBe(30)
     expect(a!.before).toBe(22)
+  })
+})
+
+describe('activity bouts on the clock (E-3b-ui)', () => {
+  const bouts = [
+    { kind: 'walk' as const, startMin: 30, durMin: 20 },
+    { kind: 'run' as const, startMin: 120, durMin: 10 },
+  ]
+  const walked = simulate({ items: decodeMeal('cola:1'), activity: bouts }, { particles: 0, lookup: lookupFood })
+
+  it('each bout’s start and end is a moment; the system’s own moments leave them out', () => {
+    expect(boutMoments(walked).map((m) => [m.id, m.atMin])).toEqual([
+      ['event.activityStart', 30],
+      ['event.activityEnd', 50],
+      ['event.activityStart', 120],
+      ['event.activityEnd', 130],
+    ])
+    expect(runMoments(walked).some((m) => m.id.startsWith('event.activity'))).toBe(false)
+    expect(hasPlan(walked)).toBe(true)
+  })
+
+  it('the body’s band: the bout’s kind from its start to its end, else resting', () => {
+    expect([0, 30, 49, 50, 125, 130].map((m) => activityBandAt(bouts, m))).toEqual(['rest', 'walk', 'walk', 'rest', 'run', 'rest'])
   })
 })

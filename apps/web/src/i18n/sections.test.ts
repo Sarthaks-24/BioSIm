@@ -42,6 +42,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts'],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
+  mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],
+  activity: ['components/ActivitySheet.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */
