@@ -2,6 +2,65 @@
 
 All notable changes to LifePeek. Data corrections are listed here so teachers can see what changed.
 
+## 2.1.0 (unreleased)
+
+The first public release of the new screen (2.0.0 below was never released on its own). It fixes
+what a check on real phones, tablets and projectors found, and makes the site lighter.
+
+What students and teachers will notice:
+
+- **Phones**: the body shows on every phone screen, even small ones (320 px wide) and with the
+  browser bars showing. The meal bar is one row; many foods fold into a "+3" chip instead of
+  spilling off the screen; the less-used buttons are under "⋯".
+- **Phone on its side (landscape)** and laptops zoomed to 200 %: the body on the left, the meal,
+  graph and controls on the right, all without scrolling.
+- **Projector**: on a 1024×768 projector the body fills at least 40 % of the screen, also with a
+  kept meal; the graph summary sits under the graph; the projector colours are easier to read from
+  the back row.
+- **Timeline**: the key moments have their own lane and no longer cover the track; the time labels
+  stay apart; "Keys and settings" never overlaps the timeline.
+- **Graphs**: labels never sit on a line, the squeezed part of a graph is shown as a light hatch,
+  and the tag says "Model estimate".
+- **Pop-ups** ("How we know", the food sheet, menus): always fully on screen, below the header,
+  with a Close button; Esc and the phone's Back button close them and keep your meal.
+- **Links, Back and share**: Back closes an open sheet instead of leaving the site; Copy link and
+  Share are there at every screen size (one click on a laptop); a link with a food we no longer
+  have, too many foods or an impossible time opens with a note saying what changed; links made by
+  a newer LifePeek offer "Update now".
+- **The clock** keeps real time on slow phones, stops when you switch tabs, and does not jump.
+  The "new version" note no longer shows by mistake.
+- **Home**: the chart's text is readable on a phone, and "Open the simulator" is on the first
+  screen.
+- **Teach**: lesson step 2 says where the lesson starts (35 min); "Save for class offline" saves a
+  lesson (or all of them) so it works with no internet in class, and shows "Ready for class
+  offline ✓"; the QR code is made from the site's own address.
+- **Page titles and link previews**: every page has its own title and description, so a link
+  shared on WhatsApp or found in a search says which page it is; unknown addresses show a real
+  "page not found".
+- **Lighter site**: the app saves only its core for offline use (about 0.76 MB instead of 1.8 MB).
+  The 3D body (about 1 MB) downloads only on a device that can show it, the first time it is
+  opened; meanwhile the flat body works, with a note if the connection is slow.
+- **Hindi is paused**: the site is English only for now, until a reviewer has checked every Hindi
+  string. Links with `lang=hi` open in English with a short note.
+- **Report form and privacy page**: one clear privacy warning in the report form; the project
+  email on the privacy page is a tap-to-email link.
+- Frame rate on a 2 GB Android phone: <fps, 3D and flat, from the device check>.
+- Classroom check (5 students, 1 teacher): <one line: tasks passed, from the student check>.
+
+Known limits:
+
+- The 3D body needs the internet the first time it is opened; after that (or after "Save for
+  class offline") it works offline. Without internet the flat body is shown.
+- Hindi is not in this release (see above).
+- On iPhone and iPad, a short drawing glitch while the page loads under heavy load is still being
+  watched (it was not seen in our tests); a device check covers it.
+- The frame-rate test in our browser checks is a report, not a pass mark: the real 2 GB phone
+  check above is the one that counts.
+- The model's numbers are unchanged from 2.0.0 (model version 2); the "How we know" panels list
+  each value's source and its limits.
+
+<!-- Before tagging: fill in the two lines above, and change the heading to "2.1.0". npm run release-gate checks this. -->
+
 ## 2.0.0 (unreleased)
 
 A new, cleaner screen: one body, one meal, and the graphs that explain it.

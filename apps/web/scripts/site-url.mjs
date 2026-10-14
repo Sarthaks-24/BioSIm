@@ -3,8 +3,8 @@
 // from here. Set VITE_SITE_URL (in the Vercel project's environment, or a .env file) once the
 // project's real name is known; without it, the planned name below.
 //
-// The QR code on /teach (src/assets/lifepeek-qr.svg) is a picture of the address: make it again
-// when the address changes (src/lib/presets.ts says how).
+// The QR code on /teach is a picture of the address too: scripts/qr-code.mjs makes it at build
+// time from this value (R79), so a new address needs no hand step.
 
 /** The planned production address, used when VITE_SITE_URL is not set. */
 export const DEFAULT_SITE_URL = 'https://lifepeek.vercel.app'

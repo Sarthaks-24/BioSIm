@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-import { LESSONS, QR_PATH, TASKS, presetHref } from '../src/lib/presets.ts'
+import { LESSONS, TASKS, presetHref } from '../src/lib/presets.ts'
+import { QR_PATH } from '../src/lib/qrPath.ts'
 import en from '../src/i18n/en.json' with { type: 'json' }
 import { SIM_BODY, checkAxe, onlyIn } from './helpers/gate.ts'
 
@@ -99,7 +100,7 @@ test('the QR code opens the screen the first questions start from', async ({ pag
   await expect(qr).toBeVisible()
   // The address it holds is printed under it, to type if a camera can't read it (council round 3).
   await expect(page.getByText(`lifepeek.vercel.app${QR_PATH}`, { exact: true })).toBeVisible()
-  expect(QR_PATH).toBe('/sim?v=2&a=cola:1')
+  expect(QR_PATH).toBe('/sim?a=cola:1')
   // A file of its own (not inlined into the page's code), drawn about 240 px wide.
   const src = (await qr.getAttribute('src'))!
   expect(src).toMatch(/^\/assets\/.+\.svg$/)

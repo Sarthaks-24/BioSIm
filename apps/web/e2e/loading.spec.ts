@@ -9,6 +9,9 @@ import { SIM_BODY, onlyIn, verdict } from './helpers/gate.ts'
 // the app's own numbers). Report for a week (qa-fixes §1.1), then enforce.
 // Projects desktop, and webkit-desktop / webkit-phone / firefox-desktop with E2E_ENGINES=1.
 
+// TODO(2026-10-21, R59): B17 reports for one clean week after T7's merge. On or after 2026-10-21,
+// if the nightly engines job (WebKit, Firefox) and the desktop runs show no `[gate report] … B17`
+// line, set this to 'enforce' and update e2e/red-list.md. Kept report-only at T11 (2026-10-14).
 const MODE = 'report' as const
 const MAX_OFF_PX = 12
 /** Lines are drawn up to this far past the plot's box (their width, round caps, the axis break). */

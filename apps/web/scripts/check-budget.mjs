@@ -164,6 +164,9 @@
 //   engine-not-in-/sim guard.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
+//   FIX-L (R87): the late notes lie over the body pane on a phone (Notes.tsx, +0.045) and the build puts
+//   a vh fallback before every dvh (scripts/vh-fallback.mjs, +0.040; body's own min-height dropped,
+//   Layout has it): /sim 187.286 → 187.372 KB on main 87f73a4 (+0.09).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'

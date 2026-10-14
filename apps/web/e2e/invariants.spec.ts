@@ -19,47 +19,16 @@ import {
   type Mode,
 } from './helpers/gate.ts'
 
-// Track A invariants (T0; plan qa-fixes §3.1, §3.2) on the new window sizes and engines. All of
-// them report for now (INVARIANTS below): the stage fails most of them before FP-1 and FP-2 (the
-// red list, e2e/red-list.md). T2 enforces phone-small and tablet-portrait, T3 landscape and
-// projector-sizes, T7 storage-blocked, T5 the dock and timeline checks on every Chromium project
-// (TIMELINE); webkit-* and firefox-* report for a week first. T4's overlay checks (FP-5) are in
-// e2e/overlays.spec.ts, which runs on these projects too.
+// Track A invariants (T0; plan qa-fixes §3.1, §3.2) on the new window sizes and engines. They
+// reported from T0 (the stage failed most of them before FP-1 and FP-2: the red list,
+// e2e/red-list.md); T2, T3, T5 and T7 enforced their parts, and T11 (the v2.1 gate) enforces every
+// Chromium project. Still report-only: webkit-* and firefox-* (nightly, a clean week first), the
+// first screen of the two smallest phones (FIRST_SCREEN) and the Hindi link. FIX-L (R87) enforces
+// the dvh fallback (scripts/vh-fallback.mjs) and adds the late notes check.
+// T4's overlay checks (FP-5) are in e2e/overlays.spec.ts, which runs on these projects too.
 
-/** Report or enforce, per project. A T-step flips its projects when its FP lands. */
+/** Report or enforce, per project. */
 export const INVARIANTS: Record<string, Mode> = {
-  'phone-small': 'report',
-  'phone-560': 'report',
-  'phone-xs': 'report',
-  'tablet-portrait': 'report',
-  landscape: 'report',
-  'projector-sizes': 'report',
-  'storage-blocked': 'enforce',
-  'webkit-desktop': 'report',
-  'webkit-phone': 'report',
-  'firefox-desktop': 'report',
-}
-const PROJECTS = Object.keys(INVARIANTS)
-/**
- * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project. T2
- * (FP-1) enforces them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
- * projector-sizes; the project's other checks (overlaps, overlays, Back, console, links) belong
- * to other FPs and follow INVARIANTS until those land.
- */
-const BODY_VISIBLE: Record<string, Mode> = {
-  ...INVARIANTS,
-  'phone-small': 'enforce',
-  'tablet-portrait': 'enforce',
-  landscape: 'enforce',
-  'projector-sizes': 'enforce',
-}
-/**
- * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
- * hour labels apart, the moments' targets and list, Settings on touch). T5 enforces them on every
- * Chromium project; webkit-* and firefox-* follow INVARIANTS (a week of reports first).
- */
-const TIMELINE: Record<string, Mode> = {
-  ...INVARIANTS,
   'phone-small': 'enforce',
   'phone-560': 'enforce',
   'phone-xs': 'enforce',
@@ -67,7 +36,31 @@ const TIMELINE: Record<string, Mode> = {
   landscape: 'enforce',
   'projector-sizes': 'enforce',
   'storage-blocked': 'enforce',
+  'webkit-desktop': 'report',
+  'webkit-phone': 'report',
+  'firefox-desktop': 'report',
 }
+const PROJECTS = Object.keys(INVARIANTS)
+/**
+ * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project: T2
+ * (FP-1) enforced them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
+ * projector-sizes, T11 on phone-560 and phone-xs.
+ */
+const BODY_VISIBLE: Record<string, Mode> = INVARIANTS
+/**
+ * Play and graph 1's plot in the first screen (§3.2), per project. On a 360×560 window (a 360×640
+ * phone with its browser bars) and on 320×568, Play and the graph sit up to ≈ 130 px below the
+ * first screen (the body comes first, ≥ 160 / 120 px): the plan keeps these two report-only
+ * (qa-fixes §3.1: phone-560 "enforce after 1 green week", phone-xs "report"); the body itself is
+ * enforced there.
+ */
+const FIRST_SCREEN: Record<string, Mode> = { ...BODY_VISIBLE, 'phone-560': 'report', 'phone-xs': 'report' }
+/**
+ * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
+ * hour labels apart, the moments' targets and list, Settings on touch). T5 enforced them on every
+ * Chromium project; webkit-* and firefox-* follow INVARIANTS (a week of reports first).
+ */
+const TIMELINE: Record<string, Mode> = INVARIANTS
 
 const KEPT = '/sim?v=3&a=cola:1&b=cheeseburger:1,fries:1&t=60'
 /** The stage states of FP-1's acceptance: default, kept, first visit, empty, 6 foods. */
@@ -191,7 +184,7 @@ for (const l of ['en', 'pseudo'] as const) {
               body: page.locator('[data-body]'),
               'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
             },
-            { mode },
+            { mode: FIRST_SCREEN[project]! },
           )
         }
         if (noScroll(project)) await expectNoPageScroll(page, { mode })
@@ -418,7 +411,7 @@ test('switches language with storage blocked', async ({ page }) => {
 test('every dvh has a vh fallback before it', async ({ page }) => {
   onlyIn('phone-small')
   const thrown = await tryStep(async () => void (await page.goto('/')))
-  if (thrown) return verdict('dvh fallback', 'report', [`/ did not open: ${thrown}`])
+  if (thrown) return verdict('dvh fallback', INVARIANTS['phone-small']!, [`/ did not open: ${thrown}`])
   const hrefs = await page.locator('link[rel="stylesheet"]').evaluateAll((els) => els.map((e) => (e as HTMLLinkElement).href))
   const problems: string[] = []
   for (const href of hrefs) {
@@ -432,5 +425,81 @@ test('every dvh has a vh fallback before it', async ({ page }) => {
       })
     }
   }
-  verdict('dvh fallback', 'report', problems)
+  verdict('dvh fallback', INVARIANTS['phone-small']!, problems)
+})
+
+/**
+ * R87 (T11's finding): a note that comes late must not move the stage. The 3D body's file is held
+ * past 6 s, so "Slow connection, still loading" shows (R71) while the flat body stands in; Play,
+ * the body (≥ 160 px) and graph 1's plot stay on the first screen, and nothing shifts when the
+ * note comes (the layout shifts after the stage drew add up to ≈ 0). On a 360×640 and a 390×844
+ * phone, with the first-visit card and without. Service workers are blocked so the page's own
+ * request for the 3D file is the one held.
+ */
+test.describe('late notes', () => {
+  test.use({ serviceWorkers: 'block' })
+  const SLOW: string = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8')).sim.slow3d
+
+  test('a late note does not move Play, the body or the graph (R87)', async ({ page }) => {
+    onlyIn('phone-small')
+    test.slow()
+    const mode = INVARIANTS['phone-small']!
+    await page.addInitScript(() => {
+      const w = window as { __shifts?: { at: number; value: number }[] }
+      w.__shifts = []
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[])
+          if (!e.hadRecentInput) w.__shifts!.push({ at: e.startTime, value: e.value })
+      }).observe({ type: 'layout-shift', buffered: true })
+    })
+    // The 3D body's file arrives after 9 s: the slow note shows at 6 s.
+    await page.route(/\/assets\/BodyCanvas-[\w-]+\.js$/, async (route) => {
+      await new Promise((r) => setTimeout(r, 9_000))
+      await route.continue().catch(() => undefined)
+    })
+    for (const [w, h] of [
+      [360, 640],
+      [390, 844],
+    ] as const) {
+      for (const firstVisit of [true, false]) {
+        await page.setViewportSize({ width: w, height: h })
+        const where = `${w}×${h}${firstVisit ? ' first visit' : ''}`
+        await page
+          .evaluate((seen) => (seen ? localStorage.setItem('lifepeek:medicalNoteSeen', '1') : localStorage.clear()), !firstVisit)
+          .catch(() => undefined)
+        const failed = await tryStep(async () => {
+          await goto(page, firstVisit ? '/sim' : KEPT)
+          await page.locator('[data-stage]').waitFor()
+          await page.locator('[data-body]').first().waitFor()
+          await page.evaluate(() => document.fonts.ready)
+        })
+        if (failed) {
+          verdict(`late notes (${where})`, mode, [failed])
+          continue
+        }
+        // The stage has drawn; the note is still to come (6 s after the flat body showed).
+        const drawn = await page.evaluate(() => performance.now())
+        await expect(page.getByText(SLOW)).toBeVisible({ timeout: 10_000 })
+        await page.waitForTimeout(500)
+        const shift = await page.evaluate(
+          (since) =>
+            ((window as { __shifts?: { at: number; value: number }[] }).__shifts ?? [])
+              .filter((s) => s.at > since)
+              .reduce((sum, s) => sum + s.value, 0),
+          drawn,
+        )
+        verdict(`late note shifts nothing (${where})`, mode, shift <= 0.01 ? [] : [`layout shift ${shift.toFixed(3)} after the stage drew`])
+        await checkBody(page, { minHeight: 160 }, { mode, label: `slow 3D ${where}` })
+        await expectInFirstScreen(
+          page,
+          {
+            Play: page.getByRole('button', { name: PLAY, exact: true }),
+            body: page.locator('[data-body]'),
+            'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
+          },
+          { mode },
+        )
+      }
+    }
+  })
 })

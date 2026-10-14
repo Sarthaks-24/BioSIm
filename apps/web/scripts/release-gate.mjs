@@ -6,7 +6,7 @@
 // It is NOT part of `npm run check`: until the maintainer fills in the project email, the launch
 // date and the INDB sent date, the Hindi reviewer signs REVIEW.md and GOVERNANCE.md is committed,
 // it fails on purpose and prints what is still missing. The human steps (live URL run, real phone,
-// projector, task test, tag) are in docs/RELEASE-CHECKLIST.md.
+// projector, task test, tag) are in docs/RELEASE-v2.1.md.
 //
 // Checks:
 //   1. no placeholder text ships (`<project email>`, `<date…>`, the Hindi ones, `TO VERIFY`,
@@ -21,6 +21,17 @@
 //   6. CHANGELOG.md's newest entry is not marked "unreleased" and has no `<…>` left in it;
 //   7. the model version is sealed (MODEL_SEALED in packages/engine/src/params.ts, MODEL D12):
 //      model version 3 stays unsealed on the `v3` branch until E-3b and S-1…S-4 are in.
+//   8. the privacy page's contact is a real email address (shown as a mailto: link, T12b);
+//   9. the production build settings: no committed file turns on the test-only pseudo-locale, and
+//      Hindi only together with check 4 (R47);
+//  10. the browser gates are enforced: every red-list bug (e2e/helpers/gate.ts RED_LIST) and every
+//      Chromium invariant project (e2e/invariants.spec.ts INVARIANTS), except the ones that stay
+//      report-only on purpose (REPORT_ONLY below), and CI fails on a placeholder once the email is in.
+//
+// This is the production run (no VITE_HINDI, no VITE_PSEUDO, as Vercel builds). Before the
+// maintainer's own items are done it fails on exactly those: the project email, the launch date,
+// the INDB sent date, GOVERNANCE.md, the changelog's fps and classroom lines (docs/RELEASE-v2.1.md).
+// On the `v3` branch it also fails on the model seal (check 7) until model version 3 is sealed.
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -187,9 +198,62 @@ check(
   check('The model version is sealed (MODEL_SEALED in packages/engine/src/params.ts)', problem ? [problem] : [])
 }
 
+// 8. The project email (B20; T12b: a mailto: link). RichText links any bare address; a placeholder has no "@".
+{
+  const en = JSON.parse(read('apps/web/src/i18n/en.json'))
+  const contact = JSON.stringify(en.privacy?.sections ?? [])
+  check(
+    'The privacy page gives the project email (a mailto: link)',
+    /[\w.+-]+@[\w-]+(\.[\w-]+)+/.test(contact) ? [] : ['apps/web/src/i18n/en.json privacy contact has no email address yet (B20)'],
+  )
+}
+
+// 9. Production build settings (R47): never the pseudo-locale; Hindi only with its review check.
+{
+  const problems = []
+  const files = ['vercel.json', 'apps/web/.env', 'apps/web/.env.production', 'apps/web/.env.example', '.env', '.env.production']
+  for (const file of files.filter((f) => fs.existsSync(path.join(root, f)))) {
+    const text = read(file)
+    if (/VITE_PSEUDO\W+1/.test(text)) problems.push(`${file} turns on VITE_PSEUDO (the e2e build's test language)`)
+    if (/VITE_HINDI\W+1/.test(text) && !HINDI)
+      problems.push(`${file} turns on VITE_HINDI: run the gate with VITE_HINDI=1 so the Hindi review check runs`)
+  }
+  if (process.env.VITE_PSEUDO === '1') problems.push('VITE_PSEUDO=1 is set: run the gate as the production build is made, without it')
+  check('Production build settings (no test language; Hindi only with its review, R47)', problems)
+}
+
+// 10. Browser gates enforced (T11). These stay report-only on purpose, each with its reason.
+{
+  const REPORT_ONLY = {
+    B13: 'Hindi (R47: paused; its English + pseudo-locale twin is enforced)',
+    B20: 'placeholders: flip to enforce once the project email and launch date are in (check 1)',
+  }
+  const problems = []
+  const gate = read('apps/web/e2e/helpers/gate.ts')
+  const red = gate.slice(gate.indexOf('export const RED_LIST'))
+  for (const [, bug, mode] of red.slice(0, red.indexOf('}')).matchAll(/(B\d+): '(report|enforce)'/g)) {
+    if (mode === 'report' && !REPORT_ONLY[bug]) problems.push(`${bug} is report-only in e2e/helpers/gate.ts RED_LIST`)
+    if (mode === 'report' && bug === 'B20' && !/<project email>|<date/.test(read('apps/web/src/i18n/en.json')))
+      problems.push('B20 is report-only, but the email and launch date are in: set it to enforce (RED_LIST)')
+  }
+  const inv = read('apps/web/e2e/invariants.spec.ts')
+  const table = inv.slice(inv.indexOf('export const INVARIANTS'))
+  for (const [, project, mode] of table.slice(0, table.indexOf('}')).matchAll(/'?([\w-]+)'?: '(report|enforce)'/g)) {
+    // WebKit and Firefox run nightly (E2E_ENGINES=1) and report until a clean week (qa-fixes §3.1).
+    if (mode === 'report' && !/^(webkit|firefox)-/.test(project))
+      problems.push(`invariant project ${project} is report-only (e2e/invariants.spec.ts)`)
+  }
+  const ci = read('.github/workflows/ci.yml')
+  if (!/lint:placeholders[^\n]*--enforce/.test(ci) && !/<project email>|<date/.test(read('apps/web/src/i18n/en.json')))
+    problems.push(
+      'CI runs the placeholder lint report-only, but the email and launch date are in: add --enforce (.github/workflows/ci.yml)',
+    )
+  check('The browser gates are enforced (red list, invariant projects), apart from the report-only ones with a reason', problems)
+}
+
 // Report.
 const failed = results.filter((r) => r.problems.length)
-console.log('\nRelease gate (file checks). Human steps: docs/RELEASE-CHECKLIST.md\n')
+console.log('\nRelease gate (file checks). Human steps: docs/RELEASE-v2.1.md\n')
 if (!HINDI) console.log('Hindi is paused (R47): the Hindi review check runs only with VITE_HINDI=1.\n')
 for (const r of results) {
   console.log(`${r.problems.length ? '[ ]' : '[x]'} ${r.title}`)

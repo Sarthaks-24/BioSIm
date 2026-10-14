@@ -60,8 +60,9 @@ jobs:
 
   # Browser tests in 3 shards (qa-fixes §3.7: Chromium ≤ 12 min). Each shard builds the e2e build
   # itself (playwright.config.ts webServer). The fps and CPU tests run alone in the perf job, so no
-  # other test competes for the CPU while they count; the Track A projects (redlist, phone-small,
-  # phone-560, phone-xs, tablet-portrait, landscape, projector-sizes, storage-blocked) report only.
+  # other test competes for the CPU while they count. The Track A projects (redlist, phone-small,
+  # phone-560, phone-xs, tablet-portrait, landscape, projector-sizes, storage-blocked) are enforced
+  # since T11, apart from the report-only checks named in docs/RELEASE-v2.1.md (Hindi, B17, B20…).
   e2e:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest

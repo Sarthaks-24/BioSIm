@@ -1,151 +1,143 @@
 {
-  "commit": "eee16c9",
-  "date": "2026-10-13",
+  "commit": "e7fc2c9",
+  "date": "2026-10-14",
   "bugs": {
     "B1": {
+      "id": "B1",
       "test": "Android 360×640 › B1 the body is visible at 360×640 and 320×568 (≥ 160 px, covered ≤ 10 %)",
-      "seen": true,
-      "measured": [
-        "360×640 /sim: body 0 px tall",
-        "360×640 /sim?lang=hi: body 0 px tall",
-        "360×640 /sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi: body 0 px tall",
-        "320×568 /sim: body 0 px tall",
-        "320×568 /sim?lang=hi: body 0 px tall",
-        "320×568 /sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&lang=hi: body 0 px tall"
-      ]
+      "seen": false,
+      "measured": []
     },
     "B2": {
-      "test": "Android 360×640 › B2 the meal bar is one row below 390 px",
-      "seen": true,
-      "measured": [
-        "320 px: the meal bar has 3 rows of controls, 153 px tall",
-        "360 px: the meal bar has 3 rows of controls, 153 px tall",
-        "375 px: the meal bar has 3 rows of controls, 153 px tall"
-      ]
+      "id": "B2",
+      "test": "Android 360×640 › B2 the meal bar is one row at 320–390 px",
+      "seen": false,
+      "measured": []
     },
     "B3": {
+      "id": "B3",
       "test": "phone landscape and 200 % zoom › B3 the body shows in landscape and at 200 % zoom (≥ 160 px)",
-      "seen": true,
-      "measured": [
-        "640×360: body 0 px tall in the first screen",
-        "844×390: body 0 px tall in the first screen",
-        "640×400: body 0 px tall in the first screen"
-      ]
+      "seen": false,
+      "measured": []
     },
     "B4": {
+      "id": "B4",
       "test": "phone 390×844 › B4 \"Keys and settings\" does not overlap the timeline",
-      "seen": true,
-      "measured": [
-        "390×844 /sim: button \"Keys and settings\" × div \"Timeline\" (44×12 px)",
-        "390×844 /sim?lang=hi: button \"कुंजियाँ और सेटिंग\" × div \"समयरेखा\" (47×13 px)",
-        "360×640 /sim: button \"कुंजियाँ और सेटिंग\" × div \"समयरेखा\" (47×13 px)",
-        "360×640 /sim?lang=hi: button \"कुंजियाँ और सेटिंग\" × div \"समयरेखा\" (47×13 px)"
-      ]
+      "seen": false,
+      "measured": []
     },
     "B5": {
+      "id": "B5",
       "test": "Android 360×640 › B5 \"How we know\" has a close button and stays on screen",
-      "seen": true,
-      "measured": ["overlay top 8 is above the header's bottom 49", "no visible \"Close\" button"]
+      "seen": false,
+      "measured": []
     },
     "B6": {
+      "id": "B6",
       "test": "phone 390×844 › B6 Back closes a sheet and stays on the stage",
-      "seen": true,
-      "measured": ["Back left the stage, to about:blank"]
+      "seen": false,
+      "measured": []
     },
     "B7": {
-      "test": "Android 360×640 › B7 the Hindi header is one row (≤ 56 px) at 360 and 320",
-      "seen": true,
-      "measured": ["360 px Hindi: header 82 px tall", "320 px Hindi: header 82 px tall"]
+      "id": "B7",
+      "test": "Android 360×640 › B7 the header is one row (≤ 56 px) at 360 and 320, in the pseudo-locale and in Hindi",
+      "seen": false,
+      "measured": []
     },
     "B8": {
+      "id": "B8",
       "test": "Android 360×640 › B8 Home chart text is ≥ 12 px at 360",
-      "seen": true,
-      "measured": ["10 of 10 chart labels draw under 12 px (smallest 8.0 px)"]
+      "seen": false,
+      "measured": []
     },
     "B9": {
-      "test": "Android 360×640 › B9 Hindi Home: \"Open the simulator\" is in the first screen at 360×640",
-      "seen": true,
-      "measured": ["the CTA ends at y 803 in a 640 px screen"]
+      "id": "B9",
+      "test": "Android 360×640 › B9 Home: \"Open the simulator\" is in the first screen at 360×640, English and pseudo-locale",
+      "seen": false,
+      "measured": []
     },
     "B10": {
+      "id": "B10",
       "test": "phone 390×844 › B10 projector mode on a phone: menu closes, Energy tab not clipped",
-      "seen": true,
-      "measured": ["the menu stays open after switching projector mode on"]
+      "seen": false,
+      "measured": []
     },
     "B11": {
+      "id": "B11",
       "test": "Android 360×640 › B11 a phone and a tablet can share the link",
-      "seen": true,
-      "measured": [
-        "360×640: no Copy link or Share button",
-        "768×1024: no Copy link or Share button",
-        "800×1280: no Copy link or Share button"
-      ]
+      "seen": false,
+      "measured": []
     },
     "B12": {
+      "id": "B12",
       "test": "projector › B12 the body is ≥ 40 % of the stage with a kept meal, EN and HI",
-      "seen": true,
-      "measured": ["1024×768 EN: body 15 % of the stage", "1024×768 HI: body 15 % of the stage"]
+      "seen": false,
+      "measured": []
     },
     "B13": {
+      "id": "B13",
       "test": "projector › B13 Hindi projector timeline ticks are ≥ 8 px apart",
-      "seen": true,
-      "measured": ["\"0 घं\" and \"1 घं\" 7.2 px apart"]
+      "seen": false,
+      "measured": []
     },
     "B15": {
-      "test": "desktop › B15 with 6 foods every chip is visible or counted",
-      "seen": true,
-      "measured": ["1440 px: 2 of 6 chips wholly visible, no \"+n\" count", "360 px: 1 of 6 chips wholly visible, no \"+n\" count"]
+      "id": "B15",
+      "test": "desktop › B15 with 6 foods (and 3 bouts) every chip is visible or counted, on one row",
+      "seen": false,
+      "measured": []
     },
     "B18": {
-      "test": "desktop › B18 the clock keeps pace when frames are slow (250 ms)",
-      "seen": true,
-      "measured": ["with 250 ms frames the clock runs at 37 % of its pace (3.7 vs 9.9 sim min/s)"]
+      "id": "B18",
+      "test": "desktop › load-sensitive › B18 the clock keeps pace when frames are slow (250 ms); desktop › B18 a hidden page does not move the clock, and goes on without a jump when shown",
+      "seen": false,
+      "measured": []
     },
     "B19": {
+      "id": "B19",
       "test": "desktop › B19 no console errors or warnings on /sim",
-      "seen": true,
-      "measured": ["warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."]
+      "seen": false,
+      "measured": []
     },
     "B20": {
-      "test": "desktop › B20 the Privacy page has no placeholder",
+      "id": "B20",
+      "test": "desktop › B20 the Privacy page has no placeholder; desktop › B20 the Hindi Privacy page has no placeholder",
       "seen": true,
       "measured": [
-        "/privacy: \"<date of launch>\"",
-        "/privacy: \"<project email>\"",
-        "/privacy?lang=hi: \"<date of launch>\"",
-        "/privacy?lang=hi: \"<project email>\""
+        "English: \"<date of launch>\"",
+        "English: \"<project email>\"",
+        "Hindi: \"<लॉन्च की तारीख>\"",
+        "Hindi: \"<प्रोजेक्ट ईमेल>\""
       ]
     },
     "B21": {
+      "id": "B21",
       "test": "desktop › B21 a link that is changed on load says so",
-      "seen": true,
-      "measured": [
-        "/sim?v=2&a=cola:999: a=cola:999 came back as cola:5; lang=en was added to a link that had none, and no note says so",
-        "/sim?v=2&a=water:1,milk:1,roti:1,dal:1,apple:1,banana:1,cola:1,fries:1: a=water:1,milk:1,roti:1,dal:1,apple:1,banana:1,cola:1,fries:1 came back as water:1,milk:1,roti:1,dal:1,apple:1,banana:1; lang=en was added to a link that had none, and no note says so",
-        "/sim?v=2&a=cola:1&t=99999: t=99999 came back as 2880; lang=en was added to a link that had none, and no note says so"
-      ]
+      "seen": false,
+      "measured": []
     },
     "B22": {
+      "id": "B22",
       "test": "desktop › B22 lang is written only when chosen",
-      "seen": true,
-      "measured": ["lang=en was added to a link that had none"]
+      "seen": false,
+      "measured": []
     },
     "B23": {
+      "id": "B23",
       "test": "desktop › B23 Teach step 2 matches the lesson link (opens at 35 min)",
-      "seen": true,
-      "measured": [
-        "the lesson opens at 35 min, but step 2 (\"Open cola with burger + fries kept (the first ready lesson b…\") says only \"press Play\""
-      ]
+      "seen": false,
+      "measured": []
     },
     "B24": {
+      "id": "B24",
       "test": "desktop › B24 the report form shows one privacy warning",
-      "seen": true,
-      "measured": ["2 privacy warnings in the report form"]
+      "seen": false,
+      "measured": []
     },
     "B25": {
+      "id": "B25",
       "test": "desktop › B25 no dead store actions (swapKept)",
-      "seen": true,
-      "measured": ["swapKept is defined in state/run.ts but nothing calls it"]
+      "seen": false,
+      "measured": []
     }
   }
 }

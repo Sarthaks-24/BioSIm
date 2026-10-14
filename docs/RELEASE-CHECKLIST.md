@@ -1,5 +1,8 @@
 # Release checklist (v2.0.0)
 
+> v2.0.0 was never released on its own: its work ships in **v2.1.0**. Use
+> [RELEASE-v2.1.md](RELEASE-v2.1.md) for that release; this page is kept for its live-URL gate rows.
+
 Tick each box before tagging. Every command is for **Git Bash**, run from `/e/BioSim` (the main
 checkout, on `main`). Pushes go **by name only**: never `git push --tags`, never `--force`.
 
