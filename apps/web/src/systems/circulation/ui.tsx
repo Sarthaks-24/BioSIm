@@ -106,7 +106,7 @@ const PILL =
   'inline-flex items-center gap-1.5 rounded-full bg-ink py-0.5 pr-2 pl-2.5 align-baseline font-semibold whitespace-nowrap text-white shadow-[0_1px_2px_rgb(20_33_61/0.3)]'
 
 /** The "now" bar's parts: the gut, the muscles, the rest of the body (shades of ink, never a status colour). */
-const SHARE_SHADES = ['bg-ink/75', 'bg-ink/45', 'bg-ink/15'] as const
+const SHARE_SHADES = [75, 45, 15].map((p) => `color-mix(in srgb, var(--color-ink) ${p}%, transparent)`)
 
 /**
  * Heart & blood's Now line: "[Heart] 94 a minute · walking", the kept plan's rate at the same
@@ -144,9 +144,9 @@ function NowLine({ run, kept, className = '' }: NowProps) {
       {shares && total > 0 && (
         // Under 1024 px wide or 680 px tall the body keeps the room: "Where blood goes" says the same.
         <div data-now-shares={shares.join(' ')} className="mt-1 flex flex-col gap-0.5 max-lg:hidden [@media(height<42.5rem)]:hidden">
-          <span aria-hidden="true" className="flex h-1.5 w-full max-w-72 overflow-hidden rounded-full">
+          <span aria-hidden="true" className="flex h-1.5 w-full overflow-hidden rounded-full" style={{ maxWidth: '18rem' }}>
             {shares.map((v, i) => (
-              <span key={i} className={SHARE_SHADES[i]} style={{ width: `${(100 * v) / total}%` }} />
+              <span key={i} style={{ width: `${(100 * v) / total}%`, background: SHARE_SHADES[i] }} />
             ))}
           </span>
           <span className="text-caption text-ink-muted">
@@ -159,12 +159,12 @@ function NowLine({ run, kept, className = '' }: NowProps) {
 }
 
 /**
- * The rhythm chip over the body (ui-ux §4): "♥ 66 a minute · typical adult, resting · shown at its
- * true speed ⓘ". The number is the model's at the clock's minute (the beat is drawn at that rate, at
+ * The rhythm chip over the body (ui-ux §4): "♥ 66 a minute · typical adult, resting ⓘ". The number is the model's at the clock's minute (the beat is drawn at that rate, at
  * most 2.5 a second; faster says "animation slowed", everywhere, and the number stays true). ⓘ opens
  * the rest: who and what, why the heart moves while the clock runs hours in seconds, and that its
- * movement is enlarged to be seen. A phone shows "♥ 66 ⓘ", a laptop "♥ 66 a minute ⓘ" and the words
- * only where the picture is big (from 1024 px up, not on the projector).
+ * movement is enlarged to be seen. A phone shows "♥ 66 ⓘ", a laptop "♥ 66 a minute · typical adult,
+ * resting ⓘ" (not on the projector); "shown at its true speed" is in ⓘ, as the torso framing puts
+ * the chip over the head and shoulders and the body's gate allows ≤ 10 % covered.
  */
 function RhythmChip({ run }: { run: RunResult }) {
   const { t } = useTranslation()
@@ -188,9 +188,8 @@ function RhythmChip({ run }: { run: RunResult }) {
         <span className="lg:hidden">{n}</span>
         <span className="max-lg:hidden">{t('sys.circulation.now.rate', { n })}</span>
       </strong>
-      <span className="max-lg:hidden in-data-[contrast=high]:hidden">
-        · {who} · {t('sys.circulation.chip.speed')}
-      </span>
+      {/* "Shown at its true speed" is in ⓘ: in the torso framing the chip lies over the head and shoulders (gate: ≤ 10 % covered). */}
+      <span className="max-lg:hidden in-data-[contrast=high]:hidden">· {who}</span>
       {slowed && <span>· {t('sys.circulation.chip.slowed')}</span>}
       <button
         type="button"
@@ -243,7 +242,7 @@ function WhyCard() {
           id={cardId}
           data-why="circulation"
           aria-label={t('sys.circulation.why.title')}
-          className="rounded-control bg-surface-sunk p-2 text-ink"
+          className="rounded-control bg-surface-sunk px-2 py-1.5 text-ink"
         >
           <h3 className="font-semibold">{t('sys.circulation.why.title')}</h3>
           <dl className="mt-1 flex flex-col gap-1.5">
@@ -285,7 +284,7 @@ function FlowPick({ pick }: { pick: SlotPick }) {
           type="button"
           aria-pressed={pick.at === i}
           onClick={() => pick.set(i)}
-          className="rounded-full px-2 py-0.5 font-semibold text-ink ring-1 ring-ink/20 aria-pressed:bg-ink aria-pressed:text-white"
+          className="rounded-full px-2 py-0.5 font-semibold text-ink ring-1 ring-ink/15 aria-pressed:bg-ink aria-pressed:text-white"
         >
           {t(`sys.circulation.pick.${k}`)}
         </button>

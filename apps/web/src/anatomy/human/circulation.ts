@@ -476,7 +476,7 @@ export const LABELS: Readonly<Record<CirculationLabel, Callout>> = {
   heart: { anchor: v(0.24, 1.12, 0.2), at: v(0.95, 0.95, 0.1), side: 'right' },
   aorta: { anchor: v(0.24, 1.75, 0.2), at: v(0.72, 2.45, 0.1), side: 'right' },
   venaCava: { anchor: v(-0.12, 0.4, 0.2), at: v(-0.95, 0.3, 0.1), side: 'left' },
-  pulmonaryArtery: { anchor: v(-0.3, 1.78, 0.2), at: v(-0.85, 2.38, 0.1), side: 'left' },
+  pulmonaryArtery: { anchor: v(-0.4, 1.72, 0.2), at: v(-0.95, 1.5, 0.1), side: 'left' },
   pulmonaryVein: { anchor: v(0.45, 1.43, 0.2), at: v(0.98, 1.62, 0.1), side: 'right' },
   legs: { anchor: v(0.36, -1.7, 0.2), at: v(0.92, -1.55, 0.1), side: 'right' },
 }

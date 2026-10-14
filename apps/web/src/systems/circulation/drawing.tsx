@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt } from '@lifepeek/engine'
 import {
-  APEX,
   ATRIA,
   ATRIA_ORIGIN,
   GUT,
@@ -311,7 +310,6 @@ function HeartLayer({ sim, view, width: w, height: h, reduced, projector, kit }:
       ref={root}
       data-layer="circulation"
       data-beat={reduced ? 'still' : 'moving'}
-      data-apex={`${m.X(APEX.x).toFixed(1)} ${m.Y(APEX.y).toFixed(1)}`}
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
       <canvas ref={back} aria-hidden="true" className="absolute top-0 left-0" />
@@ -340,13 +338,17 @@ function HeartLayer({ sim, view, width: w, height: h, reduced, projector, kit }:
       <div
         data-blood-key=""
         // Beside the hips, never over the body's outline (its widest, ±0.95 units).
-        style={{ maxWidth: `${Math.round(Math.min(184, Math.max(112, m.X(-0.95) - 8)))}px` }}
-        className="absolute bottom-1 left-1 flex flex-col gap-0.5 rounded-control bg-surface-raised/85 px-1.5 py-0.5 text-caption leading-tight text-ink-muted"
+        style={{ maxWidth: `${Math.round(Math.min(184, Math.max(112, m.X(-0.95) - 8)))}px`, left: 4, bottom: 4 }}
+        className="absolute flex flex-col gap-0.5 rounded-control bg-surface-raised/85 px-1.5 py-0.5 text-caption leading-tight text-ink-muted"
       >
         <span className="flex flex-wrap gap-x-2">
           {(['rich', 'poor'] as const).map((b) => (
             <span key={b} className="inline-flex items-center gap-1 whitespace-nowrap text-ink">
-              <span aria-hidden="true" className="inline-block h-1 w-3.5 rounded-full" style={{ background: CIRCULATION_TONE[b] }} />
+              <span
+                aria-hidden="true"
+                className="inline-block rounded-full"
+                style={{ width: 14, height: 4, background: CIRCULATION_TONE[b] }}
+              />
               {t(`sys.circulation.key.${b}`)}
             </span>
           ))}

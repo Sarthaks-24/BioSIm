@@ -21,6 +21,15 @@
         "engineKB": 10.662,
         "simRatchetKB": 187.076,
         "simEngineRatchetKB": 197.838
+      },
+      {
+        "wp": "U-3",
+        "at": "2026-10-14",
+        "on": "v3 6201885 + U-3: Heart & blood's row in the registry, the slot that shows one line at a time beside a kept plan (GraphColumn), litres a minute to one decimal (formatNumber), its pack loader, its name and its moment's name in the core text: /sim +0.275, engine +0.007 (its rows stay in the engine chunk)",
+        "simKB": 187.151,
+        "engineKB": 10.669,
+        "simRatchetKB": 187.351,
+        "simEngineRatchetKB": 198.12
       }
     ]
   },
