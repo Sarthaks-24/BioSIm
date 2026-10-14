@@ -89,7 +89,7 @@ without Hindi does not need it. Do **not** set `VITE_HINDI` on Vercel.
       curl -s https://lifepeek.vercel.app/teach | grep -o "<title>[^<]*</title>"
 
   Four header lines; 200; 404; Teach's own title. On `/teach`, scan the QR code with a phone: it
-  opens `/sim?v=2&a=cola:1` on your address.
+  opens `/sim?a=cola:1` on your address.
 - [ ] The browser checks against the live site (must pass):
 
       cd /e/BioSim && PLAYWRIGHT_BASE_URL=https://lifepeek.vercel.app npm run e2e -w @lifepeek/web

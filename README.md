@@ -11,9 +11,10 @@
 
 *LifePeek was called BioSim until 2026.*
 
-See what happens to a meal inside your body. Pick a meal, press Play and watch it travel through
-a 3D body, with graphs of the stomach, blood sugar and energy beside it. Keep one meal to compare
-it with the next: the kept meal is a dashed line on every graph. You can see how fast each leaves
+See what happens to a meal inside a typical healthy body (a model, not yours). Pick a meal, press
+Play and watch it travel through a 3D body, with graphs of the stomach, blood sugar and energy
+beside it. Keep one meal to compare it with the next: the kept meal is a dashed line on every
+graph. You can see how fast each leaves
 the stomach, where the carbohydrate, protein, fat, fibre and water go, and how blood sugar
 typically responds.
 Other living things (animals, plants, cells) are planned.

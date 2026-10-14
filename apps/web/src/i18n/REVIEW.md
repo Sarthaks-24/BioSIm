@@ -127,9 +127,9 @@ Rules for the reviewer:
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `about.title` | About LifePeek | LifePeek का परिचय | draft |
-| `about.lead` | Compare what happens to two meals inside your body. Free, no login, works offline once loaded. | देखिए कि दो भोजनों के साथ आपके शरीर के अंदर क्या होता है, और उनकी तुलना कीजिए। मुफ़्त, बिना लॉगिन, और एक बार लोड होने के बाद इंटरनेट के बिना भी चलता है। | draft |
+| `about.lead` | Compare what happens to two meals inside a typical healthy body (a model, not yours). Free, no login, works offline once loaded. | देखिए कि दो भोजनों के साथ आपके शरीर के अंदर क्या होता है, और उनकी तुलना कीजिए। मुफ़्त, बिना लॉगिन, और एक बार लोड होने के बाद इंटरनेट के बिना भी चलता है। | draft |
 | `about.makerTitle` | Who made it | इसे किसने बनाया | draft |
-| `about.maker` | LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources. | LifePeek को {{name}} ने बनाया है। इसकी हर संख्या का स्रोत दिया गया है, और गलती की हर रिपोर्ट को प्रकाशित स्रोतों से जाँचा जाता है। | draft |
+| `about.maker` | LifePeek is made by {{name}}. Every number in it is cited or marked as a model estimate, and every report of a mistake is checked against published sources. | LifePeek को {{name}} ने बनाया है। इसकी हर संख्या का स्रोत दिया गया है, और गलती की हर रिपोर्ट को प्रकाशित स्रोतों से जाँचा जाता है। | draft |
 | `about.sourcesTitle` | Where the numbers come from | संख्याएँ कहाँ से आती हैं | draft |
 | `about.sources` | Each food is described only by cited values: its nutrients from USDA FoodData Central or the Indian Nutrient Databank, and, where it applies, its glycemic index from the International GI tables (Atkinson et al. 2008). The model computes everything else. | हर खाद्य पदार्थ के लिए सिर्फ़ स्रोत सहित मान लिए गए हैं: उसके पोषक तत्व USDA FoodData Central या Indian Nutrient Databank से, और जहाँ लागू हो, उसका ग्लाइसेमिक इंडेक्स अंतरराष्ट्रीय GI तालिकाओं (Atkinson et al. 2008) से। बाकी सब कुछ मॉडल गणना करके निकालता है। | draft |
 | `about.sourcesLink` | Every food and its sources | हर खाद्य पदार्थ और उसके स्रोत | draft |
@@ -379,7 +379,7 @@ back to `draft`: the energy texts ("entered the body", not "the blood"), `stats.
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `home.headline` | Half the food energy in a can of cola leaves your stomach in about half an hour. For a burger with fries, it takes over four hours. | कोला के एक कैन की आधी ऊर्जा लगभग आधे घंटे में आमाशय से निकल जाती है। फ़्राइज़ के साथ बर्गर की आधी ऊर्जा को निकलने में चार घंटे से ज़्यादा लगते हैं। | draft |
+| `home.headline` | Half the food energy in a can of cola leaves the stomach in about half an hour. For a burger with fries, it takes over four hours. | कोला के एक कैन की आधी ऊर्जा लगभग आधे घंटे में आमाशय से निकल जाती है। फ़्राइज़ के साथ बर्गर की आधी ऊर्जा को निकलने में चार घंटे से ज़्यादा लगते हैं। | draft |
 | `stages.smallIntestine.what` | Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption. | काइम लगभग 3 मीटर लंबी पतली नली से होकर गुज़रता है। इसकी भीतरी परत लाखों दीर्घरोम (villi) में मुड़ी होती है, जो अवशोषण के लिए बहुत बड़ा सतही क्षेत्र देते हैं। | draft |
 | `science.limits[0]` | Models a healthy adult only — not children, pregnancy, diabetes or digestive illness. | केवल एक स्वस्थ वयस्क का मॉडल है — बच्चों, गर्भावस्था, डायबिटीज़ या पाचन रोगों के लिए नहीं। | draft |
 | `nav.main` | Main | मुख्य | draft |

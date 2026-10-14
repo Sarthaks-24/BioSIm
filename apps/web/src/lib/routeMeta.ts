@@ -28,7 +28,7 @@ export const pageTitle = (name: string) => (name ? `${name} — LifePeek` : HOME
 
 /** Each page's meta description and og:description (built HTML only, never in the app's code). */
 export const ROUTE_DESCRIPTIONS: Record<RoutePath, string> = {
-  '/': 'LifePeek shows what happens to food inside your body. Watch a meal travel through it and compare it with another — how fast it leaves the stomach, where nutrients go and how blood sugar responds.',
+  '/': 'LifePeek shows what happens to food inside a typical healthy body (a model, not yours): how fast a meal leaves the stomach, where nutrients go and how blood sugar responds. Compare two meals.',
   '/sim':
     'Pick a meal and press Play: see how fast it leaves the stomach, where its sugar, protein, fat and fibre go, and how blood sugar and energy respond. Keep one meal to compare it with the next.',
   '/teach':
