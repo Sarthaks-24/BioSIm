@@ -102,6 +102,15 @@
         "engineKB": 11.974,
         "simRatchetKB": 188.679,
         "simEngineRatchetKB": 200.753
+      },
+      {
+        "wp": "S-7 (engine)",
+        "at": "2026-10-14",
+        "on": "v3 e522b86 (S-6) + wp/s7-nerve-eng, merged: the nerve demo's pure reflexTime in its own entry @lifepeek/engine/demo, which nothing in the app imports yet: /sim 188.479 and engine 11.974 unchanged (measured)",
+        "simKB": 188.479,
+        "engineKB": 11.974,
+        "simRatchetKB": 188.679,
+        "simEngineRatchetKB": 200.753
       }
     ]
   },

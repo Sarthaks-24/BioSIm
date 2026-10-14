@@ -459,6 +459,8 @@ const guardProblems = []
     'adhTauMin', // water and kidneys
     'restAvdo2MlPerL', // heart and blood (circulation)
     'raGainPerGPerMin', // hormones (insulin, S-6)
+    // The nerve demo (S-7): its own lazy entry, @lifepeek/engine/demo (demo/nerveParams.ts).
+    'nmjDelayMs',
   ]
   for (const f of staticFiles(SIM_ROOTS)) {
     const text = fs.readFileSync(path.join(dist, f), 'utf8')
