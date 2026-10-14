@@ -15,10 +15,10 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { ORGANISMS } from '../registry/index.ts'
-import type { SystemId } from '../registry/types.ts'
+import { DEFAULT_SYSTEM, defaultSystemFor, systemForLink, type SystemId } from '../systems/registry.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
+import { useStripTab } from './stripTab.ts'
 
 /**
  * The v2 run state (ROADMAP A6 + UI-3): one meal, and optionally a kept run to compare it with
@@ -48,6 +48,8 @@ export interface RunState {
   profile: ProfileId
   /** The one body-system layer that is lit (URL `layer`). */
   layer: SystemId
+  /** The opened link had `?preview=1`: a hidden system may be lit (architecture §5.2). Kept in the written link. */
+  preview: boolean
   /** Model version the open link was made with (to warn about old links); null = not opened from a link. */
   linkModelVersion: number | null
   /** The `o` of a link made by a newer LifePeek for an organism this version lacks; the run opened as human. */
@@ -76,21 +78,12 @@ export interface RunState {
   openDefault: () => void
 }
 
-const HUMAN = ORGANISMS[DEFAULT_ORGANISM].organism
-export const DEFAULT_LAYER: SystemId = HUMAN.defaultSystem
+export const DEFAULT_LAYER: SystemId = DEFAULT_SYSTEM
 export const DEFAULT_RUN_PROFILE: ProfileId = DEFAULT_PROFILE[DEFAULT_ORGANISM]
 /** What a bare `/sim` opens: the first preset's meal (cola), nothing kept, so Play works at once. */
 export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.meal
 
 const fitsCap = (items: MealItem[]) => mealKcal(items, lookupFood) <= PARAMS.maxMealKcal
-const isLayer = (id: string | undefined): id is SystemId => ORGANISMS[DEFAULT_ORGANISM].systems.some((s) => s.id === id)
-/**
- * The layer a link with no `layer` opens: Heart & blood when it carries activity (R39), once that
- * system exists here; otherwise the organism's default. linkQuery writes `layer` only when it differs.
- */
-const HEART_LAYER: string = 'circulation'
-export const defaultLayerFor = (activity: readonly ActivityBout[]): SystemId =>
-  activity.length && isLayer(HEART_LAYER) ? HEART_LAYER : DEFAULT_LAYER
 /** A kept run with no food and no activity is no kept run. */
 const keptOf = (items: MealItem[], profile: ProfileId, activity: ActivityBout[] = []): KeptRun | null =>
   items.length || activity.length ? { items, profile, activity } : null
@@ -102,6 +95,7 @@ export const INITIAL_RUN = {
   kept: null as KeptRun | null,
   profile: DEFAULT_RUN_PROFILE,
   layer: DEFAULT_LAYER,
+  preview: false,
   linkModelVersion: null as number | null,
   unknownOrganism: null as string | null,
   droppedFoods: 0,
@@ -144,7 +138,11 @@ export const useRunStore = create<RunState>((set, get) => ({
     if (meal.length || activity.length) set({ kept: keptOf(meal, profile, activity) })
   },
   unkeep: () => set({ kept: null }),
-  setLayer: (layer) => set({ layer }),
+  // A new system starts on its first graph (architecture §5.2).
+  setLayer: (layer) => {
+    if (layer !== get().layer) useStripTab.setState({ tab: null })
+    set({ layer })
+  },
 
   loadLink: (search) => {
     const params = new URLSearchParams(search)
@@ -157,9 +155,11 @@ export const useRunStore = create<RunState>((set, get) => ({
     // One `who` per link: the kept run is about the same person.
     const profile = s.who ?? DEFAULT_RUN_PROFILE
     const activity = s.act ?? []
-    const layer = isLayer(s.layer) ? s.layer : defaultLayerFor(activity)
-    // A view this version doesn't have is a change too (the codec checks only its shape).
-    let changes = [...(s.changes ?? []), ...(s.layer && s.layer !== layer ? [{ param: 'layer', asked: s.layer }] : [])]
+    // A system this version doesn't have, or has but not yet public (unless `?preview=1`), opens
+    // the default system, and the link's notes say so (architecture §5.2; the codec checks only its shape).
+    const preview = params.get('preview') === '1'
+    const layer = systemForLink(s.layer, activity, preview)
+    let changes = [...(s.changes ?? []), ...(s.layer && s.layer !== layer ? [{ param: 'layer', asked: s.layer, shown: layer }] : [])]
     // The e2e build's `lang=pseudo` (i18n/pseudo.ts) is no change. Not in a real build.
     if (import.meta.env.VITE_PSEUDO === '1') changes = changes.filter((c) => c.asked !== 'pseudo')
     set({
@@ -169,6 +169,7 @@ export const useRunStore = create<RunState>((set, get) => ({
       kept: keptOf(keptItems, profile, s.bact ?? []),
       profile,
       layer,
+      preview,
       linkModelVersion: params.has('v') ? s.modelVersion : null,
       unknownOrganism: s.unknownOrganism ?? null,
       droppedFoods: s.a.length + s.b.length - meal.length - keptItems.length,
@@ -191,18 +192,26 @@ export const useRunStore = create<RunState>((set, get) => ({
 
 /**
  * The query string that reopens exactly this run: v, a (meal), b (kept), t, then `who` and
- * `layer` only when they are not the default, then lang, then `act` / `bact` when there are bouts. A one-profile kept run can't carry its
+ * `layer` only when they are not the default, then lang, then `act` / `bact` when there are bouts
+ * (and `preview=1` in a preview session). A one-profile kept run can't carry its
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
-export function linkQuery(run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'>, simMin: number, lang?: string): string {
-  return encodeShareState({
+export function linkQuery(
+  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'> & { preview?: boolean },
+  simMin: number,
+  lang?: string,
+): string {
+  const query = encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
-    ...(run.layer !== defaultLayerFor(run.activity) ? { layer: run.layer } : {}),
+    ...(run.layer !== defaultSystemFor(run.activity) ? { layer: run.layer } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
     act: run.activity,
     bact: run.kept?.activity ?? [],
-  }).toString()
+  })
+  // A preview session stays one when the page is reloaded; the app never links to it otherwise.
+  if (run.preview) query.set('preview', '1')
+  return query.toString()
 }

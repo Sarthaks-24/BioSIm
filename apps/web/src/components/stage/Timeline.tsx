@@ -5,7 +5,8 @@ import { useClock } from '../../state/clock.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
-import { groupClose, hitAreas, momentNameKey, runMoments, type Moment } from '../../lib/moments.ts'
+import { groupClose, hitAreas, momentNameKey, type Moment } from '../../lib/moments.ts'
+import { useSystemUi } from '../../systems/ui.ts'
 
 /**
  * The dock's timeline (WP-11 slider, WP-14 key moments, FP-3). It uses the same squeezed scale as
@@ -63,6 +64,8 @@ interface Marker {
 
 export default function Timeline({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t } = useTranslation()
+  // The lit system's key moments (SystemUi.moments, W-1).
+  const { moments: momentsOf } = useSystemUi()
   const track = useRef<HTMLDivElement>(null)
   const lane = useRef<HTMLDivElement>(null)
   const kneeLabel = useRef<HTMLSpanElement>(null)
@@ -121,7 +124,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       [kept, 'kept'],
     ] as const) {
       if (!sim || sim.meal.items.length === 0) continue
-      for (const m of runMoments(sim)) {
+      for (const m of momentsOf(sim)) {
         const name = t(momentNameKey(m.id, sim))
         const time =
           m.low != null && m.high != null
@@ -148,7 +151,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       lines: moments.map((m) => m.line),
       ...hits[i]!,
     }))
-  }, [run, kept, t, width])
+  }, [momentsOf, run, kept, t, width])
 
   // Which names show: the marker under the pointer or the keyboard focus; else, after a marker was
   // pressed (a tap on a phone has no hover), every moment the paused clock is at, of both meals

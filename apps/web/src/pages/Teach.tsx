@@ -29,7 +29,7 @@ function openLesson(e: MouseEvent, l: Lesson) {
   if (opensElsewhere(e)) return
   // Only where the stage has a projector size (from 1024 px up).
   if (window.matchMedia('(min-width: 64rem)').matches) setProjector(true)
-  useStripTab.getState().show(l.strip)
+  useStripTab.getState().show(l.slot)
 }
 
 /** A question starts on the first graph: a lesson's graph left in front would point at the answer. */
@@ -89,7 +89,7 @@ export default function Teach() {
                   {meals(l)} ·{' '}
                   {t('teach.opensAt', {
                     time: l.t % 60 === 0 ? t('units.h', { n: l.t / 60 }) : t('units.min', { n: l.t }),
-                    graph: t(`stage.strips.${l.strip}`),
+                    graph: t(`stage.strips.${l.slot}`),
                   })}
                 </span>
                 {/* What the class should see, where the graph alone could mislead (council round 3). */}

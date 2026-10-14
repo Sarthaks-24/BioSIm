@@ -1,7 +1,10 @@
 import type { TFunction } from 'i18next'
 import { DEFAULT_ORGANISM, ORGANISM_PARAMS, valueAt, type Meal, type RunResult } from '@lifepeek/engine'
-import { shortMealNames } from '../components/stage/mealText.ts'
-import { formatDuration } from './time.ts'
+import { shortMealNames } from '../../components/stage/mealText.ts'
+import { formatDuration } from '../../lib/time.ts'
+import type { RunKey, Summary } from '../registry.ts'
+
+export type { RunKey, Summary }
 
 /**
  * The stage's summary sentence (council verdict #3, 2026-10-13): the answer in one sentence, so
@@ -15,10 +18,10 @@ import { formatDuration } from './time.ts'
  * - the same foods in another amount: how much longer blood sugar stays raised (`bloodData`,
  *   council round 3), the meals named by amount ("4 servings of cola").
  * The decision (`summaryData`) is kept apart from the wording, so tests can check it is TRUE for
- * every lesson. The aria wiring and the per-graph summaries are WP-15's.
+ * every lesson. The aria wiring and the per-graph summaries are WP-15's. Digestion's
+ * `SystemUi.summary` (W-1): the stage's SummaryLine draws whichever system is lit.
  */
 export type SummaryReason = 'drink' | 'calories' | 'none'
-export type RunKey = 'run' | 'kept'
 
 export type SummaryData =
   | { kind: 'empty' }
@@ -131,14 +134,6 @@ export function bloodData(run: RunResult, kept: RunResult): BloodData | null {
     peak: Math.round(Math.max(blood.run.peak, blood.kept.peak)),
     samePeak: Math.abs(blood.run.peak - blood.kept.peak) < SAME_PEAK_MGDL,
   }
-}
-
-/** The summary as words: a headline and, when one is true, the reason. */
-export interface Summary {
-  headline: string
-  /** The headline's key number ("8×", "35 min"), drawn in the colour of the line it is about. */
-  key?: { text: string; line: RunKey }
-  reason?: string
 }
 
 /** "×9", or "×1.6" below 3, where the decimal matters. */

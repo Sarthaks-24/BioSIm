@@ -119,36 +119,55 @@
 //   bd0f7b4 (−0.40; ledger row −0.40, planned −0.2), Home 144.66 → 144.27 KB. This script now
 //   enforces the Home ratchet (147 KB, B26), the Track A total (R66: ≤ +1.0 KB over eee16c9, no
 //   slack) and that every lazy chunk is precached.
+//   W-1 (2026-10-14, branch v3): the systems registry (src/systems/: SystemIds, PackIds, SystemDef
+//   with graph slots, SystemUi; digestion's Now line, summary and graph sentences moved into
+//   systems/digestion/; keys 1–3 with S, B, E as digestion's aliases). The catalog's rows left the
+//   first download (R67, architecture §1.3): core/catalog.ts keeps the IDs and types, the rows are
+//   core/catalog/core.ts, which only the engine chunk imports (a pack brings its own rows file), and
+//   the stage no longer checks a slot's row at run time (registry.test does). The sheets get the
+//   system's words from the stage, so they split no stage code into new chunks: /sim 185.979 →
+//   185.129 KB on v3 b0cc009 (−0.85: rows −1.08, registry +0.24); merged with v3 3924ecb (T4, S-2):
+//   185.397 → 184.557 KB (−0.84); with v3 a5988f0 (T10, S-1): 184.233 KB, engine chunk 7.8 KB.
+//   /sim's cap 190 → 194 KB, signed by the council as the LAST raise (R42): if a v3 step would pass
+//   194, the engine worker (W-2) lands first; the cap never moves again. Load on demand (R71):
+//   pack-manifest.json (scripts/pack-manifest.mjs) puts the engine and digestion's pack in the
+//   precache tier and the 3D body, the other packs and Hindi in the lazy tier, which the service
+//   worker keeps on first use ("lp-lazy", scripts/cache-policy.mjs: one policy object, as main's
+//   T12d). The 3D body left the precache: 1791.0 → 823.3 KB raw on v3 3924ecb (828.4 KB with
+//   a5988f0); the cap 2600 → 1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are
+//   enforced; the lazy total is a report. The lazy-chunk check counts the lazy tier as offline.
+//   "reactsToMeal" (a catalog row's field) joins the engine-not-in-/sim guard.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
+import { ENGINE, PACK_SYSTEMS, SIM_ROOTS, packManifest, staticFiles as manifestFiles, tierProblems } from './pack-manifest.mjs'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
-
-/** The engine entry's key in the manifest (packages/engine/src/run.ts, relative to apps/web). */
-const ENGINE = '../../packages/engine/src/run.ts'
 
 const BUDGETS = [
   // 120 KB is the goal (report); 147 KB is the ratchet it may never pass again (B26, plan qa-fixes §0).
   { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
   { name: 'Home ratchet', roots: ['index.html'], max: 147 * KB, mode: 'enforce' },
   // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
-  { name: '/sim before 3D', roots: ['index.html', 'src/pages/Simulator.tsx'], max: 190 * KB, mode: 'enforce' },
+  // 194 is the LAST raise (R42, W-1): if a v3 step would pass it, the engine worker (W-2) lands first.
+  { name: '/sim before 3D', roots: SIM_ROOTS, max: 194 * KB, mode: 'enforce' },
   // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
   {
     name: '3D body (lazy)',
     roots: ['src/three/BodyCanvas.tsx'],
-    minus: ['index.html', 'src/pages/Simulator.tsx'],
+    minus: SIM_ROOTS,
     max: 270 * KB,
     mode: 'enforce',
   },
-  { name: 'precache (raw)', precache: true, max: 2600 * KB, mode: 'enforce' },
+  // 1300 from W-1 (R71: only the core at install; the 3D body and the packs load on first use). It
+  // only goes down (a ratchet); a raise needs an explicit ruling (R74), written in the history above.
+  { name: 'precache (raw)', precache: true, max: 1300 * KB, mode: 'enforce' },
   // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
-  { name: 'engine (lazy)', roots: [ENGINE], minus: ['index.html', 'src/pages/Simulator.tsx'], max: 45 * KB, mode: 'report' },
+  { name: 'engine (lazy)', roots: [ENGINE], minus: SIM_ROOTS, max: 45 * KB, mode: 'report' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
@@ -172,21 +191,7 @@ const size = (file) => fs.statSync(path.join(dist, file)).size
 const gzip = (file) => gzipSync(fs.readFileSync(path.join(dist, file))).length
 
 /** JS and CSS files a route downloads before it can draw: the roots and their static imports. */
-function staticFiles(roots) {
-  const files = new Set()
-  const seen = new Set()
-  const walk = (key) => {
-    if (seen.has(key)) return
-    seen.add(key)
-    const chunk = manifest[key]
-    if (!chunk) throw new Error(`Not in the manifest: ${key}`)
-    files.add(chunk.file)
-    for (const css of chunk.css ?? []) files.add(css)
-    for (const dep of chunk.imports ?? []) walk(dep)
-  }
-  roots.forEach(walk)
-  return [...files]
-}
+const staticFiles = (roots) => manifestFiles(manifest, roots)
 
 /** Every URL in the service worker's precache list. */
 function precacheFiles() {
@@ -237,22 +242,61 @@ let trackAOver = false
   console.log(
     `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${(sim.bytes / KB).toFixed(3)} KB = ${now > 0 ? '+' : ''}${now.toFixed(3)} KB over the base: ${trackAOver ? 'OVER (fails)' : 'ok'}`,
   )
+  // R61: on v3 the rows above compare against main's T-steps only (v3 also has E-2's lazy engine);
+  // this line says where this build stands against main itself. Update `main` when main merges in.
+  if (ledger.main) {
+    const vsMain = sim.bytes / KB - ledger.main.simKB
+    console.log(
+      `v3 vs main (report): /sim ${kb(sim.bytes)} against main's ${ledger.main.simKB} KB at ${ledger.main.commit} = ${sign(vsMain)} KB`,
+    )
+  }
 }
 
-// Every lazy chunk is precached (plan qa-fixes §3.2), so a part loaded on first use works offline.
+// Every lazy chunk works offline (plan qa-fixes §3.2, as R71 changed it): precached at install, or
+// in the pack-manifest's lazy tier, which the service worker keeps on first use ("lp-lazy").
 // Enforced since T10 (FP-9).
-// TODO R71: T12d/W-1 replace with tiered pack-manifest check (lazy packs and 3D go to the runtime
-// cache "lp-lazy" on first open, not the precache).
 let unprecached = 0
 {
   const precached = new Set(precacheFiles())
+  const lazyTier = new Set(packManifest(manifest).lazy.map((u) => u.slice(1)))
   const lazy = new Set()
   for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
-  const missing = [...lazy].filter((f) => !precached.has(f))
+  const missing = [...lazy].filter((f) => !precached.has(f) && !lazyTier.has(f))
   unprecached = missing.length
   console.log(
-    `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; missing: ${missing.join(', ')})` : ' ok'}`,
+    `\nLazy chunks offline (precached or lazy tier): ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; neither: ${missing.join(', ')})` : ' ok'}`,
   )
+}
+
+// Tiers (W-1, R71 "load on demand, small cache"): dist/pack-manifest.json splits the files the stage
+// loads after its first paint into the precache tier (the engine, digestion's pack: a cold offline
+// start of the core simulator) and the lazy tier (the 3D body, every other pack, Hindi), which the
+// service worker keeps on first use. Enforced: every precache entry precached, nothing in both
+// tiers, every lazy URL saveable; each pack at most 20 KB gz / 70 KB raw. The lazy total is a report.
+const packProblems = []
+{
+  const packs = packManifest(manifest)
+  const file = path.join(dist, 'pack-manifest.json')
+  if (!fs.existsSync(file)) packProblems.push('dist/pack-manifest.json is missing (vite.config.ts writes it)')
+  else if (JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))) !== JSON.stringify(packs))
+    packProblems.push('dist/pack-manifest.json does not match this build')
+  packProblems.push(...tierProblems(packs, precacheFiles(), (url) => fs.existsSync(path.join(dist, url))))
+  const sizes = (files) => [files.reduce((n, f) => n + gzip(f), 0), files.reduce((n, f) => n + size(f), 0)]
+  console.log('\nTiers (pack-manifest.json; gz / raw; a pack at most 20 / 70 KB, enforce)')
+  for (const [id, e] of Object.entries(packs.entries)) {
+    const [gz, raw] = sizes(e.files)
+    const pack = id in PACK_SYSTEMS && id !== 'core'
+    const over = pack && (gz > 20 * KB || raw > 70 * KB)
+    if (over) packProblems.push(`pack ${id} is ${kb(gz)} gz / ${kb(raw)} raw, over 20 / 70 KB`)
+    console.log(`${pad(id, 14)}${pad(e.tier, 10)}${pad(kb(gz), 10)}${pad(kb(raw), 10)}${over ? 'OVER (fails)' : pack ? 'ok' : ''}`)
+  }
+  const unbuilt = Object.keys(PACK_SYSTEMS).filter((id) => id !== 'core' && !packs.entries[id])
+  if (unbuilt.length) console.log(`${pad('not built yet', 14)}${unbuilt.join(', ')}`)
+  const [lgz, lraw] = sizes(packs.lazy.map((u) => u.slice(1)))
+  console.log(
+    `${pad('lazy total', 24)}${pad(kb(lgz), 10)}${pad(kb(lraw), 10)}report: what a device fetches only when a part is first opened`,
+  )
+  console.log(`Tier checks (enforce): ${packProblems.length ? 'FAILS' : 'ok'}`)
 }
 
 // Engine not in /sim (E-2, architecture §4; enforced): /sim's first download must not carry the
@@ -263,13 +307,15 @@ const guardProblems = []
 {
   const NOT_IN_SIM = [
     'simulate: unknown organism',
+    // A catalog row (its field name survives minifying): rows load with the run or their pack (W-1, architecture §1.3).
+    'reactsToMeal',
     'heart.rate', // circulation
     'lungs.breathRate', // breathing
     'kidney.filtrationRate', // kidneys
     'blood.insulin', // hormones
     'brain.glucoseUse', // nerves
   ]
-  for (const f of staticFiles(['index.html', 'src/pages/Simulator.tsx'])) {
+  for (const f of staticFiles(SIM_ROOTS)) {
     const text = fs.readFileSync(path.join(dist, f), 'utf8')
     for (const s of NOT_IN_SIM) if (text.includes(s)) guardProblems.push(`${f} (in /sim's first download) has "${s}"`)
   }
@@ -283,6 +329,11 @@ const guardProblems = []
     if (!precacheFiles().includes(engine.file)) guardProblems.push(`${engine.file} is not precached: /sim would not run offline`)
   }
   console.log(`\nEngine not in /sim (enforce): ${guardProblems.length ? `FAILS\n  ${guardProblems.join('\n  ')}` : 'ok'}`)
+}
+
+if (packProblems.length) {
+  console.error(`\nThe tier check failed:\n  ${packProblems.join('\n  ')}\nSee apps/web/scripts/pack-manifest.mjs.`)
+  process.exit(1)
 }
 
 if (guardProblems.length) {

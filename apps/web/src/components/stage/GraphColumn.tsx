@@ -1,44 +1,26 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DEFAULT_ORGANISM, SIGNALS, isChartable, type ActiveSignalId, type ChartableSeries, type RunResult } from '@lifepeek/engine'
+import { DEFAULT_ORGANISM, type ChartableSeries, type RunResult } from '@lifepeek/engine'
 import { useProjector } from '../../hooks/useProjector.ts'
 import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
+import { systemOf, type GraphSlotDef } from '../../systems/registry.ts'
+import { useSystemUi } from '../../systems/ui.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
 import StripAnnouncer from '../graphs/StripAnnouncer.tsx'
 import { shortMealNames } from './mealText.ts'
 
 /**
- * One graph slot: the signals drawn on one shared axis. Neighbouring signals of the same family
- * share a slot (energy in and energy used are one two-line graph, WP-13); the first is the main line.
+ * The lit system's graph slots (systems/registry.ts) that have a line to draw for this run: never an
+ * empty frame. Each slot is one shared axis: a main line, and maybe a second (energy coming in and
+ * used at rest, WP-13). Every slot's main line is a graph signal: registry.test checks it, so the
+ * stage needs no catalog row to know it (W-1: the rows load with the run).
  */
-export interface Slot {
-  /** The family ("gut", "blood", "energy"): the slot's id and its short tab name. */
-  id: string
-  signals: ActiveSignalId[]
-}
-
-export function slotsOf(signals: readonly ActiveSignalId[]): Slot[] {
-  const slots: Slot[] = []
-  for (const id of signals) {
-    const family = id.split('.')[0]!
-    const last = slots[slots.length - 1]
-    if (last?.id === family) last.signals.push(id)
-    else slots.push({ id: family, signals: [id] })
-  }
-  return slots
-}
-
-/** The lit layer's graph slots that have a line to draw for this run: never an empty frame. */
-export function useSlots(run: RunResult | null): Slot[] {
+export function useSlots(run: RunResult | null): readonly GraphSlotDef[] {
   const layer = useRunStore((s) => s.layer)
-  const system = ORGANISMS[DEFAULT_ORGANISM].systems.find((s) => s.id === layer)
-  return useMemo(
-    () => slotsOf(system?.signals ?? []).filter((s) => isChartable(SIGNALS[s.signals[0]!]) && !!run?.signals.has(s.signals[0]!)),
-    [system, run],
-  )
+  return useMemo(() => (systemOf(layer)?.slots ?? []).filter((s) => !!run?.signals.has(s.signals[0])), [layer, run])
 }
 
 /**
@@ -71,7 +53,7 @@ function useTabbed() {
 }
 
 /**
- * The graph column (UI-1): the lit layer's graphs, from the registry, beside the body. From
+ * The graph column (UI-1): the lit system's graphs, from the systems registry, beside the body. From
  * 1024 px up the slots are stacked and share the height; on a phone, on the projector and on a
  * short screen one shows at a time, picked by tabs. Stomach, blood sugar (WP-12) and energy
  * (WP-13, two lines on one axis) are live graphs; a slot with nothing to draw is left out.
@@ -85,7 +67,8 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const keptItems = useRunStore((s) => s.kept?.items)
   const { organism } = ORGANISMS[DEFAULT_ORGANISM]
   const slots = useSlots(run)
-  // The picked tab lives in a store, so the key map can switch it too (S, B, E: lib/keys.ts).
+  const { stripSummary } = useSystemUi()
+  // The picked tab lives in a store, so the key map can switch it too (1–3, and S, B, E: lib/keys.ts).
   const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
@@ -118,11 +101,12 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
       )}
       <StripStack weights={visible.map(() => 1)}>
         {visible.map((slot) => {
-          const [id, secondId] = slot.signals as [ActiveSignalId, ActiveSignalId?]
+          const [id, secondId] = slot.signals
           return (
             <RunStrip
               key={slot.id}
-              slot={slot.id}
+              slot={slot}
+              summarize={stripSummary}
               series={run.signals.get(id) as ChartableSeries}
               second={secondId ? run.signals.get(secondId) : null}
               range={organism.signalOverrides[id]?.displayRange}

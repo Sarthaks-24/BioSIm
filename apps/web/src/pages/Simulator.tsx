@@ -10,6 +10,8 @@ import { useClock, useMealClock } from '../state/clock.ts'
 import { useRunStore } from '../state/run.ts'
 import { useSheet } from '../state/sheet.ts'
 import { useStripTab } from '../state/stripTab.ts'
+import { systemOf, type GraphSlotDef } from '../systems/registry.ts'
+import { useSystemUi } from '../systems/ui.ts'
 import { Dock, IconButton, PlayButton, SettingsIcon } from '../components/kit/index.ts'
 import BodyPane from '../components/stage/BodyPane.tsx'
 import GraphColumn, { useSlots } from '../components/stage/GraphColumn.tsx'
@@ -45,11 +47,17 @@ function keep() {
   announce(t('keep.tag', { meal: mealNames(meal, i18n.language) }))
 }
 
-/** S, B, E: show that graph (where they show one at a time) and read its values out. */
-const showStrip = (slot: string) => () => {
-  useStripTab.getState().show(slot)
-  readOutSlot(slot)
+/**
+ * 1, 2, 3 (and S, B, E: digestion's aliases, v3.0): show that graph of the lit system (where the
+ * graphs show one at a time) and read its values out. A key for a graph the system lacks does nothing.
+ */
+const showSlot = (pick: (slots: readonly GraphSlotDef[]) => GraphSlotDef | undefined) => () => {
+  const slot = pick(systemOf(useRunStore.getState().layer)?.slots ?? [])
+  if (!slot) return
+  useStripTab.getState().show(slot.id)
+  readOutSlot(slot.id)
 }
+const byLetter = (letter: GraphSlotDef['letter']) => showSlot((slots) => slots.find((s) => s.letter === letter))
 
 /** What each key of the map (lib/keys.ts) does on the stage. */
 const ACTIONS: Record<KeyAction, () => void> = {
@@ -65,9 +73,12 @@ const ACTIONS: Record<KeyAction, () => void> = {
   keep,
   table: () => useSheet.getState().open({ kind: 'table', slot: useStripTab.getState().tab }),
   help: () => useSheet.getState().open({ kind: 'help' }),
-  stripGut: showStrip('gut'),
-  stripBlood: showStrip('blood'),
-  stripEnergy: showStrip('energy'),
+  slot1: showSlot((slots) => slots[0]),
+  slot2: showSlot((slots) => slots[1]),
+  slot3: showSlot((slots) => slots[2]),
+  slotS: byLetter('s'),
+  slotB: byLetter('b'),
+  slotE: byLetter('e'),
 }
 
 /**
@@ -94,7 +105,8 @@ export default function Simulator() {
   const { run: kept } = useRun('kept')
   useMealClock()
   useLinkSync()
-  useMomentsOnClock(run, kept)
+  const ui = useSystemUi()
+  useMomentsOnClock(ui.moments, run, kept)
 
   // The key map (lib/keys.ts): keyboard and presentation clicker. Keys a focused control uses
   // itself (typing, Space on a button, arrows on the slider) are left to it.
@@ -169,7 +181,7 @@ export default function Simulator() {
             }
           >
             <Suspense fallback={null}>
-              <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} />
+              <sheets.Component sheet={sheet} run={run} kept={kept} slots={slots} ui={ui} />
             </Suspense>
           </LoadBoundary>
         )}

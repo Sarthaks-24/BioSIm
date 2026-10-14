@@ -95,6 +95,13 @@ test('a whole lesson with the keyboard only: add a food, play, step through the 
     await expect(page.getByRole('button', { name: 'Energy', pressed: true })).toBeVisible()
     await page.keyboard.press('s')
     await expect(page.getByRole('button', { name: 'Stomach', pressed: true })).toBeVisible()
+    // 1, 2 and 3 pick the lit system's graphs by place (W-1); S, B, E are digestion's aliases.
+    await page.keyboard.press('2')
+    await expect(page.getByRole('button', { name: 'Blood sugar', pressed: true })).toBeVisible()
+    await page.keyboard.press('3')
+    await expect(page.getByRole('button', { name: 'Energy', pressed: true })).toBeVisible()
+    await page.keyboard.press('1')
+    await expect(page.getByRole('button', { name: 'Stomach', pressed: true })).toBeVisible()
   }
 })
 

@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 import i18n from 'i18next'
 import { buildMeal, decodeMeal } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
-import en from '../i18n/en.json'
-import { lookupFood } from '../data/foods.ts'
-import { PRESETS } from './presets.ts'
+import en from '../../i18n/en.json'
+import { lookupFood } from '../../data/foods.ts'
+import { PRESETS } from '../../lib/presets.ts'
 import { bloodData, compareSummary, sameFoods, singleSummary, summaryData } from './summary.ts'
-import { formatDuration } from './time.ts'
+import { formatDuration } from '../../lib/time.ts'
 
 /**
  * The summary sentence is what students read first, so it must be true for every lesson the app
@@ -18,7 +18,7 @@ const pair = (a: string, b: string) => summaryData(sim(a), sim(b))
 const encode = (items: { foodId: string; servings: number }[]) => items.map((i) => `${i.foodId}:${i.servings}`).join(',')
 
 // The app's i18n setup needs a browser; the food names only need `localized`.
-vi.mock('../i18n/index.ts', () => ({
+vi.mock('../../i18n/index.ts', () => ({
   localized: (text: Record<string, string> | undefined, lang: string) => text?.[lang] ?? text?.en ?? '',
 }))
 
