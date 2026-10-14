@@ -1,65 +1,97 @@
-# Red list (T0)
+# Red list (T0 → T11)
 
-The QA sweep's bugs (cache/plans/v3/qa/bug-sweep.md §3, B1–B26) as report tests, run on
-**eee16c9** (the code the sweep tested: the e2e build, `VITE_PSEUDO=1`, Chromium, 2026-10-13).
-Plan: qa-fixes §0 ("a report test counts only if it was seen failing on eee16c9") and §1.1.
+The QA sweep's bugs (cache/plans/v3/qa/bug-sweep.md §3, B1–B26) as tests. At T0 they were report
+tests, run on **eee16c9** (the code the sweep tested: the e2e build, `VITE_PSEUDO=1`, Chromium,
+2026-10-13); each T-step that fixed one flipped it to enforce. Plan: qa-fixes §0 ("a report test
+counts only if it was seen failing on eee16c9") and §1.1.
 
 - Tests: `e2e/redlist.spec.ts`, project `redlist`. Modes: `RED_LIST` in `e2e/helpers/gate.ts`.
-- Raw result: `e2e/red-list.json` (what each test measured), made with
+- Raw result: `e2e/red-list.json` (what each test measured). **Rewritten once at T11 (R60)** on
+  the v2.1 gate build (`--commit` in the file), with
   `PLAYWRIGHT_JSON_OUTPUT_FILE=red.json npx playwright test --project=redlist --reporter=json`
-  then `node scripts/red-list.mjs red.json --commit eee16c9 --write`.
-- While a bug's mode is `report`, its test prints `[gate report] redlist red Bn: …` and passes.
-  **The T-step that fixes it flips its mode to `enforce`** (then the test must pass) and reruns the
-  script, so the JSON shows it green.
-- A step that cannot finish (a button not there, a wait that times out) is one more problem of its
-  bug, never a failed test while the bug reports. Tests that need Hindi (B7, B9, B13, B20's Hindi
-  half) skip on a build without it (R47); the script counts them as skipped, and joins B20's two
-  halves (English, and Hindi read from the saved language, as on B9's Home).
+  then `node scripts/red-list.mjs red.json --commit <sha> --write`. The eee16c9 measurements are
+  in the history table below.
+- A `report` bug prints `[gate report] redlist red Bn: …` and passes; an `enforce` bug fails its
+  test. A step that cannot finish (a button not there, a wait that times out) is one more problem
+  of its bug. Tests that need Hindi (B7, B9, B13, B20's Hindi half) skip on a build without it
+  (R47); the script counts them as skipped.
+- B18's pace test is load-sensitive (it times real frames): it gets one retry and the tag
+  `@load-sensitive` (R79).
 
-## Seen failing on eee16c9 (22 of 26)
+## Status at T11 (the v2.1 gate)
 
-| Bug | Measured on eee16c9 | Fix | T-step |
-|---|---|---|---|
-| B1 | body picture 0 px tall at 360×640 and 320×568, EN and HI, ± kept | FP-1 | T2 |
-| B2 | meal bar: 3 rows of controls, 153 px tall, at 320/360/375 | FP-1 | T2 |
-| B3 | body 0 px at 640×360, 844×390, 640×400 (200 % zoom) | FP-2 | T3 (enforced; + body visible and no scroll on `landscape`, 4 sizes × 5 states, EN + pseudo-locale) |
-| B4 | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360 | FP-3 | T5 (enforced; + 3 × 10 tap grid and no overlaps on every Chromium project) |
-| B5 | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close | FP-5 | T4 (enforced; + e2e/overlays.spec.ts on every project: in the window, below the header, Close, Esc + Back) |
-| B6 | Back with the Add food sheet open goes to `about:blank` | FP-6 | T8 |
-| B7 | Hindi header 82 px tall at 360 and 320 (limit 56) | FP-1 | T2 |
-| B8 | Home chart: all 10 labels under 12 px at 360 (smallest 8 px) | FP-8 | T9b |
-| B9 | Hindi Home 360×640: "Open the simulator" ends at y 803 | FP-8 | T9b (Hindi reports, R47; EN + pseudo-locale enforced) |
-| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (enforced; + every "⋯" action closes it, overlays.spec.ts), T6 done |
-| B11 | no Copy link / Share at 360×640, 768×1024, 800×1280 | FP-6 | T8 |
-| B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %) | FP-2 | T3 (enforced, EN and HI; + body visible and no scroll on `projector-sizes`, 3 sizes × 5 states, EN + pseudo-locale) |
-| B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8) | FP-3 | T5 (Hindi reports, R47; EN + pseudo-locale enforced in invariants.spec.ts) |
-| B15 | 6 foods: 2 of 6 chips wholly visible at 1440, 1 of 6 at 360, no "+n" | FP-1 | T2 |
-| B18 | with 250 ms frames the clock runs at 37 % of its pace (3.7 vs 9.9 sim min/s) | FP-7 | T7 (enforced; + hidden page 10 s) |
-| B19 | `THREE.Clock: This module has been deprecated` warning on /sim | FP-7 | T7 (enforced; console clean on every project) |
-| B20 | /privacy shows `<project email>` and `<date of launch>` (EN and HI) | FP-8 + user | T9a |
-| B21 | `a=cola:999` → `cola:5`, 8 foods → 6, `t=99999` → 2880, no note | FP-6 | T8 |
-| B22 | `lang=en` added to a link that had none | FP-6 | T8 |
-| B23 | lesson opens at 35 min; step 2 says only "press Play" | FP-8 | T9a |
-| B24 | report form: 2 privacy warnings | FP-8 | T9a |
-| B25 | `swapKept` defined in state/run.ts, never called | FP-9 | T10 (enforced; + `npm run lint:dead` in `npm run check` and CI: exports nothing uses, components only tests render, store actions only tests call) |
+The T11 run (e7fc2c9, full Chromium suite, 2 workers: 533 passed, 0 failed): 21 of the 22 listed
+bugs green, **B20 red** (`<date of launch>`, `<project email>`: the user's items).
+
+| Bug               | Status                                      | Mode              | Why / where                                                                                                                                                                        |
+| ----------------- | ------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1, B2, B7, B15   | fixed (FP-1, T2)                            | enforce           | phone stage; B7 is Hindi and skips without it                                                                                                                                      |
+| B3, B12           | fixed (FP-2, T3)                            | enforce           | short-wide stage, projector 40 %                                                                                                                                                   |
+| B4                | fixed (FP-3, T5)                            | enforce           | timeline + dock                                                                                                                                                                    |
+| B5, B10           | fixed (FP-5, T4)                            | enforce           | overlays                                                                                                                                                                           |
+| B6, B11, B21, B22 | fixed (FP-6, T8)                            | enforce           | Back, share, links                                                                                                                                                                 |
+| B8, B9            | fixed (FP-8, T9b)                           | enforce           | Home; B9's Hindi half reports (R47)                                                                                                                                                |
+| B18, B19          | fixed (FP-7, T7)                            | enforce           | clock, console; B18's pace test retries once (R79)                                                                                                                                 |
+| B23, B24          | fixed (FP-8, T9a)                           | enforce           | Teach step 2, one privacy warning                                                                                                                                                  |
+| B25               | fixed (FP-9, T10)                           | enforce           | + `npm run lint:dead` in `npm run check` and CI                                                                                                                                    |
+| B13               | fixed in English + pseudo-locale (FP-3, T5) | **report**        | Hindi is paused (R47); the English + pseudo-locale twin is enforced in invariants.spec.ts                                                                                          |
+| B20               | waits for the user                          | **report**        | the project email and launch date are the user's (docs/RELEASE-v2.1.md). `npm run release-gate` fails on them; flip B20 and CI's `lint:placeholders -- --enforce` once they are in |
+| B17               | fixed (FP-7, T7), not on the list           | **report**        | `e2e/loading.spec.ts`: enforce on or after 2026-10-21 if clean (R59, dated TODO there)                                                                                             |
+| B14               | not reproduced, not on the list             | enforce elsewhere | `graphs.spec.ts` "no words on a graph touch a line"                                                                                                                                |
+| B16               | fixed (FP-7, T7), not on the list           | enforce           | `e2e/update.spec.ts` (desktop); WebKit/Firefox nightly                                                                                                                             |
+| B26               | fixed (FP-9, T10), not on the list          | enforce           | `npm run budget` (Home ratchet, /sim, Track A ledger) and the CI CPU ratio; fps reports                                                                                            |
+
+## History: seen failing on eee16c9 (22 of 26)
+
+| Bug | Measured on eee16c9                                                                                                                                                                                   | Fix         | T-step                                                                                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | body picture 0 px tall at 360×640 and 320×568, EN and HI, ± kept                                                                                                                                      | FP-1        | T2                                                                                                                                                 |
+| B2  | meal bar: 3 rows of controls, 153 px tall, at 320/360/375                                                                                                                                             | FP-1        | T2                                                                                                                                                 |
+| B3  | body 0 px at 640×360, 844×390, 640×400 (200 % zoom)                                                                                                                                                   | FP-2        | T3 (enforced; + body visible and no scroll on `landscape`, 4 sizes × 5 states, EN + pseudo-locale)                                                 |
+| B4  | "Keys and settings" overlaps the timeline by 44×12 (EN) / 47×13 px (HI) at 390 and 360                                                                                                                | FP-3        | T5 (enforced; + 3 × 10 tap grid and no overlaps on every Chromium project)                                                                         |
+| B5  | "How we know" at 360×640: top 8 px, above the header's bottom (49); no visible Close                                                                                                                  | FP-5        | T4 (enforced; + e2e/overlays.spec.ts on every project: in the window, below the header, Close, Esc + Back)                                         |
+| B6  | Back with the Add food sheet open goes to `about:blank`                                                                                                                                               | FP-6        | T8                                                                                                                                                 |
+| B7  | Hindi header 82 px tall at 360 and 320 (limit 56)                                                                                                                                                     | FP-1        | T2                                                                                                                                                 |
+| B8  | Home chart: all 10 labels under 12 px at 360 (smallest 8 px)                                                                                                                                          | FP-8        | T9b                                                                                                                                                |
+| B9  | Hindi Home 360×640: "Open the simulator" ends at y 803                                                                                                                                                | FP-8        | T9b (Hindi reports, R47; EN + pseudo-locale enforced)                                                                                              |
+| B10 | phone menu stays open after switching projector mode on (the tab clip did not show at 390: the check looked for role=tab; T6 checks the graph tabs, and keeps them whole, enforced in graphs.spec.ts) | FP-5 (FP-4) | T4 (enforced; + every "⋯" action closes it, overlays.spec.ts), T6 done                                                                             |
+| B11 | no Copy link / Share at 360×640, 768×1024, 800×1280                                                                                                                                                   | FP-6        | T8                                                                                                                                                 |
+| B12 | projector 1024×768 kept: body 15 % of the stage, EN and HI (1280×800 and 1366×768 pass ≥ 40 %)                                                                                                        | FP-2        | T3 (enforced, EN and HI; + body visible and no scroll on `projector-sizes`, 3 sizes × 5 states, EN + pseudo-locale)                                |
+| B13 | Hindi projector ticks "0 घं" / "1 घं" 7.2 px apart (limit 8)                                                                                                                                          | FP-3        | T5 (Hindi reports, R47; EN + pseudo-locale enforced in invariants.spec.ts)                                                                         |
+| B15 | 6 foods: 2 of 6 chips wholly visible at 1440, 1 of 6 at 360, no "+n"                                                                                                                                  | FP-1        | T2                                                                                                                                                 |
+| B18 | with 250 ms frames the clock runs at 37 % of its pace (3.7 vs 9.9 sim min/s)                                                                                                                          | FP-7        | T7 (enforced; + hidden page 10 s)                                                                                                                  |
+| B19 | `THREE.Clock: This module has been deprecated` warning on /sim                                                                                                                                        | FP-7        | T7 (enforced; console clean on every project)                                                                                                      |
+| B20 | /privacy shows `<project email>` and `<date of launch>` (EN and HI)                                                                                                                                   | FP-8 + user | T9a                                                                                                                                                |
+| B21 | `a=cola:999` → `cola:5`, 8 foods → 6, `t=99999` → 2880, no note                                                                                                                                       | FP-6        | T8                                                                                                                                                 |
+| B22 | `lang=en` added to a link that had none                                                                                                                                                               | FP-6        | T8                                                                                                                                                 |
+| B23 | lesson opens at 35 min; step 2 says only "press Play"                                                                                                                                                 | FP-8        | T9a                                                                                                                                                |
+| B24 | report form: 2 privacy warnings                                                                                                                                                                       | FP-8        | T9a                                                                                                                                                |
+| B25 | `swapKept` defined in state/run.ts, never called                                                                                                                                                      | FP-9        | T10 (enforced; + `npm run lint:dead` in `npm run check` and CI: exports nothing uses, components only tests render, store actions only tests call) |
 
 ## Not on the red list
 
-| Bug | Why | Where it is checked |
-|---|---|---|
-| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. T6: the label falls back to the free band (labels.ts lineEndSpots); T6 shots at 1440, 390 and the projector (5 kept meals) show no word on a line. | `graphs.spec.ts` "no words on a graph touch a line" (1280 and 390, EN and HI, 5 kept meals); FP-4 visual shots (§3.3); device lab |
-| B16 | Intermittent (seen once in the sweep, not in 3 tries); needs two builds and two pages at once. | `e2e/update.spec.ts` (T7): two tabs, fresh context, second tab 0–1500 ms later, × 5 (desktop, Firefox, WebKit) — reproduced on Firefox before the fix (1 run in 4), clean after (30 rounds); A→B positive. Firefox fresh profile (device lab) |
-| B17 | WebKit under load only; Playwright WebKit on Windows is not Safari. | `e2e/loading.spec.ts` (T7, report): 1/3/6 s, lines in their plot, label dots ≤ 12 px from the re-projected organ; webkit-phone showed lines 20 px under their plot at 1 s before the plot SVG fitted its box. iPhone/iPad (device lab) |
-| B26 | Not a browser bug: Home 144.8 KB > 120 (report row), fps 27.7 < 30 (report). | T10 enforces: `npm run budget` (Home ratchet ≤ 147 KB, 120 stays the goal; /sim ≤ 190 KB; Track A ≤ +1.0 KB over eee16c9, R66; every lazy chunk precached) and the CPU ratio in CI (`scripts/cpu-ratio.mjs --enforce`, §3.4). fps and CPU per frame in `perf.spec.ts` stay reports. |
+| Bug | Why                                                                                                                                                                                                                                                                                                         | Where it is checked                                                                                                                                                                                                                                                                 |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B14 | Not reproduced: at 1440×900 the energy label sits 11 px clear of the kept line (kept lessons at 0–6 h); at 1280 the label is not drawn. Fix speculative. T6: the label falls back to the free band (labels.ts lineEndSpots); T6 shots at 1440, 390 and the projector (5 kept meals) show no word on a line. | `graphs.spec.ts` "no words on a graph touch a line" (1280 and 390, EN and HI, 5 kept meals); FP-4 visual shots (§3.3); device lab                                                                                                                                                   |
+| B16 | Intermittent (seen once in the sweep, not in 3 tries); needs two builds and two pages at once.                                                                                                                                                                                                              | `e2e/update.spec.ts` (T7): two tabs, fresh context, second tab 0–1500 ms later, × 5 (desktop, Firefox, WebKit) — reproduced on Firefox before the fix (1 run in 4), clean after (30 rounds); A→B positive. Firefox fresh profile (device lab)                                       |
+| B17 | WebKit under load only; Playwright WebKit on Windows is not Safari.                                                                                                                                                                                                                                         | `e2e/loading.spec.ts` (T7, report): 1/3/6 s, lines in their plot, label dots ≤ 12 px from the re-projected organ; webkit-phone showed lines 20 px under their plot at 1 s before the plot SVG fitted its box. iPhone/iPad (device lab)                                              |
+| B26 | Not a browser bug: Home 144.8 KB > 120 (report row), fps 27.7 < 30 (report).                                                                                                                                                                                                                                | T10 enforces: `npm run budget` (Home ratchet ≤ 147 KB, 120 stays the goal; /sim ≤ 190 KB; Track A ≤ +1.0 KB over eee16c9, R66; every lazy chunk precached) and the CPU ratio in CI (`scripts/cpu-ratio.mjs --enforce`, §3.4). fps and CPU per frame in `perf.spec.ts` stay reports. |
 
-## Invariant projects (report)
+## Invariant projects
 
 `e2e/invariants.spec.ts` runs the §3.2 invariants on the new projects (`phone-small`, `phone-560`,
 `phone-xs`, `tablet-portrait`, `landscape`, `projector-sizes`, `storage-blocked`; `webkit-*` and
-`firefox-desktop` with `E2E_ENGINES=1`). On eee16c9 they report, among others: body 0 px on every
-phone and landscape size, no body in the empty state (U2), the tablet page scrolls (1088 px in
-1024), "Keys and settings" and the key-moment markers overlapping the timeline track, the
-"Typical adult" popover without a Close button, `lang=en` added to links, every `dvh` without a `vh`
-fallback. Their modes are in `INVARIANTS` (one per project); T2, T3 and T7 flip theirs.
-They run in English and the +40 % pseudo-locale (`?lang=pseudo`), not Hindi (R47: Hindi is paused);
-the one `lang=hi` link of the round-trip check reports whatever its project's mode.
+`firefox-*` with `E2E_ENGINES=1`), in English and the +40 % pseudo-locale (not Hindi, R47). On
+eee16c9 they reported, among others: body 0 px on every phone and landscape size, no body in the
+empty state (U2), the tablet page scrolling, overlapping timeline controls, a popover without a
+Close button, `lang=en` added to links and every `dvh` without a `vh` fallback.
+
+Since T11 every Chromium project is enforced (`INVARIANTS`). Still report-only, each on purpose:
+
+- Play and graph 1's plot in the first screen of `phone-560` (360×560) and `phone-xs` (320×568):
+  they sit up to ≈ 130 px below it, under a body that is enforced (`FIRST_SCREEN`; qa-fixes §3.1).
+- The `dvh` fallback check: Tailwind's `*-dvh` utilities have no `vh` line before them (every
+  browser since 2022 reads `dvh`; listed for the device lab).
+- The `lang=hi` link round trip (R47).
+- `webkit-*` and `firefox-*`: nightly, a clean week first (qa-fixes §3.1). At T11 they ran clean
+  locally (Windows WebKit and Firefox: 160 passed, 2 Firefox tests passed on their retry).

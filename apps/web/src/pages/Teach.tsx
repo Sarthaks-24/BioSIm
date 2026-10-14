@@ -2,13 +2,15 @@ import { useEffect, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
-import { LESSONS, QR_PATH, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { LESSONS, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { QR_PATH } from '../lib/qrPath.ts'
 import { SITE_URL } from '../lib/site.ts'
 import { setProjector } from '../hooks/useProjector.ts'
 import { useStripTab } from '../state/stripTab.ts'
 import { addEnglish } from '../i18n/index.ts'
 import { shortMealNames } from '../components/stage/mealText.ts'
-// A file next to the page, never inlined into its code (D-QR: made with qrcode@1.5.4, error level M).
+// A file next to the page, never inlined into its code (D-QR: error level M). Made at build time
+// from the site address (scripts/qr-code.mjs, R79); not committed.
 import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'

@@ -56,6 +56,9 @@ apps/web/public/THIRD_PARTY_NOTICES.txt
 # Written at build time from public GitHub issues for the /stats page (apps/web/scripts/fetch-stats.mjs)
 apps/web/public/stats.json
 
+# Made at build time from VITE_SITE_URL (apps/web/scripts/qr-code.mjs, R79)
+apps/web/src/assets/lifepeek-qr.svg
+
 # The Hindi reviewer's export (apps/web/scripts/hi-review.mjs); REVIEW.md is the list that is kept
 apps/web/hi-review.csv
 
