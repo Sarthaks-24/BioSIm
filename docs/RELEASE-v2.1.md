@@ -141,6 +141,5 @@ These checks print `[gate report]` lines and do not fail, each for a reason:
 - B17 (loading frames, `e2e/loading.spec.ts`): enforce on or after 2026-10-21 if it stays clean (R59).
 - WebKit and Firefox projects: nightly CI, a clean week first (qa-fixes §3.1).
 - Play and the graph on the first screen of a 360×560 and a 320×568 window (the body is enforced).
-- `dvh` with no `vh` fallback (every browser since 2022 has `dvh`).
 - 30 fps at 6× CPU and the absolute CPU per frame: the real phone (step 3) counts; the CPU ratio
   between builds is enforced on every PR.

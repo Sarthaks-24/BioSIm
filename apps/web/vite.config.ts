@@ -8,6 +8,7 @@ import cacheTiersPlugin from './scripts/cache-tiers.mjs'
 import { workboxPolicy } from './scripts/cache-policy.mjs'
 import { siteUrl } from './scripts/site-url.mjs'
 import qrCode from './scripts/qr-code.mjs'
+import vhFallback from './scripts/vh-fallback.mjs'
 
 /**
  * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
@@ -34,6 +35,8 @@ export default defineConfig({
     prerenderHead({ site: SITE_URL }),
     // Teach's QR code, a picture of this build's address (scripts/qr-code.mjs, R79).
     qrCode({ site: SITE_URL }),
+    // A vh fallback before every dvh in the built CSS, which the CSS minifier would remove (R87).
+    vhFallback(),
     // dist/pack-manifest.json and the precache list: the core only (scripts/cache-tiers.mjs).
     tiers,
     VitePWA({
