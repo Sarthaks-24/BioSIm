@@ -5,7 +5,9 @@ import { useClock } from '../../state/clock.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
-import { groupClose, hitAreas, momentNameKey, type Moment } from '../../lib/moments.ts'
+import { boutMoments, groupClose, hasPlan, hitAreas, momentNameKey, type Moment } from '../../lib/moments.ts'
+import { useRunStore } from '../../state/run.ts'
+import { useBoutMarks } from './boutMarks.ts'
 import { useSystemUi } from '../../systems/ui.ts'
 
 /**
@@ -70,6 +72,10 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
   const lane = useRef<HTMLDivElement>(null)
   const kneeLabel = useRef<HTMLSpanElement>(null)
   const width = useTrackWidth(track)
+  // The activity bouts' bars on the track (E-3b-ui), from the lazy BoutMarks once there are any.
+  const marks = useBoutMarks(run.activity.length + (kept?.activity.length ?? 0) > 0)
+  // "after eating" with a meal, "from the start" with activity only (ui-ux §4).
+  const since = useRunStore((s) => (s.meal.length || !s.activity.length ? 'sim.afterEating' : 'sim.fromStart'))
 
   const fill = useRef<HTMLSpanElement>(null)
   const thumb = useRef<HTMLSpanElement>(null)
@@ -90,11 +96,11 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       if (rounded === shownMin) return
       shownMin = rounded
       el.setAttribute('aria-valuenow', String(rounded))
-      el.setAttribute('aria-valuetext', `${formatDuration(min, t)} ${t('sim.afterEating')}`)
+      el.setAttribute('aria-valuetext', `${formatDuration(min, t)} ${t(since)}`)
     }
     show(useClock.getState().simMin)
     return useClock.subscribe((s) => s.simMin, show)
-  }, [t])
+  }, [t, since])
 
   // The hour labels that fit (B13): each label in TICK_ORDER shows unless it would come within
   // TICK_GAP px of one already shown. Measured again when the track, the language or the fonts change.
@@ -123,8 +129,8 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       [run, 'run'],
       [kept, 'kept'],
     ] as const) {
-      if (!sim || sim.meal.items.length === 0) continue
-      for (const m of momentsOf(sim)) {
+      if (!sim || !hasPlan(sim)) continue
+      for (const m of [...momentsOf(sim), ...boutMoments(sim)]) {
         const name = t(momentNameKey(m.id, sim))
         const time =
           m.low != null && m.high != null
@@ -145,7 +151,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       GAP,
     )
     return groups.map((moments, i): Marker => ({
-      key: `${moments[0]!.lane}:${moments[0]!.id}`,
+      key: `${moments[0]!.lane}:${moments[0]!.id}:${moments[0]!.atMin}`,
       moments,
       atMin: moments[0]!.atMin,
       lines: moments.map((m) => m.line),
@@ -260,6 +266,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
               style={{ transform: 'translateX(-100%)' }}
             />
           </span>
+          {marks && <marks.BoutBars run={run.activity} kept={kept?.activity ?? []} pos={posAt} />}
           {/* A track-wide box slid right by the clock's share of the track; the thumb sits at its left edge. */}
           <span aria-hidden="true" ref={thumb} className="pointer-events-none absolute inset-0 will-change-transform">
             <span

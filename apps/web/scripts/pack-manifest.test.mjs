@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { workboxPolicy } from './cache-policy.mjs'
-import { ENGINE, HINDI, THREE_D, packManifest, tierProblems } from './pack-manifest.mjs'
+import { ACTIVITY_SHEET, ENGINE, HINDI, THREE_D, packManifest, tierProblems } from './pack-manifest.mjs'
 
 // A made-up Vite manifest: /sim (entry + stage), the engine with the core rows, the 3D body, Hindi,
 // and a breathing pack whose UI chunk shares a file with the stage and whose catalog rows and
@@ -13,6 +13,8 @@ const MANIFEST = {
   '_rows-core.js': { file: 'assets/rows-core-AAAAAAAF.js' },
   [THREE_D]: { file: 'assets/BodyCanvas-AAAAAAAG.js', isDynamicEntry: true, imports: ['_shared.js'] },
   [HINDI]: { file: 'assets/hi-AAAAAAAH.js', isDynamicEntry: true },
+  [ACTIVITY_SHEET]: { file: 'assets/ActivitySheet-AAAAAAAN.js', isDynamicEntry: true, imports: ['_shared.js', '_en-activity.js'] },
+  '_en-activity.js': { file: 'assets/lifepeek-en-activity-AAAAAAAO.js' },
   'src/systems/breathing/ui.tsx': { file: 'assets/ui-AAAAAAAI.js', isDynamicEntry: true, imports: ['_shared.js', '_lung.js'] },
   '_lung.js': { file: 'assets/lung-AAAAAAAJ.js' },
   '../../packages/engine/src/core/catalog/breathing.ts': { file: 'assets/breathing-AAAAAAAK.js', isDynamicEntry: true },
@@ -29,7 +31,7 @@ describe('pack-manifest.json (W-1; R71 load on demand)', () => {
     expect(out.precache).toEqual(['/assets/run-AAAAAAAE.js', '/assets/rows-core-AAAAAAAF.js'])
   })
 
-  it('finds a pack by where its code lives (lazy chunks, catalog rows, text), never /sim files; 3D and Hindi are lazy', () => {
+  it('finds a pack by where its code lives (lazy chunks, catalog rows, text), never /sim files; 3D, the activity sheet and Hindi are lazy', () => {
     expect(out.entries.breathing).toEqual({
       tier: 'lazy',
       files: [
@@ -41,6 +43,11 @@ describe('pack-manifest.json (W-1; R71 load on demand)', () => {
     })
     expect(out.entries['3d']).toEqual({ tier: 'lazy', files: ['assets/BodyCanvas-AAAAAAAG.js'] })
     expect(out.entries.hindi).toEqual({ tier: 'lazy', files: ['assets/hi-AAAAAAAH.js'] })
+    // The meal sheet's Activity half and its words load when the tab is first shown (E-3b-ui).
+    expect(out.entries.activity).toEqual({
+      tier: 'lazy',
+      files: ['assets/ActivitySheet-AAAAAAAN.js', 'assets/lifepeek-en-activity-AAAAAAAO.js'],
+    })
     expect([...out.precache, ...out.lazy].some((u) => u.includes('shared') || u.includes('NowLine'))).toBe(false)
   })
 

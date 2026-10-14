@@ -3,7 +3,7 @@
 //   - precache: saved when the app is installed. Only the core: the engine and digestion's pack, so
 //     a cold offline start of the core simulator keeps working;
 //   - lazy: saved the first time it is used, in the service worker's "lp-lazy" cache
-//     (scripts/cache-policy.mjs): the 3D body, every other system pack, Hindi.
+//     (scripts/cache-policy.mjs): the 3D body, every other system pack, the activity sheet, Hindi.
 // vite.config.ts writes it into dist/ after the bundle, and removes the lazy tier from the
 // precache list (scripts/cache-policy.mjs). check-budget.mjs checks both tiers against the service
 // worker and prints each pack's size and the lazy total. /teach's "Save for class offline" (R71,
@@ -34,6 +34,10 @@ export const PACK_SYSTEMS = {
 export const ENGINE = '../../packages/engine/src/run.ts'
 /** The 3D body's entry (three.js and the scene): lazy, never needed for the core simulator (R71). */
 export const THREE_D = 'src/three/BodyCanvas.tsx'
+/** The meal sheet's Activity half and its words (E-3b-ui): lazy, loaded when the tab is first shown (R71/R74). */
+export const ACTIVITY_SHEET = 'src/components/ActivitySheet.tsx'
+/** The bouts' marks on the graphs and the timeline (E-3b-ui): lazy, loaded when a run first has a bout. */
+export const BOUT_MARKS = 'src/components/stage/BoutMarks.tsx'
 /** Hindi's one file (a Hindi build only: R47). */
 export const HINDI = 'src/i18n/hi.json'
 /** /sim's first download: what every lazy part can count on. */
@@ -80,6 +84,8 @@ export function packManifest(manifest) {
     if (files.length) entries[pack] = { tier: pack === 'core' ? 'precache' : 'lazy', files }
   }
   if (manifest[THREE_D]) entries['3d'] = { tier: 'lazy', files: beyondSim([THREE_D]) }
+  const activity = [ACTIVITY_SHEET, BOUT_MARKS].filter((k) => manifest[k])
+  if (activity.length) entries.activity = { tier: 'lazy', files: beyondSim(activity) }
   if (manifest[HINDI]) entries.hindi = { tier: 'lazy', files: beyondSim([HINDI]) }
   const tier = (t) => [
     ...new Set(

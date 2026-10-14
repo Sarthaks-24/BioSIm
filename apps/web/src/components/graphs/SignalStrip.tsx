@@ -1,12 +1,13 @@
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { valueAt, type ChartableSeries, type Series } from '@lifepeek/engine'
+import { valueAt, type ActivityBout, type ChartableSeries, type Series } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS } from '../../lib/time.ts'
 import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks, type Domain } from '../../lib/axis.ts'
 import { formatNumber, formatSignal, unitLabel } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
 import { LineSwatch } from '../stage/KeptTag.tsx'
+import { useBoutMarks } from '../stage/boutMarks.ts'
 import Playhead from './Playhead.tsx'
 import { freeSpot, lineEndSpots, placeLabel, polyline, ringSpots, type Box } from './labels.ts'
 import { STRIP_ROWS } from './layout.ts'
@@ -45,6 +46,9 @@ interface Props {
   tabbed?: boolean
   /** The run's clock (`run.stepMin`, `run.horizonMin`): index i of every series is minute i·stepMin. */
   clock?: { stepMin: number; horizonMin: number }
+  /** The activity bouts of this run and of the kept one: a hatched column each, the kept ones dashed (ui-ux §5). */
+  bouts?: readonly ActivityBout[]
+  keptBouts?: readonly ActivityBout[]
 }
 
 /**
@@ -70,6 +74,8 @@ function useSize<T extends HTMLElement>() {
   }, [])
   return [ref, size] as const
 }
+
+const NO_BOUTS: readonly ActivityBout[] = []
 
 /** The human run's clock (PARAMS: 1-minute steps for 48 h), for callers that pass none. */
 const RUN_CLOCK = { stepMin: 1, horizonMin: HORIZON_MIN }
@@ -111,6 +117,8 @@ export default function SignalStrip({
   summary,
   tabbed = false,
   clock = RUN_CLOCK,
+  bouts = NO_BOUTS,
+  keptBouts = NO_BOUTS,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -119,6 +127,7 @@ export default function SignalStrip({
   const summaryId = useId()
   const hatch = useId()
   const [plot, { width, height, rem }] = useSize<HTMLDivElement>()
+  const marks = useBoutMarks(bouts.length + keptBouts.length > 0)
 
   const { domain, stretched } = useMemo(
     () => domainFor(range ?? meta.displayRange ?? [0, 1], [series.values, series.low, series.high, kept?.values, second?.series.values]),
@@ -377,6 +386,8 @@ export default function SignalStrip({
                 height={height}
                 fill={`url(#${hatch})`}
               />
+              {/* Activity bouts (E-3b-ui): their columns, from the lazy BoutMarks once there are any. */}
+              {marks && <marks.BoutBands bouts={bouts} kept={keptBouts} x={(m) => xAt(m, width)} height={height} id={`${hatch}b`} />}
               <g className="stroke-grid" strokeWidth="1" shapeRendering="crispEdges">
                 {ticks.slice(0, -1).map((v, i) => (
                   <line

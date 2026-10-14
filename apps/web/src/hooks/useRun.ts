@@ -113,12 +113,12 @@ export function useRun(which: 'current' | 'kept'): { run: RunResult | null; pend
 /**
  * Hands the key moments to the meal clock, so "next / previous moment" (PageDown / PageUp, a
  * clicker) steps through every marker on the dock's timeline: this meal's and the kept meal's, in
- * time order, each time once. `moments` is the lit system's (SystemUi.moments; digestion's is
- * lib/moments.ts runMoments).
+ * time order, each time once. `moments` gives a run's moments (pages/Simulator.tsx: the lit system's,
+ * SystemUi.moments, and each activity bout's start and end; none for a run with nothing in it).
  */
 export function useMomentsOnClock(moments: (run: RunResult) => Moment[], run: RunResult | null, kept: RunResult | null = null) {
   useEffect(() => {
-    const times = [run, kept].flatMap((sim) => (sim && sim.meal.items.length > 0 ? moments(sim).map((m) => m.atMin) : []))
+    const times = [run, kept].flatMap((sim) => (sim ? moments(sim).map((m) => m.atMin) : []))
     useClock.getState().setMoments(times)
   }, [moments, run, kept])
 }

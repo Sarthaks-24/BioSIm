@@ -152,6 +152,8 @@ export function RunStrip({
     <SignalStrip
       series={series}
       kept={kept?.signals.get(id) ?? null}
+      bouts={run.activity}
+      keptBouts={kept?.activity}
       runName={runName}
       keptName={keptName}
       marker={marker}

@@ -34,6 +34,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts'],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
+  mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],
+  activity: ['components/ActivitySheet.tsx'],
 }
 
 function flatKeys(obj: unknown, prefix = '', out = new Set<string>()): Set<string> {

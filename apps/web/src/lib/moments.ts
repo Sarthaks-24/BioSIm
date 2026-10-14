@@ -24,6 +24,8 @@ export function runMoments(run: RunResult): Moment[] {
   const leftBase = glucoseLeftBase(run)
   const out: Moment[] = []
   for (const id of EVENT_IDS) {
+    // Each bout's start and end are moments of every system (boutMoments), not only the first and last.
+    if (id === 'event.activityStart' || id === 'event.activityEnd') continue
     const m = run.moments.get(id)
     if (m?.atMin == null || m.atMin > run.horizonMin) continue
     if ((id === 'event.glucosePeak' || id === 'event.glucoseBackToBase') && !leftBase) continue
@@ -31,6 +33,22 @@ export function runMoments(run: RunResult): Moment[] {
   }
   return out
 }
+
+/**
+ * Each activity bout's start and end (E-3b-ui, ui-ux §5: starts and ends are moments, PageDown):
+ * on the timeline of every system, beside the system's own moments.
+ */
+export function boutMoments(run: RunResult): Moment[] {
+  return run.activity.flatMap((b): Moment[] =>
+    [
+      { id: 'event.activityStart' as const, atMin: b.startMin },
+      { id: 'event.activityEnd' as const, atMin: b.startMin + b.durMin },
+    ].filter((m) => m.atMin <= run.horizonMin),
+  )
+}
+
+/** A run with something to mark: a meal, or activity bouts. */
+export const hasPlan = (run: RunResult) => run.meal.items.length > 0 || run.activity.length > 0
 
 /**
  * The words for a moment. "Half has left the stomach" is by food energy (water: by weight), so

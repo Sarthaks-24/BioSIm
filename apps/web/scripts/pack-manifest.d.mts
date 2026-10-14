@@ -9,6 +9,8 @@ type ViteManifest = Record<string, { file: string; css?: string[]; imports?: str
 export const PACK_SYSTEMS: Record<string, string[]>
 export const ENGINE: string
 export const THREE_D: string
+export const ACTIVITY_SHEET: string
+export const BOUT_MARKS: string
 export const HINDI: string
 export const SIM_ROOTS: string[]
 export function staticFiles(manifest: ViteManifest, roots: string[]): string[]

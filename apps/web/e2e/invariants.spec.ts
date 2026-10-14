@@ -77,6 +77,9 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   'first visit': { url: '/sim', firstVisit: true },
   empty: { url: '/sim?v=3&a=' },
   '6 foods': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1' },
+  // E-3b-ui: bouts add no stage row (their chips share the plan strip, their marks the graphs and the dock).
+  'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20' },
+  '6 foods + 3 bouts': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10' },
 }
 
 /** The window sizes each project checks (the project's own first). */

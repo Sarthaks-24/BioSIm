@@ -8,6 +8,7 @@ import {
   decodeShareState,
   encodeShareState,
   mealKcal,
+  sortBouts,
   type ActivityBout,
   type LinkChange,
   type MealItem,
@@ -68,7 +69,9 @@ export interface RunState {
   /** Returns false if growing the meal would go over the cap (shrinking is always allowed). */
   setServings: (foodId: string, servings: number) => boolean
   removeFood: (foodId: string) => void
-  /** Copies the current meal into `kept` (the meal stays as it is). An empty meal is not kept. */
+  /** The activity plan as a whole (the sheet and the chips' ✕ change it; links are read by loadLink). Kept in start order. */
+  setActivity: (bouts: readonly ActivityBout[]) => void
+  /** Copies the current meal and bouts into `kept` (they stay as they are). An empty plan is not kept. */
   keep: () => void
   unkeep: () => void
   setLayer: (layer: SystemId) => void
@@ -132,6 +135,7 @@ export const useRunStore = create<RunState>((set, get) => ({
     return true
   },
   removeFood: (foodId) => set({ meal: get().meal.filter((i) => i.foodId !== foodId), capBlocked: false }),
+  setActivity: (bouts) => set({ activity: sortBouts(bouts) }),
 
   keep: () => {
     const { meal, profile, activity } = get()

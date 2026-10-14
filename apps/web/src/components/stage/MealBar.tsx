@@ -1,16 +1,17 @@
 import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PARAMS, SERVING_STEPS, type MealItem, type ProfileId } from '@lifepeek/engine'
+import { PARAMS, SERVING_STEPS, type ActivityBout, type MealItem, type ProfileId } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../LoadBoundary.tsx'
 import { FlagIcon, FoodChip, IconButton, LinkIcon, MoreIcon } from '../kit/index.ts'
 import { announce } from '../graphs/StripAnnouncer.tsx'
-import AddFoodSheet from './AddFoodSheet.tsx'
+import AddFoodSheet, { useMealSheet } from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
 import KeptTag, { LineSwatch } from './KeptTag.tsx'
 import Popover from './Popover.tsx'
+import { BOUT_EMOJI, boutLabel } from './boutText.ts'
 import { mealKcalRounded } from './mealText.ts'
 
 /**
@@ -27,18 +28,6 @@ const mealActions = lazyWithRetry<{
 
 /** The report form is downloaded on the first click: it is not part of the first paint (size budget). */
 const feedbackDialog = lazyWithRetry(() => import('../FeedbackDialog.tsx'))
-
-/**
- * The e2e build's stand-in for v3's activity bouts (`&fixture=bouts`, only where VITE_PSEUDO=1):
- * the three longest bout chips, so the one-row rule is tested with them before they exist (FP-1,
- * B15). The flag is written out, so a real build drops this.
- */
-const fixtureBouts = (): Chip[] =>
-  import.meta.env.VITE_PSEUDO === '1' && location.search.includes('fixture=bouts')
-    ? ['Brisk walking 120 min, from 11:30', 'Skipping rope 105 min, from 10:45', 'Playing football 90 min, from 12:00'].map(
-        (text) => () => <FoodChip kind="bout" emoji="🚶" name={text} onRemove={() => {}} />,
-      )
-    : []
 
 /** One chip of the plan strip, drawn on the strip or (`inline`) in the "+n" list. */
 type Chip = (inline?: boolean) => ReactNode
@@ -58,7 +47,7 @@ export default function MealBar() {
   const meal = useRunStore((s) => s.meal)
   const profile = useRunStore((s) => s.profile)
   const kept = useRunStore((s) => s.kept)
-  const [bouts] = useState(fixtureBouts)
+  const activity = useRunStore((s) => s.activity)
   // "⋯": a menu by it (Popover: Esc, a press elsewhere or Tab out closes it, focus comes back), and
   // each of its actions closes it too (FP-5).
   const [more, setMore] = useState(false)
@@ -87,7 +76,7 @@ export default function MealBar() {
   return (
     <section aria-labelledby="meal-bar-title" className="border-b border-border bg-surface-page">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 lg:min-h-14 lg:gap-x-4 lg:px-4">
-        <PlanStrip meal={meal} bouts={bouts} />
+        <PlanStrip meal={meal} activity={activity} />
         {kept && (
           // On a phone the Now line names the kept meal, with its ✕, right under the meal bar: this
           // row gives way to it while it shows (styles.css), so the body keeps the height (WP-18).
@@ -205,7 +194,7 @@ export default function MealBar() {
  * its name shortening before its servings or ✕ (council MUST 9). To fit, every chip is laid out
  * once and measured, and the ones past the room are hidden, before the browser paints.
  */
-function PlanStrip({ meal, bouts }: { meal: readonly MealItem[]; bouts: readonly Chip[] }) {
+function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: readonly ActivityBout[] }) {
   const { t, i18n } = useTranslation()
   const strip = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLUListElement>(null)
@@ -214,12 +203,24 @@ function PlanStrip({ meal, bouts }: { meal: readonly MealItem[]; bouts: readonly
   const kcal = useRef<HTMLSpanElement>(null)
   // How many chips show, and whether the kcal does; null while everything is laid out to be measured.
   const [fit, setFit] = useState<{ shown: number; kcal: boolean } | null>(null)
-  const chips = [...meal.map((item) => (inline?: boolean) => <MealChip item={item} inline={inline} />), ...bouts]
+  const chips: Chip[] = [
+    ...meal.map((item) => (inline?: boolean) => <MealChip item={item} inline={inline} />),
+    // The activity bouts (E-3b-ui): the same chip, `kind="bout"`, no kcal; tap to change, ✕ to remove.
+    ...activity.map((b, i) => () => (
+      <FoodChip
+        kind="bout"
+        emoji={BOUT_EMOJI[b.kind] ?? '🚶'}
+        name={boutLabel(b, t)}
+        onEdit={() => useMealSheet.setState({ open: { tab: 'activity', edit: i } })}
+        onRemove={() => useRunStore.getState().setActivity(activity.filter((_, j) => j !== i))}
+      />
+    )),
+  ]
   const n = chips.length
   const hidden = fit ? n - fit.shown : 0
   const total = meal.length > 0 && t('units.kcal', { n: mealKcalRounded(meal) })
 
-  useLayoutEffect(() => setFit(null), [meal, bouts, i18n.language])
+  useLayoutEffect(() => setFit(null), [meal, activity, i18n.language])
   useLayoutEffect(() => {
     if (fit) return
     const box = strip.current!
@@ -302,7 +303,7 @@ function PlanStrip({ meal, bouts }: { meal: readonly MealItem[]; bouts: readonly
           </ul>
         </Popover>
       )}
-      <AddFoodSheet compact={meal.length > 0} />
+      <AddFoodSheet compact={n > 0} />
       {total && (
         <span
           ref={kcal}
