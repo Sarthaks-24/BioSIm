@@ -44,9 +44,9 @@ test('a preview link lights Heart & blood: heart, chip, colour key, three graphs
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, REST)
-  // With WebGL the 3D heart in the chest framing (A-5), else the flat one in the torso framing.
+  // With WebGL the 3D heart (A-5), else the flat one: the torso framing either way.
   await expect(
-    page.locator(in3d() ? '[data-body="3d"][data-framing="chest"][data-ready]' : '[data-body="flat"][data-framing="torso"]'),
+    page.locator(in3d() ? '[data-body="3d"][data-framing="torso"][data-ready]' : '[data-body="flat"][data-framing="torso"]'),
   ).toBeVisible()
   await expect(page.locator('[data-system-title="circulation"]')).toContainText('Heart & blood')
   await expect(page.locator('[data-rhythm-chip]')).toContainText(/6\d/)
@@ -166,7 +166,7 @@ test('a link with activity and no layer opens Heart & blood in a preview (R39); 
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
   await goto(page, '/sim?v=3&a=roti:1&act=walk.30.20&t=40&preview=1')
   await expect(page.locator('[data-system-title="circulation"]')).toBeVisible()
-  await expect(page.locator('[data-layer="circulation"]')).toBeAttached()
+  await expect(page.locator('[data-layer="circulation"]').first()).toBeAttached()
   await goto(page, '/sim?v=3&a=roti:1&act=walk.30.20&t=40')
   await page.locator('[data-stage]').waitFor()
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()

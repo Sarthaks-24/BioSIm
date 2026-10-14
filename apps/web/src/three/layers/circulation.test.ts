@@ -192,8 +192,8 @@ describe('3D heart and both loops (A-5)', () => {
     })
   })
 
-  it('mounts in the chest framing, without the food, with its own program that grows and draws dashes', () => {
-    expect(HEART_3D).toMatchObject({ framing: 'chest', food: false, dashes: true })
+  it('mounts in the torso framing (as the flat heart, so the legs’ vessels show), without the food, with its own program that grows and draws dashes', () => {
+    expect(HEART_3D).toMatchObject({ framing: 'torso', food: false, dashes: true })
     const m = mountLayer(HEART_3D, 'high')
     expect(m.tissue.customProgramCacheKey()).toBe(`lifepeek-tissue:circulation:${ORGANS.length}`)
     expect(m.state.dash).toBe(m.uniforms.uDash.value)

@@ -516,17 +516,15 @@ const LABEL_KEYS: readonly CirculationLabel[] = ['heart', 'aorta', 'venaCava', '
 
 /**
  * The labels' places in 3D: the flat ones (anatomy/human/circulation.ts LABELS) with their dots on
- * the vessel or the heart's front in depth. In the chest framing the legs are below the picture,
- * so "To and from the legs" points at the aorta and the vena cava where they leave it.
+ * the vessel or the heart's front in depth; the legs' dot on the leg artery above where it stops.
  */
 const LABELS_3D: Record<CirculationLabel, (typeof LABELS)[CirculationLabel]> = {
   heart: { ...LABELS.heart, anchor: v3(0.24, 1.12, 0.21) },
   aorta: { ...LABELS.aorta, anchor: v3(0.12, 1.93, -0.04) },
-  // Higher than the flat one's: low in the chest framing it would sit on the colour key.
-  venaCava: { ...LABELS.venaCava, anchor: v3(-0.136, 0.8, -0.22), at: v3(-0.95, 0.8, 0.1) },
+  venaCava: { ...LABELS.venaCava, anchor: v3(-0.12, 0.4, -0.23) },
   pulmonaryArtery: { ...LABELS.pulmonaryArtery, anchor: v3(-0.4, 1.73, -0.18) },
   pulmonaryVein: { ...LABELS.pulmonaryVein, anchor: v3(0.46, 1.42, -0.22) },
-  legs: { ...LABELS.legs, anchor: v3(0.06, -0.42, -0.22), at: v3(0.88, -0.3, 0.1) },
+  legs: { ...LABELS.legs, anchor: v3(0.33, -1.55, -0.1) },
 }
 
 /**
@@ -588,8 +586,8 @@ function heartOverlay(host: HTMLElement, { reduced, t, register }: OverlayProps)
   }
   let keyWidth = ''
   const stop = register((project, width, height) => {
-    // Beside the hips, never over the body's outline (its widest low in the picture, ±0.85 units).
-    const edge = project(v3(-0.85, -0.3, 0))
+    // Beside the hips, never over the body's outline (its widest, ±0.95 units: as the flat drawing's).
+    const edge = project(v3(-0.95, 0, 0))
     const w = `${Math.round(Math.min(184, Math.max(112, (edge?.[0] ?? 120) - 8)))}px`
     if (w !== keyWidth) key.style.maxWidth = keyWidth = w
     arrows.forEach((v, i) => {
@@ -629,7 +627,8 @@ const HEART_3D: Layer3d = {
   organs: ORGANS,
   build,
   write,
-  framing: 'chest',
+  // The flat heart's framing (U-3): hips to head, so the legs' vessels and their dashes show.
+  framing: 'torso',
   food: false,
   grow: { origins: ORIGINS },
   dashes: true,

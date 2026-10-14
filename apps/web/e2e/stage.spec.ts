@@ -331,8 +331,8 @@ test('digestion, breathing and the heart swap their 3D layers in one canvas: one
     expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
     await page.locator('body').press(']')
     await expect(heart).toBeVisible({ timeout: 30_000 })
-    // The chest framing too; the heart beats at the run's rate, at most 2.5 a second; the breath's attributes went with its layer.
-    await expect(heart).toHaveAttribute('data-framing', 'chest')
+    // The torso framing (the legs' vessels show); the heart beats at the run's rate, at most 2.5 a second; the breath's attributes went with its layer.
+    await expect(heart).toHaveAttribute('data-framing', 'torso')
     expect(Number(await heart.getAttribute('data-beat-hz'))).toBeLessThanOrEqual(2.5)
     await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-breath', /.*/)
     if (i === 0) await withinGpu()
