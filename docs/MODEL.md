@@ -226,6 +226,34 @@ The `circulation` module runs after muscles and skin. It reads the oxygen used (
 
 **Limits.** Studies were small and mostly lying down or seated; the meal's HR/SV split comes from one study of heart patients (Kelbaek 1989) and is the same for every meal; Sidery 1994 saw a 1 MJ meal raise CO by 2.19 L/min, far more than the model gives a meal that size; recovery is simplified: the heart follows the MET's 50 s off lag, with no slow EPOC and no slower heart-rate recovery, so it is nearly back to rest 3 min after a bout; no baroreflex, posture, fitness, blood volume or blood pressure; the CO slope is for steady bouts (non-linear in ramp tests, Stringer 2005); the gut gives up blood in every bout, though Eriksen 1994 found it held in reclining exercise after a meal; 220 − age is ±10–12 beats and not for children.
 
+## Insulin and the brain's glucose use (S-6, v3.1)
+
+The `bloodSugar` module computes two more rows after the glucose curve, with no new module (D4: `control` is the hormones-and-nerves pack, not an engine module). Their catalog rows and `event.insulinPeak` are lazy (`core/catalog/control.ts`) and ship in v3.1; their numbers are in `packParams.ts` (`insulin`, `brain`), loaded with the engine, not the first page. Both rows are *assumption* ("Model estimate"). Sources were read in step V-6.
+
+**Insulin, open loop** (model §2.5 E1). Insulin is worked out from blood glucose G and the glycemic carbohydrate coming in from the gut (Ra, g/min, the same input the glucose curve uses), and **never fed back**: glucose keeps its own lagged insulin-action term (`glucose.ts`), and changing any insulin number leaves glucose the same to the byte (model D5, C1, closes in E2). All numbers but one come from Dalla Man 2007's meal model (BioModels BIOMD0000000379, normal subject, read from the model file), in its units, pmol/kg/min:
+
+    secretion S = 1.8 + Y + 2.3 × max(0, dG/dt) + c × Ra
+    dY/dt = −0.05 × (Y − 0.11 × max(0, G − 90))
+    liver share HE = 0.6471 − 0.0304 × S   (0.59 at basal)
+    plasma level for S: P(S) = S / ((0.484 + 0.194) / (1 − HE) − 0.484)
+    insulin (× before eating): dI/dt = n × (P(S) / P(1.8) − I),  n = ln 2 / 5 min
+
+The static part Y follows glucose above fasting, the dynamic part answers while glucose rises, and the liver takes out less insulin as secretion rises, so blood insulin rises more than secretion (the steady state of the model's liver and plasma compartments). Insulin follows that level with a half-life of about 5 min (Lebovitz 2011, "~5 min"; Duckworth 1998's 4–6 min was seen only through BioNumbers), standing in for the compartments' own lags. c × Ra stands in for the gut hormones' boost, which no source read gives as a number: **c = 9 (pmol/kg/min per g/min) is the one calibration**, fitted so 75 g of glucose gives 12× fasting at 30 min, Takahashi 2018's normal type (74.1 / 6.2 µU/mL). With nothing coming in, insulin is exactly 1. It is shown as "× before eating", never in µU/mL. The band is Takahashi's spread at the 30-min sample (74.1 ± 33.4, ±45 % of the rise). `event.insulinPeak` is the first minute insulin is highest (none if it never rises by 0.1×).
+
+| | Highest | at | 4 h made (× basal) |
+|---|---|---|---|
+| 75 g glucose | 13.1× | 24 min | 3.6 |
+| Cola | 7.3× | 27 min | 2.1 |
+| 2 roti + dal | 4.5× | 94 min | 2.6 |
+| Burger + fries | 4.0× | 94 min | 2.4 |
+| Water | 1 | – | 1 |
+
+**Brain.** `brain.glucoseUse` is a constant 4.4 g/h: about 5.6 mg of glucose per 100 g of brain per minute, the brain being about 2 % of body weight (Mergenthaler 2013), 1.3 kg in the reference man, so 4.37 g/h, 106 g a day, inside Cahill & Owen 1968's "100 to 145 grams of glucose/24 hours". The same all day: between meals the liver supplies it (the liver comes with E2). A card, not a graph.
+
+**Tests** (`test/insulin.test.ts`): Takahashi calibration (6–20× at the 30 or 60 min sample, 12× at 30 min, peak before 60 min); hold-outs: still above 2× at 120 min (Takahashi 2018: 5.8×; the model gives 9×) and 2–4.5× the basal secretion over the 4 h after six mixed meals (Polonsky 1988: 63–67 nmol against 4 × 5.4 nmol/h, about 3×; the model gives 2.2–3.1×); the brain 100–145 g a day (Cahill & Owen 1968). Pinned: water or nothing gives insulin exactly 1 and no peak; every meal with glucose is back to 1 by 48 h; more glucose, more insulin; glucose byte-identical whatever the insulin numbers; the brain's use the same for every meal and plan; activity never moves insulin; adding insulin and the brain's use leaves every other signal, band, moment and row order byte-identical (D13 iii, also checked over 34 meals × 9 plans when built); rows inside their ranges in the fuzz; the insulin part adds ≤ 2 ms.
+
+**Limits.** Open loop: insulin does not lower glucose here, so at 120 min after 75 g of glucose the model gives 9× against Takahashi's 5.8× (the gut is still absorbing); solid meals' slow emptying keeps a burger's insulin near 3× at 8 h (the deferred emptying change); protein and fat raise insulin only through glucose here (an egg or a salad gives none); insulin varies a lot between people; a healthy adult who makes their own insulin, so it is not an injection guide.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -257,6 +285,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `heart.output` | L/min | assumption | resting O2 ÷ 50 mL/L + 5.5 × extra O2 of moving + the gut's rise (circulation pack row) | OpenStax §19.4, Stringer 2005, Cook 2005, Eriksen 1994, Waaler 1991 |
 | `heart.rate`, `heart.strokeVolume` | beats/min, mL | assumption | SV 65 mL up to 1.4× with moving, and 73 % of a meal's rise; HR = CO ÷ SV, at most 191 | OpenStax §19.4, Higginbotham 1986, Kelbaek 1989 |
 | `blood.flow.gut`, `blood.flow.muscle` | mL/min | assumption | 24 % / 21 % of resting CO + the meal's rise / 90 % of the moving rise; in a bout the gut gives some to the muscles | OpenStax Table 20.3, Sieber 1992 |
+| `blood.insulin` | × before eating | assumption (band: assumption) | open loop from glucose and the glucose coming in; never fed back (control pack row, v3.1) | Dalla Man 2007, Lebovitz 2011, Takahashi 2018, Polonsky 1988 |
+| `brain.glucoseUse` | g/h | assumption | constant 4.4 (control pack row, v3.1) | Mergenthaler 2013, Cahill & Owen 1968 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -268,6 +298,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `event.bladderFirstUrge` | the bladder first holds 150 mL (kidneys pack, lazy) | OpenStax §25.2 |
 | `event.halfMealWaterPassed` | half the meal's water has left as urine (extra urine; kidneys pack, lazy) | Maughan 2016, Crowe 1987 |
 | `event.gutFlowPeak` | gut blood flow is highest after a meal (circulation pack, lazy row) | Waaler 1991 |
+| `event.insulinPeak` | insulin is highest (none if it never rises by 0.1×; control pack, lazy row, v3.1) | Takahashi 2018 |
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
@@ -284,7 +315,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 - Peaks for solid meals come out ~10 min later than continuous-glucose-monitor data.
 - After big, fatty meals the model shows a small, slow tail of raised blood sugar (+5–7 mg/dL) while carbohydrate is still trickling out of the stomach. Real bodies usually settle sooner; the chart says so.
 - More of the same food or drink gives the same highest blood sugar, only for longer (cola ×1 and ×4 both peak at about 121 mg/dL). The stomach lets food out at a capped rate (Brener et al. 1983 for sugary drinks) and insulin action brings the curve down before even one serving has left, so the peak depends on the rate, not the amount. Real people usually reach a somewhat higher point with a bigger portion. A test pins this, and "How we know" on the blood-sugar graph says so.
-- The insulin constants, the absorption time constants other than carbohydrate, and the eating pace are calibrated or assumed, not measured. `params.ts` says which.
+- The glucose curve's insulin-action constants, the absorption time constants other than carbohydrate, and the eating pace are calibrated or assumed, not measured. `params.ts` says which. (The insulin row, S-6, is a separate open-loop output; see its section.)
 
 ## References
 
@@ -342,6 +373,12 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 52. Poole DC, Jones AM. Oxygen uptake kinetics. *Compr Physiol* 2012;2:933–996.
 53. Kelbaek H, Gjørup T, Christensen NJ, Munck O, Godtfredsen J. Central hemodynamic changes after ingestion of a meal in patients with coronary artery disease. *Arch Intern Med* 1989;149:363–365.
 54. Kelbaek H, Munck O, Christensen NJ, Godtfredsen J. Autonomic nervous control of postprandial hemodynamic changes at rest and upright exercise. *J Appl Physiol* 1987;63:1862–1865.
+55. Dalla Man C, Rizza RA, Cobelli C. Meal simulation model of the glucose-insulin system. *IEEE Trans Biomed Eng* 2007;54:1740–1749 (BioModels BIOMD0000000379).
+56. Lebovitz HE. Insulin: potential negative consequences of early routine use in patients with type 2 diabetes. *Diabetes Care* 2011;34(Suppl 2):S225–S230.
+57. Takahashi K, Nakamura H, Sato H, Matsuda H, Takada K, Tsuji T. Four plasma glucose and insulin responses to a 75 g OGTT in healthy young Japanese women. *J Diabetes Res* 2018;2018:5742497.
+58. Polonsky KS, Given BD, Van Cauter E. Twenty-four-hour profiles and pulsatile patterns of insulin secretion in normal and obese subjects. *J Clin Invest* 1988;81:442–448.
+59. Mergenthaler P, Lindauer U, Dienel GA, Meisel A. Sugar for the brain: the role of glucose in physiological and pathological brain function. *Trends Neurosci* 2013;36:587–597.
+60. Cahill GF Jr, Owen OE. Starvation and survival. *Trans Am Clin Climatol Assoc* 1968;79:13–20.
 
 The food data comes from:
 
