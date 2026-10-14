@@ -24,10 +24,13 @@ const prefetch = () => void load().catch(() => {})
 export const usePicker = create<{ open: boolean }>(() => ({ open: false }))
 export const openPicker = () => usePicker.setState({ open: true })
 
-/** Lights the picker's row before (−1) or after (+1) the lit one: `‹ ›`, and [ and ] (ui-ux §3.2). */
+/**
+ * Lights the picker's row before (−1) or after (+1) the lit one: `‹ ›`, and [ and ] (ui-ux §3.2).
+ * While a row is on its way, from that row: pressed quickly, each press moves on (R120 #6).
+ */
 export function stepLayer(dir: 1 | -1) {
-  const { layer, preview, setLayer } = useRunStore.getState()
-  setLayer(stepSystem(layer, preview, dir))
+  const { layer, preview, switching, setLayer } = useRunStore.getState()
+  setLayer(stepSystem(switching && !switching.failed ? switching.to : layer, preview, dir))
 }
 
 /** How long a pack may load before the title says it is on its way (it usually arrives sooner), and before it adds that the connection is slow (R71). */
