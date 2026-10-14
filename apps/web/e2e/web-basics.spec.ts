@@ -59,7 +59,7 @@ test('the nav at 360 px: each link opens its page and its title; the logo goes H
     ['Simulator', '/sim', 'Simulator — LifePeek'],
     ['For teachers', '/teach', 'For teachers — LifePeek'],
     ['Science & sources', '/science', 'Science & sources — LifePeek'],
-  ]) {
+  ] as const) {
     await page.getByRole('button', { name: 'Menu' }).click()
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${path}$`))
@@ -78,7 +78,7 @@ test('the footer at 360 px: every link works', async ({ page, request }) => {
     ['About', '/about', 'About — LifePeek'],
     ['Privacy', '/privacy', 'Privacy — LifePeek'],
     ['Stats', '/stats', 'Stats — LifePeek'],
-  ]) {
+  ] as const) {
     await open(page, '/teach')
     await footer.getByRole('link', { name, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${path}$`))
@@ -130,7 +130,7 @@ test('the not-found page: noindex, no canonical, and links to the simulator and 
 
 test('each page is served with its own head (built HTML, before any JavaScript)', async ({ request }) => {
   for (const { url, title } of PAGES.slice(0, 7)) {
-    const path = url.split('?')[0]
+    const path = url.split('?')[0]!
     const html = await (await request.get(path)).text()
     expect(html, path).toContain(`<title>${title.replace('&', '&amp;')}</title>`)
     expect(html, path).toMatch(new RegExp(`<link rel="canonical" href="https?://[^"]+${path === '/' ? '/' : path}"`))
