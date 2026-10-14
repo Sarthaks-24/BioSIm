@@ -45,7 +45,8 @@ You do **not** write timings or blood-sugar values. The model computes them.
 
 ## Change the model
 
-- Every constant lives in `packages/engine/src/params.ts`, next to its citation.
+- Every constant lives in `packages/engine/src/params.ts` (a system pack's in `packParams.ts`, which
+  only the engine chunk loads), next to its citation.
 - After a change, run `npm test -w @lifepeek/engine`. The golden tests compare the model with
   published data. If one fails, either fix your change or add a citation that explains why the
   reference range should move.

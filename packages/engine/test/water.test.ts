@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   ACTIVITY_KINDS,
-  PARAMS,
   PROFILES,
   activityKey,
   buildMeal,
@@ -130,14 +129,14 @@ describe('calibration and hold-outs: a drink of water (model §2.4)', () => {
     ['calvi2024'],
     'the ADH lag τ = 10 min is a vasopressin half-life of 6.9 min, inside the measured 5–20 min (Calvi 2024)',
     () => {
-      const halfLife = Math.LN2 * PARAMS.water.adhTauMin
+      const halfLife = Math.LN2 * HUMAN_MODEL.params.water.adhTauMin
       expect(halfLife).toBeGreaterThanOrEqual(5)
       expect(halfLife).toBeLessThanOrEqual(20)
     },
   )
 
   pinned('kidney.urineRate', 'about critically damped (kx·τ = 0.3): after a drink, urine never dips below the background', () => {
-    expect(PARAMS.water.urinePerExtraMlPerMin * PARAMS.water.adhTauMin).toBeLessThanOrEqual(0.3)
+    expect(HUMAN_MODEL.params.water.urinePerExtraMlPerMin * HUMAN_MODEL.params.water.adhTauMin).toBeLessThanOrEqual(0.3)
     for (const m of ['water:1', LITRE, LITRE_AND_A_QUARTER, 'cola:1']) {
       const rate = values(run(m), 'kidney.urineRate')
       expect(Math.min(...rate), m).toBeGreaterThanOrEqual(U0h - 0.5)
@@ -149,7 +148,7 @@ describe('calibration and hold-outs: a drink of water (model §2.4)', () => {
     ['iom2005'],
     'urine never above 1000 mL/h, the top of “600 to 1,000 mL/hour with water loading” (IOM 2005 p83); the model’s ceiling is 750 mL/h (“0.7 to 1.0 L/hour”, p74)',
     () => {
-      expect(PARAMS.water.maxUrineMlPerH).toBe(750)
+      expect(HUMAN_MODEL.params.water.maxUrineMlPerH).toBe(750)
       for (const m of [LITRE_AND_A_QUARTER, 'water:5,cola:5', ...meals]) {
         const rate = values(run(m, [walk60]), 'kidney.urineRate')
         expect(Math.max(...rate), m).toBeLessThanOrEqual(1000)
@@ -179,9 +178,9 @@ describe('a whole day: background, metabolic water, other meals', () => {
     ['iom2005', 'openstax-ap2e-26'],
     'resting metabolic water 0.12 mL/kcal × 1504 kcal = 180 mL a day, inside 140–350 (IOM 2005 p80 “+250 to +350 mL/d”, p85 15/10.5/11.1 g per 100 kcal; OpenStax §26.2 “about 230 mL”); part of the steady background',
     () => {
-      expect(PARAMS.water.metabolicMlPerKcal).toBeGreaterThanOrEqual(0.105)
-      expect(PARAMS.water.metabolicMlPerKcal).toBeLessThanOrEqual(0.15)
-      const perDay = PARAMS.water.metabolicMlPerKcal * R * 1440
+      expect(HUMAN_MODEL.params.water.metabolicMlPerKcal).toBeGreaterThanOrEqual(0.105)
+      expect(HUMAN_MODEL.params.water.metabolicMlPerKcal).toBeLessThanOrEqual(0.15)
+      const perDay = HUMAN_MODEL.params.water.metabolicMlPerKcal * R * 1440
       expect(perDay).toBeCloseTo(180.5, 0)
       expect(perDay).toBeGreaterThanOrEqual(140)
       expect(perDay).toBeLessThanOrEqual(350)
@@ -346,7 +345,7 @@ describe('the water balance and drift (model §5)', () => {
     const total = runModules(HUMAN_MODULES, setupOf(m, plan)).signals.get(ENERGY_TOTAL)!.values
     const out = new Float64Array(N)
     let sum = 0
-    for (let i = 0; i < N; i++) out[i] = sum += PARAMS.water.metabolicMlPerKcal * (total[i]! - R)
+    for (let i = 0; i < N; i++) out[i] = sum += HUMAN_MODEL.params.water.metabolicMlPerKcal * (total[i]! - R)
     return out
   }
 
@@ -456,7 +455,7 @@ describe('contract: status, params, ranges, speed', () => {
     // Every water parameter says what it rests on; kx and τ are the only calibrated ones.
     const own = Object.entries(PARAM_SOURCES).filter(([path]) => path.startsWith('water.'))
     expect(own.map(([path]) => path).sort()).toEqual(
-      Object.keys(PARAMS.water)
+      Object.keys(HUMAN_MODEL.params.water)
         .map((k) => `water.${k}`)
         .sort(),
     )

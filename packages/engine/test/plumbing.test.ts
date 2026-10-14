@@ -6,6 +6,7 @@ import { DEFAULT_ORGANISM, MODEL_VERSION, PARAMS, buildMeal, decodeMeal, emptyin
 import {
   HUMAN_MODEL,
   ORGANISM_MODELS,
+  PACK_PARAMS,
   PROVIDES,
   bluntingFactor,
   computeEvents,
@@ -24,9 +25,9 @@ import { firstDiff, lookup, sample } from './fixtures.ts'
 
 const srcDir = resolve(dirname(fileURLToPath(import.meta.url)), '../src')
 
-/** A deep copy of PARAMS with one number changed, for checking that a module reads its argument. */
+/** A deep copy of the human run's params (HUMAN_MODEL.params, R78) with one number changed, for checking that a module reads its argument. */
 function paramsWith(path: string, value: number): Params {
-  const copy = structuredClone(PARAMS) as unknown as Record<string, unknown>
+  const copy = structuredClone(HUMAN_MODEL.params) as unknown as Record<string, unknown>
   const keys = path.split('.')
   let o = copy
   for (const k of keys.slice(0, -1)) o = o[k] as Record<string, unknown>
@@ -82,6 +83,17 @@ describe('the run carries its clock', () => {
     expect(Object.keys(ORGANISM_MODELS)).toEqual([DEFAULT_ORGANISM])
     expect(HUMAN_MODEL).toMatchObject({ id: 'human', modelVersion: MODEL_VERSION, params: PARAMS, provides: PROVIDES.human })
     expect([HUMAN_MODEL.horizonMin, HUMAN_MODEL.stepMin]).toEqual([HUMAN_MODEL.params.horizonMin, HUMAN_MODEL.params.stepMin])
+  })
+
+  // P-1 (R75 (1), R77, R78): the packs' numbers live in packParams.ts, which only the run chunk
+  // loads; PARAMS (the main thread's half) has none of them, and the run's set is exactly both.
+  it('the run’s params are PARAMS and PACK_PARAMS, with no key in both; the pack numbers are not in PARAMS', () => {
+    const core = Object.keys(PARAMS)
+    const pack = Object.keys(PACK_PARAMS)
+    expect(pack.sort()).toEqual(['circulation', 'effort', 'gas', 'water'])
+    expect(core.filter((k) => pack.includes(k))).toEqual([])
+    expect(HUMAN_MODEL.params).toEqual({ ...PARAMS, ...PACK_PARAMS })
+    expect(Object.keys(HUMAN_MODEL.params).sort()).toEqual([...core, ...pack].sort())
   })
 })
 
