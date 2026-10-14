@@ -21,6 +21,6 @@ export const BREATHING_LESSON: SystemLesson = {
   kept: roti,
   keptActivity: [],
   t: 38,
-  title: 'sys.breathing.lesson.title',
-  question: 'sys.breathing.lesson.question',
+  title: 'teach.lessons.breathRun',
+  question: 'teach.lessonQuestions.breathRun',
 }

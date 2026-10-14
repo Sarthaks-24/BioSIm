@@ -22,8 +22,16 @@ const ALLOWED: Record<string, readonly string[]> = {
   privacy: ['pages/Privacy.tsx'],
   about: ['pages/About.tsx'],
   // main.tsx loads Home's words before it draws Home; Home loads the race after.
-  home: ['pages/Home.tsx', 'components/HomeRace.tsx'],
-  teach: ['pages/Teach.tsx'],
+  // Home's lesson card and systems list render only on Home (X-1), as its race does.
+  home: ['pages/Home.tsx', 'components/HomeRace.tsx', 'components/HomeLesson.tsx'],
+  // The systems' lesson files name their titles for Teach, the only page that reads them (lib/lessons.ts, X-1).
+  teach: [
+    'pages/Teach.tsx',
+    'systems/breathing/lesson.ts',
+    'systems/circulation/lesson.ts',
+    'systems/kidneys/lesson.ts',
+    'systems/muscles/lesson.ts',
+  ],
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
   feedback: ['components/FeedbackDialog.tsx', 'pages/About.tsx'],
@@ -72,6 +80,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   // registry/i18nKeys.ts is the tests' list of keys (never in a download).
   lifeProcess: ['components/SystemPicker.tsx', 'registry/i18nKeys.ts'],
   count: ['components/CountYours.tsx'],
+  flagship: ['components/LessonBar.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

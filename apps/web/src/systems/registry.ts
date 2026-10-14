@@ -155,8 +155,6 @@ export interface SystemUi {
    * R10, R29, R57), and "Count yours" beside the book line (X-2; it names the run's own value).
    */
   note?: ComponentType<{ slot: GraphSlotDef; pick?: SlotPick; run: RunResult }>
-  /** Its lessons (each with its release, R18), for Teach once the row is public (X-1). */
-  lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
   card?: ComponentType
   /**
@@ -166,7 +164,12 @@ export interface SystemUi {
   background?: (slot: GraphSlotDef, run: RunResult) => Series | null
 }
 
-/** A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with its release (R18). */
+/**
+ * A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with
+ * its release (R18). Each is a data file in its system's folder (`systems/<id>/lesson.ts`) that only
+ * Teach reads (lib/lessons.ts, X-1), never its pack: Teach lists a lesson without loading the pack,
+ * and a module both imported would be split out of the pack's chunk.
+ */
 export interface SystemLesson {
   key: string
   release: 'v3.0' | 'v3.1'
@@ -178,7 +181,7 @@ export interface SystemLesson {
   keptActivity: ActivityBout[]
   /** Minutes on the meal clock the lesson opens at (paused). */
   t: number
-  /** Its title and question (`sys.<pack>.lesson.*`). */
+  /** Its title and question (`teach.lessons.<key>`, `teach.lessonQuestions.<key>`: Teach's own text). */
   title: string
   question: string
 }

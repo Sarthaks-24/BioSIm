@@ -21,6 +21,6 @@ export const KIDNEYS_LESSON: SystemLesson = {
   kept: glasses(1),
   keptActivity: [],
   t: 60,
-  title: 'sys.kidneys.lesson.title',
-  question: 'sys.kidneys.lesson.question',
+  title: 'teach.lessons.drinkWater',
+  question: 'teach.lessonQuestions.drinkWater',
 }

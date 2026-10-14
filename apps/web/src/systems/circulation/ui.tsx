@@ -7,7 +7,6 @@ import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SlotPick, SystemUi } from '../registry.ts'
 import { beatRate, countModel, doingAt, seriesOf } from './beat.ts'
-import { CIRCULATION_LESSON } from './lesson.ts'
 import { circulationStripSummary, circulationSummary } from './summary.ts'
 
 /**
@@ -359,7 +358,6 @@ const CIRCULATION_UI: SystemUi = {
   moments,
   chip: RhythmChip,
   note: StripNote,
-  lessons: [CIRCULATION_LESSON],
 }
 
 const UIS = { circulation: CIRCULATION_UI }

@@ -18,8 +18,8 @@ export const MUSCLES_LESSON: SystemLesson = {
   layer: 'muscles',
   slot: 'energy',
   ...plan,
-  title: 'sys.effort.muscles.lesson.title',
-  question: 'sys.effort.muscles.lesson.question',
+  title: 'teach.lessons.musclesRun',
+  question: 'teach.lessonQuestions.musclesRun',
 }
 
 export const SKIN_LESSON: SystemLesson = {
@@ -28,6 +28,6 @@ export const SKIN_LESSON: SystemLesson = {
   layer: 'skin',
   slot: 'sweat',
   ...plan,
-  title: 'sys.effort.skin.lesson.title',
-  question: 'sys.effort.skin.lesson.question',
+  title: 'teach.lessons.sweatRun',
+  question: 'teach.lessonQuestions.sweatRun',
 }

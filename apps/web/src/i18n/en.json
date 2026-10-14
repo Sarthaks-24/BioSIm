@@ -28,7 +28,26 @@
       "classBodyEnglishOnly": "Projector mode, keys for a presentation clicker, works offline once loaded, and a link that reopens the exact same meals."
     },
     "examples": "Try a comparison",
-    "example": "{{meal}}, with {{kept}} kept"
+    "example": "{{meal}}, with {{kept}} kept",
+    "lesson": {
+      "title": "One roti, one walk: what does every system do?",
+      "lead": "A guided lesson in five pauses, one body system at each, on the same meal and walk. Press Next, or Page Down on a presentation clicker.",
+      "start": "Start the guided lesson"
+    },
+    "systems": {
+      "title": "Body systems",
+      "lead": "Every system runs on the same meal, the same walk and the same clock.",
+      "items": {
+        "digestion": "Where the food is, blood sugar and energy.",
+        "breathing": "Breaths a minute, air per breath, oxygen used.",
+        "circulation": "Heart beats a minute, blood pumped, where the blood goes.",
+        "kidneys": "Urine made, and the water from the meal.",
+        "lymph": "A drawing of the lymph vessels, and how the body fights germs.",
+        "muscles": "Energy the muscles use.",
+        "bones": "A drawing of the skeleton.",
+        "skin": "Sweat made."
+      }
+    }
   },
   "sim": {
     "title": "Simulator",
@@ -161,7 +180,12 @@
     "lessons": {
       "stomachRace": "Which leaves the stomach first?",
       "rotiDal": "Which raises blood sugar more gently?",
-      "colaFour": "One cola or four: what happens to blood sugar?"
+      "colaFour": "One cola or four: what happens to blood sugar?",
+      "breathRun": "Why do you breathe faster when you run?",
+      "heartWalk": "Where does the blood go after a meal, and in a walk?",
+      "drinkWater": "Where does the water from a drink go?",
+      "musclesRun": "How much harder do muscles work in a run?",
+      "sweatRun": "Where does the heat of a run go?"
     },
     "lessonNotes": {
       "colaFour": "What to see: both reach the same highest point, about 121 mg/dL, but after four colas blood sugar stays raised about 3 h 15 min longer."
@@ -185,7 +209,31 @@
       "Cola, about 8 times faster: a drink starts leaving straight away, and it has fewer calories than a burger with fries.",
       "About 111 mg/dL (105 to 115). Its highest, about 121, was at 35 minutes.",
       "The body is using more: almost nothing is coming in from the cola, while the body uses about 63 kcal an hour."
-    ]
+    ],
+    "lessonQuestions": {
+      "breathRun": "How many breaths a minute during the run, and at rest?",
+      "heartWalk": "How much blood goes to the muscles during the walk, and at rest?",
+      "drinkWater": "How much urine an hour at the most, with four glasses and with one?",
+      "musclesRun": "How many times their resting energy do the muscles use during the run?",
+      "sweatRun": "How much sweat does the skin make in the run, and how much at rest?"
+    },
+    "flagship": {
+      "title": "One roti, one walk: what does every system do?",
+      "lead": "Start here. Two rotis with a glass of water, and a 20-minute walk from 1 h, with the same meal at rest kept. The stage stops five times, on a different body system each time: a question, what the book says, and what the model shows. Press Next (or Page Down on a presentation clicker). About 15 minutes alone, or the “run and pause” part of a 40-minute lesson.",
+      "start": "Start the guided lesson",
+      "exit": "Exit question: which system hardly changed after the roti, but changed a lot during the walk?",
+      "exitAnswer": "Breathing: about 16 breaths a minute after the roti, about 24 during the walk (this model)."
+    },
+    "chapters": {
+      "c10": "Class 10 · Life Processes",
+      "nutrition": "Nutrition",
+      "respiration": "Respiration",
+      "transport": "Transportation",
+      "excretion": "Excretion",
+      "movement": "Moving and body heat"
+    },
+    "classTag": "Class {{n}}",
+    "opensAtTime": "opens at {{time}}"
   },
   "science": {
     "title": "Science and sources",
@@ -209,7 +257,12 @@
     "references": "References",
     "nutrientsPerServing": "Per serving",
     "gi": "Glycemic index",
-    "noGi": "not applicable (almost no carbohydrate)"
+    "noGi": "not applicable (almost no carbohydrate)",
+    "systems": {
+      "title": "Sources by body system",
+      "lead": "The references each system’s graphs rest on, from the model’s catalog. The full list is at the end of this page.",
+      "none": "Drawing only: no numbers are worked out for it."
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -1105,10 +1158,6 @@
         "flat": "{{name}}: about {{value}} all the way, with no walk or run.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
       },
-      "lesson": {
-        "title": "Why do you breathe faster when you run?",
-        "question": "How many breaths a minute during the run, and at rest?"
-      },
       "count": {
         "model": "This model: about {{rest}} a minute at rest, for one resting grown-up.",
         "modelActive": "This model: about {{rest}} a minute at rest, {{n}} a minute {{doing}}."
@@ -1207,10 +1256,6 @@
         "flat": "{{name}}: about {{value}} all the way.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
       },
-      "lesson": {
-        "title": "Where does the blood go after a meal, and in a walk?",
-        "question": "How much blood goes to the muscles during the walk, and at rest?"
-      },
       "count": {
         "model": "This model: about {{rest}} a minute at rest, for one resting grown-up.",
         "modelActive": "This model: about {{rest}} a minute at rest, {{n}} a minute {{doing}}."
@@ -1252,10 +1297,6 @@
           "compareRest": "At the most, muscles use about {{most}}× their resting energy with {{which}}; with the other they stay at rest.",
           "this": "this plan",
           "kept": "the kept one"
-        },
-        "lesson": {
-          "title": "How much harder do muscles work in a run?",
-          "question": "How many times their resting energy do the muscles use during the run?"
         }
       },
       "skin": {
@@ -1286,10 +1327,6 @@
           "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
           "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
           "same": "Sweat is about the same in both: about {{value}} in all."
-        },
-        "lesson": {
-          "title": "Where does the heat of a run go?",
-          "question": "How much sweat does the skin make in the run, and how much at rest?"
         }
       },
       "bones": {
@@ -1362,10 +1399,6 @@
         "flat": "{{name}}: about {{value}} all the way.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}.",
         "low": "{{name}}: {{start}} at the start, {{low}} at the least, at {{time}}."
-      },
-      "lesson": {
-        "title": "Where does the water from a drink go?",
-        "question": "How much urine an hour at the most, with four glasses and with one?"
       }
     }
   },
@@ -1397,5 +1430,49 @@
     "examplePulse": "{{n}} beats in 15 s = {{m}} a minute",
     "private": "Nothing you count is typed in or saved.",
     "notCheck": "Not a health check. Counts differ between people and from minute to minute."
+  },
+  "flagship": {
+    "title": "One roti, one walk: what does every system do?",
+    "step": "Step {{n}} of {{count}}",
+    "stepShort": "{{n}}/{{count}}",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "close": "End the lesson",
+    "more": "Question and answer",
+    "book": "The book says",
+    "model": "This model says",
+    "pauses": {
+      "stomach": {
+        "question": "Where is the roti now?",
+        "book": "NCERT Class 10: digested food is absorbed in the small intestine.",
+        "model": "The roti leaves the stomach a little at a time, and sugar from it starts to reach the blood."
+      },
+      "blood": {
+        "question": "Where is more blood going?",
+        "book": "NCERT Class 10: blood carries digested food around the body.",
+        "model": "While the intestine takes in food, more blood flows to it."
+      },
+      "breaths": {
+        "question": "Why are breaths faster now?",
+        "book": "Older NCERT Class 7 book (2024-25): 15–18 breaths a minute at rest.",
+        "model": "Walking muscles use more oxygen and make more carbon dioxide, so breaths come faster and deeper: about 24 a minute instead of 16 without the walk."
+      },
+      "sweat": {
+        "question": "Where does the extra heat go?",
+        "book": "NCERT Class 6: the body stays near 37 °C.",
+        "model": "The walking muscles turn the extra energy into heat; sweat carries it away, so the body stays near 37 °C."
+      },
+      "heart": {
+        "question": "Why does the heart beat faster now?",
+        "book": "Older NCERT Class 7 book (2024-25): 72–80 beats a minute at rest.",
+        "model": "The heart beats faster, about 94 a minute instead of 67 without the walk, to send more blood to the walking muscles."
+      },
+      "water": {
+        "question": "Where did the water go?",
+        "book": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
+        "model": "The kidneys send the extra water from the glass out as urine. Sweat took some water in the walk, so by now about 60 mL less has come out than without the walk."
+      }
+    }
   }
 }

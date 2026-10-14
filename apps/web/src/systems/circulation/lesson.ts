@@ -25,6 +25,6 @@ export const CIRCULATION_LESSON: SystemLesson = {
   kept: meal,
   keptActivity: [],
   t: 70,
-  title: 'sys.circulation.lesson.title',
-  question: 'sys.circulation.lesson.question',
+  title: 'teach.lessons.heartWalk',
+  question: 'teach.lessonQuestions.heartWalk',
 }

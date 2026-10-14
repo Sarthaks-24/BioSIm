@@ -5,7 +5,6 @@ import { useClock } from '../../state/clock.ts'
 import type { Moment } from '../../lib/moments.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SystemUi } from '../registry.ts'
-import { KIDNEYS_LESSON } from './lesson.ts'
 import { kidneysStripSummary, kidneysSummary } from './summary.ts'
 import { URGE_ML, backgroundOf, momentAt, seriesOf } from './water.ts'
 
@@ -150,7 +149,6 @@ const KIDNEYS_UI: SystemUi = {
   moments,
   note: StripNote,
   background: (slot, run) => (slot.id === 'urine' ? backgroundOf(run) : null),
-  lessons: [KIDNEYS_LESSON],
 }
 
 const UIS = { kidneys: KIDNEYS_UI }

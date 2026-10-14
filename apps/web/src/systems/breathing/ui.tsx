@@ -7,7 +7,6 @@ import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SystemUi } from '../registry.ts'
 import { breathRate, countModel, doingAt, seriesOf } from './breath.ts'
-import { BREATHING_LESSON } from './lesson.ts'
 import { breathingStripSummary, breathingSummary } from './summary.ts'
 
 /**
@@ -212,7 +211,6 @@ const BREATHING_UI: SystemUi = {
   moments: () => [],
   chip: RhythmChip,
   note: StripNote,
-  lessons: [BREATHING_LESSON],
 }
 
 const UIS = { breathing: BREATHING_UI }

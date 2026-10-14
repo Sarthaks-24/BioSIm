@@ -7,7 +7,6 @@ import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SystemUi } from '../registry.ts'
 import { doingAt, restOf, seriesOf, timesRest, valueText } from './effort.ts'
-import { MUSCLES_LESSON, SKIN_LESSON } from './lesson.ts'
 import { effortStripSummary, musclesSummary, skinSummary } from './summary.ts'
 
 /**
@@ -275,7 +274,6 @@ const MUSCLES_UI: SystemUi = {
   // Its moments are the bouts' starts and ends, which the stage adds for every system (lib/moments.ts).
   moments,
   note: StripNote,
-  lessons: [MUSCLES_LESSON],
 }
 
 const SKIN_UI: SystemUi = {
@@ -284,7 +282,6 @@ const SKIN_UI: SystemUi = {
   stripSummary: effortStripSummary,
   moments,
   note: StripNote,
-  lessons: [SKIN_LESSON],
 }
 
 const BONES_UI: SystemUi = {

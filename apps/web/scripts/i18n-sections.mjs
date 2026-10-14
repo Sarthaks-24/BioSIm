@@ -115,6 +115,9 @@ export const PAGE_SECTIONS = {
   // X-2: "Count yours" brings its own words (components/CountYours.tsx, lazy); the stage keeps the
   // button's name, which Breathing and the heart show beside their book line.
   count: ['open'],
+  // X-1: the guided lesson's bar brings its own words (components/LessonBar.tsx, lazy); Home and
+  // Teach name the lesson in their own sections.
+  flagship: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */
