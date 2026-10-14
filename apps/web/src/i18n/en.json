@@ -1466,6 +1466,7 @@
     "time": "This link’s time is past the end of the model’s {{hours}} hours, so it opens at the end.",
     "who": "This version doesn’t know the person this link asks for, so it shows the typical adult.",
     "layer": "This version doesn’t have the body system this link asks for (“{{asked}}”), so it shows {{shown}}.",
+    "layerOff": "This link’s body system isn’t available here, so it shows {{shown}}.",
     "activity": "This version can’t show these activities from the link, so they were left out: {{bouts}}.",
     "bout": "{{kind}} from {{start}}, {{min}} min",
     "kinds": {

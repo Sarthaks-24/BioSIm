@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next'
 import { MAX_ITEMS, MODEL_VERSION, PARAMS, isActivityKind } from '@lifepeek/engine'
 import type { RunState } from '../state/run.ts'
+import { systemOf } from '../systems/registry.ts'
 
 /** What the notes about an opened link read from the run state. */
 export type LinkState = Pick<RunState, 'linkModelVersion' | 'unknownOrganism' | 'droppedFoods' | 'hindiLater' | 'changes'>
@@ -40,8 +41,11 @@ export function linkNotes(s: LinkState, t: TFunction, food: (id: string) => stri
       else left.push(food(part[1]!))
     } else if (c.param === 't' && Number(c.asked) > PARAMS.horizonMin) notes.push(t('link.time', { hours: PARAMS.horizonMin / 60 }))
     else if (c.param === 'who') notes.push(t('link.who'))
-    else if (c.param === 'layer') notes.push(t('link.layer', { asked: c.asked, shown: t(`systems.${c.shown ?? 'digestion'}.name`) }))
-    else if (c.param === 'act' || c.param === 'bact') {
+    else if (c.param === 'layer') {
+      const shown = t(`systems.${c.shown ?? 'digestion'}.name`)
+      // A row behind the teacher switch is never named, not even by its ID (R117, R120 #5).
+      notes.push(systemOf(c.asked)?.teacherSwitch ? t('link.layerOff', { shown }) : t('link.layer', { asked: c.asked, shown }))
+    } else if (c.param === 'act' || c.param === 'bact') {
       // Each bout left out is named (R21): a kind this version does not know, one outside the limits or
       // overlapping another. A newer link's own note says its activity is not shown.
       const bout = BOUT_PART.exec(c.asked)
