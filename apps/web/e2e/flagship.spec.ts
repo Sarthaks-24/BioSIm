@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test'
 import { checkAxe, goto, measureBody, returningVisitor } from './helpers/gate.ts'
 
 // The flagship guided lesson, "One roti, one walk" (X-1; ui-ux §8.1, content-i18n §8.2), and the
-// v3.0 Home, Teach and Science. Its systems are hidden until the release gate (H-1), so Home and
-// Teach offer the lesson only in a `?preview=1` session today; a plain visit is v2.1's. The bar:
+// v3.0 Home, Teach and Science. Its systems are public since the release gate (H-1, R103), so Home
+// and Teach offer the lesson on a plain visit; a `?preview=1` session shows the same. The bar:
 // five pauses, Next / Back and a clicker's Page Down / Page Up, each pause lighting its system at
 // its time on its graph, the next pause's pack fetched beforehand, the body ≥ 160 px with the bar at
 // 360×640 in English and the +40 % pseudo-locale. Projects desktop, projector and phone.
@@ -40,24 +40,21 @@ async function expectPause(page: Page, p: (typeof PAUSES)[number]) {
   if (tabbed()) await expect(front(page, p.graph)).toBeVisible()
 }
 
-test('a plain visit is v2.1’s: no lesson card on Home or Teach, no systems list, one Science section', async ({ page }) => {
-  await goto(page, '/')
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  // Home's v3.0 parts load after its first paint; with only Digestion public they show nothing.
-  await page.waitForLoadState('networkidle')
-  await expect(page.locator('[data-flagship]')).toHaveCount(0)
-  await expect(page.locator('[data-systems]')).toHaveCount(0)
-  await goto(page, '/teach')
-  await expect(page.locator('[data-flagship]')).toHaveCount(0)
-  await expect(page.locator('[data-chapter]')).toHaveCount(1)
-  await expect(page.locator('[data-chapter="nutrition"] [data-lesson]')).toHaveCount(3)
-  await goto(page, '/science')
-  await expect(page.locator('section[data-system]')).toHaveCount(1)
-  await expect(page.locator('section[data-system="digestion"] li').first()).toBeVisible()
+test('a ?preview=1 visit shows what a plain one does: the lesson card, the systems, five chapters, eight Science sections', async ({
+  page,
+}) => {
+  await goto(page, '/?preview=1')
+  await expect(page.locator('[data-flagship]')).toBeVisible()
+  await expect(page.locator('[data-systems] [data-system]')).toHaveCount(8)
+  await goto(page, '/teach?preview=1')
+  await expect(page.locator('[data-flagship]')).toBeVisible()
+  await expect(page.locator('[data-chapter]')).toHaveCount(5)
+  await goto(page, '/science?preview=1')
+  await expect(page.locator('section[data-system]')).toHaveCount(8)
 })
 
-test('Home in a preview: the lesson is the first call to action, then a static list of the systems', async ({ page }) => {
-  await goto(page, '/?preview=1')
+test('Home: the lesson is the first call to action, then a static list of the systems', async ({ page }) => {
+  await goto(page, '/')
   const card = page.locator('[data-flagship]')
   await expect(card).toBeVisible()
   await expect(card).toContainText('One roti, one walk: what does every system do?')
@@ -82,7 +79,7 @@ test('Home in a preview: the lesson is the first call to action, then a static l
 test('the lesson: five pauses with Next, Back and the clicker, each pack fetched before its pause, then Finish', async ({ page }) => {
   const asked: string[] = []
   page.on('request', (r) => asked.push(new URL(r.url()).pathname))
-  await goto(page, '/teach?preview=1')
+  await goto(page, '/teach')
   const start = page.locator('[data-flagship]').getByRole('link', { name: 'Start the guided lesson' })
   await expect(start).toBeVisible()
   await start.click()
@@ -123,7 +120,7 @@ test('the lesson: five pauses with Next, Back and the clicker, each pack fetched
 
 test('on a phone the bar is one line, and "?" opens the question, the book’s line and the model’s', async ({ page }) => {
   test.skip(test.info().project.name !== 'phone', 'phone only')
-  await goto(page, '/?preview=1')
+  await goto(page, '/')
   await page.locator('[data-flagship]').click()
   await expect(bar(page)).toBeVisible()
   const height = await bar(page).evaluate((e) => e.getBoundingClientRect().height)
@@ -142,7 +139,7 @@ for (const lang of ['en', 'pseudo'] as const)
   test(`the body keeps ≥ 160 px with the bar at 360×640 (${lang})`, async ({ page }) => {
     test.skip(test.info().project.name !== 'phone', 'phone only')
     await page.setViewportSize({ width: 360, height: 640 })
-    await goto(page, `/?preview=1${lang === 'pseudo' ? '&lang=pseudo' : ''}`)
+    await goto(page, `/${lang === 'pseudo' ? '?lang=pseudo' : ''}`)
     await expect(page.locator('html')).toHaveAttribute('lang', lang === 'pseudo' ? 'en-XA' : 'en')
     await page.locator('[data-flagship]').click()
     await expect(bar(page)).toBeVisible()
@@ -157,8 +154,8 @@ for (const lang of ['en', 'pseudo'] as const)
     await shot(page, `body-360-${lang}`)
   })
 
-test('Teach in a preview: the lesson on top, then the lessons by NCERT chapter, each with its classes', async ({ page }) => {
-  await goto(page, '/teach?preview=1')
+test('Teach: the lesson on top, then the lessons by NCERT chapter, each with its classes', async ({ page }) => {
+  await goto(page, '/teach')
   await expect(page.locator('[data-flagship]')).toBeVisible()
   await expect(page.locator('[data-chapter]')).toHaveCount(5)
   await expect(page.locator('[data-chapter]').evaluateAll((els) => els.map((e) => e.getAttribute('data-chapter')))).resolves.toEqual([
@@ -175,15 +172,15 @@ test('Teach in a preview: the lesson on top, then the lessons by NCERT chapter, 
   await expect(breath).toHaveAttribute('data-release', 'v3.0')
   await shot(page, 'teach')
   if (test.info().project.name === 'desktop') await checkAxe(page)
-  // A system's lesson opens on its system and graph, in a preview link.
-  await page.locator('[data-lesson="heartWalk"] a').click()
+  // A system's lesson opens on its system and graph, with a plain link.
+  await page.locator('[data-lesson="heartWalk"] a').first().click()
   await expect(page.locator('[data-system-title="circulation"]')).toBeAttached()
   await expect.poll(() => now(page)).toBe(70)
   if (tabbed()) await expect(front(page, 'Where blood goes')).toBeVisible()
 })
 
-test('Science in a preview: one section per system, each with the sources its rows cite', async ({ page }) => {
-  await goto(page, '/science?preview=1')
+test('Science: one section per system, each with the sources its rows cite', async ({ page }) => {
+  await goto(page, '/science')
   const sections = page.locator('section[data-system]')
   await expect(sections).toHaveCount(8)
   await expect(page.locator('section[data-system="breathing"] li')).toHaveCount(7)

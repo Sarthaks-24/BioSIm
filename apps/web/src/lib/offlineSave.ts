@@ -31,13 +31,17 @@ function packManifest() {
   return manifest
 }
 
-/** The core's files and a lesson's lazy files (3D only with WebGL). */
+/**
+ * The core's files and a lesson's lazy files (3D only with WebGL), each once: packs share chunks (the
+ * stage and the system packs share WhyCard and the signal texts), and `Cache.addAll` rejects a list
+ * with the same URL twice, which failed every save of a system lesson (H-1).
+ */
 async function files(packs: string[]) {
   const m = await packManifest()
   return {
     cache: m.cache,
     core: m.entries.find((e) => e.id === 'core')?.urls ?? [],
-    lazy: m.entries.filter((e) => packs.includes(e.id) && (!e.webgl || hasWebGL())).flatMap((e) => e.urls),
+    lazy: [...new Set(m.entries.filter((e) => packs.includes(e.id) && (!e.webgl || hasWebGL())).flatMap((e) => e.urls))],
   }
 }
 

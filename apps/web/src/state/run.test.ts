@@ -159,10 +159,11 @@ describe('keep, unkeep, swap', () => {
       { kind: 'run', startMin: 240, durMin: 10 },
     ])
     expect(run().kept?.activity).toEqual([{ kind: 'walkBrisk', startMin: 0, durMin: 60 }])
-    // No Heart & blood row yet, so an `act` link with no `layer` opens the default (R39); written
-    // back, it names that layer, so it keeps opening Digestion once Heart & blood is the default (R93 #5).
-    expect(run().layer).toBe(DEFAULT_LAYER)
-    expect(written()).toBe(q.replace('&act=', `&layer=${DEFAULT_LAYER}&act=`))
+    // Heart & blood is public (H-1), so an `act` link with no `layer` opens it (R39); written back,
+    // it names that layer, so the link keeps opening what it showed if the default changes (R93 #5).
+    // It is lit once its pack has loaded (not in this test: no pack chunks here); the link names it at once.
+    expect(run().switching?.to).toBe('circulation')
+    expect(written()).toBe(q.replace('&act=', '&layer=circulation&act='))
     // A kept run of activity alone is still a kept run.
     run().loadLink(`v=${MODEL_VERSION}&bact=run.0.30`)
     expect(run().kept).toEqual({ items: [], profile: DEFAULT_RUN_PROFILE, activity: [{ kind: 'run', startMin: 0, durMin: 30 }] })

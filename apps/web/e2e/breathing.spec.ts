@@ -1,13 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
-// Breathing (P-0 preview, U-2): hidden until the v3.0 release gate, so only a `?preview=1` link
-// opens it. Its pack loads when it is lit: the flat lungs, breathing at the model's rate on the real
+// Breathing (U-2): public since the v3.0 release gate (H-1, R103), so a plain link opens it (and a
+// `?preview=1` one still does). Its pack loads when it is lit: the flat lungs, breathing at the model's rate on the real
 // clock, the rhythm chip, three graphs, the book line and the children's band; the system title and
 // its lazy picker; and the loading words while the pack is on its way (R71). Projects desktop,
 // phone, projector and reduced. E2E_SHOTS=1 saves rest and walk pictures to .shots/ (git-ignored).
 
-const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing&preview=1'
+const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing'
 const REST = `${PLAN}&t=10`
 const WALK = `${PLAN}&t=40`
 
@@ -24,7 +24,7 @@ async function open(page: Page, url: string) {
 /** The chip's number: the breaths a minute it says. */
 const chipRate = (page: Page) => page.locator('[data-rhythm-chip]').getAttribute('data-rhythm-chip').then(Number)
 
-test('a preview link lights breathing: lungs, chip, three graphs, the book line and the children’s band', async ({ page }) => {
+test('a link lights breathing: lungs, chip, three graphs, the book line and the children’s band', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, REST)
@@ -102,7 +102,7 @@ test('the title opens the picker; keys [ ] L; Esc closes it and the title keeps 
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
   await page.keyboard.press('l')
   await expect(picker).toBeVisible()
-  // Switched away in a preview, the hidden rows stay in the picker (R93 #4).
+  // Every built row is public: switched away, all eight stay in the picker (R93 #4).
   await expect(picker.locator('[data-system-row]')).toHaveCount(8)
   await expect(picker.locator('[data-system-row="breathing"]')).toBeVisible()
   await page.keyboard.press('ArrowDown')
@@ -110,11 +110,16 @@ test('the title opens the picker; keys [ ] L; Esc closes it and the title keeps 
   await expect(picker).toBeHidden()
 })
 
-test('without ?preview=1 breathing stays hidden: the link opens Digestion, and the picker offers Digestion alone', async ({ page }) => {
+test('a plain link opens breathing (public since H-1), and a ?preview=1 link still does', async ({ page }) => {
+  for (const url of ['/sim?v=3&a=roti:1&layer=breathing', '/sim?v=3&a=roti:1&layer=breathing&preview=1']) {
+    await goto(page, url)
+    await page.locator('[data-stage]').waitFor()
+    await expect(page.locator('[data-layer="breathing"]')).toBeAttached()
+    await expect(page.locator('[data-system-title="breathing"]')).toBeVisible()
+  }
+  // The plain one stays plain: nothing adds preview=1 to it.
   await goto(page, '/sim?v=3&a=roti:1&layer=breathing')
-  await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="breathing"]')).toHaveCount(0)
-  await expect(page.locator('[data-now]').filter({ visible: true }).first()).toHaveAttribute('data-now', /^(?!breathing)/)
+  await page.locator('[data-layer="breathing"]').waitFor({ state: 'attached' })
   expect(new URL(page.url()).searchParams.get('preview')).toBeNull()
 })
 
@@ -144,14 +149,14 @@ test('while the pack loads the lit system stays drawn and the title says so; a f
   await page.locator('[data-stage]').waitFor()
   const status = page.locator('[data-system-title] [role=status]')
   await expect(status).toHaveText('Getting the lungs ready…')
+  // The screen is never cleared: Digestion stays drawn meanwhile (checked while the pack is still on its way).
+  await expect(page.locator('[data-system-title=digestion]')).toBeVisible()
   // The link, and a copy of it made now, keep what was asked for (R93 #2).
   expect(new URL(page.url()).searchParams.get('layer')).toBe('breathing')
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.getByRole('button', { name: 'Copy link' }).click()
   const copied = await page.evaluate(() => navigator.clipboard.readText())
   expect(new URL(copied).searchParams.get('layer')).toBe('breathing')
-  // The screen is never cleared: Digestion stays drawn meanwhile.
-  await expect(page.locator('[data-system-title=digestion]')).toBeVisible()
   await expect(page.locator('[data-body]').first()).toBeVisible()
   await expect(page.locator('[data-system-title=breathing]')).toBeVisible()
   await expect(status).toHaveCount(0)

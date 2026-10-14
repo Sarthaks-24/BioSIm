@@ -7,7 +7,7 @@ import type { SystemDef } from '../registry.ts'
  * No graphs (empty `slots`), so the picker shows "Drawing only" for it. S-5 adds the lymph-fat and
  * blood-fat graphs in v3.1, and the row's tag changes then.
  *
- * Hidden until the v3.0 release gate (H-1) opens it: `?layer=lymph&preview=1` shows it meanwhile.
+ * Public since the v3.0 release gate (H-1, R103), as Drawing only.
  */
 export const LYMPH: SystemDef = {
   id: 'lymph',
@@ -23,5 +23,5 @@ export const LYMPH: SystemDef = {
   inputs: [],
   rhythms: [],
   graphWindowMin: 2880,
-  public: false,
+  public: true,
 }

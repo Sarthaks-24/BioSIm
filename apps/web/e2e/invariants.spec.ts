@@ -71,21 +71,24 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   empty: { url: '/sim?v=3&a=' },
   '6 foods': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1' },
   // E-3b-ui: bouts add no stage row (their chips share the plan strip, their marks the graphs and the dock).
-  'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20' },
-  '6 foods + 3 bouts': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10' },
-  // U-2's gate per system (ui-ux §12): Breathing (a preview until the v3.0 gate), its title and rhythm
+  // On Digestion, as written: since H-1 a link with bouts and no layer opens Heart & blood (R39).
+  'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20&layer=digestion' },
+  '6 foods + 3 bouts': {
+    url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10&layer=digestion',
+  },
+  // U-2's gate per system (ui-ux §12): Breathing (public since the v3.0 gate), its title and rhythm
   // chip over the body, in a walk with a kept plan at rest.
-  'breathing, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=breathing&preview=1' },
-  // U-3's: Heart & blood (a preview until the v3.0 gate), its title, rhythm chip and colour key over
+  'breathing, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=breathing' },
+  // U-3's: Heart & blood (public since the v3.0 gate), its title, rhythm chip and colour key over
   // the body, in a walk with a kept plan at rest ("Where blood goes" one flow at a time).
-  'circulation, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation&preview=1' },
+  'circulation, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation' },
   // U-1's: Muscles in a run with a kept plan at rest, Skin (its thermometer card over the body) in a
   // walk, and the Bones card (Drawing only, the card in the graphs' place), each in the full framing.
-  'muscles, run, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=run.30.20&layer=muscles&preview=1' },
-  'skin, walk': { url: '/sim?v=3&a=roti:1&t=40&act=walk.30.20&layer=skin&preview=1' },
-  'bones, run': { url: '/sim?v=3&a=roti:1&t=40&act=run.30.20&layer=bones&preview=1' },
-  // U-4's: Kidneys & water (a preview until the v3.0 gate), its bladder gauge and the 0–12 h dock, two glasses kept against one with a walk.
-  'kidneys, water, kept': { url: '/sim?v=3&a=water:2&b=water:1&t=90&act=walk.30.20&layer=kidneys&preview=1' },
+  'muscles, run, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=run.30.20&layer=muscles' },
+  'skin, walk': { url: '/sim?v=3&a=roti:1&t=40&act=walk.30.20&layer=skin' },
+  'bones, run': { url: '/sim?v=3&a=roti:1&t=40&act=run.30.20&layer=bones' },
+  // U-4's: Kidneys & water (public since the v3.0 gate), its bladder gauge and the 0–12 h dock, two glasses kept against one with a walk.
+  'kidneys, water, kept': { url: '/sim?v=3&a=water:2&b=water:1&t=90&act=walk.30.20&layer=kidneys' },
 }
 
 /** The window sizes each project checks (the project's own first). */

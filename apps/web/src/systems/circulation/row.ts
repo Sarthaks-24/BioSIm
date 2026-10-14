@@ -7,9 +7,8 @@ import type { SystemDef } from '../registry.ts'
  * minute, blood pumped a minute, where blood goes), its rhythm and its limits come with the pack
  * (systems/circulation/ui.tsx `DEFS`, merged by systems/load.ts), so no circulation signal ID is in /sim.
  *
- * Hidden until the v3.0 release gate (H-1, architecture §5.2: V-3 closed, the model sealed): it opens
- * only from a `?preview=1` link, which the app never makes. Once public, a link with `act` and no
- * `layer` opens here (R39, systems/registry.ts defaultSystemFor).
+ * Public since the v3.0 release gate (H-1, R103; architecture §5.2: V-3 closed, the model sealed): a
+ * link with `act` and no `layer` opens here (R39, systems/registry.ts defaultSystemFor).
  */
 export const CIRCULATION: SystemDef = {
   id: 'circulation',
@@ -26,5 +25,5 @@ export const CIRCULATION: SystemDef = {
   inputs: ['meal', 'activity'],
   rhythms: [],
   graphWindowMin: 2880,
-  public: false,
+  public: true,
 }

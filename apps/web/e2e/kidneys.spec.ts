@@ -1,13 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
-// Kidneys & water (U-4): hidden until the v3.0 release gate, so only a `?preview=1` link opens it.
+// Kidneys & water (U-4): public since the v3.0 release gate (H-1, R103), so a plain link opens it.
 // Its pack loads when it is lit: the flat kidneys, ureters and bladder with its gauge, two graphs on
 // a 0–12 h window (the dock says so, "48 h ›" widens it) with the background urine line, the
 // "moves with" line and the filtering card with its source line. Projects desktop, phone, projector
 // and reduced. E2E_SHOTS=1 saves rest, water and walk pictures to .shots/ (git-ignored).
 
-const BASE = '/sim?v=3&layer=kidneys&preview=1'
+const BASE = '/sim?v=3&layer=kidneys'
 const REST = `${BASE}&a=roti:1&t=80`
 const WATER = `${BASE}&a=water:2&t=80`
 const WALK = `${BASE}&a=water:2&act=walk.30.60&t=80`
@@ -30,7 +30,7 @@ const shot = async (page: Page, name: string) => {
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `../../.shots/u4-kidneys-${name}-${test.info().project.name}.png` })
 }
 
-test('a preview link lights kidneys & water: picture, gauge, two graphs on 0–12 h with the background line', async ({ page }) => {
+test('a link lights kidneys & water: picture, gauge, two graphs on 0–12 h with the background line', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, WATER)
@@ -131,9 +131,12 @@ test('scrubbing the clock fast: the bladder’s drawn size changes at most once 
   await expect(layer).toHaveAttribute('data-bladder-drawn', /\d+/)
 })
 
-test('without ?preview=1 kidneys stay hidden: the link opens Digestion', async ({ page }) => {
-  await goto(page, '/sim?v=3&a=water:1&layer=kidneys')
+test('a ?preview=1 link still opens kidneys & water; Digestion has no 0–12 h window', async ({ page }) => {
+  await goto(page, '/sim?v=3&a=water:1&layer=kidneys&preview=1')
   await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="kidneys"]')).toHaveCount(0)
+  await expect(page.locator('[data-layer="kidneys"]')).toBeAttached()
+  await expect(page.locator('[data-window="720"]')).toBeAttached()
+  await goto(page, '/sim?v=3&a=water:1')
+  await page.locator('[data-stage]').waitFor()
   await expect(page.locator('[data-window]')).toHaveCount(0)
 })

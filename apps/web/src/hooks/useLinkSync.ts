@@ -51,6 +51,12 @@ export function useLinkSync() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   /** The language the link carries (null: none chosen). */
   const lang = useRef<string | null>(null)
+  /**
+   * The system a newer LifePeek's link opened, while its pack is still on its way: lighting it is
+   * the link's doing, not the reader's, so it must not write the link over (H-1: a link with `act`
+   * and no `layer` opens Heart & blood once its pack has loaded, R39).
+   */
+  const linkLayer = useRef<string | null>(null)
 
   const writeUrl = () => {
     // This writes the latest state, so a pending debounced write has nothing left to do.
@@ -108,8 +114,12 @@ export function useLinkSync() {
     if (wanted && wanted !== i18n.language) void i18n.changeLanguage(wanted)
     // A link from a newer LifePeek stays as it came until the reader changes something, so updating
     // (components/stage/LinkNotes.tsx) reloads it whole: this version would leave out what it can't show.
-    const { linkModelVersion, unknownOrganism } = useRunStore.getState()
-    if (unknownOrganism || (linkModelVersion ?? 0) > MODEL_VERSION) return
+    const { linkModelVersion, unknownOrganism, switching } = useRunStore.getState()
+    linkLayer.current = null
+    if (unknownOrganism || (linkModelVersion ?? 0) > MODEL_VERSION) {
+      linkLayer.current = switching?.to ?? null
+      return
+    }
     // Write back the canonical form (this also fills in a bare page).
     writeUrl()
   }
@@ -117,14 +127,16 @@ export function useLinkSync() {
   // stores → URL
   useEffect(() => {
     const unsubRun = useRunStore.subscribe((s, prev) => {
-      if (
-        s.meal !== prev.meal ||
-        s.kept !== prev.kept ||
-        s.profile !== prev.profile ||
-        s.layer !== prev.layer ||
-        s.activity !== prev.activity
-      )
+      const reader = s.meal !== prev.meal || s.kept !== prev.kept || s.profile !== prev.profile || s.activity !== prev.activity
+      // A newer link's own system arriving (its pack loaded) is not the reader changing something.
+      if (!reader && s.layer !== prev.layer && s.layer === linkLayer.current) {
+        linkLayer.current = null
+        return
+      }
+      if (reader || s.layer !== prev.layer) {
+        linkLayer.current = null
         writeUrl()
+      }
     })
     const unsubClock = useClock.subscribe(
       (s) => (s.playing ? -1 : Math.round(s.simMin)),

@@ -1,18 +1,18 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
-// Heart & blood (U-3): hidden until the v3.0 release gate, so only a `?preview=1` link opens it. Its
+// Heart & blood (U-3): public since the v3.0 release gate (H-1, R103), so a plain link opens it. Its
 // pack loads when it is lit: the flat heart with both loops, beating at the model's rate on the real
 // clock (at most 2.5 a second, size only), dashes denser where the blood goes, the rhythm chip, the
 // colour key, three graphs with the book line, the children's band, the "Why different?" card and
 // the held blood pressure; beside a kept plan "Where blood goes" one flow at a time. Projects
 // desktop, phone, projector and reduced. E2E_SHOTS=1 saves rest, walk and kept pictures to .shots/.
 
-const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=circulation&preview=1'
+const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=circulation'
 const REST = `${PLAN}&t=10`
 const WALK = `${PLAN}&t=40`
-const RUN = '/sim?v=3&a=roti:1&act=run.30.10&layer=circulation&preview=1&t=38'
-const KEPT = '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation&preview=1'
+const RUN = '/sim?v=3&a=roti:1&act=run.30.10&layer=circulation&t=38'
+const KEPT = '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation'
 
 test.beforeEach(({ page }) => returningVisitor(page))
 
@@ -34,7 +34,7 @@ async function showGraph(page: Page, name: string) {
 const shot = (page: Page, name: string) =>
   process.env.E2E_SHOTS ? page.screenshot({ path: `../../.shots/u3-circulation-${name}-${test.info().project.name}.png` }) : null
 
-test('a preview link lights Heart & blood: heart, chip, colour key, three graphs, book line, band, blood pressure', async ({ page }) => {
+test('a link lights Heart & blood: heart, chip, colour key, three graphs, book line, band, blood pressure', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, REST)
@@ -127,15 +127,16 @@ test('beside a kept plan, "Where blood goes" shows one flow at a time against it
   await shot(page, 'kept')
 })
 
-test('a link with activity and no layer opens Heart & blood in a preview (R39); without one, Digestion until the row is public', async ({
-  page,
-}) => {
+test('a link with activity and no layer opens Heart & blood (R39, live since H-1); without activity, Digestion', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
-  await goto(page, '/sim?v=3&a=roti:1&act=walk.30.20&t=40&preview=1')
-  await expect(page.locator('[data-system-title="circulation"]')).toBeVisible()
-  await expect(page.locator('[data-layer="circulation"]')).toBeAttached()
-  await goto(page, '/sim?v=3&a=roti:1&act=walk.30.20&t=40')
+  for (const url of ['/sim?v=3&a=roti:1&act=walk.30.20&t=40', '/sim?v=3&a=roti:1&act=walk.30.20&t=40&preview=1']) {
+    await goto(page, url)
+    await expect(page.locator('[data-system-title="circulation"]')).toBeVisible()
+    await expect(page.locator('[data-layer="circulation"]')).toBeAttached()
+    // Written back, the link names the layer it shows (R93).
+    await expect.poll(() => new URL(page.url()).searchParams.get('layer')).toBe('circulation')
+  }
+  await goto(page, '/sim?v=3&a=roti:1&t=40')
   await page.locator('[data-stage]').waitFor()
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
-  await expect(page.locator('[data-layer="circulation"]')).toHaveCount(0)
 })

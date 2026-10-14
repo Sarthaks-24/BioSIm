@@ -10,8 +10,7 @@ import type { SystemDef } from '../registry.ts'
  * Its graphs show 0–12 h (`graphWindowMin`, ui-ux §4, model D17): a drink's water has left by then,
  * and the rest of the 48 h is the steady background day. The dock says "0–12 h shown · 48 h ›".
  *
- * Hidden until the v3.0 release gate (H-1, architecture §5.2): it opens only from a `?preview=1`
- * link, which the app never makes.
+ * Public since the v3.0 release gate (H-1, R103; architecture §5.2).
  */
 export const KIDNEYS: SystemDef = {
   id: 'kidneys',
@@ -27,5 +26,5 @@ export const KIDNEYS: SystemDef = {
   inputs: ['meal', 'activity'],
   rhythms: [],
   graphWindowMin: 12 * 60,
-  public: false,
+  public: true,
 }

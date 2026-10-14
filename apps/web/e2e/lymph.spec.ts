@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test'
 import { goto } from './helpers/gate.ts'
 
-// Lymph & germ defence (A-11a): a Drawing-only row, hidden until the v3.0 release gate, so only a
-// `?preview=1` link opens it. Its pack loads when it is lit: the static lymph map over the full
+// Lymph & germ defence (A-11a): a Drawing-only row, public since the v3.0 release gate (H-1, R103),
+// so a plain link opens it. Its pack loads when it is lit: the static lymph map over the full
 // body, the Now line with the "Drawing only" tag, and the germ-defence card in the graphs' place.
 // Projects desktop and phone. E2E_SHOTS=1 saves a picture of each to .shots/ (git-ignored).
 
-const LYMPH = '/sim?v=3&a=cola:1&layer=lymph&preview=1'
+const LYMPH = '/sim?v=3&a=cola:1&layer=lymph'
 
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
 
-test('a preview link lights the lymph map, its Now line and the germ-defence card', async ({ page }, info) => {
+test('a link lights the lymph map, its Now line and the germ-defence card', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await goto(page, LYMPH)
@@ -64,11 +64,9 @@ test('a preview link lights the lymph map, its Now line and the germ-defence car
   expect(errors).toEqual([])
 })
 
-test('without ?preview=1 the hidden lymph row opens Digestion', async ({ page }) => {
-  await goto(page, '/sim?v=3&a=cola:1&layer=lymph')
-  await expect(page.locator('[data-now]').filter({ visible: true }).first()).toHaveAttribute('data-now', /^(?!lymph)/)
-  await expect(page.locator('[data-card="germs"]')).toHaveCount(0)
-  await expect(page.locator('canvas[data-layer="lymph"]')).toHaveCount(0)
+test('a ?preview=1 link still opens the lymph row (public since H-1, Drawing only)', async ({ page }) => {
+  await goto(page, `${LYMPH}&preview=1`)
+  await expect(page.locator('[data-card="germs"]')).toBeVisible()
 })
 
 test('switching to the lymph map and back keeps the 3D body (R93 #1)', async ({ page }) => {

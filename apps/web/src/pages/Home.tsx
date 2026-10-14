@@ -42,7 +42,7 @@ export default function Home() {
       <section className="home-split py-10 lg:py-20">
         <div>
           <h1 className="home-title">{t('home.promise')}</h1>
-          <p className="mt-6 max-w-[60ch] text-lg leading-relaxed text-ink-muted">{t('home.intro')}</p>
+          <p className="home-intro mt-6 max-w-[60ch] text-lg leading-relaxed text-ink-muted">{t('home.intro')}</p>
           {V3 && <V3.Lesson />}
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/sim" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">

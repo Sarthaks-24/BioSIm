@@ -116,8 +116,9 @@ test('bouts add no stage row: the body and the dock keep their size', async ({ p
       ['[data-activity-band]', '[data-dock]'].map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().height)),
     )
   }
-  const without = await sizes('/sim?v=3&a=cola:1&t=40')
-  const withBouts = await sizes('/sim?v=3&a=cola:1&t=40&act=walk.30.20,run.120.10,walkBrisk.240.30')
+  // On Digestion both: a link with bouts and no layer opens Heart & blood (R39).
+  const without = await sizes('/sim?v=3&a=cola:1&t=40&layer=digestion')
+  const withBouts = await sizes('/sim?v=3&a=cola:1&t=40&layer=digestion&act=walk.30.20,run.120.10,walkBrisk.240.30')
   expect(withBouts).toEqual(without)
 })
 

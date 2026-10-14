@@ -7,8 +7,8 @@ import type { SystemDef } from '../registry.ts'
  * per breath, oxygen used and carbon dioxide made), its rhythm and its limits come with the pack
  * (systems/breathing/ui.tsx `DEFS`, merged by systems/load.ts), so no breathing signal ID is in /sim.
  *
- * Hidden until the v3.0 release gate (H-1, architecture §5.2: V-2 closed, the model sealed, Hindi Tier
- * 1): it opens only from a `?preview=1` link, which the app never makes (P-0, R8/R19).
+ * Public since the v3.0 release gate (H-1, R103; architecture §5.2: V-2 closed, the model sealed;
+ * Hindi paused, R47).
  */
 export const BREATHING: SystemDef = {
   id: 'breathing',
@@ -25,5 +25,5 @@ export const BREATHING: SystemDef = {
   inputs: ['meal', 'activity'],
   rhythms: [],
   graphWindowMin: 2880,
-  public: false,
+  public: true,
 }

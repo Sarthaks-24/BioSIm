@@ -75,6 +75,15 @@
         "engineKB": 10.684,
         "simRatchetKB": 188.349,
         "simEngineRatchetKB": 199.133
+      },
+      {
+        "wp": "H-1",
+        "at": "2026-10-14",
+        "on": "v3 e60463e + H-1 (seal, polish, gates, public flip): the two-line graph row on a phone (SignalStrip, styles.css), labels placed again when they resize (CalloutOverlay), a newer link kept as it came when its system loads (useLinkSync), the first-run mark (useRun), Home on a phone with the lesson card (styles.css): /sim 188.191 -> 188.481 (+0.290), engine 10.683 -> 10.685",
+        "simKB": 188.481,
+        "engineKB": 10.685,
+        "simRatchetKB": 188.681,
+        "simEngineRatchetKB": 199.466
       }
     ]
   },

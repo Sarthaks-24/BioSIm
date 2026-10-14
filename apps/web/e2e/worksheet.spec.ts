@@ -9,7 +9,7 @@ import { checkAxe, onlyIn } from './helpers/gate.ts'
 // The printable worksheets (X-3; ui-ux §8.3): each Teach lesson's sheet, printed as the browser
 // prints it (A4, the print CSS), is one page, students' copy and teacher's copy alike; its QR code
 // is at least 25 mm on paper and holds exactly the lesson's link on this site. Desktop project.
-// `?preview=1` lists every built system's lessons (the gate makes them public later, R30).
+// Every built system's lessons are public since H-1 (R103); these links keep `?preview=1`, so that path stays tested.
 
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1')))
 

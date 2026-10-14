@@ -92,13 +92,15 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
   await page.goto('/teach')
   await installed(page)
   const lessons = page.locator('[data-lesson]')
+  // Every chapter's lessons (all public since H-1), once the list is drawn.
+  await expect(lessons).toHaveCount(8)
   const count = await lessons.count()
   expect(count).toBeGreaterThan(0)
   await expect(lessons.getByText('Not saved for offline')).toHaveCount(count)
   await page.getByRole('button', { name: 'Save all for class offline' }).click()
   await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count, { timeout: 30_000 })
   await expect(page.getByRole('button', { name: 'Save all for class offline' })).toBeDisabled()
-  const href = await lessons.first().getByRole('link').getAttribute('href')
+  const href = await lessons.first().getByRole('link').first().getAttribute('href')
   await context.setOffline(true)
   try {
     await page.goto(href!)

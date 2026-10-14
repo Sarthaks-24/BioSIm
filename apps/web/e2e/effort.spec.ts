@@ -1,14 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
-// Muscles, Skin & temperature and the Bones card (U-1): the `effort` pack, hidden until the v3.0
-// release gate, so only a `?preview=1` link opens them. Each is a flat layer over the full body in
+// Muscles, Skin & temperature and the Bones card (U-1): the `effort` pack, public since the v3.0
+// release gate (H-1, R103), so a plain link opens them. Each is a flat layer over the full body in
 // the band's still pose; muscles and skin move only with walking or running (R75); bones are
 // Drawing only. Also R85 (the phone's empty card offers the walk first) and R89 (organ labels keep
 // off a posed arm in the torso view). Projects desktop, phone, projector, reduced and nowebgl.
 // E2E_SHOTS=1 saves rest and run pictures to .shots/ (git-ignored).
 
-const plan = (layer: string, t: number) => `/sim?v=3&a=roti:1&act=run.30.20&layer=${layer}&preview=1&t=${t}`
+const plan = (layer: string, t: number) => `/sim?v=3&a=roti:1&act=run.30.20&layer=${layer}&t=${t}`
 const REST = 10
 const RUN = 40
 
@@ -117,7 +117,7 @@ test('bones: Drawing only, the card in the graphs’ place, the same pose as mus
   await shot(page, 'bones-run')
 })
 
-test('the picker offers the three rows under "Moving and body heat" in a preview; bones says Drawing only', async ({ page }) => {
+test('the picker offers the three rows under "Moving and body heat"; bones says Drawing only', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
   await open(page, 'muscles', RUN)
   await page.getByRole('button', { name: 'Body system: Muscles' }).click()
@@ -130,13 +130,14 @@ test('the picker offers the three rows under "Moving and body heat" in a preview
   await expect(page.locator('[data-system-title="skin"]')).toBeVisible()
 })
 
-test('without ?preview=1 muscles, skin and bones stay hidden: the link opens Digestion', async ({ page }) => {
+test('a plain link opens muscles, skin and bones (public since H-1), and a ?preview=1 link still does', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
-  for (const layer of ['muscles', 'skin', 'bones']) {
-    await goto(page, `/sim?v=3&a=roti:1&act=run.30.20&layer=${layer}`)
-    await page.locator('[data-stage]').waitFor()
-    await expect(page.locator(`[data-layer="${layer}"]`)).toHaveCount(0)
-  }
+  for (const layer of ['muscles', 'skin', 'bones'])
+    for (const extra of ['', '&preview=1']) {
+      await goto(page, `/sim?v=3&a=roti:1&act=run.30.20&layer=${layer}${extra}`)
+      await page.locator('[data-stage]').waitFor()
+      await expect(page.locator(`[data-system-title="${layer}"]`)).toBeVisible()
+    }
 })
 
 test('the phone’s empty card offers "Try: walk 20 min, from 0:30" first in its row (R85)', async ({ page }) => {
@@ -158,7 +159,8 @@ test('in a run, the torso view’s organ labels keep off the arm in front (R89),
   test.skip(test.info().project.name !== 'nowebgl', 'the flat torso view (no WebGL), on the projector')
   await page.addInitScript(() => localStorage.setItem('lifepeek:projector', '1'))
   await page.setViewportSize({ width: 1280, height: 800 })
-  await goto(page, '/sim?v=3&a=roti:1&act=run.30.20&t=38')
+  // Digestion's torso view (a link with a run and no layer opens Heart & blood, R39).
+  await goto(page, '/sim?v=3&a=roti:1&act=run.30.20&t=38&layer=digestion')
   await expect(page.locator('[data-body="flat"][data-ready]')).toBeVisible()
   await expect(page.locator('[data-activity-band]')).toHaveAttribute('data-activity-band', 'run')
   await bodySettled(page)

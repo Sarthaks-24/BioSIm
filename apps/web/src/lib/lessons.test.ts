@@ -15,8 +15,9 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
     expect(CHAPTERS[0]!.lessons.map((l) => l.key)).toEqual(LESSONS.map((l) => l.key))
   })
 
-  it('a lesson shows only once its system is public, or in a preview: today, Nutrition’s alone (R18, R30)', () => {
-    expect(shownChapters(false).map((c) => c.key)).toEqual(['nutrition'])
+  it('a lesson shows only once its system is public, or in a preview: since H-1, every chapter (R18, R30)', () => {
+    expect(shownChapters(false).map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion', 'movement'])
+    expect(shownChapters(false)).toEqual(shownChapters(true))
     for (const c of shownChapters(false)) for (const l of c.lessons) expect(systemOf(l.system)!.public, l.key).toBe(true)
     expect(shownChapters(true).flatMap((c) => c.lessons.map((l) => l.key))).toEqual(CHAPTERS.flatMap((c) => c.lessons.map((l) => l.key)))
   })

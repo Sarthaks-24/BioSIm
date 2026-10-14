@@ -7,7 +7,7 @@ import { bodySettled, goto, overlayProblems, returningVisitor } from './helpers/
 // seconds left and the end; the meal clock waits while it is open. Projects desktop, phone,
 // projector and reduced (no draining ring). E2E_SHOTS=1 saves a picture to .shots/ (git-ignored).
 
-const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing&preview=1&t=10'
+const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing&t=10'
 
 test.beforeEach(({ page }) => returningVisitor(page))
 

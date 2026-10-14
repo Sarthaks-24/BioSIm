@@ -23,10 +23,10 @@ export function Lesson() {
       to={flagshipHref(preview)}
       state={LESSON_STATE}
       data-flagship=""
-      className="mt-8 block max-w-[60ch] rounded-frame border border-border bg-surface-raised p-5 hover:bg-surface-sunk"
+      className="home-lesson mt-8 block max-w-[60ch] rounded-frame border border-border bg-surface-raised p-5 hover:bg-surface-sunk"
     >
       <span className="block text-title font-extrabold text-balance">{t('home.lesson.title')}</span>
-      <span className="mt-1 block leading-relaxed text-ink-muted">{t('home.lesson.lead')}</span>
+      <span className="home-lesson-lead mt-1 block leading-relaxed text-ink-muted">{t('home.lesson.lead')}</span>
       <span className="mt-4 inline-block rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">{t('home.lesson.start')}</span>
     </Link>
   )

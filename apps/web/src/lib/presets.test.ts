@@ -178,8 +178,8 @@ describe('the flagship lesson, "One roti, one walk"', () => {
 
   it('Home and Teach offer it only once every system it pauses on is public, or in a preview (R18, R30)', () => {
     expect(flagshipShown(false)).toBe(FLAGSHIP.systems.every((id) => systemOf(id)!.public))
-    // Today (before H-1) its systems are hidden: only a preview shows it.
-    expect(flagshipShown(false)).toBe(false)
+    // Since H-1 (R103) its systems are public: Home and Teach offer it to everyone.
+    expect(flagshipShown(false)).toBe(true)
     expect(flagshipShown(true)).toBe(true)
   })
 

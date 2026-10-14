@@ -58,6 +58,8 @@ const ctx: CheckContext = {
   unitKey: (unit) => UNIT_KEYS[unit],
   en: (key) => text(en, key),
   hi: (key) => text(hi, key),
+  // Hindi is paused (R47): only a VITE_HINDI=1 run asks the public rows for their Hindi.
+  hindi: process.env.VITE_HINDI === '1',
 }
 
 describe('systems registry (architecture §5.2)', () => {
@@ -109,8 +111,9 @@ describe('systems registry (architecture §5.2)', () => {
     ])
   })
 
-  it('a public row needs Hindi (Tier 1); a drawing-only public row needs its own drawing (R11)', () => {
-    const noHindi: CheckContext = { ...ctx, hi: () => undefined }
+  it('a public row needs Hindi (Tier 1) when Hindi ships; a drawing-only public row needs its own drawing (R11)', () => {
+    const noHindi: CheckContext = { ...ctx, hi: () => undefined, hindi: true }
+    expect(systemProblems(DIGESTION, { ...noHindi, hindi: false })).toEqual([])
     expect(systemProblems(DIGESTION, noHindi)).toContain(
       'digestion: its name has no Hindi text systems.digestion.name (public needs Hindi Tier 1)',
     )
@@ -206,17 +209,17 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
     expect(pack.text).toBeTypeOf('function')
   })
 
-  it('hidden until H-1; bones is Drawing only (no inputs, no graphs), all three in the full framing', () => {
+  it('public since H-1; bones is Drawing only (no inputs, no graphs), all three in the full framing', () => {
     for (const id of ['muscles', 'skin', 'bones'] as const)
       expect(systemOf(id), id).toMatchObject({
-        public: false,
+        public: true,
         pack: 'effort',
         draw: 'layer',
         camera: { framing: 'full' },
         lifeProcess: 'movement',
       })
     expect(systemOf('bones')).toMatchObject({ inputs: [], slots: [] })
-    expect(systemForLink('muscles', [], false)).toBe('digestion')
+    expect(systemForLink('muscles', [], false)).toBe('muscles')
     expect(systemForLink('skin', [], true)).toBe('skin')
   })
 })
@@ -232,12 +235,12 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('hormones', [], true)).toBe('digestion')
   })
 
-  it('breathing is hidden until the v3.0 release gate (H-1): only ?preview=1 opens it, and only then does the picker offer it', () => {
-    expect(systemOf('breathing')?.public).toBe(false)
-    expect(systemForLink('breathing', [], false)).toBe('digestion')
+  it('every built row is public since the v3.0 release gate (H-1, R103): a plain link opens it, and the picker offers it', () => {
+    expect(SYSTEMS.filter((s) => !s.public).map((s) => s.id)).toEqual([])
+    expect(systemForLink('breathing', [], false)).toBe('breathing')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
-    expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
-    expect(pickerSystems(true).map((s) => s.id)).toEqual([
+    expect(pickerSystems(true)).toEqual(pickerSystems(false))
+    expect(pickerSystems(false).map((s) => s.id)).toEqual([
       'digestion',
       'breathing',
       'circulation',
@@ -249,9 +252,8 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     ])
   })
 
-  it('kidneys & water is hidden until the v3.0 release gate (H-1) too, and its graphs show 0–12 h', () => {
-    expect(systemOf('kidneys')?.public).toBe(false)
-    expect(systemForLink('kidneys', [], false)).toBe('digestion')
+  it('kidneys & water opens from a plain link, and its graphs show 0–12 h', () => {
+    expect(systemForLink('kidneys', [], false)).toBe('kidneys')
     expect(systemForLink('kidneys', [], true)).toBe('kidneys')
     expect(systemOf('kidneys')?.graphWindowMin).toBe(720)
   })
@@ -264,34 +266,34 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('lymph', true, 1)).toBe('muscles')
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     expect(stepSystem('digestion', true, -1)).toBe('skin')
-    // One row: stepping stays on it.
-    expect(stepSystem('digestion', false, 1)).toBe('digestion')
+    // Every row is public: a session without ?preview=1 steps the same way.
+    expect(stepSystem('digestion', false, 1)).toBe('breathing')
+    expect(stepSystem('digestion', false, -1)).toBe('skin')
   })
 
-  it('Heart & blood is hidden until the v3.0 release gate (H-1): only ?preview=1 opens it', () => {
-    expect(systemOf('circulation')?.public).toBe(false)
-    expect(systemForLink('circulation', walk, false)).toBe('digestion')
+  it('Heart & blood opens from a plain link (public since H-1)', () => {
+    expect(systemForLink('circulation', walk, false)).toBe('circulation')
     expect(systemForLink('circulation', [], true)).toBe('circulation')
   })
 
   it('a link with activity but no layer opens Heart & blood once that row is public, or in a preview (R39)', () => {
-    // Hidden (until H-1): Digestion, as before; a preview session already opens Heart & blood.
-    expect(defaultSystemFor(walk)).toBe('digestion')
-    expect(systemForLink(undefined, walk, false)).toBe('digestion')
+    // Public (the flag H-1 flipped): every such link opens Heart & blood; without activity, Digestion.
+    expect(defaultSystemFor(walk)).toBe('circulation')
+    expect(systemForLink(undefined, walk, false)).toBe('circulation')
+    expect(defaultSystemFor([])).toBe('digestion')
     expect(defaultSystemFor(walk, true)).toBe('circulation')
-    expect(systemForLink(undefined, walk, true)).toBe('circulation')
     expect(systemForLink(undefined, [], true)).toBe('digestion')
     // An asked-for layer wins over the default.
-    expect(systemForLink('breathing', walk, true)).toBe('breathing')
-    // Public (the flag H-1 flips): every such link opens Heart & blood; without activity, Digestion.
+    expect(systemForLink('breathing', walk, false)).toBe('breathing')
+    // Hidden (as it was before H-1): Digestion, unless a preview session.
     const row = systemOf('circulation')!
-    row.public = true
+    row.public = false
     try {
-      expect(defaultSystemFor(walk)).toBe('circulation')
-      expect(systemForLink(undefined, walk, false)).toBe('circulation')
-      expect(defaultSystemFor([])).toBe('digestion')
+      expect(defaultSystemFor(walk)).toBe('digestion')
+      expect(systemForLink(undefined, walk, false)).toBe('digestion')
+      expect(systemForLink(undefined, walk, true)).toBe('circulation')
     } finally {
-      row.public = false
+      row.public = true
     }
   })
 })

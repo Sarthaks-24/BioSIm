@@ -29,6 +29,11 @@ export interface CheckContext {
   /** The text at a key, in English and in Hindi. */
   en: (key: string) => unknown
   hi: (key: string) => unknown
+  /**
+   * Whether this release ships Hindi (a VITE_HINDI=1 build). Hindi is paused (R47): the v3.0 rows go
+   * public in English only, and their Hindi (Tier 1) is due when Hindi ships again.
+   */
+  hindi: boolean
 }
 
 const isSignalRow = (r: CatalogRow): r is SignalMeta => 'kind' in r
@@ -36,10 +41,10 @@ const isSignalRow = (r: CatalogRow): r is SignalMeta => 'kind' in r
 export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
   const out: string[] = []
   const say = (what: string) => out.push(`${s.id}: ${what}`)
-  // Texts a public row needs in both languages (Hindi Tier 1); a hidden row, English first.
+  // Texts a public row needs in both languages when Hindi ships (Hindi Tier 1); otherwise English.
   const needText = (key: string, what: string) => {
     if (typeof ctx.en(key) !== 'string') say(`${what} has no English text ${key}`)
-    if (s.public && typeof ctx.hi(key) !== 'string') say(`${what} has no Hindi text ${key} (public needs Hindi Tier 1)`)
+    if (s.public && ctx.hindi && typeof ctx.hi(key) !== 'string') say(`${what} has no Hindi text ${key} (public needs Hindi Tier 1)`)
   }
 
   if (s.pack !== PACK_OF[s.id]) say(`pack ${s.pack} is not its frozen pack ${PACK_OF[s.id]} (architecture §0)`)

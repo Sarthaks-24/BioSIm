@@ -11,8 +11,8 @@ import type { SystemDef, SystemId } from '../registry.ts'
  * Bones has no signal and no graph (model §2.8; R2, R11): a Drawing-only card, so no inputs, and the
  * picker says "Drawing only" for it. Muscles and skin move only with walking or running (R75).
  *
- * Hidden until the v3.0 release gate (H-1): muscles and skin go public on V-1 alone, with no Hindi
- * gate (R47), Bones as Drawing only; meanwhile only a `?preview=1` link opens them, which the app never makes.
+ * Public since the v3.0 release gate (H-1, R103): muscles and skin on V-1 alone, with no Hindi gate
+ * (R47), Bones as Drawing only.
  */
 const row = (id: SystemId, inputs: SystemDef['inputs']): SystemDef => ({
   id,
@@ -28,7 +28,7 @@ const row = (id: SystemId, inputs: SystemDef['inputs']): SystemDef => ({
   inputs,
   rhythms: [],
   graphWindowMin: 2880,
-  public: false,
+  public: true,
 })
 
 export const MUSCLES = row('muscles', ['meal', 'activity'])

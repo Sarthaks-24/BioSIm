@@ -13,7 +13,7 @@ const shot = async (page: Page, name: string) => {
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `../../.shots/x4-${name}-${test.info().project.name}.png` })
 }
 
-const RUN = '/sim?v=3&a=roti:1&act=run.30.10&preview=1&t=38'
+const RUN = '/sim?v=3&a=roti:1&act=run.30.10&t=38'
 const graphs = (page: Page) => page.locator('section[aria-labelledby="graphs-title"]')
 
 /** Opens a link on a system and waits for its picture. */
@@ -67,7 +67,7 @@ test('Skin & temperature: the book’s 37.0 °C (Class 6, p. 128), held here; th
 })
 
 test('the guided lesson: Digestion’s card by the first pause’s book line', async ({ page }) => {
-  await goto(page, '/?preview=1')
+  await goto(page, '/')
   await page.locator('[data-flagship]').click()
   const bar = page.locator('[data-lesson-bar]')
   await expect(bar).toHaveAttribute('data-lesson-pause', 'stomach')
