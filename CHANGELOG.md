@@ -2,6 +2,67 @@
 
 All notable changes to LifePeek. Data corrections are listed here so teachers can see what changed.
 
+## 3.1.0 (unreleased)
+
+**Class 10 Control and coordination, and how fat reaches the blood.** Three systems get their
+numbers or a demo, and lungs, heart and kidneys can be turned round in 3D. Plants are still not
+covered.
+
+What students and teachers will notice:
+
+- **Lymph & germ defence has graphs now** (it was a drawing only): "Fat’s road" shows fat from the
+  meal travelling by lymph, and "Blood fat" shows it reaching the blood. After a cheeseburger with
+  fries blood fat stays up for hours; after two rotis it hardly moves. Small dots run along the
+  lymph route while fat is on its way. The germ-defence card is still there.
+- **Hormones: insulin.** A graph shows insulin after the meal, as "× before eating" (water and an
+  egg stay at 1×), beside blood sugar. The model works insulin out from the sugar coming in; it
+  does not feed it back to pull blood sugar down (an "open loop"). The blood sugar line comes from
+  real meals, so it already includes what insulin does. **It is not an injection guide**: the
+  caption under the graph says so every time. Adrenaline, thyroxin, growth hormone and the hunger
+  signal are short cards with no numbers ("Other hormones ›").
+- **Brain & nerves: the hot-pan demo.** The same touch twice, slowed down: the reflex through the
+  spinal cord reaches the arm muscle in about 64 thousandths of a second (ms), the route through
+  the brain in about 214 ms. Counters show the real time. "Myelin off" (beyond class 10) shows
+  why myelin matters (about 883 ms). With reduced motion it steps through still pictures.
+- **3D lungs, heart and kidneys** on devices that can draw 3D: lungs breathing at the model’s
+  rate, the heart and both loops of blood, the kidneys and a filling bladder. 3D is optional:
+  the flat drawing shows the same numbers and is what every device gets without 3D. Labels stay
+  on their organs while the view is turned.
+- **The guided lesson** keeps five pauses; its Digestion pause is now about blood fat (lymph),
+  and says what insulin did.
+- **Teach** has a sixth chapter, **Control and coordination**: "Why do you pull your hand back
+  before you feel the pain?" (the hot-pan demo) and "Who keeps blood sugar steady?" (insulin).
+  "How does fat reach the blood?" joins Transportation. Each has a printable A4 worksheet with a
+  QR code and a teacher’s copy, and a "Why different?" card with its NCERT page (Class 10, Ch 5
+  p. 94; Ch 6 pp. 102 and 111).
+- **Home** lists all ten systems with what each shows; **Science** lists the sources behind the
+  new graphs and the demo.
+- **Faster on slow phones**: on browsers that support it, the maths can run off the main thread,
+  so taps answer sooner. While it works, the last picture stays on screen, dimmed, with "Working
+  it out…". Other browsers work it out as before.
+
+Model:
+
+- **Model version stays 3.** Every number from 3.0 is unchanged (the seal check still passes);
+  the new graphs (blood fat, insulin) are new outputs only. Links with `v=3` open as before.
+- Blood fat starts at 80 mg/dL before eating, for one grown-up; many Indian adults start higher
+  (116 mg/dL on average in the ICMR-INDIAB study), and "How we know" says so.
+- The nerve demo is its own small calculation (nerve speeds, arm lengths, synapse and thinking
+  times, each with its source); it does not use the meal clock.
+
+Known limits:
+
+- Insulin does not lower blood sugar in the model, and a walk does not change blood sugar.
+  Diabetes is not modelled. Never use these numbers for insulin doses.
+- The nerve demo times one average adult arm; children’s arms are shorter, so their times are
+  shorter. The knee-tap reflex is not in it yet.
+- Lymph and blood fat are for one resting grown-up; the germ-defence card has no numbers.
+- 3D covers digestion, lungs, heart and kidneys; the other systems are flat drawings. Bones stays
+  a drawing only.
+- The background maths needs a browser that allows it; if it fails or is blocked, the page works
+  it out itself, a little slower.
+- Hindi is still paused: the site is English only.
+
 ## 3.0.0 (unreleased)
 
 **Class 10 Life Processes, complete.** Lymph graphs, insulin and the nerve demo come in v3.1;
