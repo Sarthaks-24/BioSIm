@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import {
   GATE_ROUTES,
   SIM_BODY,
+  bodySettled,
   expectInFirstScreen,
   expectNoPageScroll,
   gateSteps,
@@ -56,6 +57,7 @@ test('organ labels never overlap and stay inside the body picture', async ({ pag
     await expect(body).toBeVisible()
     // With WebGL the flat body shows while the 3D code loads; test the 3D one.
     if (test.info().project.name !== 'nowebgl') await expect(page.locator('[data-body="3d"]')).toBeVisible()
+    await bodySettled(page)
     await page.evaluate(() => document.fonts.ready)
     const slider = page.getByRole('slider').first()
     // Start, food in the stomach (40 min), in the small intestine (2 h 30 min), in the colon (15 h).
@@ -78,7 +80,9 @@ test('organ labels never overlap and stay inside the body picture', async ({ pag
           { timeout: 15_000, message: 'four labels, or at most the active one on a picture under 200 px' },
         )
         .toBe(true)
-      const labels = await visibleLabels(page)
+      // Read them once the picture has stopped moving them: the same boxes two frames apart (the
+      // 3D body places its labels per drawn frame; a camera move or a late font is still settling).
+      const labels = await settledLabels(page)
       const frame = (await body.boundingBox())!
       for (const l of labels) {
         expect(l.x, `${l.key} inside`).toBeGreaterThanOrEqual(frame.x - 0.5)
@@ -103,6 +107,20 @@ test('the food stops tumbling when motion is reduced', async ({ page }) => {
   // Both bodies (3D and flat) say which way their particles are drawn.
   await expect(page.locator('[data-particles]').first()).toHaveAttribute('data-particles', reduced ? 'still' : 'tumbling')
 })
+
+/** The organ labels once two reads, two animation frames apart, give the same boxes (or after 5 s). */
+async function settledLabels(page: Page) {
+  let last = ''
+  let labels = await visibleLabels(page)
+  for (const end = Date.now() + 5_000; Date.now() < end;) {
+    const now = JSON.stringify(labels)
+    if (now === last) break
+    last = now
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))))
+    labels = await visibleLabels(page)
+  }
+  return labels
+}
 
 /** The organ labels that are showing, with their boxes. */
 function visibleLabels(page: Page) {

@@ -98,7 +98,7 @@
       "what": "Chyme moves through about 3 metres of narrow tube. Its lining is folded into millions of villi that give it a huge surface for absorption.",
       "chemistry": "Bile from the liver breaks fat into tiny droplets. Pancreatic enzymes — amylase, lipase, trypsin — and enzymes on the villi finish breaking food into sugars, amino acids, fatty acids and glycerol.",
       "absorbed": "Most nutrients and most of the water are absorbed here into the blood and lymph.",
-      "fact": "The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court.",
+      "fact": "The villi and microvilli give the small intestine a surface area of around 30 square metres — about half a badminton court (Helander and Fändriks, 2014).",
       "short": "Small intestine"
     },
     "largeIntestine": {
@@ -380,7 +380,7 @@
       },
       "breathRun": {
         "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
-        "book": "Older NCERT Class 7 book (2024-25): 15–18 breaths a minute for a grown-up at rest, up to 25 a minute in hard exercise.",
+        "book": "Older NCERT Class 7 book (2024-25): 15–18 breaths a minute for a grown-up at rest, up to 25 a minute in heavy exercise.",
         "y": "Breaths a minute",
         "tasks": [
           {
@@ -390,7 +390,7 @@
           },
           {
             "q": "How many breaths a minute at the end of the run?",
-            "b": "Older NCERT Class 7 book: up to 25 a minute in hard exercise.",
+            "b": "Older NCERT Class 7 book: up to 25 a minute in heavy exercise.",
             "m": "About 33 a minute: the model follows grown-ups running hard."
           },
           {
@@ -404,7 +404,7 @@
         ],
         "exit": {
           "q": "Why do you breathe faster and deeper when you run?",
-          "b": "NCERT Class 10: working cells use more oxygen and make more carbon dioxide.",
+          "b": "Older NCERT Class 7 book (2024-25): when we exercise we breathe fast and take deep breaths, and so take in more oxygen.",
           "m": "Breathing brings the oxygen in and carries the carbon dioxide away: in the run the body uses about 10 times as much oxygen as at rest."
         }
       },
@@ -461,13 +461,13 @@
         ],
         "exit": {
           "q": "What happens to the water from the three extra glasses?",
-          "b": "NCERT Class 10: with more water in the body, less is taken back, so more urine is made.",
+          "b": "NCERT Class 10: how much water is taken back depends on how much extra water there is in the body.",
           "m": "By 4 h about 670 mL more urine has come out than after one glass."
         }
       },
       "musclesRun": {
         "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
-        "book": "NCERT Class 10: cells break down food using oxygen to release energy.",
+        "book": "NCERT Class 10: food is used in cells to provide energy; with oxygen, glucose is broken down completely into carbon dioxide and water.",
         "y": "Muscles’ energy (times resting)",
         "tasks": [
           {
@@ -494,7 +494,7 @@
       },
       "sweatRun": {
         "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
-        "book": "NCERT Class 6: the body stays near 37 °C.",
+        "book": "NCERT Class 6: the normal temperature of a healthy human body is taken to be 37.0 °C.",
         "y": "Sweat made (mL an hour)",
         "tasks": [
           {
@@ -503,7 +503,7 @@
           },
           {
             "q": "What happens to body temperature?",
-            "b": "NCERT Class 6: it stays near 37 °C.",
+            "b": "NCERT Class 6: normal body temperature is taken to be 37.0 °C.",
             "m": "Held at 37 °C: the model does not work it out. Sweat takes the extra heat away."
           },
           {

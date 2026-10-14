@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { onlyIn, returningVisitor } from './helpers/gate.ts'
+import { expect, test, type Page, type PageAssertionsToHaveScreenshotOptions } from '@playwright/test'
+import { bodySettled, onlyIn, returningVisitor } from './helpers/gate.ts'
 
 // Visual regression (T0; plan qa-fixes §3.3). Project `visual` (E2E_VISUAL=1 only): flat body (no
 // WebGL), motion reduced, the clock text masked. About 28 shots: /sim at 0 and 2 h, with and
@@ -68,10 +68,32 @@ async function colourStyles(page: Page) {
   })
 }
 
+/** Waits for the page to be still: the network, the fonts and (on the stage) the drawn body. */
 async function settle(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.fonts.ready)
+  if (new URL(page.url()).pathname === '/sim') await bodySettled(page)
   await page.waitForTimeout(300)
+}
+
+/**
+ * The shot, taken again once on a fresh load if it differs. On about 1 load in 25 Chromium lays out
+ * the kept run's texts (the meal bar's kept tag, the Now line's kept row, the comparison under the
+ * summary) a few hundredths of a pixel wider, and keeps that for the life of the page: the 2
+ * "kept meal, projector" shots failed that way under VISUAL_ZERO (R89, H-1). It is not font loading,
+ * the window size, CPU load or the time waited (each ruled out by hand), so a second load decides;
+ * a real change shows on both loads and still fails.
+ */
+async function shot(page: Page, name: string, options: PageAssertionsToHaveScreenshotOptions, prepare = async () => {}) {
+  await prepare()
+  try {
+    await expect(page).toHaveScreenshot(name, options)
+  } catch {
+    await page.reload()
+    await settle(page)
+    await prepare()
+    await expect(page).toHaveScreenshot(name, options)
+  }
 }
 
 for (const lang of ['en', 'hi'] as const) {
@@ -91,13 +113,20 @@ for (const lang of ['en', 'hi'] as const) {
         )
         await page.goto(p.url)
         await settle(page)
-        if (p.menu) await page.locator('header button[aria-controls]').click()
-        await expect(page).toHaveScreenshot(`${p.name}-${view}-${lang}.png`, {
-          // The dock's clock text (the time a shot is taken at is set by the link; it is masked anyway).
-          mask: [page.locator('[data-stage] .text-clock-sm')],
-          animations: 'disabled',
-          ...(ZERO ? { maxDiffPixels: 0, threshold: 0 } : { maxDiffPixelRatio: 0.002 }),
-        })
+        const openMenu = async () => {
+          if (p.menu) await page.locator('header button[aria-controls]').click()
+        }
+        await shot(
+          page,
+          `${p.name}-${view}-${lang}.png`,
+          {
+            // The dock's clock text (the time a shot is taken at is set by the link; it is masked anyway).
+            mask: [page.locator('[data-stage] .text-clock-sm')],
+            animations: 'disabled',
+            ...(ZERO ? { maxDiffPixels: 0, threshold: 0 } : { maxDiffPixelRatio: 0.002 }),
+          },
+          openMenu,
+        )
         if (ZERO) expect(await colourStyles(page)).toMatchSnapshot(`${p.name}-${view}-${lang}-styles.txt`)
       })
     }

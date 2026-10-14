@@ -263,10 +263,18 @@ export default function SignalStrip({
     totals && <span ref={ref} data-total="" className="whitespace-nowrap text-ink-muted max-lg:hidden" />
   // Readouts may wrap (Hindi, a phone) between their parts, never inside a number.
   const group = 'inline-flex flex-wrap items-center gap-x-1.5'
+  // The second line's status, when it is the graph's own, is said once (in the header row) on a phone.
+  const sameStatus = second?.series.meta.status === meta.status
+  // On a phone (one graph at a time) the stage's graph row has room for two header rows: value and
+  // status, then the kept line. A two-line graph has its status row, then one row per line and the
+  // kept one: the stage gives its graph row that much more height (styles.css), so the plot never
+  // runs under the dock (H-1: kidneys at 360×640 with a kept meal, energy beside a kept meal).
+  const extraRows = tabbed && named ? (kept ? 2 : 1) : 0
   return (
     <figure
       aria-labelledby={titleId}
       aria-describedby={summary ? summaryId : undefined}
+      data-extra-rows={extraRows || undefined}
       className={`flex min-h-0 flex-col gap-1 ${STRIP_ROWS} ${className}`}
     >
       {/*
@@ -317,7 +325,9 @@ export default function SignalStrip({
               {t(`${second.series.meta.i18nKey}.short`)}
               <span ref={secondText} data-readout="" className="font-semibold whitespace-nowrap text-ink" />
               {totalSpan(secondTotal)}
-              <StatusTag status={second.series.meta.status} quiet />
+              <span className={sameStatus ? 'max-lg:hidden' : 'contents'}>
+                <StatusTag status={second.series.meta.status} quiet />
+              </span>
             </span>
           )}
           {kept && (

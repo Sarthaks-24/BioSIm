@@ -79,6 +79,11 @@ export function useCallouts<K extends string = CalloutId>(
         const el = e.target as HTMLElement
         sizes.current.set(el.dataset.callout!, { w: el.offsetWidth, h: el.offsetHeight })
       }
+      // Place them again now, in this frame, for the view they were last placed for: a label that
+      // grew (a web font arriving, Hindi's wider words) must not show one frame at its old place,
+      // over its neighbour, until the picture draws again (H-1: the stage.spec overlap flake).
+      const v = view.current
+      if (v) latest.current(v.project, v.width, v.height, v.blocked)
       measured.current()
     })
     for (const el of Object.values(labels.current)) if (el) ro.observe(el)
@@ -128,6 +133,10 @@ export function useCallouts<K extends string = CalloutId>(
       dot.setAttribute('cy', String(l.y1))
     }
   }
+
+  // This render's `place` (its specs), for the size observer above.
+  const latest = useRef(place)
+  latest.current = place
 
   // A label's text or weight changed (language, active organ): measure and place it now, before
   // the browser paints, so not even one frame shows the old place with the new, wider label.
