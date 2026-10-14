@@ -15,9 +15,40 @@ export const MAX_SHEET_BOUTS = 3
 /**
  * The meal sheet's state: closed, or open on its Food or Activity tab, maybe changing one bout
  * (`edit`: its place in the plan). A store, so a bout chip can open it on that bout (E-3b-ui).
+ * `switched`: the reader moved between Food and Activity, so the focus stays on that switch.
+ * `returnTo`: the chip that opened it, which gets the focus back when it closes (else the chip now
+ * in its place, else "+ Add"; R93 #10).
  */
-export type MealSheet = { tab: 'food' | 'activity'; edit?: number } | null
-export const useMealSheet = create<{ open: MealSheet }>(() => ({ open: null }))
+export type MealSheet = { tab: 'food' | 'activity'; edit?: number; switched?: boolean } | null
+export const useMealSheet = create<{ open: MealSheet; returnTo: HTMLElement | null; returnAt: number }>(() => ({
+  open: null,
+  returnTo: null,
+  returnAt: -1,
+}))
+
+/** The strip's chips' first buttons (a food's servings, a bout's change), in order. */
+const chipButtons = (near: Element | null | undefined) => [
+  ...(near?.closest('[data-plan-strip]')?.querySelectorAll('[data-chip] > button:first-child') ?? []),
+]
+
+/** Opens the meal sheet from a chip's button (`from`), which gets the focus back when it closes. */
+export const openMealSheet = (open: NonNullable<MealSheet>, from: HTMLElement) =>
+  useMealSheet.setState({ open, returnTo: from, returnAt: chipButtons(from).indexOf(from) })
+
+/** Whether an element can take the focus: in the page and shown (not in a folded chip or a closed list). */
+export const focusable = (el: Element | null | undefined): el is HTMLElement =>
+  el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0
+
+/**
+ * Where the focus goes when the meal sheet closes: the chip that opened it if it is still there,
+ * else the chip now at its place on the strip (the next one: that bout was removed), else `add`.
+ * After the next frame: the sheet (a modal dialog, which keeps the focus inside) has gone by then,
+ * and the strip has its new chips.
+ */
+function focusBack(add: HTMLElement | null) {
+  const { returnTo, returnAt } = useMealSheet.getState()
+  requestAnimationFrame(() => ([returnTo, chipButtons(add)[returnAt]].find(focusable) ?? add)?.focus())
+}
 
 /**
  * The food search is downloaded the first time it is opened, with the stage's other sheets
@@ -58,12 +89,12 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
 
   const show = () => {
     useRunStore.setState({ capBlocked: false })
-    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' } })
+    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' }, returnTo: null, returnAt: -1 })
   }
 
   const close = () => {
-    useMealSheet.setState({ open: null })
-    opener.current?.focus()
+    focusBack(opener.current)
+    useMealSheet.setState({ open: null, returnTo: null, returnAt: -1 })
   }
 
   return (
@@ -75,6 +106,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
         onClick={show}
         disabled={full && bouts >= MAX_SHEET_BOUTS}
         aria-haspopup="dialog"
+        data-add-food=""
         title={full ? t('stage.mealFull', { n: MAX_ITEMS }) : undefined}
         // Next to food chips "+" alone is clear (the words stay its name); with no food yet the
         // words show, as the first thing to do.
@@ -95,6 +127,8 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
             <foodSearch.Component
               anchor={anchor}
               tab={open.tab}
+              // Switching Food | Activity keeps the focus on the switch; opening places it (R93 #11).
+              place={!open.switched}
               // If it does not arrive, this boundary's box says so, as for the food search.
               activity={
                 <activitySheet.Component
@@ -106,9 +140,10 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
                   clock={clockText}
                   emoji={BOUT_EMOJI}
                   onDone={close}
+                  place={!open.switched}
                 />
               }
-              onTab={(tab) => useMealSheet.setState({ open: { tab } })}
+              onTab={(tab) => useMealSheet.setState({ open: { tab, switched: true } })}
               onClose={close}
             />
           </Suspense>

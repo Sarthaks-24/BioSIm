@@ -7,7 +7,9 @@ export interface SegmentedOption<T extends string> {
 
 interface Props<T extends string> {
   /** Names the group for screen readers ("Layer", "Graph"). */
-  label: string
+  label?: string
+  /** Or the id of the words on screen that name it, so it is named once (R93 #11). */
+  labelledBy?: string
   options: readonly SegmentedOption<T>[]
   value: T
   onChange: (id: T) => void
@@ -22,11 +24,16 @@ interface Props<T extends string> {
  *   Sunk on Paper is too faint to see on its own (WCAG 1.4.11).
  * - Plain toggle buttons (aria-pressed), one Tab stop each, so ← → stay free for the clock.
  */
-export default function Segmented<T extends string>({ label, options, value, onChange, className = '' }: Props<T>) {
+export default function Segmented<T extends string>({ label, labelledBy, options, value, onChange, className = '' }: Props<T>) {
   return (
     // The padding gives the 3 px focus outline room inside the scroll box; the negative margin
     // keeps the row aligned with its neighbours.
-    <div role="group" aria-label={label} className={`-m-1.5 flex max-w-full gap-1 overflow-x-auto overscroll-x-contain p-1.5 ${className}`}>
+    <div
+      role="group"
+      aria-label={label}
+      aria-labelledby={labelledBy}
+      className={`-m-1.5 flex max-w-full gap-1 overflow-x-auto overscroll-x-contain p-1.5 ${className}`}
+    >
       {options.map((o) => {
         const selected = o.id === value
         return (

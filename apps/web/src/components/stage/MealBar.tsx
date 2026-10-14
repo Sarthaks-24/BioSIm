@@ -7,7 +7,7 @@ import { useRunStore } from '../../state/run.ts'
 import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../LoadBoundary.tsx'
 import { FlagIcon, FoodChip, IconButton, LinkIcon, MoreIcon } from '../kit/index.ts'
 import { announce } from '../graphs/StripAnnouncer.tsx'
-import AddFoodSheet, { useMealSheet } from './AddFoodSheet.tsx'
+import AddFoodSheet, { focusable, openMealSheet } from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
 import KeptTag, { LineSwatch } from './KeptTag.tsx'
 import Popover from './Popover.tsx'
@@ -203,16 +203,31 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
   const kcal = useRef<HTMLSpanElement>(null)
   // How many chips show, and whether the kcal does; null while everything is laid out to be measured.
   const [fit, setFit] = useState<{ shown: number; kcal: boolean } | null>(null)
+  // A chip's ✕ (R93 #10): once the strip has its new chips (the next frame), the focus goes to the
+  // chip now in that place, else the one before it; to "+n" if that chip is folded; "+ Add" when
+  // no chip is left. Never to the page's top.
+  const removing = (at: number, remove: () => void) => () => {
+    remove()
+    requestAnimationFrame(() => {
+      const items = [...(list.current?.children ?? [])] as HTMLElement[]
+      const li = items[Math.min(at, items.length - 1)]
+      const target = li && (li.hidden ? plus.current : li.querySelector('button'))
+      ;(focusable(target) ? target : strip.current?.querySelector<HTMLElement>('[data-add-food]'))?.focus()
+    })
+  }
   const chips: Chip[] = [
-    ...meal.map((item) => (inline?: boolean) => <MealChip item={item} inline={inline} />),
-    // The activity bouts (E-3b-ui): the same chip, `kind="bout"`, no kcal; tap to change, ✕ to remove.
+    ...meal.map((item, i) => (inline?: boolean) => (
+      <MealChip item={item} inline={inline} onRemove={removing(i, () => useRunStore.getState().removeFood(item.foodId))} />
+    )),
+    // The activity bouts (E-3b-ui): the same chip, `kind="bout"`, no kcal; tap to change (the
+    // sheet, a dialog, gives the focus back to the chip), ✕ to remove.
     ...activity.map((b, i) => () => (
       <FoodChip
         kind="bout"
         emoji={BOUT_EMOJI[b.kind] ?? '🚶'}
         name={boutLabel(b, t)}
-        onEdit={() => useMealSheet.setState({ open: { tab: 'activity', edit: i } })}
-        onRemove={() => useRunStore.getState().setActivity(activity.filter((_, j) => j !== i))}
+        onEdit={(button) => openMealSheet({ tab: 'activity', edit: i }, button)}
+        onRemove={removing(meal.length + i, () => useRunStore.getState().setActivity(activity.filter((_, j) => j !== i)))}
       />
     )),
   ]
@@ -263,7 +278,7 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
   }, [])
 
   return (
-    <div ref={strip} className="flex min-w-0 flex-1 items-center gap-1.5 lg:max-w-max lg:flex-[1_1_20rem] lg:gap-2">
+    <div ref={strip} data-plan-strip="" className="flex min-w-0 flex-1 items-center gap-1.5 lg:max-w-max lg:flex-[1_1_20rem] lg:gap-2">
       <h2 id="meal-bar-title" className="flex shrink-0 items-center gap-2 text-control font-semibold text-ink-muted max-lg:sr-only">
         <LineSwatch />
         {t('stage.meal')}
@@ -318,7 +333,7 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
 }
 
 /** One food: the chip, and the servings picker it opens (`inline`: under the chip, in the "+n" list). */
-function MealChip({ item, inline = false }: { item: MealItem; inline?: boolean }) {
+function MealChip({ item, inline = false, onRemove }: { item: MealItem; inline?: boolean; onRemove: () => void }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const [open, setOpen] = useState(false)
@@ -342,7 +357,7 @@ function MealChip({ item, inline = false }: { item: MealItem; inline?: boolean }
             setBlocked(false)
             setOpen((o) => !o)
           }}
-          onRemove={() => useRunStore.getState().removeFood(item.foodId)}
+          onRemove={onRemove}
         />
       </span>
       {open && (

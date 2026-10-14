@@ -127,7 +127,7 @@ export default function SignalStrip({
   const summaryId = useId()
   const hatch = useId()
   const [plot, { width, height, rem }] = useSize<HTMLDivElement>()
-  const marks = useBoutMarks(bouts.length + keptBouts.length > 0)
+  const marks = useBoutMarks(bouts.length + keptBouts.length > 0, series)
 
   const { domain, stretched } = useMemo(
     () => domainFor(range ?? meta.displayRange ?? [0, 1], [series.values, series.low, series.high, kept?.values, second?.series.values]),

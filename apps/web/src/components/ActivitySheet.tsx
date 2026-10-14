@@ -54,9 +54,11 @@ interface Props {
   clock: (min: number) => string
   emoji: Readonly<Record<string, string>>
   onDone: () => void
+  /** Whether it takes the focus when it shows: not after the reader switched to it (R93 #11). */
+  place?: boolean
 }
 
-export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock, emoji, onDone }: Props) {
+export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock, emoji, onDone, place = true }: Props) {
   const { t } = useTranslation()
   const editing = edit != null ? bouts[edit] : undefined
   const [kind, setKind] = useState<Kind>(editing && (KINDS as readonly string[]).includes(editing.kind) ? (editing.kind as Kind) : 'walk')
@@ -66,8 +68,11 @@ export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock
   const first = useRef<HTMLDivElement>(null)
   const fromId = useId()
 
-  // The focus goes to the first thing to choose (the dialog keeps it inside; Esc and Back close it).
-  useEffect(() => first.current?.querySelector<HTMLElement>('button, select')?.focus(), [])
+  // Opened from a chip or "+ Add", the focus goes to the first thing to choose (the dialog keeps it
+  // inside; Esc and Back close it). Switched to from Food, it stays on the switch.
+  useEffect(() => {
+    if (place) first.current?.querySelector<HTMLElement>('button, select')?.focus()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- placed once, when it shows
 
   /** Adds `bout` (or puts it in place of the one being changed); says why not when it can't. */
   const put = (bout: ActivityBout) => {
@@ -147,10 +152,21 @@ export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock
               </select>
             </label>
             <div className="flex flex-col gap-1">
-              <span className="text-control font-semibold">{t('activity.howLong')}</span>
+              <span id={`${fromId}-long`} className="text-control font-semibold">
+                {t('activity.howLong')}
+              </span>
+              {/* Named once, by the words above it; each length reads "5 min", shows "5". */}
               <Segmented
-                label={t('activity.howLong')}
-                options={LENGTHS.map((n) => ({ id: String(n), label: n }))}
+                labelledBy={`${fromId}-long`}
+                options={LENGTHS.map((n) => ({
+                  id: String(n),
+                  label: (
+                    <>
+                      <span aria-hidden="true">{n}</span>
+                      <span className="sr-only">{t('units.min', { n })}</span>
+                    </>
+                  ),
+                }))}
                 value={String(durMin)}
                 onChange={(n) => {
                   setDur(Number(n))

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { workboxPolicy } from './cache-policy.mjs'
-import { CORE_ROOTS, ENGINE, HINDI, LAZY_URL, LESSON_PACKS, cacheTiers, packManifest, tierProblems } from './cache-tiers.mjs'
+import { CORE_ROOTS, ENGINE, HINDI, LAZY_URL, LESSON_PACKS, LIMBS, cacheTiers, packManifest, tierProblems } from './cache-tiers.mjs'
 
 // Load on demand, small cache (T12d, R71): the tiers from a build manifest shaped like Vite's.
 const manifest = {
@@ -34,7 +34,7 @@ const manifest = {
   ...Object.fromEntries(
     LESSON_PACKS.stage.roots.map((key) => [
       key,
-      { file: `assets/${path.basename(key, '.tsx')}-a.js`, imports: ['index.html', '_sheet-text-a.js'] },
+      { file: `assets/${path.basename(key).replace(/\.tsx?$/, '')}-a.js`, imports: ['index.html', '_sheet-text-a.js'] },
     ]),
   ),
   '_sheet-text-a.js': { file: 'assets/sheet-text-a.js' },
@@ -80,6 +80,9 @@ describe('cache tiers', () => {
     expect(tiers.packs.stage.webgl).toBe(false)
     expect(tiers.packs.stage.files).toContain('assets/Sheets-a.js')
     expect(tiers.packs.stage.files).toContain('assets/sheet-text-a.js')
+    // The legs and poses: a bout poses the body (R93 #6).
+    expect(LESSON_PACKS.stage.roots).toContain(LIMBS)
+    expect(tiers.packs.stage.files).toContain('assets/limbs-a.js')
     for (const pack of Object.values(tiers.packs)) for (const f of pack.files) expect(tiers.lazy.has(f), f).toBe(true)
   })
 
@@ -148,6 +151,9 @@ describe("cache tiers with v3's packs (W-1; R71 load on demand)", () => {
         'assets/lung-AAAAAAAJ.js',
         'assets/breathing-AAAAAAAK.js',
         'assets/_lifepeek-en-sys.breathing-AAAAAAAL.js',
+        // The legs, which the flat body loads when it draws the pack's system posed or full (R93 #6).
+        'assets/limbs-a.js',
+        'assets/sheet-text-a.js',
       ],
     })
     expect(tiers.packs.hindi).toEqual({ webgl: false, files: ['assets/hi-AAAAAAAH.js'] })

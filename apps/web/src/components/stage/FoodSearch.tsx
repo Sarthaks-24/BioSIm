@@ -18,6 +18,7 @@ import type { MealSheet } from './AddFoodSheet.tsx'
 export default function FoodSearch({
   anchor,
   tab = 'food',
+  place = true,
   activity,
   onTab = () => {},
   onClose,
@@ -25,6 +26,8 @@ export default function FoodSearch({
   anchor: { top: number; left: number } | null
   /** Which half shows (E-3b-ui): the food search, or the activity plans (ActivitySheet). */
   tab?: NonNullable<MealSheet>['tab']
+  /** Whether the half that shows takes the focus: not after the reader switched halves (R93 #11). */
+  place?: boolean
   /** The Activity half (AddFoodSheet: ActivitySheet, loaded when first shown). */
   activity?: ReactNode
   onTab?: (tab: NonNullable<MealSheet>['tab']) => void
@@ -56,9 +59,10 @@ export default function FoodSearch({
     if (d && !d.open) {
       d.showModal()
     }
-    // The food half's search box takes the focus when it shows (the activity half places its own).
-    if (tab === 'food') input.current?.focus()
-  }, [tab])
+    // The food half's search box takes the focus when the sheet opens on it (the activity half
+    // places its own); after a switch from Activity the focus stays on the switch.
+    if (tab === 'food' && place) input.current?.focus()
+  }, [tab, place])
 
   const choose = (foodId: string) => {
     if (inMeal(foodId)) return

@@ -49,7 +49,7 @@ test('a bout chip edits its bout; ✕ removes it; a blocked choice says why', as
   const sheet = page.locator('[data-activity-sheet]')
   await expect(sheet).toBeVisible()
   await sheet.getByRole('button', { name: 'Run', exact: true }).click()
-  await sheet.getByRole('button', { name: '10', exact: true }).click()
+  await sheet.getByRole('button', { name: '10 min', exact: true }).click()
   await sheet.getByRole('button', { name: 'Save' }).click()
   await expect.poll(() => param(page, 'act')).toBe('run.30.10')
 

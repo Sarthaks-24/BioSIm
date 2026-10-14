@@ -9,7 +9,7 @@ import { drivenAt, levelGate } from './drives.ts'
 import { LIMB_KIT } from '../anatomy/human/kit.ts'
 import { figure, takeKit } from './limbs.ts'
 import { limbsFor, loadLimbs } from './registry.ts'
-import { LAZY_PACKS, loadPack, packDrawing, type PackDef } from '../systems/load.ts'
+import { LAZY_PACKS, loadPack, packDrawing, packUi, type PackDef } from '../systems/load.ts'
 import { poseSvg } from './restingBody.ts'
 import { MAX_DRAWN_HZ, STILL_PHASE, drawnRate, rhythmLayer, rhythmScale } from './rhythm.ts'
 
@@ -36,6 +36,31 @@ describe('the flat registry loads on demand (R71, R74)', () => {
       expect(drawing).toHaveBeenCalledTimes(2)
     } finally {
       delete packs.breathing
+    }
+  })
+
+  it('a pack is kept all or nothing: a part that fails leaves no UI or drawing of it behind (R93 #13)', async () => {
+    const layer = () => null
+    const ui = { kidneys: { now: () => 'x' } } as unknown as NonNullable<Awaited<ReturnType<NonNullable<PackDef['ui']>>>>['default']
+    const drawing = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ default: { kidneys: layer } })
+    const packs = LAZY_PACKS as Record<string, PackDef>
+    packs.kidneys = {
+      rows: async () => ({ default: [] }),
+      ui: async () => ({ default: ui }),
+      drawing,
+    }
+    try {
+      await expect(loadPack('kidneys')).rejects.toThrow('offline')
+      expect(packUi('kidneys')).toBeUndefined()
+      expect(packDrawing('kidneys')).toBeUndefined()
+      await loadPack('kidneys')
+      expect(packUi('kidneys')).toBe(ui.kidneys)
+      expect(packDrawing('kidneys')).toBe(layer)
+    } finally {
+      delete packs.kidneys
     }
   })
 
@@ -147,6 +172,18 @@ describe('data → picture only through drives (anatomy plan D4)', () => {
     const shown = [0, 100, 200, 300, 400].map((ms, i) => gate([40, 0, 40, 0, 40][i]!, 11_000 + ms))
     expect(new Set(shown).size).toBeLessThanOrEqual(2)
   })
+
+  it('one bound still has hysteresis, and a value that is not a number keeps the step (R93 #14)', () => {
+    const gate = levelGate([10])
+    expect(gate(5, 0)).toBe(0)
+    // A fifth of the bound is the step: it flips at 11, not at 10.5, and back under 9.
+    expect(gate(10.5, 2000)).toBe(0)
+    expect(gate(11, 4000)).toBe(1)
+    expect(gate(9.5, 6000)).toBe(1)
+    expect(gate(NaN, 8000)).toBe(1)
+    expect(gate(8.9, 10_000)).toBe(0)
+    expect(levelGate([10], 1000, 4)(11.9, 0)).toBe(1)
+  })
 })
 
 describe('the rhythm layer (flash safety, WCAG 2.3.1)', () => {
@@ -154,6 +191,23 @@ describe('the rhythm layer (flash safety, WCAG 2.3.1)', () => {
     expect(drawnRate(15)).toEqual({ hz: 0.25, slowed: false })
     expect(drawnRate(150)).toEqual({ hz: MAX_DRAWN_HZ, slowed: false })
     expect(drawnRate(162)).toEqual({ hz: MAX_DRAWN_HZ, slowed: true })
+    for (const bad of [NaN, Infinity, -Infinity]) expect(drawnRate(bad)).toEqual({ hz: 0, slowed: false })
+  })
+
+  it('the layer enforces the cap and reduced motion itself: it is given the rate, never a phase', () => {
+    const style = { transform: '', transformOrigin: '', willChange: '' }
+    let reduced = false
+    const layer = rhythmLayer({ style }, [0, 0], 0.1, () => reduced)
+    // 600 a minute is drawn at 2.5 Hz: a tenth of a second is a quarter cycle, never more.
+    expect(layer.tick(600, 0)).toBe(true)
+    layer.tick(600, 100)
+    expect(style.transform).toBe(`scale(${rhythmScale(0.25, 0.1).toFixed(3)})`)
+    // A rate that is not a number stands still where it is.
+    layer.tick(NaN, 300)
+    expect(style.transform).toBe(`scale(${rhythmScale(0.25, 0.1).toFixed(3)})`)
+    reduced = true
+    layer.tick(60, 500)
+    expect(style.transform).toBe(`scale(${rhythmScale(STILL_PHASE, 0.1).toFixed(3)})`)
   })
 
   it('changes size only, through one CSS transform, written only when it changes; reduced motion is the mid-phase still', () => {
@@ -169,13 +223,15 @@ describe('the rhythm layer (flash safety, WCAG 2.3.1)', () => {
         },
       }),
     }
-    const layer = rhythmLayer(el, [10, 20], 0.1)
+    const layer = rhythmLayer(el, [10, 20], 0.1, () => false)
     expect(style.willChange).toBe('transform')
     expect(style.transformOrigin).toBe('10px 20px')
-    layer.set(0.25)
-    layer.set(0.25)
-    layer.set(0.2501)
-    expect(writes).toEqual(['scale(1.050)'])
+    // 15 a minute is a quarter cycle a second: ticks at 0, 1 s, 1 s and 1.0004 s.
+    layer.tick(15, 0)
+    layer.tick(15, 1000)
+    layer.tick(15, 1000)
+    layer.tick(15, 1000.4)
+    expect(writes).toEqual(['scale(1.000)', 'scale(1.050)'])
     layer.still()
     expect(writes.at(-1)).toBe(`scale(${rhythmScale(STILL_PHASE, 0.1).toFixed(3)})`)
     expect(Object.keys(style).sort()).toEqual(['transform', 'transformOrigin', 'willChange'])

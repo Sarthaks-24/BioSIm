@@ -56,6 +56,15 @@ export const PACK_SYSTEMS = {
 export const ENGINE = '../../packages/engine/src/run.ts'
 /** The 3D body's entry (three.js and the scene): lazy, never needed for the core simulator (R71). */
 export const THREE_D = 'src/three/BodyCanvas.tsx'
+/**
+ * The flat body's legs and poses (flat/registry.ts `loadLimbs`): a lazy chunk the flat body loads
+ * for the `full` framing or a bout's pose, whatever system is lit. No pack imports it (the flat body
+ * hands a layer `kit.loadLimbs`), so the build manifest can't show the link: it is a drawing runtime
+ * dep (R93 #6), saved with the stage's lesson and with every system pack that draws.
+ */
+export const LIMBS = 'src/flat/limbs.ts'
+/** What a system pack's drawing loads at run time besides its own chunks (the manifest can't see it). */
+const DRAWING_DEPS = [LIMBS]
 /** Hindi's one file (a Hindi build only: R47). */
 export const HINDI = 'src/i18n/hi.json'
 /** /sim's first download: what every lazy part can count on. */
@@ -78,6 +87,8 @@ export const LESSON_PACKS = {
       // E-3b-ui: the meal sheet's Activity half and the bouts' marks on the graphs and the dock.
       'src/components/ActivitySheet.tsx',
       'src/components/stage/BoutMarks.tsx',
+      // A bout poses the body (and Digestion's `full` framing shows the legs): R93 #6.
+      LIMBS,
     ],
   },
 }
@@ -118,8 +129,18 @@ export function staticFiles(manifest, roots) {
   return [...closure(manifest, roots, () => false)].filter((f) => /\.(?:js|css)$/.test(f))
 }
 
-/** A system pack's manifest keys: its systems' lazy chunks, its catalog rows, its text sections. */
+/**
+ * A system pack's manifest keys: its systems' lazy chunks, its catalog rows, its text sections, and,
+ * for a pack with code under src/systems/ (its UI and drawing), the drawing's runtime deps
+ * (DRAWING_DEPS: the legs), so a lesson saved offline draws the whole map, not the trunk only.
+ */
 function packRoots(manifest, pack) {
+  const own = packOwnRoots(manifest, pack)
+  const draws = pack !== 'core' && own.some((k) => k.startsWith('src/systems/'))
+  return draws ? [...own, ...DRAWING_DEPS.filter((k) => manifest[k])] : own
+}
+
+function packOwnRoots(manifest, pack) {
   const systems = PACK_SYSTEMS[pack]
   return Object.keys(manifest).filter(
     (k) =>
