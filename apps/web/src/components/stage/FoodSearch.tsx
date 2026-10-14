@@ -23,13 +23,14 @@ let back: { from: HTMLElement | null; at: number } = { from: null, at: -1 }
 /**
  * Where the focus goes when the meal sheet closes (R93 #10): the chip that opened it if it is still
  * there, else the chip now at its place on the strip (the next one: that bout was removed), else
- * `add` ("+ Add"). After the next frame: the sheet (a modal dialog, which keeps the focus inside)
+ * "+n" (the chip is folded into its list), else `add` ("+ Add"). After the next frame: the sheet (a modal dialog, which keeps the focus inside)
  * has gone by then, and the strip has its new chips.
  */
 export function focusBack(add: HTMLElement | null) {
   const { from, at } = back
   back = { from: null, at: -1 }
-  requestAnimationFrame(() => ([from, chipButtons(add)[at]].find(focusable) ?? add)?.focus())
+  const more = () => add?.closest('[data-plan-strip]')?.querySelector('[data-more-chips]')
+  requestAnimationFrame(() => ([from, chipButtons(add)[at], more()].find(focusable) ?? add)?.focus())
 }
 
 /**

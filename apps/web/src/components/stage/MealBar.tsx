@@ -297,6 +297,7 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
         <button
           ref={plus}
           type="button"
+          data-more-chips=""
           hidden={!!fit && !hidden}
           aria-expanded={open}
           onClick={() => setOpen(!open)}
