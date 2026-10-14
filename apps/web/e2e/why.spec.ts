@@ -3,8 +3,8 @@ import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 
 // "Why does the model differ from the book?" cards (X-4; ui-ux §8.4, content-i18n §8.5, R9, R54):
 // "Why different? ›" by a system's book line opens its card (the book's value with its page, the
-// model's, why, and the exam line), in Breathing and Skin & temperature, and by the guided lesson's
-// book line (Digestion's card). The cards come with their packs: a plain digestion visit never
+// model's, why, and the exam line), in Breathing, Skin & temperature and Lymph, and by the guided
+// lesson's book line (its first pause's system's card). The cards come with their packs: a plain digestion visit never
 // fetches one. Projects desktop and phone. E2E_SHOTS=1 saves pictures to .shots/ (git-ignored).
 
 test.beforeEach(({ page }) => returningVisitor(page))
@@ -66,21 +66,33 @@ test('Skin & temperature: the book’s 37.0 °C (Class 6, p. 128), held here; th
   await shot(page, 'skin')
 })
 
-test('the guided lesson: Digestion’s card by the first pause’s book line', async ({ page }) => {
+test('the guided lesson: Heart & blood’s card by the first pause’s book line (v3.1: the Digestion pause is now Lymph’s, R38)', async ({
+  page,
+}) => {
   await goto(page, '/')
   await page.locator('[data-flagship]').click()
   const bar = page.locator('[data-lesson-bar]')
-  await expect(bar).toHaveAttribute('data-lesson-pause', 'stomach')
+  await expect(bar).toHaveAttribute('data-lesson-pause', 'blood')
   let scope = bar
   if (test.info().project.name === 'phone') {
     // On a phone the book's line is in the "?" sheet.
     await bar.getByRole('button', { name: 'Question and answer' }).click()
     scope = page.getByRole('dialog', { name: 'Step 1 of 5' })
   }
-  const { card } = await openCard(scope, 'why.digestion', 2)
-  await expect(card.locator('[data-why-row="where"] [data-why-book]')).toContainText('(NCERT Class 10, Ch 5, p. 98)')
-  await expect(card.locator('[data-why-row="where"] [data-why-model]')).toContainText('97 % of the carbohydrate')
+  const { card } = await openCard(scope, 'sys.circulation.why', 3)
+  await expect(card.locator('[data-why-row="rest"] [data-why-book]')).toContainText('(older NCERT Class 7 book, 2024-25, Ch 7, p. 71)')
   await shot(page, 'lesson')
+})
+
+test('Lymph (U-5): the book’s road, NCERT Class 10 p. 94, and the burger’s blood fat; the baseline before eating', async ({ page }) => {
+  await open(page, '/sim?v=3&a=cheeseburger:1,fries:1&t=240&layer=lymph', 'lymph')
+  const scope = graphs(page).locator('[data-strip-note="road"]')
+  test.skip(test.info().project.name === 'phone', 'a phone shows one graph and keeps its book line in "How we know"')
+  const { card } = await openCard(scope, 'sys.lymph.why', 2)
+  await expect(card.locator('[data-why-row="road"] [data-why-book]')).toContainText('(NCERT Class 10, Ch 5, p. 94)')
+  await expect(card.locator('[data-why-row="road"] [data-why-model]')).toContainText('from 80 to about 101 mg/dL')
+  await expect(card.locator('[data-why-row="before"]')).toContainText('116 mg/dL')
+  await shot(page, 'lymph')
 })
 
 test('the cards are lazy: a plain digestion visit fetches no card', async ({ page }) => {

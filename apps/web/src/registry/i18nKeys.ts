@@ -10,7 +10,7 @@ import {
 } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
-import { CONTROL_EVENTS, CONTROL_SIGNALS, EFFORT_SIGNALS } from '@lifepeek/engine/run'
+import { CONTROL_EVENTS, CONTROL_SIGNALS, EFFORT_SIGNALS, LYMPH_EVENTS, LYMPH_SIGNALS } from '@lifepeek/engine/run'
 import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
@@ -21,13 +21,15 @@ const PACK_ROWS: readonly SignalMeta[] = [
   ...Object.values(EFFORT_SIGNALS),
   ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
   ...KIDNEY_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+  // U-5 (v3.1): lymph's two graphs.
+  ...Object.values(LYMPH_SIGNALS),
   // U-6: the control pack's (insulin, the brain's sugar).
   ...Object.values(CONTROL_SIGNALS),
 ]
 /** Their moments (Heart & blood's gut-flow peak, the kidneys' first urge and half the meal's water): the dock names them (`signals.event.*.name`). */
-const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS, ...Object.values(CONTROL_EVENTS)].filter(
-  (r): r is EventMeta<RunEventId> => !('kind' in r),
-)
+const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS].filter((r): r is EventMeta<RunEventId> => !('kind' in r))
+/** v3.1 packs' moments whose UI half has shipped (U-5: lymph's blood fat near its highest; U-6: the most insulin). */
+const PACK_EVENTS_V31 = [...Object.values(LYMPH_EVENTS), ...Object.values(CONTROL_EVENTS)] as EventMeta<RunEventId>[]
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -53,11 +55,11 @@ export function catalogKeys(): KeyUse {
     if (row.limitKey) required.add(row.limitKey)
   }
   for (const row of [...Object.values(EVENTS), ...PACK_EVENTS]) {
-    // A built pack's moment is named whatever release ships it (U-6: the most insulin, v3.1).
-    if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0' && !PACK_EVENTS.includes(row)) continue
+    if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0') continue
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }
+  for (const row of PACK_EVENTS_V31) required.add(`${row.i18nKey}.name`)
   required.add('signals.event.never')
   for (const s of SIGNAL_STATUSES) for (const sub of ['label', 'help']) required.add(`status.${s}.${sub}`)
   required.add('status.howWeKnow')

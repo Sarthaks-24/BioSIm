@@ -44,7 +44,7 @@ function openLesson(e: MouseEvent, l: Pick<TeachLesson, 'system' | 'slot'>) {
 }
 
 /** The guided lesson (X-1): projector-friendly as the ready lessons; its link's `state` brings the bar. */
-const openFlagship = (e: MouseEvent) => openLesson(e, { system: FLAGSHIP.layer, slot: 'gut' })
+const openFlagship = (e: MouseEvent) => openLesson(e, { system: FLAGSHIP.layer, slot: FLAGSHIP.slot })
 
 /** A question starts on the first graph: a lesson's graph left in front would point at the answer. */
 function openTask(e: MouseEvent) {

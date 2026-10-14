@@ -23,22 +23,15 @@ const front = (page: Page, name: string) => page.getByRole('group', { name: 'Gra
 const tabbed = () => test.info().project.name !== 'desktop'
 
 /**
- * The pauses with skin public or in a preview (pause 4 is skin's: R34). Hormones is public on v3
- * (U-6), so pause 1 is its insulin graph in place of Digestion's (R38: v3.1, never a sixth pause).
+ * The pauses with skin public or in a preview (the skin pause is in the walk: R34). Since v3.1 the
+ * Digestion pause is replaced by Lymph's blood fat at its highest, last in clock order (U-5, R38).
  */
 const PAUSES = [
-  {
-    step: 1,
-    pause: 'insulin',
-    system: 'hormones',
-    t: 50,
-    graph: 'Insulin (× before eating)',
-    question: 'What does the pancreas do after the roti?',
-  },
-  { step: 2, pause: 'blood', system: 'circulation', t: 51, graph: 'Where blood goes', question: 'Where is more blood going?' },
-  { step: 3, pause: 'breaths', system: 'breathing', t: 70, graph: 'Breaths a minute', question: 'Why are breaths faster now?' },
-  { step: 4, pause: 'sweat', system: 'skin', t: 75, graph: 'Sweat made', question: 'Where does the extra heat go?' },
-  { step: 5, pause: 'water', system: 'kidneys', t: 111, graph: 'Urine made per hour', question: 'Where did the water go?' },
+  { step: 1, pause: 'blood', system: 'circulation', t: 51, graph: 'Where blood goes', question: 'Where is more blood going?' },
+  { step: 2, pause: 'breaths', system: 'breathing', t: 70, graph: 'Breaths a minute', question: 'Why are breaths faster now?' },
+  { step: 3, pause: 'sweat', system: 'skin', t: 75, graph: 'Sweat made', question: 'Where does the extra heat go?' },
+  { step: 4, pause: 'water', system: 'kidneys', t: 111, graph: 'Urine made per hour', question: 'Where did the water go?' },
+  { step: 5, pause: 'fat', system: 'lymph', t: 147, graph: 'Blood fat (triglyceride)', question: 'Did the roti raise blood fat?' },
 ] as const
 
 async function expectPause(page: Page, p: (typeof PAUSES)[number]) {
@@ -96,7 +89,7 @@ test('the lesson: five pauses with Next, Back and the clicker, each pack fetched
   await expect(bar(page)).toBeVisible()
   await expectPause(page, PAUSES[0])
   await shot(page, 'pause1')
-  // The packs of the pauses ahead are fetched before Next is pressed (Heart & blood's, from pause 1).
+  // The packs of the pauses ahead are fetched before Next is pressed (Breathing's, from pause 1).
   const packsSoFar = () => asked.filter((p) => /\/assets\/pack-[\w-]+\.js$/.test(p)).length
   await expect.poll(packsSoFar).toBeGreaterThanOrEqual(1)
   const next = bar(page).locator('[data-lesson-next]')
@@ -116,9 +109,12 @@ test('the lesson: five pauses with Next, Back and the clicker, each pack fetched
   await shot(page, 'pause4')
   await page.locator('body').press('PageDown')
   await expectPause(page, PAUSES[4])
+  // v3.1 (U-6): the blood-fat pause says what insulin did too, in one sentence (Hormones is public).
+  if (test.info().project.name !== 'phone')
+    await expect(bar(page).locator('[data-lesson-insulin]').first()).toContainText('Insulin rose as sugar from the roti reached the blood')
   await shot(page, 'pause5')
-  // Each pack the lesson lit was fetched before its pause was shown: one per system besides digestion's.
-  expect(packsSoFar()).toBeGreaterThanOrEqual(4)
+  // Each pack the lesson lit was fetched before its pause was shown: one per system (lymph's too).
+  expect(packsSoFar()).toBeGreaterThanOrEqual(5)
   // Play and scrub still work during the lesson.
   await page.getByRole('slider', { name: 'Timeline' }).press('ArrowRight')
   await expect.poll(() => now(page)).toBe(PAUSES[4].t + 10)
@@ -137,9 +133,9 @@ test('on a phone the bar is one line, and "?" opens the question, the book’s l
   expect(height).toBeLessThanOrEqual(52)
   await bar(page).getByRole('button', { name: 'Question and answer' }).click()
   const sheet = page.getByRole('dialog', { name: 'Step 1 of 5' })
-  await expect(sheet).toContainText('What does the pancreas do after the roti?')
-  await expect(sheet).toContainText('The book says: NCERT Class 10 (Ch 6, p. 111)')
-  await expect(sheet).toContainText('This model says: Insulin rises as sugar from the roti reaches the blood')
+  await expect(sheet).toContainText('Where is more blood going?')
+  await expect(sheet).toContainText('The book says: NCERT Class 10')
+  await expect(sheet).toContainText('This model says: While the intestine takes in food')
   await shot(page, 'phone-sheet')
   await page.keyboard.press('Escape')
   await expect(sheet).toHaveCount(0)
@@ -195,7 +191,9 @@ test('Science: one section per system, each with the sources its rows cite', asy
   const sections = page.locator('section[data-system]')
   await expect(sections).toHaveCount(10)
   await expect(page.locator('section[data-system="breathing"] li')).toHaveCount(7)
-  await expect(page.locator('section[data-system="lymph"]')).toContainText('Drawing only')
+  // Lymph cites its rows' sources since U-5 (v3.1); Bones stays Drawing only.
+  await expect(page.locator('section[data-system="lymph"] li').first()).toBeVisible()
+  await expect(page.locator('section[data-system="bones"]')).toContainText('Drawing only')
   // Each source links to its entry in the reference list.
   const href = await page.locator('section[data-system="kidneys"] a').first().getAttribute('href')
   expect(href).toMatch(/^#/)

@@ -11,7 +11,7 @@ import { LYMPH_TONE } from '../../anatomy/tones/lymph.ts'
  * (R13: a source line, never a fourth tag; R31: read on the OpenStax page, §18.4 and §21.2).
  *
  * Drawn in SVG with the lymph tones and the ink: nothing moves or flashes. No symptom or disease,
- * no score, no "boost" (framing lint). In the pack's `ui` chunk (ui.tsx), at most 5 KB gz with it.
+ * no score, no "boost" (framing lint). In the pack's one chunk (pack.ts), with the graphs' words since U-5.
  */
 
 const PANELS = ['barrier', 'cut', 'fight', 'memory'] as const
@@ -146,7 +146,11 @@ const PICTURES: Record<Panel, (arrow: string) => ReactNode> = {
   ),
 }
 
-export default function GermCard() {
+/**
+ * The card. `titled`: with its own title (in the graphs' place); without it inside the Now line's
+ * "Germ defence" popover (systems/lymph/ui.tsx), whose title row names it already.
+ */
+export default function GermCard({ titled = true }: { titled?: boolean }) {
   const { t } = useTranslation()
   const [at, setAt] = useState(0)
   // Ids of this card's own (two cards on a page never share one; R93 #15).
@@ -161,11 +165,18 @@ export default function GermCard() {
   const go = (to: number) => to >= 0 && to < PANELS.length && setAt(to)
   const dim = (off: boolean) => (off ? { opacity: 0.4 } : undefined)
   return (
-    <section data-card="germs" aria-labelledby={titleId} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink">
+    <section
+      data-card="germs"
+      aria-labelledby={titled ? titleId : undefined}
+      aria-label={titled ? undefined : t('sys.lymph.card.title')}
+      className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink"
+    >
       <header className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h3 id={titleId} className="text-title font-extrabold">
-          {t('sys.lymph.card.title')}
-        </h3>
+        {titled && (
+          <h3 id={titleId} className="text-title font-extrabold">
+            {t('sys.lymph.card.title')}
+          </h3>
+        )}
         <StatusTag status="illustration" />
       </header>
       <svg

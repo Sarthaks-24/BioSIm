@@ -51,7 +51,6 @@ function onePack(load: () => Promise<PackModule>): PackDef {
 
 /** The part of a system's row that comes with its pack. */
 export type SystemParts = Partial<Pick<SystemDef, 'slots' | 'rhythms' | 'knownLimits' | 'organs'>>
-const lymph = () => import('./lymph/pack.ts')
 const effort = () => import('./muscles/pack.ts')
 
 /**
@@ -79,13 +78,10 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // U-4: its rows and moments, words, English (with the signal and unit texts) and flat kidneys and
   // bladder, one lazy module under systems/kidneys/ (cache-tiers.mjs: lazy tier).
   kidneys: onePack(() => import('./kidneys/pack.ts')),
-  // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
-  lymph: {
-    rows: async () => ({ default: [] }),
-    ui: () => lymph().then((m) => ({ default: m.ui })),
-    text: () => import('virtual:lifepeek-en/sys.lymph'),
-    drawing: () => lymph().then((m) => ({ default: m.drawing })),
-  },
+  // A-11a, U-5 (v3.1): its rows and moment, words, graphs, the germ-defence card, English (with the
+  // signal texts) and the lymph map with its fat dots, one lazy module under systems/lymph/
+  // (cache-tiers.mjs: lazy tier). Drawing only until S-5; Model estimate since (R3).
+  lymph: onePack(() => import('./lymph/pack.ts')),
   // U-7 and U-6: Brain & nerves (the nerve demo, its words, English and flat brain) and Hormones
   // (insulin and blood sugar, the brain card, the flat pancreas), one lazy module: systems/nerves/pack.ts
   // gathers both rows' parts, each kept in its own folder (cache-tiers.mjs: lazy tier).

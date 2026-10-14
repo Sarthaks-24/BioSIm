@@ -5,7 +5,7 @@ import en from '../i18n/en.json'
 import { DIGESTION } from '../systems/digestion/def.ts'
 import { systemOf } from '../systems/registry.ts'
 import { FLAGSHIP, flagshipHref, flagshipShown } from './flagship.ts'
-import { HEART_PAUSE, INSULIN_PAUSE, PAUSES, pausesFor, type Pause } from './flagshipPauses.ts'
+import { HEART_PAUSE, PAUSES, pausesFor, type Pause } from './flagshipPauses.ts'
 import { lookupFood } from '../data/foods.ts'
 import { runMoments } from './moments.ts'
 import { LESSONS, PRESETS, TASKS } from './presets.ts'
@@ -63,7 +63,7 @@ describe('the flagship lesson, "One roti, one walk"', () => {
   const walked = plan([...FLAGSHIP.activity])
   const rested = plan([...FLAGSHIP.keptActivity])
   const at = (r: RunResult, id: string, min: number) => valueAt(r.signals.get(id as never)!, min, r.stepMin)
-  const pause = (key: Pause['key']) => [...PAUSES, HEART_PAUSE, INSULIN_PAUSE].find((p) => p.key === key)!
+  const pause = (key: Pause['key']) => [...PAUSES, HEART_PAUSE].find((p) => p.key === key)!
   const model = (key: Pause['key']) => en.flagship.pauses[key].model
   /** The numbers a sentence says, in order. */
   const numbers = (text: string) => [...text.matchAll(/\d+/g)].map((m) => Number(m[0]))
@@ -81,21 +81,23 @@ describe('the flagship lesson, "One roti, one walk"', () => {
     expect(FLAGSHIP.release).toBe('v3.0')
   })
 
-  it('at most five pauses, in clock order, on v3.0 systems only, each on a different system (R30, R38)', () => {
+  it('at most five pauses, in clock order, on v3.0 systems and lymph (v3.1), each on a different system (R30, R38)', () => {
     for (const skin of [true, false]) {
       const pauses = pausesFor(skin)
       expect(pauses.length).toBeLessThanOrEqual(5)
       expect(pauses.map((p) => p.t)).toEqual([...pauses.map((p) => p.t)].sort((a, b) => a - b))
-      for (const p of pauses) expect(['digestion', 'circulation', 'breathing', 'skin', 'kidneys']).toContain(p.system)
+      for (const p of pauses) expect(['circulation', 'breathing', 'skin', 'kidneys', 'lymph']).toContain(p.system)
+      // v3.1: the blood-fat pause replaced the Digestion one, never a sixth (R38).
+      expect(pauses.map((p) => p.system)).not.toContain('digestion')
     }
     expect(new Set(pausesFor(true).map((p) => p.system)).size).toBe(5)
-    // Pause 4 is skin's; while skin is hidden, the heart's in the walk (R34).
-    expect(pausesFor(true)[3]!.system).toBe('skin')
-    expect(pausesFor(false)[3]).toEqual(HEART_PAUSE)
+    // The skin pause is in the walk; while skin is hidden, the heart's in the walk (R34).
+    expect(pausesFor(true)[2]!.system).toBe('skin')
+    expect(pausesFor(false)[2]).toEqual(HEART_PAUSE)
     // The systems it pauses on whatever is public are the ones Home and Teach wait for.
     expect(new Set(pausesFor(false).map((p) => p.system))).toEqual(new Set(FLAGSHIP.systems))
     // The links open at the first pause.
-    expect([FLAGSHIP.layer, FLAGSHIP.t]).toEqual([PAUSES[0]!.system, PAUSES[0]!.t])
+    expect([FLAGSHIP.layer, FLAGSHIP.slot, FLAGSHIP.t]).toEqual([PAUSES[0]!.system, PAUSES[0]!.slot, PAUSES[0]!.t])
   })
 
   it('each pause opens on a graph its system has', () => {
@@ -105,30 +107,31 @@ describe('the flagship lesson, "One roti, one walk"', () => {
       circulation: ['beats', 'pumped', 'where'],
       kidneys: ['urine', 'water'],
       skin: ['sweat'],
-      hormones: ['sugar', 'insulin'],
+      lymph: ['road', 'fat'],
     }
-    for (const p of [...PAUSES, HEART_PAUSE, INSULIN_PAUSE]) expect(slots[p.system], p.key).toContain(p.slot)
+    for (const p of [...PAUSES, HEART_PAUSE]) expect(slots[p.system], p.key).toContain(p.slot)
   })
 
-  it('1 · Digestion at 0:30: the roti is leaving the stomach a little at a time, and its sugar is reaching the blood', () => {
-    const p = pause('stomach')
-    expect(p.t).toBe(30)
-    const stomach = (m: number) => at(walked, 'gut.stomach.contentG', m)
-    expect(stomach(p.t)).toBeGreaterThan(0)
-    expect(stomach(p.t)).toBeLessThan(stomach(p.t - 5))
-    expect(stomach(p.t)).toBeGreaterThan(stomach(p.t + 5))
-    expect(at(walked, 'blood.glucose', p.t)).toBeGreaterThan(at(walked, 'blood.glucose', 0) + 5)
-    expect(at(walked, 'blood.glucose', p.t)).toBeGreaterThan(at(walked, 'blood.glucose', p.t - 5))
+  it('5 · Lymph at blood fat’s highest (v3.1, R38): the roti’s little fat raises it only a little, by the numbers it says', () => {
+    const p = pause('fat')
+    expect(p.t).toBe(Math.round(walked.moments.get('event.triglyceridePeak' as never)!.atMin!))
+    const fat = (m: number) => at(walked, 'blood.triglyceride', m)
+    // Its words: about 3 g of fat; about 86 mg/dL at the most, from 80 before eating.
+    expect(numbers(model('fat'))).toEqual([Math.round(walked.meal.total.fatG), Math.round(fat(p.t)), Math.round(fat(0))])
+    expect(fat(0)).toBe(PACK_PARAMS.lymph.fastingMgDl)
+    expect(fat(p.t) - fat(0)).toBeLessThan(10)
+    // The walk changes nothing here: the kept plan at rest has the same blood fat.
+    expect(at(rested, 'blood.triglyceride', p.t)).toBeCloseTo(fat(p.t), 6)
   })
 
-  it('2 · Heart & blood at the most blood to the gut: more blood flows to the intestine', () => {
+  it('1 · Heart & blood at the most blood to the gut: more blood flows to the intestine', () => {
     const p = pause('blood')
     expect(p.t).toBe(Math.round(walked.moments.get('event.gutFlowPeak' as never)!.atMin!))
     expect(p.t).toBeLessThan(walkStart)
     expect(at(walked, 'blood.flow.gut', p.t)).toBeGreaterThan(1.1 * at(walked, 'blood.flow.gut', 0))
   })
 
-  it('3 · Breathing in the walk: faster and deeper, the numbers its sentence says', () => {
+  it('2 · Breathing in the walk: faster and deeper, the numbers its sentence says', () => {
     const p = pause('breaths')
     expect(p.t).toBeGreaterThan(walkStart)
     expect(p.t).toBeLessThan(walkEnd)
@@ -140,7 +143,7 @@ describe('the flagship lesson, "One roti, one walk"', () => {
     expect(at(walked, 'gas.o2UseRate', p.t)).toBeGreaterThan(2 * at(rested, 'gas.o2UseRate', p.t))
   })
 
-  it('4 · Skin in the walk: sweat carries the extra heat of walking away (none at rest); 37 °C is the book’s, held', () => {
+  it('3 · Skin in the walk: sweat carries the extra heat of walking away (none at rest); 37 °C is the book’s, held', () => {
     const p = pause('sweat')
     expect(p.t).toBeGreaterThan(walkStart)
     expect(p.t).toBeLessThan(walkEnd)
@@ -152,14 +155,14 @@ describe('the flagship lesson, "One roti, one walk"', () => {
     expect(numbers(model('sweat'))).toEqual([37])
   })
 
-  it('4 (skin hidden) · Heart & blood in the walk: the beats its sentence says, more blood to the muscles', () => {
+  it('3 (skin hidden) · Heart & blood in the walk: the beats its sentence says, more blood to the muscles', () => {
     const p = HEART_PAUSE
     expect(p.t).toBe(pause('sweat').t)
     expect(numbers(model('heart'))).toEqual([Math.round(at(walked, 'heart.rate', p.t)), Math.round(at(rested, 'heart.rate', p.t))])
     expect(at(walked, 'blood.flow.muscle', p.t)).toBeGreaterThan(2 * at(rested, 'blood.flow.muscle', p.t))
   })
 
-  it('5 · Kidneys when half the meal’s water has left: less has come out after the walk, by the amount it says', () => {
+  it('4 · Kidneys when half the meal’s water has left: less has come out after the walk, by the amount it says', () => {
     const p = pause('water')
     expect(p.t).toBe(Math.round(walked.moments.get('event.halfMealWaterPassed' as never)!.atMin!))
     const [walk, rest] = [at(walked, 'kidney.urineTotal', p.t), at(rested, 'kidney.urineTotal', p.t)]
@@ -169,31 +172,20 @@ describe('the flagship lesson, "One roti, one walk"', () => {
     expect(at(walked, 'skin.sweatTotal', p.t)).toBeGreaterThan(0)
   })
 
-  it('v3.1 · 1 · Hormones near the most insulin replaces the Digestion pause once Hormones may be lit: still five, in clock order (R38, U-6)', () => {
-    for (const skin of [true, false]) {
-      const pauses = pausesFor(skin, true)
-      expect(pauses.length).toBe(5)
-      expect(pauses.map((p) => p.t)).toEqual([...pauses.map((p) => p.t)].sort((a, b) => a - b))
-      expect(pauses.map((p) => p.key)).not.toContain('stomach')
-      expect(pauses[0]).toEqual(INSULIN_PAUSE)
-      // Each on a different system, but for the heart twice while skin is hidden (R34).
-      expect(new Set(pauses.map((p) => p.system)).size).toBe(skin ? 5 : 4)
-    }
-    // Without Hormones the v3.0 lesson, unchanged.
-    expect(pausesFor(true, false)).toEqual(pausesFor(true))
-    const p = INSULIN_PAUSE
-    // Near the most insulin (within 15 %), on a 10-minute mark, before the heart's pause.
+  it('v3.1 · the blood-fat pause says what insulin did too, in one sentence, once Hormones may be lit (R38, U-6): still five pauses', () => {
+    const p = pause('fat')
+    for (const skin of [true, false]) expect(pausesFor(skin)).toHaveLength(5)
+    // "to about 5 times its before-eating level at 1 h 25 min": the most insulin and when (to 5 minutes); the walk does not move it (D6).
     const peak = walked.moments.get('event.insulinPeak' as never)!.atMin!
-    expect(at(walked, 'blood.insulin', p.t)).toBeGreaterThan(0.85 * at(walked, 'blood.insulin', peak))
-    expect(p.t % 10).toBe(0)
-    expect(p.t).toBeLessThan(pause('blood').t)
-    // "about 5 times its level before eating now": the model's insulin at the pause; the walk does not move it (D6).
-    expect(numbers(model('insulin'))).toEqual([Math.round(at(walked, 'blood.insulin', p.t))])
-    expect(at(rested, 'blood.insulin', p.t)).toBe(at(walked, 'blood.insulin', p.t))
-    // "Then it falls back": back near 1× within 4 h.
-    expect(at(walked, 'blood.insulin', 240)).toBeLessThan(1.1)
-    // "as sugar from the roti reaches the blood": blood sugar above its start at the pause.
-    expect(at(walked, 'blood.glucose', p.t)).toBeGreaterThan(at(walked, 'blood.glucose', 0) + 5)
+    const at5 = Math.round(peak / 5) * 5
+    expect(numbers(en.flagship.pauses.fat.insulin)).toEqual([Math.round(at(walked, 'blood.insulin', peak)), Math.floor(at5 / 60), at5 % 60])
+    expect(at(rested, 'blood.insulin', peak)).toBe(at(walked, 'blood.insulin', peak))
+    // "as sugar from the roti reached the blood": blood sugar above its start at the peak.
+    expect(at(walked, 'blood.glucose', peak)).toBeGreaterThan(at(walked, 'blood.glucose', 0) + 5)
+    // "and is falling back now": at the pause it is past its peak, lower than a few minutes before, still above 1×.
+    expect(p.t).toBeGreaterThan(peak)
+    expect(at(walked, 'blood.insulin', p.t)).toBeLessThan(at(walked, 'blood.insulin', p.t - 5))
+    expect(at(walked, 'blood.insulin', p.t)).toBeGreaterThan(1)
   })
 
   it('the exit question’s answer: breathing hardly moves after the roti, a lot in the walk (Teach)', () => {
@@ -214,7 +206,7 @@ describe('the flagship lesson, "One roti, one walk"', () => {
   it('its link opens the first pause, keeping a preview a preview; no lesson parameter', () => {
     const url = new URL(flagshipHref(false), 'https://example.org')
     const s = decodeShareState(url.searchParams)
-    expect([s.a, s.b, s.t, s.layer, s.act]).toEqual([FLAGSHIP.meal, FLAGSHIP.kept, 30, 'digestion', FLAGSHIP.activity])
+    expect([s.a, s.b, s.t, s.layer, s.act]).toEqual([FLAGSHIP.meal, FLAGSHIP.kept, 51, 'circulation', FLAGSHIP.activity])
     expect(s.bact).toBeUndefined()
     expect(url.searchParams.get('preview')).toBeNull()
     expect(new URL(flagshipHref(true), 'https://example.org').searchParams.get('preview')).toBe('1')

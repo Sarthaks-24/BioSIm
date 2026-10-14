@@ -32,6 +32,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/kidneys/lesson.ts',
     'systems/hormones/lesson.ts',
     'systems/muscles/lesson.ts',
+    // And lymph's (U-5, v3.1).
+    'systems/lymph/lesson.ts',
     'systems/nerves/lesson.ts',
     // The worksheet shows only on Teach (`/teach?sheet=<lesson>`), so Teach's words are there.
     'components/Worksheet.tsx',
@@ -55,6 +57,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     // Kidneys' graphs and their background line, the same (U-4).
     'systems/kidneys/ui.tsx',
     'systems/kidneys/water.ts',
+    // Lymph's graphs (U-5).
+    'systems/lymph/ui.tsx',
     // Hormones' graphs, the same (U-6).
     'systems/hormones/ui.tsx',
   ],
@@ -77,6 +81,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     // The effort pack's text brings the units section too (systems/muscles/text.ts).
     'systems/muscles/effort.ts',
     'systems/kidneys/summary.ts',
+    // The lymph pack's text brings it too (systems/lymph/text.ts, U-5).
+    'systems/lymph/summary.ts',
     // The control pack's text brings it too (systems/hormones/text.ts).
     'systems/hormones/summary.ts',
   ],

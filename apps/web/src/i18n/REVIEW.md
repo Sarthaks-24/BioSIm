@@ -324,7 +324,7 @@ The graphs on the new screen: their labels, the ⓘ "How we know" panel, and the
 
 | Key | English | Hindi | Status |
 |---|---|---|---|
-| `units.words.mgdl` | milligrams of sugar in each decilitre (a tenth of a litre) of blood | रक्त के हर डेसीलीटर (लीटर का दसवाँ भाग) में शर्करा, मिलीग्राम में | draft |
+| `units.words.mgdl` | milligrams in each decilitre (a tenth of a litre) of blood | रक्त के हर डेसीलीटर (लीटर का दसवाँ भाग) में शर्करा, मिलीग्राम में | draft |
 | `units.words.g` | grams (1000 g = 1 kg) | ग्राम (1000 ग्राम = 1 किलो) | draft |
 | `units.words.kcal` | kilocalories of food energy | भोजन की ऊर्जा, किलो कैलोरी में | draft |
 | `units.words.kcalPerH` | kilocalories of energy per hour | प्रति घंटे ऊर्जा, किलो कैलोरी में | draft |

@@ -240,9 +240,11 @@ const BUDGETS = [
   { name: 'lazy total (raw)', lazyTotal: true, max: Infinity, mode: 'report' },
   // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
   { name: 'engine (lazy)', roots: [ENGINE], minus: SIM_ROOTS, max: 45 * KB, mode: 'report' },
-  // A-11a: the germ-defence card (anatomy plan §8: ≤ 5 KB gz), checked with all of the lymph pack's
-  // code (its Now line and the map too: one chunk, systems/lymph/pack.ts), so the card is under it.
-  { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
+  // U-5 (v3.1): the lymph pack (its graphs' words, the germ-defence card, the map with its fat dots,
+  // its English: one lazy module, systems/lymph/pack.ts), at most 20 KB gz like every system pack
+  // (ui-ux §9, anatomy plan §8). A-11a's "germ card + map ≤ 5 KB" row measured the same chunk when it
+  // held only the card and the map; the card alone stays far under 5 KB (it is unchanged but a prop).
+  { name: 'lymph pack (lazy)', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 20 * KB, mode: 'enforce' },
   // U-2: the body-system picker (ui-ux §9, architecture §4: ≤ 6 KB gz, lazy), with the Overlay it opens in.
   { name: 'picker (lazy)', roots: ['src/components/SystemPicker.tsx'], minus: SIM_ROOTS, max: 6 * KB, mode: 'enforce' },
   // U-1: the effort pack (muscles, skin, the bones card: rows, words, English, three flat layers), one
@@ -496,6 +498,9 @@ const guardProblems = []
     'raGainPerGPerMin', // hormones (insulin, S-6)
     // The nerve demo (S-7): its own lazy entry, @lifepeek/engine/demo (demo/nerveParams.ts).
     'nmjDelayMs',
+    // Lymph (S-5, U-5; R108): its first graph's signal and one of its pack's numbers (packParams.ts lymph).
+    'lymph.fatFlowRate',
+    'packTauMin',
   ]
   for (const f of staticFiles(SIM_ROOTS)) {
     const text = fs.readFileSync(path.join(dist, f), 'utf8')

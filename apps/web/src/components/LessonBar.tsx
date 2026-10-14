@@ -76,9 +76,9 @@ export default function LessonBar({ lesson, run, tabs, loadPack, className = '' 
   }
   // Pause 4 is skin's once skin may be lit (public, or a preview), else the heart's (R34).
   const skin = run((s) => s.preview || !!systemOf('skin')?.public)
-  // In v3.1 the insulin pause replaces the Digestion one once Hormones may be lit (R38).
-  const hormones = run((s) => s.preview || !!systemOf('hormones')?.public)
-  const pauses = pausesFor(skin, hormones)
+  const pauses = pausesFor(skin)
+  // v3.1 (R38, U-6): the blood-fat pause says what insulin did too, once Hormones may be lit.
+  const insulin = run((s) => s.preview || !!systemOf('hormones')?.public)
   const last = pauses.length - 1
   const at = Math.min(step, last)
   const pause = pauses[at]!
@@ -91,7 +91,7 @@ export default function LessonBar({ lesson, run, tabs, loadPack, className = '' 
     const next = pauses[at + 1] && systemOf(pauses[at + 1]!.system)
     if (next) loadPack(next.pack)?.catch(() => {})
     // A pause is set when it is reached, not again on every render.
-  }, [at, skin, hormones])
+  }, [at, skin])
 
   /**
    * A pause: the clock stops at its time, its system is lit (its pack loads first, the lit one stays
@@ -138,6 +138,7 @@ export default function LessonBar({ lesson, run, tabs, loadPack, className = '' 
       <p>
         <span className="font-semibold text-ink">{t('flagship.model')}: </span>
         {t(`flagship.pauses.${pause.key}.model`)}
+        {pause.key === 'fat' && insulin && <span data-lesson-insulin=""> {t('flagship.pauses.fat.insulin')}</span>}
       </p>
     </>
   )

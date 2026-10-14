@@ -1,13 +1,20 @@
 import type { SystemDef } from '../registry.ts'
 
 /**
- * Lymph & germ defence (A-11a; anatomy plan §2.7, model §2.11, R3/R11): a Drawing-only row with no
- * engine half in v3.0. Its picture is the static lymph map (systems/lymph/LymphLayer.tsx) and, in
- * the graph column's place, the germ-defence card (GermCard.tsx); both load with the `lymph` pack.
- * No graphs (empty `slots`), so the picker shows "Drawing only" for it. S-5 adds the lymph-fat and
- * blood-fat graphs in v3.1, and the row's tag changes then.
+ * Lymph & germ defence (A-11a, U-5; anatomy plan §2.7, model §2.10, §2.11, R3): the `lymph` pack,
+ * drawn flat in the `full` framing by its own layer (systems/lymph/LymphLayer.tsx: the lymph map,
+ * with fat dots on the lymph route while lymph carries fat). Only what the title, the picker and
+ * links need is here, in the first download. Its two graphs (Fat's road, Blood fat), its moment and
+ * limits come with the pack (systems/lymph/ui.tsx `DEFS`, merged by systems/load.ts), so no lymph
+ * signal ID is in /sim. The germ-defence card (GermCard.tsx) opens from its Now line.
  *
- * Public since the v3.0 release gate (H-1, R103), as Drawing only.
+ * v3.0 had it Drawing only (no engine half, empty `slots`, no inputs: the picker's "Drawing only").
+ * v3.1 (S-5, U-5): the meal moves it, so the picker shows its first graph's value and "Model
+ * estimate" (R3). Its graphs show 0–12 h (`graphWindowMin`, as Kidneys'): an everyday meal's fat
+ * has reached the blood and left it by then; the dock says "0–12 h shown · 48 h ›" for a big one.
+ *
+ * Public since the v3.0 release gate (H-1, R103) as Drawing only; with its graphs since U-5's
+ * acceptance (v3.1 is released by the user).
  */
 export const LYMPH: SystemDef = {
   id: 'lymph',
@@ -20,8 +27,8 @@ export const LYMPH: SystemDef = {
   knownLimits: [],
   draw: 'layer',
   pack: 'lymph',
-  inputs: [],
+  inputs: ['meal'],
   rhythms: [],
-  graphWindowMin: 2880,
+  graphWindowMin: 12 * 60,
   public: true,
 }

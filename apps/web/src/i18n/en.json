@@ -186,6 +186,7 @@
       "drinkWater": "Where does the water from a drink go?",
       "musclesRun": "How much harder do muscles work in a run?",
       "sweatRun": "Where does the heat of a run go?",
+      "fatRoad": "How does fat reach the blood?",
       "reflexHotPan": "Why do you pull your hand back before you feel the pain?",
       "insulinCola": "Who keeps blood sugar steady?"
     },
@@ -218,6 +219,7 @@
       "drinkWater": "How much urine an hour at the most, with four glasses and with one?",
       "musclesRun": "How many times their resting energy do the muscles use during the run?",
       "sweatRun": "How much sweat does the skin make in the run, and how much at rest?",
+      "fatRoad": "How high does blood fat go after a cheeseburger with fries, and after two rotis?",
       "reflexHotPan": "How many milliseconds does the reflex take, and the route through the brain?",
       "insulinCola": "How high does insulin go after a glass of cola, and after a glass of water?"
     },
@@ -470,6 +472,35 @@
           "m": "By 4 h about 670 mL more urine has come out than after one glass."
         }
       },
+      "fatRoad": {
+        "setup": "A cheeseburger with fries at 0 h. Kept to compare: two rotis.",
+        "book": "NCERT Class 10: lymph carries digested and absorbed fat from the intestine, and drains extra fluid back into the blood.",
+        "y": "Blood fat (mg/dL)",
+        "tasks": [
+          {
+            "q": "Which road does fat from the intestine take to the blood?",
+            "b": "NCERT Class 10: lymph carries digested and absorbed fat from the intestine.",
+            "m": "Into lymph vessels, up the main lymph duct, into a vein in the neck."
+          },
+          {
+            "q": "Sketch blood fat from 0 to 12 h, for the cheeseburger with fries and for the rotis. How high does each go?",
+            "m": "About 101 mg/dL with the cheeseburger and fries, and it stays up for hours; about 86 mg/dL with the rotis (80 before eating)."
+          },
+          {
+            "q": "Does the sugar from the meal take the same road?",
+            "m": "No. In this model sugar goes from the intestine straight into the blood; only fat goes by lymph."
+          },
+          {
+            "q": "What other job does lymph do?",
+            "b": "NCERT Class 10: it drains extra fluid from the spaces between cells back into the blood.",
+            "k": "About 3 L of tissue fluid a day (OpenStax Anatomy and Physiology 2e)."
+          }
+        ],
+        "exit": {
+          "q": "Why does blood fat stay up for hours after the cheeseburger with fries, but not after the rotis?",
+          "m": "The cheeseburger and fries have about 32 g of fat and leave the stomach slowly, so fat keeps arriving by lymph for hours; the rotis have about 3 g."
+        }
+      },
       "musclesRun": {
         "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
         "book": "NCERT Class 10: food is used in cells to provide energy; with oxygen, glucose is broken down completely into carbon dioxide and water.",
@@ -596,7 +627,7 @@
     "kcalPerH": "{{n}} kcal/h",
     "gPerMin": "{{n}} g/min",
     "words": {
-      "mgdl": "milligrams of sugar in each decilitre (a tenth of a litre) of blood",
+      "mgdl": "milligrams in each decilitre (a tenth of a litre) of blood",
       "g": "grams (1000 g = 1 kg)",
       "kcal": "kilocalories of food energy",
       "kcalPerH": "kilocalories of energy per hour",
@@ -891,6 +922,11 @@
           "desc": "The blood flowing to the muscles each minute. Walking and running send much more; a meal does not change it."
         }
       },
+      "triglyceride": {
+        "name": "Blood fat (triglyceride)",
+        "short": "Blood fat",
+        "desc": "Fat (triglyceride) in the blood. It starts at 80 mg/dL here and rises as the meal’s fat arrives by lymph; then the body takes it out of the blood again. A rise after a meal is normal: there is no line for “high” here."
+      },
       "insulin": {
         "name": "Insulin",
         "short": "Insulin",
@@ -970,6 +1006,9 @@
       },
       "halfMealWaterPassed": {
         "name": "Half the meal’s water has left as urine"
+      },
+      "triglyceridePeak": {
+        "name": "Blood fat near its highest; after a big meal it stays up for hours"
       },
       "insulinPeak": {
         "name": "Most insulin"
@@ -1069,6 +1108,13 @@
         "desc": "Water from drinks and food that is in the body and has not yet left as urine. Below zero means sweat took more than you drank: the model assumes you drink it back over about 90 minutes."
       }
     },
+    "lymph": {
+      "fatFlowRate": {
+        "name": "Fat reaching the blood by lymph",
+        "short": "Fat’s road",
+        "desc": "How much of the meal’s fat lymph carries to the blood each minute. Fat taken in by the small intestine goes into lymph vessels first, then up the main lymph duct into a vein in the neck."
+      }
+    },
     "brain": {
       "glucoseUse": {
         "name": "Sugar used by the brain",
@@ -1102,6 +1148,9 @@
     "bladderEmpties": "At about 150 mL the bladder starts to feel full, and we can usually wait. Here it empties at 300 mL; a person chooses when.",
     "gfrFixed": "The kidneys filter about 125 mL a minute all day here (90–140 in grown men). This model does not sleep: urine is not slower at night.",
     "waterSimple": "The model has no salt: milk and ORS, which the body holds on to a little longer, count the same as plain water. Any drink’s water counts the same. The numbers are for a typical grown man.",
+    "lymphFat": "All of a meal’s fat goes to the blood by lymph here, about half an hour after the gut takes it in, and the blood clears it in one step. Fat the liver sends out and fat used as fuel are left out. One grown-up.",
+    "bloodFatLate": "After a big meal of solid food, blood fat peaks later here than in studies (often after 6 h instead of 3–4 h), because food leaves the stomach slowly in this model. Read the hours as rough.",
+    "bloodFatIndia": "Blood fat before eating is 80 mg/dL here. Many Indian adults start higher: 116 mg/dL on average in the ICMR-INDIAB study (Joshi 2014). People differ.",
     "insulinOpenLoop": "Insulin here follows the sugar coming in from food; it does not pull blood sugar back down. Blood sugar is the same line as in Digestion, from studies of real meals, which already include what insulin does.",
     "insulinHigh": "Two hours after a sugary drink the model’s insulin is higher than in studies (about 9× where young adults measured about 6×), and after a big solid meal it stays raised for hours, because the stomach empties slowly here.",
     "insulinSugarOnly": "Only sugar and starch from food raise insulin in this model. In real life protein and fat raise it a little too; here an egg leaves it at 1×.",
@@ -1423,7 +1472,13 @@
   },
   "sys": {
     "lymph": {
-      "now": "Lymph vessels take the fluid that leaks out round the cells back to the blood, through the lymph nodes.",
+      "now": {
+        "organ": "Lymph",
+        "road": "fat on its way: {{n}} g/min",
+        "none": "almost no fat in this meal",
+        "fat": "blood fat {{n}} mg/dL",
+        "kept": "Kept: blood fat {{n}} mg/dL"
+      },
       "map": {
         "vessels": "Lymph vessels",
         "nodes": "Lymph nodes",
@@ -1460,6 +1515,50 @@
         },
         "cells": "About 5,000–10,000 white cells per µL of blood (a µL is one millionth of a litre); labs differ.",
         "source": "Source: OpenStax Anatomy and Physiology 2e, sections 18.4 (white cells) and 21.2 (stomach acid)."
+      },
+      "germs": "Germ defence ›",
+      "strips": {
+        "road": "Fat’s road",
+        "fat": "Blood fat (triglyceride)"
+      },
+      "moves": "Moves with this meal.",
+      "fluid": {
+        "value": "Lymph also takes about 3 L of tissue fluid a day back to the blood.",
+        "source": "Source: OpenStax Anatomy and Physiology 2e, section 21.1"
+      },
+      "book": "NCERT Class 10 says: lymph carries digested and absorbed fat from the intestine",
+      "fasting": "80 mg/dL before eating here, for one grown-up; people differ.",
+      "summary": {
+        "none": "This meal has almost no fat, so lymph carries almost none.",
+        "noneReason": "Blood fat stays about {{base}}.",
+        "little": "Blood fat hardly moves: about {{n}} mg/dL at most ({{base}} before eating).",
+        "littleReason": "This meal has only about {{g}} g of fat.",
+        "peak": "Blood fat highest: about {{n}} mg/dL, at {{time}} ({{base}} before eating).",
+        "hours": "Blood fat rises to about {{n}} mg/dL and stays up for hours ({{base}} before eating).",
+        "road": "Its {{g}} g of fat goes from the intestine into lymph, then into the blood.",
+        "compare": "Blood fat at the most: about {{run}} mg/dL with this plan, {{kept}} with the kept one.",
+        "compareFat": "Fat in the meal: {{run}} g and {{kept}} g.",
+        "same": "Blood fat is about the same in both: at the most about {{n}} mg/dL."
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}.",
+        "hours": "{{name}}: {{start}} at the start, up to {{peak}}, and it stays up for hours."
+      },
+      "why": {
+        "road": {
+          "what": "How fat reaches the blood",
+          "book": "lymph carries digested and absorbed fat from the intestine and drains excess fluid from extra cellular space back into the blood (NCERT Class 10, Ch 5, p. 94)",
+          "model": "after a cheeseburger with fries, fat keeps reaching the blood by lymph for hours, and blood fat goes from 80 to about 101 mg/dL (model estimate)",
+          "why": "They agree on the road. The book gives no amounts; the model’s come from a physiology textbook and from studies of blood fat after meals (OpenStax Anatomy and Physiology 2e, §21.1; Nordestgaard 2016)."
+        },
+        "before": {
+          "what": "Blood fat before eating",
+          "book": "no number given",
+          "model": "80 mg/dL, for one grown-up (Liu 2022)",
+          "why": "People differ. Many Indian adults start higher: 116 mg/dL on average in the ICMR-INDIAB study (Joshi 2014). The rise after a meal is what this graph shows."
+        },
+        "ask": "Why does blood fat stay up for hours after a cheeseburger with fries, but not after two rotis?"
       }
     },
     "breathing": {
@@ -1971,11 +2070,6 @@
     "book": "The book says",
     "model": "This model says",
     "pauses": {
-      "stomach": {
-        "question": "Where is the roti now?",
-        "book": "NCERT Class 10 (Ch 5, p. 98): the digested food is absorbed in the small intestine.",
-        "model": "The roti leaves the stomach a little at a time, and sugar from it starts to reach the blood."
-      },
       "blood": {
         "question": "Where is more blood going?",
         "book": "NCERT Class 10: blood carries digested food around the body.",
@@ -2001,10 +2095,11 @@
         "book": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
         "model": "The kidneys send the extra water from the glass out as urine. Sweat took some water in the walk, so by now about 60 mL less has come out than without the walk."
       },
-      "insulin": {
-        "question": "What does the pancreas do after the roti?",
-        "book": "NCERT Class 10 (Ch 6, p. 111): when blood sugar rises, the pancreas makes more insulin.",
-        "model": "Insulin rises as sugar from the roti reaches the blood: about 5 times its level before eating now. Then it falls back."
+      "fat": {
+        "question": "Did the roti raise blood fat?",
+        "book": "NCERT Class 10 (Ch 5, p. 94): lymph carries digested and absorbed fat from the intestine.",
+        "model": "Two rotis have only about 3 g of fat, so blood fat rises only a little: about 86 mg/dL at the most, from 80 before eating.",
+        "insulin": "Insulin rose as sugar from the roti reached the blood, to about 5 times its before-eating level at 1 h 25 min, and is falling back now."
       }
     }
   },

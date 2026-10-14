@@ -6,6 +6,7 @@ import { lookupFood } from '../data/foods.ts'
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
+import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import type { SystemLesson } from '../systems/registry.ts'
 
@@ -31,6 +32,7 @@ const CARDS: Record<string, Card> = {
   'sys.circulation.why': en.sys.circulation.why,
   'sys.kidneys.why': en.sys.kidneys.why,
   'sys.effort.why': en.sys.effort.why,
+  'sys.lymph.why': en.sys.lymph.why,
   'sys.control.why': en.sys.control.why,
 }
 const rowsOf = (card: Card) => Object.entries(card).filter((e): e is [string, Row] => typeof e[1] === 'object')
@@ -155,14 +157,33 @@ describe('Hormones: what insulin does (NCERT Class 10, Ch 6, p. 111, read for U-
     expect(numbers(card.feedback.model)).toEqual([])
     expect(card.feedback.model).toContain('does not pull blood sugar down')
     // The same page, word for word where the stage quotes it (the insulin graph's book line, the lesson's pause and worksheet).
-    for (const line of [en.sys.control.book, en.flagship.pauses.insulin.book, en.sheet.lessons.insulinCola.book])
-      expect(line).toMatch(/pancreas makes more insulin/)
+    for (const line of [en.sys.control.book, en.sheet.lessons.insulinCola.book]) expect(line).toMatch(/pancreas makes more insulin/)
   })
 })
 
-describe('the guided lesson’s two book lines, as read (R100)', () => {
-  it('NCERT Class 10 p. 98 and Class 6 p. 128', () => {
-    expect(en.flagship.pauses.stomach.book).toBe('NCERT Class 10 (Ch 5, p. 98): the digested food is absorbed in the small intestine.')
+describe('Lymph (NCERT Class 10, Ch 5, p. 94; U-5)', () => {
+  const card = en.sys.lymph.why
+  it('the book’s words as read on p. 94 (R31), quoted', () => {
+    expect(card.road.book).toBe(
+      'lymph carries digested and absorbed fat from the intestine and drains excess fluid from extra cellular space back into the blood (NCERT Class 10, Ch 5, p. 94)',
+    )
+  })
+
+  it('after the lesson’s cheeseburger with fries, blood fat from fasting to its highest, as the model says (R90: stays up for hours)', () => {
+    expect(LYMPH_LESSON.meal.map((i) => i.foodId)).toEqual(['cheeseburger', 'fries'])
+    expect(card.road.model).toContain('cheeseburger with fries')
+    expect(numbers(card.road.model)).toEqual([PACK_PARAMS.lymph.fastingMgDl, Math.round(most(plan(LYMPH_LESSON), 'blood.triglyceride'))])
+  })
+
+  it('before eating: the model’s 80 and the ICMR-INDIAB 116 mg/dL (R90, Joshi 2014)', () => {
+    expect(numbers(card.before.model)).toEqual([PACK_PARAMS.lymph.fastingMgDl, 2022])
+    expect(numbers(card.before.why)).toEqual([116, 2014])
+  })
+})
+
+describe('the guided lesson’s two book lines, as read (R100; the blood-fat pause since v3.1, U-5)', () => {
+  it('NCERT Class 10 p. 94 and Class 6 p. 128', () => {
+    expect(en.flagship.pauses.fat.book).toBe('NCERT Class 10 (Ch 5, p. 94): lymph carries digested and absorbed fat from the intestine.')
     expect(en.flagship.pauses.sweat.book).toBe(
       'NCERT Class 6 (Curiosity, Ch 7, p. 128): the normal temperature of a healthy human body is taken to be 37.0 °C.',
     )

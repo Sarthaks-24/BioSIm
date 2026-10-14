@@ -10,9 +10,10 @@ import { presetHref } from './presets.ts'
  * (lib/flagshipPauses.ts, lazy); this is what Home's lesson card and Teach need to offer it. Neither
  * is in any page's first download (Home loads its card after the first paint).
  *
- * Its release (R18): v3.0. It pauses on v3.0 systems only (R30), so Home and Teach offer it once all
- * of them are public (their rows' `public`, flipped at H-1), or in a `?preview=1` session. Skin is not
- * among them: while it is hidden its pause falls back to the heart (R34).
+ * Its release (R18): v3.0. It paused on v3.0 systems only (R30); since v3.1 its Digestion pause is
+ * Lymph's blood fat (U-5, R38). Home and Teach offer it once all of them are public (their rows'
+ * `public`), or in a `?preview=1` session. Skin is not among them: while it is hidden its pause
+ * falls back to the heart (R34).
  */
 const meal: MealItem[] = [
   { foodId: 'roti', servings: 1 },
@@ -27,11 +28,12 @@ export const FLAGSHIP = {
   activity: walk,
   kept: meal,
   keptActivity: [] as ActivityBout[],
-  /** Its first pause: Digestion at 0:30 (lib/flagshipPauses.ts; presets.test checks they agree). */
-  layer: 'digestion' as SystemId,
-  t: 30,
+  /** Its first pause: Heart & blood at the most blood to the gut (lib/flagshipPauses.ts; presets.test checks they agree). */
+  layer: 'circulation' as SystemId,
+  slot: 'where',
+  t: 51,
   /** The systems it pauses on whatever is public (pause 4 is skin only when skin is public, R34). */
-  systems: ['digestion', 'circulation', 'breathing', 'kidneys'] as readonly SystemId[],
+  systems: ['circulation', 'breathing', 'kidneys', 'lymph'] as readonly SystemId[],
 }
 
 /**
