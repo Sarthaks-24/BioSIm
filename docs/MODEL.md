@@ -2,7 +2,7 @@
 
 **Model version:** see `MODEL_VERSION` in `packages/engine/src/params.ts`.
 
-Every tunable number lives in `params.ts`, next to its source. If you change one:
+Every tunable number lives in `params.ts`, next to its source; the system packs' numbers (breathing, muscles and skin, water and kidneys, heart and blood) live in `packParams.ts`, which only the engine chunk loads. If you change one:
 
 - bump `MODEL_VERSION`;
 - run `npm run calibrate -w @lifepeek/engine` to see the outputs next to their published targets;

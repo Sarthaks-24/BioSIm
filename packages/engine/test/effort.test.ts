@@ -3,7 +3,6 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
-  PARAMS,
   PROFILES,
   buildMeal,
   decodeMeal,
@@ -75,8 +74,8 @@ describe('muscles: muscle.energyRate (model §2.7)', () => {
     ['wang2012', 'janssen2000'],
     'resting muscle = 13 kcal/kg/day (Elia 1992 via Wang 2012) × 38.4 % of body mass (Janssen 2000) × 65 kg ÷ 24 = 13.5 kcal/h, 18–26 % of resting use (21.6 %)',
     () => {
-      expect(PARAMS.effort.muscleKcalPerKgDay).toBe(13)
-      expect(PARAMS.effort.muscleMassShare).toBe(0.384)
+      expect(HUMAN_MODEL.params.effort.muscleKcalPerKgDay).toBe(13)
+      expect(HUMAN_MODEL.params.effort.muscleMassShare).toBe(0.384)
       const muscle = values(run(''), 'muscle.energyRate')
       expect(muscle[0]!).toBeCloseTo(13.52, 2)
       const share = muscle[600]! / Rh
@@ -116,7 +115,7 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
     ['baker2019', 'bakerwolfe2020'],
     'walk: extra heat ÷ 0.58 kcal/mL (580 kcal per kg evaporated) ≈ 330 mL/h, inside 0.2–0.4 L/h (Baker 2019 “~0.3 L/h … the very low end”; Baker & Wolfe 2020 walking 0.3–0.6 L/h)',
     () => {
-      expect(PARAMS.effort.sweatKcalPerMl).toBe(0.58)
+      expect(HUMAN_MODEL.params.effort.sweatKcalPerMl).toBe(0.58)
       const sim = run('cola:1', [walk60])
       const rate = values(sim, 'skin.sweatRate')[90]!
       expect(rate).toBeCloseTo((((2.8 * 3.5 * kg) / 200) * 60) / 0.58, 2) // 329.5 mL/h
@@ -172,7 +171,7 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
 })
 
 describe('heat: made and lost (model §2.9, D10 helper)', () => {
-  const split = (total: number, activity: number) => heatLoss(total, activity, R, PARAMS.effort)
+  const split = (total: number, activity: number) => heatLoss(total, activity, R, HUMAN_MODEL.params.effort)
   const sum = (h: ReturnType<typeof split>) => h.radiation + h.convection + h.conduction + h.evaporation
 
   pinned('skin.sweatRate', 'identity: resting heat made = R (energy used at rest, e = 0), and all of it leaves', () => {

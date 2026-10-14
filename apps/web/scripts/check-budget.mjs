@@ -158,6 +158,10 @@
 //   was tried and dropped: it split the entry's shared code into six files (+1.5 KB on /sim).
 //   Merged into v3 after T12 (280b993): Home's words are in the core tier (cache-tiers.mjs), a
 //   pack's section in its lazy pack; /sim 183.419 KB, Home 144.509 KB, precache 787.7 KB raw.
+//   P-1 (2026-10-14, branch v3; R75 (1), R77, R78): PARAMS.gas, .effort and .water moved to
+//   packParams.ts with circulation's, which only the engine chunk loads: /sim 184.318 → 184.021 KB
+//   on v3 9d32d30 (−0.30), engine chunk 9.7 → 10.0 KB. One key of each pack's numbers joins the
+//   engine-not-in-/sim guard.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
@@ -333,8 +337,8 @@ const packProblems = []
 }
 
 // Engine not in /sim (E-2, architecture §4; enforced): /sim's first download must not carry the
-// engine (its own error text) or any other system's signals (the first ID of each, as the lean
-// catalog and the packs keep them out). The engine chunk is a lazy, precached file, and a production
+// engine (its own error text), any other system's signals (the first ID of each, as the lean
+// catalog and the packs keep them out) or a pack's numbers (packParams.ts, P-1). The engine chunk is a lazy, precached file, and a production
 // build has dropped ctx.get's development checks (core/module.ts GUARDS).
 const guardProblems = []
 {
@@ -347,6 +351,11 @@ const guardProblems = []
     'kidney.filtrationRate', // kidneys
     'blood.insulin', // hormones
     'brain.glucoseUse', // nerves
+    // A pack's numbers (P-1, R75 (1), R77, R78): one distinctive key of each, as packParams.ts keeps them in the run chunk.
+    'weirCo2', // breathing (gas)
+    'muscleMassShare', // muscles and skin (effort)
+    'adhTauMin', // water and kidneys
+    'restAvdo2MlPerL', // heart and blood (circulation)
   ]
   for (const f of staticFiles(SIM_ROOTS)) {
     const text = fs.readFileSync(path.join(dist, f), 'utf8')
