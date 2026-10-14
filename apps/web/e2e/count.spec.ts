@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, overlayProblems, returningVisitor } from './helpers/gate.ts'
 
 // "Count yours" (X-2; ui-ux §8.2, content §8.3, R14): the 15-second timer by Breathing's book line.
-// It only shows a timer: no input field, nothing written to any storage and no request while it is
+// The heart's row opens it for the pulse (U-3). It only shows a timer: no input field, nothing written to any storage and no request while it is
 // used; Start is big (≥ 64 px, ≥ 96 on the projector); screen readers hear the start, 10 and 5
 // seconds left and the end; the meal clock waits while it is open. Projects desktop, phone,
 // projector and reduced (no draining ring). E2E_SHOTS=1 saves a picture to .shots/ (git-ignored).
@@ -11,10 +11,10 @@ const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing&preview=1&t=10'
 
 test.beforeEach(({ page }) => returningVisitor(page))
 
-async function open(page: Page) {
-  await goto(page, PLAN)
+async function open(page: Page, layer = 'breathing') {
+  await goto(page, PLAN.replace('layer=breathing', `layer=${layer}`))
   await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="breathing"]')).toBeAttached()
+  await expect(page.locator(`[data-layer="${layer}"]`)).toBeAttached()
   await bodySettled(page)
 }
 
@@ -124,4 +124,21 @@ test('the meal clock waits while it is open, and plays on when it closes', async
   await expect(page.getByRole('button', { name: 'Pause' })).toBeAttached()
   await expect(timeline).not.toHaveAttribute('aria-valuenow', at!)
   await page.getByRole('button', { name: 'Pause' }).click()
+})
+
+test('the heart’s row counts the pulse: wrist, 72–80 book line, the model’s beats, 62–96 band', async ({ page }) => {
+  await open(page, 'circulation')
+  const graphs = page.locator('section[aria-labelledby="graphs-title"]')
+  await expect(graphs.locator('[data-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute')
+  await page.locator('[data-count-open="pulse"]').click()
+  const dialog = page.getByRole('dialog', { name: 'Count yours' })
+  await expect(dialog).toContainText('Put two fingers on the inside of your wrist to find your pulse.')
+  await expect(dialog.locator('input, textarea, select, [contenteditable]')).toHaveCount(0)
+  await expect(dialog.locator('[data-count-examples]')).toContainText('18 beats in 15 s = 72 a minute')
+  await expect(dialog.locator('[data-count-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute')
+  await expect(dialog.locator('[data-count-model]')).toHaveText(/^This model: about \d+ a minute at rest, \d+ a minute walking\.$/)
+  await expect(dialog.locator('[data-count-band]')).toHaveText('Most children your age (12–15): 62–96 a minute at rest')
+  await expect(dialog).not.toContainText(/normal/i)
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
 })

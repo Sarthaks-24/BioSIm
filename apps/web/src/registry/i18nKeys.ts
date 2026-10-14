@@ -1,10 +1,22 @@
-import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
+import {
+  ACTIVE_SIGNAL_IDS,
+  EVENTS,
+  PROFILES,
+  SIGNALS,
+  type EventMeta,
+  type RunEventId,
+  type SignalMeta,
+  type SignalStatus,
+} from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
+import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
-const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS]
+const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS, ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r)]
+/** Their moments (Heart & blood's gut-flow peak): the dock names them (`signals.event.*.name`). */
+const PACK_EVENTS = CIRCULATION_ROWS.filter((r): r is EventMeta<RunEventId> => !('kind' in r))
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -29,7 +41,7 @@ export function catalogKeys(): KeyUse {
     if (row.band) required.add(`${row.band.i18nKey}.name`)
     if (row.limitKey) required.add(row.limitKey)
   }
-  for (const row of Object.values(EVENTS)) {
+  for (const row of [...Object.values(EVENTS), ...PACK_EVENTS]) {
     if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0') continue
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)

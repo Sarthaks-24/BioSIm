@@ -10,12 +10,16 @@ import type { SignalMeta, Unit } from '@lifepeek/engine'
 
 const formatters = new Map<string, Intl.NumberFormat>()
 
-/** The page language's number format, Latin digits, whole numbers. Cached: readouts call it 10 times a second. */
-export function numberFormat(lang: string): Intl.NumberFormat {
-  let f = formatters.get(lang)
+/**
+ * The page language's number format, Latin digits, whole numbers (or `digits` decimals at most: a
+ * step under 1, as litres a minute's 0.1). Cached: readouts call it 10 times a second.
+ */
+export function numberFormat(lang: string, digits = 0): Intl.NumberFormat {
+  const key = digits ? `${lang}|${digits}` : lang
+  let f = formatters.get(key)
   if (!f) {
-    f = new Intl.NumberFormat(lang, { numberingSystem: 'latn', maximumFractionDigits: 0 })
-    formatters.set(lang, f)
+    f = new Intl.NumberFormat(lang, { numberingSystem: 'latn', maximumFractionDigits: digits })
+    formatters.set(key, f)
   }
   return f
 }
@@ -28,7 +32,8 @@ export function roundTo(value: number, step = 1): number {
 
 /** "118", "1,000": the rounded number alone (axis labels). */
 export function formatNumber(value: number, meta: Pick<SignalMeta, 'round'>, lang: string): string {
-  return numberFormat(lang).format(roundTo(value, meta.round ?? 1))
+  const step = meta.round ?? 1
+  return numberFormat(lang, step < 1 ? Math.round(-Math.log10(step)) : 0).format(roundTo(value, step))
 }
 
 /** The i18n key of each unit: `units.<key>` = "{{n}} mg/dL", `units.words.<key>` = the unit in words. i18n.test.ts counts these keys as used. */
@@ -42,6 +47,9 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   'breaths/min': 'breathsPerMin',
   mL: 'mL',
   'mL/min': 'mLPerMin',
+  // The circulation pack's (U-3), loaded with it the same way (systems/circulation/text.ts).
+  'beats/min': 'beatsPerMin',
+  'L/min': 'LPerMin',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */

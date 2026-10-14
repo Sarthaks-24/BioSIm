@@ -76,6 +76,9 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   // U-2's gate per system (ui-ux §12): Breathing (a preview until the v3.0 gate), its title and rhythm
   // chip over the body, in a walk with a kept plan at rest.
   'breathing, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=breathing&preview=1' },
+  // U-3's: Heart & blood (a preview until the v3.0 gate), its title, rhythm chip and colour key over
+  // the body, in a walk with a kept plan at rest ("Where blood goes" one flow at a time).
+  'circulation, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation&preview=1' },
 }
 
 /** The window sizes each project checks (the project's own first). */

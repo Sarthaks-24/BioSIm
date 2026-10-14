@@ -10,4 +10,6 @@ export const UNIT_KEYS: Partial<Record<Unit, string>> = {
   'breaths/min': 'units.breathsPerMin',
   mL: 'units.mL',
   'mL/min': 'units.mLPerMin',
+  'beats/min': 'units.beatsPerMin',
+  'L/min': 'units.LPerMin',
 }

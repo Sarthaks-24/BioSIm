@@ -36,6 +36,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/digestion/def.ts',
     // Breathing's graphs name their limits for the panel, as digestion's def does (U-2).
     'systems/breathing/ui.tsx',
+    // And Heart & blood's (U-3).
+    'systems/circulation/ui.tsx',
   ],
   stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
@@ -46,7 +48,14 @@ const ALLOWED: Record<string, readonly string[]> = {
   graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
   // unitInWords is called by the panel only.
   // The breathing pack's text brings the units section (systems/breathing/text.ts).
-  units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts', 'registry/units.ts', 'systems/breathing/summary.ts'],
+  units: [
+    'components/graphs/HowWeKnowPanel.tsx',
+    'lib/formatSignal.ts',
+    'registry/units.ts',
+    'systems/breathing/summary.ts',
+    // The circulation pack's text brings it too (systems/circulation/text.ts).
+    'systems/circulation/summary.ts',
+  ],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
   mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],

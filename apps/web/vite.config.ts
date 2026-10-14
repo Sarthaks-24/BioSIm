@@ -126,7 +126,7 @@ export default defineConfig({
             // the registry into a chunk of its own (+0.18 KB gz on /sim, measured). Only these modules.
             {
               name: 'clock',
-              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|lymph[\\/]def))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|lymph[\\/]def))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
               includeDependenciesRecursively: false,
             },
           ],
