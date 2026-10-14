@@ -2,6 +2,7 @@ import type { BufferGeometry, MeshStandardMaterial, ShaderMaterial } from 'three
 import type { NutrientKind } from '@lifepeek/engine'
 import { buildParticles, buildShell } from './geometry.ts'
 import type { Layer3d, LayerState, Tier } from './layer.ts'
+import { KIT_3D } from './kit.ts'
 import { layerUniforms, outlineMaterial, shellMaterial, tissueMaterial, type LayerUniforms } from './materials.ts'
 
 /**
@@ -52,7 +53,7 @@ export class LayerCache {
     let e = this.entries.get(key)
     if (e) this.entries.delete(key)
     else {
-      const geo = layer.build(tier)
+      const geo = layer.build(tier, KIT_3D)
       this.builds++
       e = { geo, bytes: geometryBytes(geo), pins: 0 }
     }
@@ -147,13 +148,15 @@ export interface MountedLayer {
  */
 export function mountLayer(layer: Layer3d, tier: Tier): MountedLayer {
   const uniforms = layerUniforms(layer.organs.length)
+  const grow = !!layer.grow
+  layer.grow?.origins.forEach((o, i) => uniforms.uGrowAt.value[i]?.fromArray(o))
   return {
     layer,
     geometry: layers.get(layer, tier),
     uniforms,
     state: { state: uniforms.uState.value, fill: uniforms.uFill.value },
-    tissue: tissueMaterial(uniforms, layer.id),
-    outline: outlineMaterial(uniforms),
+    tissue: tissueMaterial(uniforms, layer.id, grow),
+    outline: outlineMaterial(uniforms, grow),
   }
 }
 

@@ -17,8 +17,10 @@ import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
  * Both arrays have one slot per organ (Layer3d.organs order); the shaders are sized by that count.
  */
 export interface LayerUniforms {
-  /** Per organ, how far it is stretched, 0…1 (stomach: anatomy stomachFill; lungs and bladder later). */
+  /** Per organ, how far it is stretched, 0…1 (stomach: anatomy stomachFill); a `grow` layer's extra size (lungs). */
   uFill: IUniform<number[]>
+  /** Per organ, the point a `grow` layer's organ grows from (Layer3d.grow); unused otherwise. */
+  uGrowAt: IUniform<Vector3[]>
   /** Per organ: −1 = empty, faded back; 0 = normal; 1 = the active stage. */
   uState: IUniform<number[]>
   /** Outline width as a share of the distance to the camera (constant on screen). */
@@ -33,6 +35,7 @@ export interface LayerUniforms {
 export const layerUniforms = (organs: number): LayerUniforms => {
   const u: LayerUniforms = {
     uFill: { value: new Array<number>(organs).fill(0) },
+    uGrowAt: { value: Array.from({ length: organs }, () => new Vector3()) },
     uState: { value: new Array<number>(organs).fill(0) },
     uOutline: { value: 0 },
     uFadeAmount: { value: 0 },
@@ -55,14 +58,25 @@ export function setLook(u: LayerUniforms, look: BodyLook) {
 const FADE = new Color(FADE_TONE)
 
 /**
- * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
- * baked into the shader), shared only by bodies showing the same layer.
+ * How a vertex moves as its organ fills (GLSL, `p` the position): out along its normal (the stomach),
+ * or, for a `grow` layer, away from its organ's point (Layer3d.grow: the lungs swell as a whole). A
+ * layer without `grow` gets exactly the shader it had (Digestion's look is unchanged).
  */
-export function tissueMaterial(u: LayerUniforms, key: string): MeshStandardMaterial {
+const stretch = (grow: boolean, p: string, n: string) =>
+  grow
+    ? `${p} += (${p} - uGrowAt[int(organ + 0.5)]) * inflate * uFill[int(organ + 0.5)];`
+    : `${p} += ${n} * inflate * uFill[int(organ + 0.5)];`
+
+/**
+ * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
+ * baked into the shader), shared only by bodies showing the same layer. `grow`: see `stretch`.
+ */
+export function tissueMaterial(u: LayerUniforms, key: string, grow = false): MeshStandardMaterial {
   const N = u.uState.value.length
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: FrontSide })
   m.onBeforeCompile = (shader) => {
     shader.uniforms.uFill = u.uFill
+    if (grow) shader.uniforms.uGrowAt = u.uGrowAt
     shader.uniforms.uState = u.uState
     shader.uniforms.uFade = { value: FADE }
     shader.uniforms.uFadeAmount = u.uFadeAmount
@@ -72,13 +86,18 @@ export function tissueMaterial(u: LayerUniforms, key: string): MeshStandardMater
         `#include <common>
         attribute float organ;
         attribute float inflate;
-        uniform float uFill[${N}];
+        uniform float uFill[${N}];${
+          grow
+            ? `
+        uniform vec3 uGrowAt[${N}];`
+            : ''
+        }
         varying float vOrgan;`,
       )
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        transformed += objectNormal * inflate * uFill[int(organ + 0.5)];
+        ${stretch(grow, 'transformed', 'objectNormal')}
         vOrgan = organ;`,
       )
     shader.fragmentShader = shader.fragmentShader
@@ -121,22 +140,36 @@ export function tissueMaterial(u: LayerUniforms, key: string): MeshStandardMater
  * paper or another organ, a thin outline shows. Faded organs get a fainter line. On the
  * projector the line is wider and near-black (setLook).
  */
-export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
+export function outlineMaterial(u: LayerUniforms, grow = false): ShaderMaterial {
   const N = u.uState.value.length
   return new ShaderMaterial({
     side: BackSide,
     vertexColors: true,
-    uniforms: { uFill: u.uFill, uState: u.uState, uOutline: u.uOutline, uShade: u.uShade, uLift: u.uLift, uFade: { value: FADE } },
+    uniforms: {
+      uFill: u.uFill,
+      ...(grow && { uGrowAt: u.uGrowAt }),
+      uState: u.uState,
+      uOutline: u.uOutline,
+      uShade: u.uShade,
+      uLift: u.uLift,
+      uFade: { value: FADE },
+    },
     vertexShader: /* glsl */ `
       attribute float organ;
       attribute float inflate;
-      uniform float uFill[${N}];
+      uniform float uFill[${N}];${
+        grow
+          ? `
+      uniform vec3 uGrowAt[${N}];`
+          : ''
+      }
       uniform float uOutline;
       uniform float uState[${N}];
       varying vec3 vInk;
       varying float vFaded;
       void main() {
-        vec3 p = position + normal * inflate * uFill[int(organ + 0.5)];
+        vec3 p = position;
+        ${stretch(grow, 'p', 'normal')}
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         vec3 n = normalize(normalMatrix * normal);
         mv.xyz += n * uOutline * -mv.z;

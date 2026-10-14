@@ -72,7 +72,8 @@ export const SIM_ROOTS = ['index.html', 'src/pages/Simulator.tsx']
 
 /**
  * Lazy parts that Teach's "Save for class offline" saves for a lesson: the stage's on-use parts,
- * and the 3D body (only on a device with WebGL). Keys of the build manifest.
+ * and the 3D body (only on a device with WebGL), with every system's 3D layer (`layers3d`). Keys of
+ * the build manifest.
  */
 export const LESSON_PACKS = {
   '3d': { webgl: true, roots: [THREE_D] },
@@ -96,6 +97,12 @@ export const LESSON_PACKS = {
     ],
   },
 }
+
+/**
+ * The 3D layers of the other systems (src/three/layers/<system>, SystemDef.layer3d; A-3 on): lazy
+ * chunks of a few KB each, saved with the 3D body, since a lesson on a system draws its layer in 3D.
+ */
+const layers3d = (manifest) => Object.keys(manifest).filter((k) => manifest[k].isDynamicEntry && k.startsWith('src/three/layers/'))
 
 /** The runtime cache for lazy files (scripts/cache-policy.mjs, lib/offlineSave.ts through pack-manifest.json). */
 export const LAZY_CACHE = 'lp-lazy'
@@ -178,7 +185,8 @@ export function cacheTiers(manifest, assetFiles) {
   const lazyOf = (keys) => [...closure(manifest, keys, () => false)].filter((f) => lazy.has(f))
   const packs = {}
   for (const [id, pack] of Object.entries(LESSON_PACKS))
-    if (pack.roots.every((k) => manifest[k])) packs[id] = { webgl: !!pack.webgl, files: lazyOf(pack.roots) }
+    if (pack.roots.every((k) => manifest[k]))
+      packs[id] = { webgl: !!pack.webgl, files: lazyOf(pack.webgl ? [...pack.roots, ...layers3d(manifest)] : pack.roots) }
   for (const id of Object.keys(PACK_SYSTEMS)) {
     if (id === 'core') continue
     const files = lazyOf(packRoots(manifest, id))

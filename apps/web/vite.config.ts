@@ -107,9 +107,21 @@ export default defineConfig({
     // A lazy chunk's preload list named the entry chunk (index-*.js) too. The page loaded it with a
     // <script>, not a <link>, so the preload helper added a modulepreload for it that nothing used:
     // a WebKit console warning on every /sim load (B19). The entry is always loaded already.
-    modulePreload: { resolveDependencies: (_file, deps) => deps.filter((dep) => !/^assets\/index-[\w-]+\.js$/.test(dep)) },
+    // A system's 3D layer (three/layers/<id>.ts, A-3 on) is imported by its registry row in /sim, but
+    // only ever loaded by the 3D body, after the system's pack: everything it imports is loaded by
+    // then. Its preload list would be /sim bytes for nothing (16 file names: +0.2 KB gz, measured), so
+    // it has none.
+    modulePreload: {
+      resolveDependencies: (file, deps) =>
+        /^assets\/layer3d-/.test(file) ? [] : deps.filter((dep) => !/^assets\/index-[\w-]+\.js$/.test(dep)),
+    },
     rolldownOptions: {
       output: {
+        // A 3D layer's chunk is named so (`layer3d-<system>`): the preload rule above finds it by name.
+        chunkFileNames: (chunk) =>
+          chunk.facadeModuleId && /[\/]src[\/]three[\/]layers[\/]/.test(chunk.facadeModuleId)
+            ? 'assets/layer3d-[name]-[hash].js'
+            : 'assets/[name]-[hash].js',
         codeSplitting: {
           // Vite's lazy-import helper rode in the i18n chunk while i18n/index.ts lazily imported
           // hi.json. With Hindi paused (R47) that import is gone from real builds, and the helper

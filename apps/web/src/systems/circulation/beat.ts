@@ -1,5 +1,5 @@
 import { valueAt, type ActivityBout, type RunResult, type Series } from '@lifepeek/engine'
-import { MAX_DRAWN_HZ, drawnRate } from '../../flat/rhythm.ts'
+import { MAX_DRAWN_HZ, drawnRate } from '../../flat/rate.ts'
 
 /**
  * How a heartbeat and the blood are drawn (anatomy plan §2.2, D8): data → picture, in one place,

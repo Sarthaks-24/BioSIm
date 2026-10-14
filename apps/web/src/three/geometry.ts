@@ -15,7 +15,6 @@ import {
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
 import { ARM, TORSO_PROFILE, armRadius } from '../anatomy/human/base.ts'
-import type { Spline3 } from '../anatomy/spline.ts'
 import { LAYER_ATTRIBUTES } from './layer.ts'
 
 /**
@@ -43,6 +42,12 @@ interface TubeOptions {
   caps?: boolean | 'start' | 'end'
 }
 
+/** A curve a tube follows: the anatomy's Spline3, or three's own CatmullRomCurve3 (a lazy layer's: it imports nothing of /sim). */
+export interface Curve3 {
+  getPointAt(u: number, out: Vector3): unknown
+  getTangentAt(u: number, out: Vector3): unknown
+}
+
 const WORLD_Z = new Vector3(0, 0, 1)
 const WORLD_X = new Vector3(1, 0, 0)
 
@@ -52,7 +57,7 @@ const WORLD_X = new Vector3(1, 0, 0)
  * twisting along its length. Each ring closes on itself (no duplicated seam vertex), so the
  * shading has no seam line. The `along` attribute holds u for every vertex.
  */
-export function organTube(curve: Spline3, o: TubeOptions): BufferGeometry {
+export function organTube(curve: Curve3, o: TubeOptions): BufferGeometry {
   const radial = o.radial ?? 16
   const flatten = o.flatten ?? 1
   const positions: number[] = []

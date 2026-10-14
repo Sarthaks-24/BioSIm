@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BufferGeometry,
   Euler,
@@ -16,13 +17,15 @@ import { NUTRIENT_KINDS, activeStage, type NutrientKind, type RunResult, type St
 import type { Loader } from '../registry/types.ts'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { particlePosition, tumble } from '../anatomy/human/digestion.ts'
-import { useCalloutSpecs, useCallouts, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
+import { useCalloutSpecs, useCallouts, type CalloutSpec, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
+import type { Callout } from '../anatomy/callouts.ts'
+import type { Framing } from '../anatomy/human/base.ts'
 import { useMotion } from '../state/motion.ts'
 import { useProjector } from '../hooks/useProjector.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { particleMaterial, setLook } from './materials.ts'
 import { geometryTier, quality } from './quality.ts'
-import type { Layer3d, Tier } from './layer.ts'
+import type { Layer3d, OverlayProps, Tier } from './layer.ts'
 import { mountBase, mountLayer, mountStats, pinBase, pinLayer, releaseBase, releaseLayer, type MountedBase } from './mount.ts'
 import { DIGESTION_3D } from './layers/digestion.ts'
 
@@ -63,17 +66,35 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
   const q = useMemo(() => quality(), [])
   const tier = useMemo(() => geometryTier(), [])
   const layer = useLayer3d(layer3d)
-  const [width, setWidth] = useState(0)
+  const [{ width, height }, setSize] = useState({ width: 0, height: 0 })
   const invalidate = useRef<() => void>(() => {})
-  const { overlay, place } = useCallouts(useCalloutSpecs(stage, width), () => invalidate.current())
+  // The lit layer's own labels (breathing's), else Digestion's.
+  const { t } = useTranslation()
+  const digestionSpecs = useCalloutSpecs(stage, width)
+  const labels = layer?.labels
+  const specs = (labels ? labels.specs(t, width, height) : digestionSpecs) as CalloutSpec<string>[]
+  const { overlay, place } = useCallouts(specs, () => invalidate.current(), labels?.table as Record<string, Callout> | undefined)
   const wrapper = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = wrapper.current
     if (!el) return
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    const ro = new ResizeObserver(() => setSize({ width: el.clientWidth, height: el.clientHeight }))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+  // A rhythm's phase and rate now (LitLayer moves them on the real clock; the layer's overlay reads them).
+  const rhythm = useRef({ phase: 0, hz: 0 }).current
+  // What the layer's overlay places each frame the scene draws (LabelProjector calls them).
+  const overlays = useRef(new Set<Place>()).current
+  const register = useCallback(
+    (fn: Place) => {
+      overlays.add(fn)
+      invalidate.current()
+      return () => void overlays.delete(fn)
+    },
+    [overlays],
+  )
+  const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const settled = useSettled(wrapper)
   const [drawn, setDrawn] = useState(false)
   // The canvas's `webglcontextlost` listener, removed when this body goes. Fiber 9 calls
@@ -100,6 +121,8 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
       data-body="3d"
       data-ready={drawn ? '' : undefined}
       data-particles={reduced ? 'still' : 'tumbling'}
+      data-layer={layer?.id}
+      data-framing={layer?.framing ?? 'torso'}
     >
       {settled && (
         <Canvas
@@ -128,9 +151,12 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
         >
           <Lighting />
           {/* One lit layer at a time (anatomy plan D5); a new system's layer replaces it once it has loaded. */}
-          {layer && <LitLayer key={layer.id} layer={layer} tier={tier} sim={sim} clock={clock} />}
-          <Base tier={tier} sim={sim} clock={clock} reduced={reduced} />
+          {layer && (
+            <LitLayer key={layer.id} layer={layer} tier={tier} sim={sim} clock={clock} reduced={reduced} rhythm={rhythm} body={wrapper} />
+          )}
+          <Base tier={tier} sim={sim} clock={clock} reduced={reduced} food={layer?.food !== false} />
           <OrbitControls
+            ref={controls}
             makeDefault
             enablePan={false}
             minDistance={3.5}
@@ -139,13 +165,17 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
             minPolarAngle={Math.PI * 0.2}
             maxPolarAngle={Math.PI * 0.8}
           />
-          <LabelProjector place={place} />
+          <CameraRig framing={layer?.framing ?? 'torso'} reduced={reduced} controls={controls} />
+          <LabelProjector place={place} overlays={overlays} />
           <Invalidator sim={sim} clock={clock} reduced={reduced} />
           {layer && <FirstFrame onDrawn={() => setDrawn(true)} />}
         </Canvas>
       )}
       {/* Measured from the start (hidden, not removed), placed by the 3D body's frames. */}
-      <div style={drawn ? undefined : { opacity: 0 }}>{overlay}</div>
+      <div style={drawn ? undefined : { opacity: 0 }}>
+        {layer?.overlay && <LayerOverlay key={layer.id} layer={layer} reduced={reduced} rhythm={rhythm} register={register} />}
+        {overlay}
+      </div>
       {!drawn && placeholder && <div className="absolute inset-0">{placeholder}</div>}
     </div>
   )
@@ -289,14 +319,69 @@ function Invalidator({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock
  * mesh and materials (`dispose={null}`: fiber's teardown leaves them to it), and frees their GPU
  * side when the layer goes; the mesh's arrays stay cached for the next mount.
  */
-function LitLayer({ layer, tier, sim, clock }: { layer: Layer3d; tier: Tier; sim: RunResult; clock: BodyClock }) {
+function LitLayer({
+  layer,
+  tier,
+  sim,
+  clock,
+  reduced,
+  rhythm,
+  body,
+}: {
+  layer: Layer3d
+  tier: Tier
+  sim: RunResult
+  clock: BodyClock
+  reduced: boolean
+  rhythm: OverlayProps['rhythm']
+  body: RefObject<HTMLDivElement | null>
+}) {
   const m = useMemo(() => mountLayer(layer, tier), [layer, tier])
   useEffect(() => {
     pinLayer(m)
     return () => releaseLayer(m)
   }, [m])
+  const redraw = useThree((s) => s.invalidate)
+  // A rhythm (a breath): its phase moves on the real clock at the run's rate at the meal-clock minute
+  // on screen (the layer's ticker: <= 30 fps, tab visible), and each tick redraws. Motion reduced:
+  // the still phase, no ticker.
+  useEffect(() => {
+    const r = layer.rhythm
+    rhythm.phase = r?.still ?? 0
+    rhythm.hz = 0
+    redraw()
+    if (!r || reduced) return
+    return r.onTick((dt) => {
+      rhythm.hz = r.hz(sim, clock.now())
+      rhythm.phase = (rhythm.phase + rhythm.hz * dt) % 1
+      redraw()
+    })
+  }, [layer, reduced, sim, clock, rhythm, redraw])
+  // The rhythm's `data-*` on the body, as the flat layer has them; taken off when this layer goes.
+  const probed = useRef<Record<string, string>>({})
+  const probedAt = useRef(-Infinity)
+  useEffect(
+    () => () => {
+      const el = body.current
+      if (el) for (const k of Object.keys(probed.current)) delete el.dataset[k]
+    },
+    [body],
+  )
   // Runs before the scene is drawn (priority -1), so the uniforms belong to this frame's time.
-  useFrame(() => layer.write(m.state, sim, clock.now()), -1)
+  useFrame(() => {
+    const t = clock.now()
+    const r = layer.rhythm
+    if (r) rhythm.hz = reduced ? 0 : r.hz(sim, t)
+    layer.write(m.state, sim, t, r ? rhythm.phase : 0)
+    // The `data-*` read-out at most PROBE_HZ times a second: a DOM write per frame on the body's box
+    // costs the main thread more than the whole layer's maths (measured, A-3).
+    const now = performance.now()
+    const el = body.current
+    if (!r?.probe || !el || now - probedAt.current < 1000 / PROBE_HZ) return
+    probedAt.current = now
+    for (const [k, v] of Object.entries(r.probe(sim, t, rhythm.phase, reduced)))
+      if (probed.current[k] !== v) el.dataset[k] = probed.current[k] = v
+  }, -1)
   // The projector look (3D-5): wider, near-black outlines, less fade. Same shaders, new uniforms.
   const projector = useProjector()
   const invalidate = useThree((s) => s.invalidate)
@@ -314,7 +399,7 @@ function LitLayer({ layer, tier, sim, clock }: { layer: Layer3d; tier: Tier; sim
 }
 
 /** The base every layer shares: the skin shell and the food particles. */
-function Base({ tier, sim, clock, reduced }: { tier: Tier; sim: RunResult; clock: BodyClock; reduced: boolean }) {
+function Base({ tier, sim, clock, reduced, food }: { tier: Tier; sim: RunResult; clock: BodyClock; reduced: boolean; food: boolean }) {
   const b = useMemo(() => mountBase(tier), [tier])
   useEffect(() => {
     pinBase(b)
@@ -323,7 +408,10 @@ function Base({ tier, sim, clock, reduced }: { tier: Tier; sim: RunResult; clock
   return (
     <>
       <mesh geometry={b.shell} material={b.shellMaterial} renderOrder={20} dispose={null} />
-      <Swarm particles={b.particles} sim={sim} clock={clock} reduced={reduced} />
+      {/* Kept mounted (no shader is rebuilt on a switch back), hidden when the lit layer draws no food. */}
+      <group visible={food}>
+        <Swarm particles={b.particles} sim={sim} clock={clock} reduced={reduced} hidden={!food} />
+      </group>
     </>
   )
 }
@@ -352,11 +440,13 @@ function Swarm({
   sim,
   clock,
   reduced,
+  hidden,
 }: {
   particles: MountedBase['particles']
   sim: RunResult
   clock: BodyClock
   reduced: boolean
+  hidden: boolean
 }) {
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
   const materials = useMemo(() => Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, particleMaterial(NUTRIENT_COLOR[k])])), []) as Record<
@@ -374,6 +464,7 @@ function Swarm({
   }, [sim])
 
   useFrame(() => {
+    if (hidden) return
     const t = clock.now()
     for (const kind of NUTRIENT_KINDS) {
       const mesh = meshes.current[kind]
@@ -417,7 +508,7 @@ function Swarm({
  * camera and size are this frame's (the frame's state), not those of the last React render: when
  * the box changes, the frame that draws the new size places the labels for it too (B17).
  */
-function LabelProjector({ place }: { place: Callouts['place'] }) {
+function LabelProjector({ place, overlays }: { place: Callouts['place']; overlays: ReadonlySet<Place> }) {
   const p = useMemo(() => new Vector3(), [])
   useFrame(({ camera, size }) => {
     const project: Project = (v) => {
@@ -425,6 +516,83 @@ function LabelProjector({ place }: { place: Callouts['place'] }) {
       return p.z > 1 ? null : [((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height]
     }
     place(project, size.width, size.height)
+    for (const fn of overlays) fn(project, size.width, size.height)
   })
+  return null
+}
+
+/** How often a rhythm's read-out (Rhythm3d.probe) is written to the body's `data-*`, at most. */
+const PROBE_HZ = 8
+
+/** An overlay's per-frame placement (Layer3d.overlay). */
+type Place = Parameters<OverlayProps['register']>[0]
+
+/** The lit layer's own drawing over the canvas (Layer3d.overlay: plain DOM, made and cleaned up here). */
+function LayerOverlay({ layer, ...props }: OverlayProps & { layer: Layer3d }) {
+  const host = useRef<HTMLDivElement>(null)
+  const { reduced, rhythm, register } = props
+  useEffect(
+    () => (host.current ? layer.overlay?.(host.current, { reduced, rhythm, register }) : undefined),
+    [layer, reduced, rhythm, register],
+  )
+  return <div ref={host} aria-hidden="true" className="pointer-events-none absolute inset-0" />
+}
+
+/**
+ * Where the camera looks for each framing (anatomy plan §1): torso is Digestion's view (scene y -1.9 to
+ * 3.45, with room over the head); chest (-0.6 to 3.5) is the same fit, closer. A framing with no 3D
+ * preset yet is framed as torso.
+ */
+const CAMERA: Partial<Record<Framing, { y: number; distance: number }>> = {
+  torso: { y: 0.8, distance: 9.4 },
+  chest: { y: 1.45, distance: 7.3 },
+}
+/** How long the camera takes to a new framing (anatomy plan §1; a cut with motion reduced). */
+const EASE_MS = 600
+
+/**
+ * Moves the camera to the lit layer's framing: at once for the first layer (and with motion
+ * reduced), else eased over EASE_MS. The way the camera faces (a drag's orbit) is kept; only where it
+ * looks and how far away it is change. Runs before the controls' own update (priority -2).
+ */
+function CameraRig({
+  framing,
+  reduced,
+  controls,
+}: {
+  framing: Framing
+  reduced: boolean
+  controls: RefObject<ComponentRef<typeof OrbitControls> | null>
+}) {
+  const shown = useRef<Framing | null>(null)
+  const ease = useRef<{ y: number; distance: number; start: number } | null>(null)
+  const dir = useMemo(() => new Vector3(), [])
+  useFrame(({ camera, invalidate }) => {
+    const c = controls.current
+    if (!c) return
+    const goal = CAMERA[framing] ?? CAMERA.torso!
+    const put = (y: number, distance: number) => {
+      dir.subVectors(camera.position, c.target).normalize()
+      c.target.set(0, y, 0)
+      camera.position.copy(c.target).addScaledVector(dir, distance)
+    }
+    if (shown.current !== framing) {
+      const first = shown.current === null
+      shown.current = framing
+      ease.current = null
+      if (first || reduced) {
+        put(goal.y, goal.distance)
+        return
+      }
+      ease.current = { y: c.target.y, distance: camera.position.distanceTo(c.target), start: performance.now() }
+    }
+    const e = ease.current
+    if (!e) return
+    const k = Math.min(1, (performance.now() - e.start) / EASE_MS)
+    const s = k * k * (3 - 2 * k)
+    put(e.y + (goal.y - e.y) * s, e.distance + (goal.distance - e.distance) * s)
+    if (k < 1) invalidate()
+    else ease.current = null
+  }, -2)
   return null
 }

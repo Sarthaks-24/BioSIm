@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BufferGeometry, Float32BufferAttribute, type Material } from 'three'
 import { LayerCache, LRU_BYTES, geometryBytes, mountLayer, pinLayer, releaseLayer } from './mount.ts'
+import { KIT_3D } from './kit.ts'
 import { LAYER_ATTRIBUTES, type Layer3d } from './layer.ts'
 import { DIGESTION_3D } from './layers/digestion.ts'
 
@@ -96,7 +97,7 @@ describe('3D layer cache (anatomy plan §10)', () => {
 })
 
 describe('digestion layer (A-0 3D: shared attributes, uFill[N])', () => {
-  const geo = DIGESTION_3D.build('high')
+  const geo = DIGESTION_3D.build('high', KIT_3D)
 
   it('every vertex has the shared attribute set, `along` kept', () => {
     expect(Object.keys(geo.attributes).sort()).toEqual([...LAYER_ATTRIBUTES].sort())
