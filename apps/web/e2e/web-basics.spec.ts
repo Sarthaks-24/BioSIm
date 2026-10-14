@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { onlyIn, returningVisitor } from './helpers/gate.ts'
@@ -136,4 +139,62 @@ test('each page is served with its own head (built HTML, before any JavaScript)'
     expect(html, path).toMatch(new RegExp(`<link rel="canonical" href="https?://[^"]+${path === '/' ? '/' : path}"`))
     expect(html.includes('application/ld+json'), path).toBe(path === '/')
   }
+})
+
+// R120 #10: the full Content-Security-Policy of vercel.json, which vite preview sends too
+// (vite.config.ts, lifepeek-site-headers). Nothing the app does may be refused under it: every page,
+// the 3D body, the engine worker, the stage's sheets, the system picker and Teach's offline save.
+test('the CSP: sent as in vercel.json, and nothing on any page is refused under it', async ({ page, request }) => {
+  test.slow()
+  const vercel = JSON.parse(
+    fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../vercel.json'), 'utf8'),
+  ) as {
+    headers: { source: string; headers: { key: string; value: string }[] }[]
+  }
+  const want = vercel.headers.find((h) => h.source === '/(.*)')!.headers.find((h) => h.key === 'Content-Security-Policy')!.value
+  expect(want).toContain("default-src 'self'")
+  for (const url of ['/', '/sim', '/sw.js', '/pack-manifest.json'])
+    expect((await request.get(url)).headers()['content-security-policy'], url).toBe(want)
+  const refused: string[] = []
+  page.on('console', (m) => {
+    if (/Content Security Policy|Refused to/i.test(m.text())) refused.push(m.text())
+  })
+  await page.addInitScript(() => {
+    const w = window as unknown as { __csp: string[] }
+    w.__csp = []
+    document.addEventListener('securitypolicyviolation', (e) =>
+      w.__csp.push(`${e.effectiveDirective} ${e.blockedURI} ${e.sourceFile}:${e.lineNumber}`),
+    )
+  })
+  const violations = async () => [...refused, ...(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp))]
+  for (const { url } of PAGES) {
+    await open(page, url)
+    expect(await violations(), url).toEqual([])
+  }
+  // The stage: the 3D body, the engine worker (after the first run), the table sheet, the picker.
+  const worker = page.waitForEvent('worker', (w) => /engine-worker-/.test(w.url()))
+  await open(page, '/sim?v=3&a=cola:1')
+  await expect(page.locator('[data-body="3d"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  await worker
+  await page.locator('body').press('p')
+  await expect(page.locator('[data-line="kept"]').filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 })
+  await page.locator('body').press('t')
+  await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.locator('body').press(']')
+  await page.waitForTimeout(2000)
+  expect(await violations(), 'the stage').toEqual([])
+  // Teach: the service worker, and Save for class offline (Cache Storage, fetches).
+  await open(page, '/teach')
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+  await page.getByRole('button', { name: 'Save all for class offline' }).click()
+  const lessons = page.locator('[data-lesson]')
+  await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(await lessons.count(), { timeout: 30_000 })
+  expect(await violations(), 'Teach').toEqual([])
+  // The check itself works, and style attributes stay refused (no 'unsafe-inline' needed: React sets
+  // its style props through the CSSOM).
+  await page.evaluate(() => document.body.setAttribute('style', 'outline: 0'))
+  await expect.poll(violations).toHaveLength(2)
 })
