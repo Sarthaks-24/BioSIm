@@ -70,3 +70,42 @@ test('without ?preview=1 the hidden lymph row opens Digestion', async ({ page })
   await expect(page.locator('[data-card="germs"]')).toHaveCount(0)
   await expect(page.locator('canvas[data-layer="lymph"]')).toHaveCount(0)
 })
+
+test('switching to the lymph map and back keeps the 3D body (R93 #1)', async ({ page }) => {
+  // The fiber canvas forces a context loss when it unmounts; that must not turn 3D off for good.
+  await goto(page, '/sim?v=3&a=cola:1&preview=1')
+  await expect(page.locator('[data-body="3d"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  const picker = page.getByRole('dialog', { name: 'Body systems' })
+  await page.getByRole('button', { name: 'Body system: Digestion' }).click()
+  await picker.locator('[data-system-row="lymph"]').click()
+  await expect(page.locator('canvas[data-layer="lymph"][data-drawn]')).toBeVisible()
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+  // Past the old canvas's teardown, and its lost-context event.
+  await page.waitForTimeout(1500)
+  await page.getByRole('button', { name: /^Body system: / }).click()
+  await picker.locator('[data-system-row="digestion"]').click()
+  await expect(page.locator('[data-body="3d"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(1500)
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(1)
+})
+
+test.describe('the legs’ file does not arrive', () => {
+  // The service worker would fetch the file itself, past page.route.
+  test.use({ serviceWorkers: 'block' })
+
+  test('the map still draws its trunk and arms, never a blank picture (R93 #6)', async ({ page }) => {
+    await page.route(/\/limbs-[\w-]+\.js$/, (route) => route.abort())
+    await goto(page, LYMPH)
+    const map = page.locator('canvas[data-layer="lymph"][data-drawn]')
+    await expect(map).toBeVisible()
+    await expect(map).not.toHaveAttribute('data-limbs')
+    // Something is painted: the canvas has opaque pixels.
+    const painted = await map.evaluate((c: HTMLCanvasElement) => {
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data
+      let n = 0
+      for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+      return n
+    })
+    expect(painted).toBeGreaterThan(500)
+  })
+})
