@@ -26,7 +26,7 @@ const shot = async (page: Page, name: string) => {
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `../../.shots/u1-${name}-${test.info().project.name}.png` })
 }
 const graphs = (page: Page) => page.locator('section[aria-labelledby="graphs-title"]')
-const moves = 'Moves only with walking or running.'
+const moves = 'Moves only with activity.'
 
 test('muscles: rest and a run differ in pose and hatch; one graph, a Model estimate, moved only by walking or running', async ({
   page,

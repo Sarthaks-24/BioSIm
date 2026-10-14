@@ -42,8 +42,8 @@ export function linkNotes(s: LinkState, t: TFunction, food: (id: string) => stri
     else if (c.param === 'who') notes.push(t('link.who'))
     else if (c.param === 'layer') notes.push(t('link.layer', { asked: c.asked, shown: t(`systems.${c.shown ?? 'digestion'}.name`) }))
     else if (c.param === 'act' || c.param === 'bact') {
-      // Each bout left out is named (R21): a kind not shown yet, one outside the limits or
-      // overlapping another. A newer link's own note says its walk or run is not shown.
+      // Each bout left out is named (R21): a kind this version does not know, one outside the limits or
+      // overlapping another. A newer link's own note says its activity is not shown.
       const bout = BOUT_PART.exec(c.asked)
       if (newer) continue
       if (bout && isActivityKind(bout[1]!))

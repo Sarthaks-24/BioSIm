@@ -130,11 +130,11 @@ The factors are the Atwater general factors, 4.0 / 4.0 / 9.0 kcal per gram (FAO 
 
 Two more ways the body uses energy, both status *assumption* ("Model estimate"). Neither changes digestion, blood sugar or energy coming in: in this version moving has no arrow into the gut or blood sugar.
 
-**Energy used by moving** (`energy.activityRate`, `energy.activityTotal`). A run can carry activity bouts (walk, brisk walk, run; `core/activity.ts`). A MET is an activity's energy cost as a multiple of 3.5 mL O2 per kg per minute, and 1 L O2 ≈ 5 kcal, so the Compendium's cost is MET × 3.5 × kg / 200 kcal/min (Herrmann 2024; pacompendium.com). The model keeps its own resting use and adds only the cost above rest:
+**Energy used by moving** (`energy.activityRate`, `energy.activityTotal`). A run can carry activity bouts (walk, brisk walk, run, and since v3.2 sitting in class, football, cricket, badminton; `core/activity.ts`). A MET is an activity's energy cost as a multiple of 3.5 mL O2 per kg per minute, and 1 L O2 ≈ 5 kcal, so the Compendium's cost is MET × 3.5 × kg / 200 kcal/min (Herrmann 2024; pacompendium.com). The model keeps its own resting use and adds only the cost above rest:
 
     moving (kcal/min) = (MET − 1) × 3.5 × 65 / 200
 
-Walk 3.8 (17190), brisk walk 4.8 (17200), run 9.3 (12050), from the 2024 Adult Compendium; MET 1 adds exactly 0, so a resting run is unchanged to the byte. A 20-min walk adds 63.7 kcal once the body has caught up.
+Walk 3.8 (17190), brisk walk 4.8 (17200), run 9.3 (12050), sitting in class 1.8 (09065), football 7.0 (15610, soccer, casual, general), cricket 4.8 (15150), badminton 5.5 (15030, social singles and doubles), from the 2024 Adult Compendium, none of them an estimated (red) value; MET 1 adds exactly 0, so a resting run is unchanged to the byte. A 20-min walk adds 63.7 kcal once the body has caught up.
 
 **Starting and stopping** (R82). The body does not jump to a bout's MET. The MET that every module reads (energy, breathing, muscles, skin, heart, water) follows the bout through a first-order lag: τ = 35 s on the way up and 50 s on the way down, the oxygen-uptake time constants of moderate exercise (Rossiter 2002: "tauV(O2),on 35 +/- 14 s … tauV(O2),off 50 +/- 13 s"; Poole & Jones 2012 review the kinetics). Each minute holds the lag's exact mean, so energy, oxygen, heat and sweat all integrate the same curve and their identities hold every minute. The energy held back at the start is used after the end, with (50 − 35) s of the bout's extra as a small fast oxygen debt: a 20-min walk adds 64.5 kcal in all. One minute after a walk the heart has come down about a third of the way, three minutes after it is nearly at rest.
 

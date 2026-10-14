@@ -725,7 +725,7 @@ summary, so those sentences are worded to fit feminine (इडली, दाल,
 | `link.newer` | This link was made with a newer version of LifePeek, so this version may show it differently. | यह लिंक LifePeek के नए संस्करण से बना था, इसलिए यह संस्करण इसे कुछ अलग दिखा सकता है। | draft |
 | `link.old` | This link was made with an older version of the model, so some numbers may differ from when it was shared. | यह लिंक मॉडल के पुराने संस्करण से बना था, इसलिए कुछ संख्याएँ साझा करते समय की संख्याओं से अलग हो सकती हैं। | draft |
 | `link.unknownFoods` | Some foods in this link no longer exist and were left out ({{count}}). | इस लिंक के कुछ खाद्य पदार्थ अब मौजूद नहीं हैं, इसलिए उन्हें छोड़ दिया गया ({{count}})। | draft |
-| `link.newerOffline` | Made with a newer LifePeek. Connect once to update; until then the walk or run is not shown. | यह LifePeek के नए संस्करण से बना है। अपडेट करने के लिए एक बार इंटरनेट से जुड़ें; तब तक चलना या दौड़ना नहीं दिखाया जाएगा। | draft |
+| `link.newerOffline` | Made with a newer LifePeek. Connect once to update; until then the activity is not shown. | यह LifePeek के नए संस्करण से बना है। अपडेट करने के लिए एक बार इंटरनेट से जुड़ें; तब तक चलना या दौड़ना नहीं दिखाया जाएगा। | draft |
 | `link.update` | Update now | अभी अपडेट करें | draft |
 | `link.overCap` | {{meal}} is bigger than {{kcal}} kcal. The model isn't reliable for meals this big, so treat its times as rough. | {{meal}} {{kcal}} किलो कैलोरी से बड़ा है। इतने बड़े भोजन के लिए मॉडल भरोसेमंद नहीं है, इसलिए इसके समय को केवल अनुमान मानें। | draft |
 | `link.shareManual` | Copy this link | यह लिंक कॉपी करें | draft |

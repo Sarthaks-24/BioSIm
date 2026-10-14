@@ -207,6 +207,9 @@
 //   first use, saved with the stage's lesson, never precached) and enforced at ≤ 45 KB gz / 150 raw.
 //   /sim takes only its address and the page side of the async run; the wire format and the worker's
 //   page side (toWire / fromWire, connectWorker) ride in the engine chunk. Ledger row W-2.
+//   K-1 (2026-10-14, branch wp/k1-kinds from v3 a1e66ad; v3.2, R114): four more activity kinds shown.
+//   /sim takes their chip names and pictures and the pose each is drawn in: 189.182 -> 189.298 KB
+//   (+0.116). Ledger row K-1.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'

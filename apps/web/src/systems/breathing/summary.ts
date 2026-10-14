@@ -45,12 +45,9 @@ export function peakOf(series: Series, stepMin: number): { value: number; atMin:
 /** Within 1 % of the first value all the way: the graph is flat ("same as at the start"). */
 export const isFlat = (series: Series) => series.values.every((v) => Math.abs(v - series.values[0]!) <= 0.01 * Math.abs(series.values[0]!))
 
-/** "Run" → "run" inside a sentence (components/stage/boutText.ts inSentence). */
-const lower = (text: string) => text.charAt(0).toLocaleLowerCase() + text.slice(1)
-
 /**
  * The summary: one meal at rest says breathing stays about the same (and to try a walk); with a walk
- * or a run, the fastest breathing and in which bout ("Fastest during the run: about 33 a minute
+ * or a run, the fastest breathing and in which bout ("Fastest while running: about 33 a minute
  * (rest 15)."), how much deeper, and in a run the older book's "up to 25". Beside a kept plan: both
  * fastest rates, or that they are the same.
  */
@@ -79,7 +76,7 @@ export function breathingSummary(run: RunResult, kept: RunResult | null, t: TFun
     to: n(Math.round(tidal.values[peak.atMin / run.stepMin]! / 10) * 10),
   })
   return {
-    headline: t('sys.breathing.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), n: text, rest: n(rest) }),
+    headline: t('sys.breathing.summary.peak', { doing: t(`sys.breathing.doing.${kind}`), n: text, rest: n(rest) }),
     key: { text, line: 'run' },
     reason: kind === 'run' ? `${deeper} ${t('sys.breathing.summary.runBook')}` : deeper,
   }

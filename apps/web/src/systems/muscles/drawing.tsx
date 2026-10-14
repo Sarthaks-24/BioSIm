@@ -214,7 +214,7 @@ const LABEL_KEYS: readonly MusclesLabel[] = ['legs', 'arms', 'belly', 'tendon']
  * cross-faded over 300 ms (a cut with motion reduced).
  *
  * The working groups (WORKING: the legs in any walk or run, the arms too in a brisk walk or a run,
- * the belly too in a run) get a hatch step that follows `muscle.energyRate` at the meal-clock minute
+ * the belly too in a run and the games, the trunk and forearm sitting in class) get a hatch step that follows `muscle.energyRate` at the meal-clock minute
  * on screen (hatchStep, with hysteresis), changing at most once a real second and fading over 300 ms.
  * No kcal on the body; no colour change, only a hatch and one lightness step.
  */

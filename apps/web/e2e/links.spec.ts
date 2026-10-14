@@ -190,7 +190,16 @@ test.describe('links', () => {
       t: ['', '60', '-5', 'abc', '99999'],
       who: ['', 'teen-ref'],
       layer: ['', 'circulation', 'lungs', '<x>'],
-      act: ['', 'walk.120.20', 'walk.30.20,run.240.10', 'football.0.30', 'walk.0.20,run.10.10', 'walk.0.200'],
+      // football, cricket, badminton and sitting in class come back as written since v3.2 (R114).
+      act: [
+        '',
+        'walk.120.20',
+        'walk.30.20,run.240.10',
+        'football.0.30',
+        'sitClass.0.45,badminton.60.20',
+        'walk.0.20,run.10.10',
+        'walk.0.200',
+      ],
       bact: ['', 'run.0.30', 'cricket.0.30'],
     }
     let seed = 7

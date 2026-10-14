@@ -11,7 +11,7 @@ import { FADE_TONE, SKIN_LINE } from '../../anatomy/tones/base.ts'
 import { BREATHING_TONE } from '../../anatomy/tones/breathing.ts'
 import { FLAT_LOOK } from '../../flat/look.ts'
 import { MAX_BREATH_HZ } from '../../flat/rhythm.ts'
-import { activityBandAt } from '../../lib/bouts.ts'
+import { activityKindAt } from '../../lib/bouts.ts'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import { createTicker } from '../../lib/ticker.ts'
 import { STILL_BREATH, breathRate, countModel, doingAt, fillAt, lungScale, seriesOf } from './breath.ts'
@@ -93,7 +93,14 @@ describe('the pack shares no code with the stage: what it writes out matches the
 
   it('what the body is doing, and numbers with their units', () => {
     const bouts = [walk, runBout, { kind: 'walkBrisk', startMin: 100, durMin: 5 } as ActivityBout]
-    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityBandAt(bouts, min))
+    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityKindAt(bouts, min))
+    const games: ActivityBout[] = [
+      { kind: 'sitClass', startMin: 0, durMin: 45 },
+      { kind: 'football', startMin: 60, durMin: 30 },
+      { kind: 'cricket', startMin: 100, durMin: 20 },
+      { kind: 'badminton', startMin: 130, durMin: 10 },
+    ]
+    for (const min of [10, 50, 70, 110, 135, 200]) expect(doingAt(games, min)).toBe(activityKindAt(games, min))
     const r = run([runBout])
     for (const id of ['lungs.breathRate', 'lungs.tidalVolume', 'gas.o2UseRate']) {
       const s = seriesOf(r, id)!
@@ -116,7 +123,7 @@ describe('breathing’s sentences are true (ui-ux §6, §7)', () => {
     expect(peak.atMin).toBeGreaterThanOrEqual(30)
     expect(peak.atMin).toBeLessThanOrEqual(40)
     const s = breathingSummary(r, null, t, 'en')!
-    expect(s.headline).toBe(`Fastest during the run: about ${Math.round(peak.value)} a minute (rest ${Math.round(rate(r, 0))}).`)
+    expect(s.headline).toBe(`Fastest while running: about ${Math.round(peak.value)} a minute (rest ${Math.round(rate(r, 0))}).`)
     expect(s.key).toEqual({ text: String(Math.round(peak.value)), line: 'run' })
     expect(s.reason).toMatch(/deeper too: about [\d,]+ mL at rest, [\d,]+ mL then\. Older NCERT Class 7 book: up to 25/)
   })

@@ -15,9 +15,6 @@ const MUSCLE = 'muscle.energyRate'
 const SWEAT = 'skin.sweatRate'
 const SWEAT_TOTAL = 'skin.sweatTotal'
 
-/** "Run" → "run" inside a sentence (components/stage/boutText.ts inSentence). */
-const lower = (text: string) => text.charAt(0).toLocaleLowerCase() + text.slice(1)
-
 /** The bout the highest value comes in, or just after (the model eases off over a minute or two: R86). */
 function boutAt(run: RunResult, atMin: number) {
   const bout = run.activity.find((b) => atMin >= b.startMin && atMin <= b.startMin + b.durMin + 5)
@@ -62,7 +59,7 @@ export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunct
     return { headline: t('sys.effort.muscles.summary.rest'), reason: t('sys.effort.muscles.summary.restReason') }
   const text = whole(now.k, lang)
   return {
-    headline: t('sys.effort.muscles.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), k: text }),
+    headline: t('sys.effort.muscles.summary.peak', { doing: t(`sys.effort.doing.${kind}`), k: text }),
     key: { text, line: 'run' },
   }
 }
@@ -95,7 +92,7 @@ export function skinSummary(run: RunResult, kept: RunResult | null, t: TFunction
     return { headline: t('sys.effort.skin.summary.rest'), reason: t('sys.effort.skin.summary.restReason') }
   const text = valueText(peak.value, rate.meta, t, lang)
   return {
-    headline: t('sys.effort.skin.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), value: text }),
+    headline: t('sys.effort.skin.summary.peak', { doing: t(`sys.effort.doing.${kind}`), value: text }),
     key: { text, line: 'run' },
     reason: t('sys.effort.skin.summary.total', { value: all(run).text }),
   }

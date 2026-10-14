@@ -40,12 +40,19 @@ describe('link notes', () => {
     ])
   })
 
-  it('a person or a view this version lacks, and a walk or run', () => {
-    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&who=teen-ref&layer=lungs&act=football.120.20`)).toEqual([
+  it('a person or a view this version lacks, and an activity it cannot show', () => {
+    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&who=teen-ref&layer=lungs&act=football.120.200`)).toEqual([
       'This version doesn’t know the person this link asks for, so it shows the typical adult.',
       'This version doesn’t have the body system this link asks for (“lungs”), so it shows Digestion.',
-      'This version can’t show these activities from the link, so they were left out: Football from 2:00, 20 min.',
+      'This version can’t show these activities from the link, so they were left out: Football from 2:00, 200 min.',
     ])
+  })
+
+  it('since v3.2 a football, cricket, badminton or sitting-in-class bout opens with no note (R114; before, it was dropped and named)', () => {
+    const act = 'sitClass.0.45,football.60.30,cricket.120.60'
+    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&act=${act}&bact=badminton.0.30`)).toEqual([])
+    expect(useRunStore.getState().activity.map((b) => b.kind)).toEqual(['sitClass', 'football', 'cricket'])
+    expect(useRunStore.getState().kept?.activity).toEqual([{ kind: 'badminton', startMin: 0, durMin: 30 }])
   })
 
   it('a walk or run it can show opens with no note; each bout it drops is named (R21, E-3b-eng)', () => {
@@ -55,8 +62,8 @@ describe('link notes', () => {
       { kind: 'run', startMin: 240, durMin: 10 },
     ])
     expect(useRunStore.getState().kept?.activity).toEqual([{ kind: 'walkBrisk', startMin: 0, durMin: 60 }])
-    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&act=walk.30.20,run.40.10,walk.0.200&bact=cricket.65.30,<x>`)).toEqual([
-      'This version can’t show these activities from the link, so they were left out: Walk from 0:00, 200 min; Run from 0:40, 10 min; Cricket from 1:05, 30 min; “<x>”.',
+    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&act=walk.30.20,run.40.10,walk.0.200&bact=cricket.65.300,<x>`)).toEqual([
+      'This version can’t show these activities from the link, so they were left out: Walk from 0:00, 200 min; Run from 0:40, 10 min; Cricket from 1:05, 300 min; “<x>”.',
     ])
   })
 

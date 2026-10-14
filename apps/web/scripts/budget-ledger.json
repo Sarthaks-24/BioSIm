@@ -147,6 +147,15 @@
         "engineKB": 12.47,
         "simRatchetKB": 189.382,
         "simEngineRatchetKB": 201.952
+      },
+      {
+        "wp": "K-1",
+        "at": "2026-10-14",
+        "on": "v3 a1e66ad + K-1 (R114): football, cricket, badminton and sitting in class made visible. The first download gains their four chip names (activity.kinds in the core text), their four chip pictures (BOUT_EMOJI) and the pose each takes (anatomy/human/bands.ts KIND_BAND, read by lib/bouts.ts activityBandAt); the sheet's groups, the packs' doing words and the picker's are lazy: /sim 189.182 -> 189.298 (+0.116; a variant that moved the picker's bout reader into the lazy picker measured 189.326, kept out), engine 12.470 unchanged (the codec's public list is now the kinds list).",
+        "simKB": 189.298,
+        "engineKB": 12.47,
+        "simRatchetKB": 189.498,
+        "simEngineRatchetKB": 202.068
       }
     ]
   },

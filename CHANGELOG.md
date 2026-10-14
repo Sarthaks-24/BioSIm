@@ -2,6 +2,29 @@
 
 All notable changes to LifePeek. Data corrections are listed here so teachers can see what changed.
 
+## 3.2.0 (unreleased)
+
+- **Four more activities**: football, cricket, badminton and sitting in class can be added to a
+  meal, as well as a walk, a brisk walk or a run. The activity sheet groups them as "Walking and
+  running", "Games" and "Sitting". Each uses its value from the 2024 Adult Compendium of Physical
+  Activities: sitting in class 1.8 MET (09065), football 7.0 (15610, soccer, casual), cricket 4.8
+  (15150), badminton 5.5 (15030); none is an estimated value. The model already knew them, so
+  version 3's numbers do not change: a walk, a brisk walk or a run gives exactly what it gave before.
+- **Links**: a link with football, cricket, badminton or sitting in class used to open without that
+  activity, with a note that it was left out. Now it opens with the activity and no note. A bout
+  outside the limits (longer than 120 minutes, overlapping another, past the eighth) is still left
+  out and named.
+- The body is drawn in the nearest of its four still poses: sitting in class as at rest, cricket
+  and badminton as a brisk walk, football as a run. The model uses each activity's own value
+  whatever the pose.
+- Graph sentences now read "Fastest while running" (was "Fastest during the run"), so they fit
+  every activity.
+
+Known limits:
+
+- Sitting in class and the three games have no pose of their own yet.
+- The ready plans are still the three walks and runs.
+
 ## 3.0.0 (unreleased)
 
 **Class 10 Life Processes, complete.** Lymph graphs, insulin and the nerve demo come in v3.1;
@@ -58,7 +81,8 @@ Known limits:
 - Body temperature is held at 37 °C, not worked out: the model works out the sweat instead. The
   heart is back to resting within a few minutes of stopping; a real one stays a little fast for longer. Air breathed out is shown as the
   book's numbers only.
-- Only walking, brisk walking and running can be added.
+- Only walking, brisk walking and running can be added (football, cricket, badminton and sitting
+  in class come in 3.2).
 - Hindi is still paused: the site is English only.
 
 ## 2.1.0 (unreleased)

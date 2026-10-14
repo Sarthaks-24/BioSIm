@@ -10,7 +10,7 @@ import { FADE_TONE } from '../../anatomy/tones/base.ts'
 import { CIRCULATION_TONE } from '../../anatomy/tones/circulation.ts'
 import { FLAT_LOOK } from '../../flat/look.ts'
 import { MAX_DRAWN_HZ } from '../../flat/rhythm.ts'
-import { activityBandAt } from '../../lib/bouts.ts'
+import { activityKindAt } from '../../lib/bouts.ts'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import {
   GUT_MAX,
@@ -155,7 +155,14 @@ describe('the pack shares no code with the stage: what it writes out matches the
 
   it('what the body is doing, and numbers with their units (litres a minute to one decimal)', () => {
     const bouts = [walk, runBout, { kind: 'walkBrisk', startMin: 100, durMin: 5 } as ActivityBout]
-    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityBandAt(bouts, min))
+    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityKindAt(bouts, min))
+    const games: ActivityBout[] = [
+      { kind: 'sitClass', startMin: 0, durMin: 45 },
+      { kind: 'football', startMin: 60, durMin: 30 },
+      { kind: 'cricket', startMin: 100, durMin: 20 },
+      { kind: 'badminton', startMin: 130, durMin: 10 },
+    ]
+    for (const min of [10, 50, 70, 110, 135, 200]) expect(doingAt(games, min)).toBe(activityKindAt(games, min))
     const r = run([runBout])
     for (const id of ['heart.rate', 'heart.output', 'heart.strokeVolume', 'blood.flow.gut', 'blood.flow.muscle']) {
       const s = seriesOf(r, id)!
@@ -188,7 +195,7 @@ describe('Heart & blood’s sentences are true (ui-ux §6, §7)', () => {
     const r = run([walk])
     const peak = peakOf(seriesOf(r, 'heart.rate')!, r.stepMin)
     const s = circulationSummary(r, null, t, 'en')!
-    expect(s.headline).toBe(`Fastest during the walk: about ${Math.round(peak.value)} beats a minute (rest ${Math.round(rate(r, 0))}).`)
+    expect(s.headline).toBe(`Fastest while walking: about ${Math.round(peak.value)} beats a minute (rest ${Math.round(rate(r, 0))}).`)
     expect(s.key).toEqual({ text: String(Math.round(peak.value)), line: 'run' })
     expect(s.reason).toMatch(/^The heart pumps about \d+\.\d L of blood a minute then \(rest 4\.3 L\)/)
     expect(s.reason).not.toContain('slows')
@@ -244,7 +251,7 @@ describe('the book, the children’s band and "Why does the model differ from th
     const beats = DEFS.circulation.slots!.find((s) => s.id === 'beats')!
     expect(beats.reference).toEqual({ low: 62, high: 96 })
     expect(t('sys.circulation.children')).toBe('Most children your age (12–15): 62–96 a minute at rest')
-    expect(t('sys.circulation.moves')).toBe('Moves mostly with walking or running; a meal moves it a little.')
+    expect(t('sys.circulation.moves')).toBe('Moves mostly with activity; a meal moves it a little.')
     expect(t('sys.circulation.bp.value')).toBe('Blood pressure 120/80: book value, held.')
   })
 

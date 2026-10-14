@@ -961,12 +961,12 @@
       "activityRate": {
         "name": "Energy used by moving",
         "short": "Moving",
-        "desc": "Extra energy the body uses each hour while walking or running, on top of what it uses at rest. 0 while resting."
+        "desc": "Extra energy the body uses each hour while active (walking, running, a game or sitting in class), on top of what it uses at rest. 0 while resting."
       },
       "activityTotal": {
         "name": "Energy used by moving so far",
         "short": "Moving so far",
-        "desc": "Extra energy the body has used for walking or running since the meal started."
+        "desc": "Extra energy the body has used for activity since the meal started."
       },
       "foodEffectRate": {
         "name": "Energy used to digest",
@@ -1057,21 +1057,21 @@
       "strokeVolume": {
         "name": "Blood per beat",
         "short": "Blood per beat",
-        "desc": "How much blood the heart pushes out with each beat. It grows when you walk or run, up to about 1.4 times, and a little after a meal."
+        "desc": "How much blood the heart pushes out with each beat. It grows with activity, like walking or running, up to about 1.4 times, and a little after a meal."
       }
     },
     "muscle": {
       "energyRate": {
         "name": "Energy used by muscles",
         "short": "Muscles",
-        "desc": "How much energy the muscles use each hour. At rest they use about a fifth of the body’s resting energy, steadily; walking or running adds all of its extra energy here, and most of it ends up as heat."
+        "desc": "How much energy the muscles use each hour. At rest they use about a fifth of the body’s resting energy, steadily; activity adds all of its extra energy here, and most of it ends up as heat."
       }
     },
     "skin": {
       "sweatRate": {
         "name": "Sweat made",
         "short": "Sweat",
-        "desc": "How much sweat the skin makes each hour. In this model sweat carries away the extra heat of walking or running, so it comes only with them."
+        "desc": "How much sweat the skin makes each hour. In this model sweat carries away the extra heat of activity, so it comes only with it."
       },
       "sweatTotal": {
         "name": "Sweat so far",
@@ -1140,10 +1140,10 @@
     "heartOutput": "Blood pumped a minute is worked out from the oxygen the body uses (about 5.5 litres more blood for each extra litre of oxygen), from small studies of grown-ups. Blood pressure is not worked out: 120/80 is a book value, held.",
     "gutFlow": "How much more blood goes to the gut after a meal is fitted to one study of a very big meal, so small drinks barely move it. In hard exercise the gut gives some of its blood to the muscles (OpenStax Anatomy and Physiology 2e, Table 20.3).",
     "heartAdult": "The numbers are for a typical grown-up. Children’s hearts usually beat faster.",
-    "heartRecovery": "After a walk or a run the model’s heart slows back almost to resting within a few minutes. Real hearts slow quickly at first, then stay a little fast for longer: recovery is simplified here.",
+    "heartRecovery": "After an activity the model’s heart slows back almost to resting within a few minutes. Real hearts slow quickly at first, then stay a little fast for longer: recovery is simplified here.",
     "heartDrawing": "In the drawing the blood’s dashes run at most twice as fast as at rest; in a run the heart really pumps about 3.5 times as much blood. The beat is enlarged to be seen.",
-    "muscleEnergy": "Resting muscle energy is worked out from studies of how much energy muscle uses and how much of the body is muscle, for a typical 65 kg adult (a model estimate). All the extra energy of walking or running is counted in the muscles, the heart’s and the breathing muscles’ extra work included.",
-    "sweatWarmRoom": "The model takes a warm room: all the extra heat of moving leaves as sweat, and sweat starts and stops with the walk or run. Body temperature is kept within a narrow range, not worked out. Room temperature is not part of this model. Sweat is water and salt, not fat.",
+    "muscleEnergy": "Resting muscle energy is worked out from studies of how much energy muscle uses and how much of the body is muscle, for a typical 65 kg adult (a model estimate). All the extra energy of activity is counted in the muscles, the heart’s and the breathing muscles’ extra work included.",
+    "sweatWarmRoom": "The model takes a warm room: all the extra heat of moving leaves as sweat, and sweat starts and stops with the activity. Body temperature is kept within a narrow range, not worked out. Room temperature is not part of this model. Sweat is water and salt, not fat.",
     "waterSteadyDay": "We assume a steady day: about 1.5 L of urine a day from other food and drink. The body is always well watered, so sweat is drunk back over about 90 minutes.",
     "bladderEmpties": "At about 150 mL the bladder starts to feel full, and we can usually wait. Here it empties at 300 mL; a person chooses when.",
     "gfrFixed": "The kidneys filter about 125 mL a minute all day here (90–140 in grown men). This model does not sleep: urine is not slower at night.",
@@ -1415,7 +1415,7 @@
     "newer": "This link was made with a newer version of LifePeek, so this version may show it differently.",
     "old": "This link was made with an older version of the model, so some numbers may differ from when it was shared.",
     "unknownFoods": "Some foods in this link no longer exist and were left out ({{count}}).",
-    "newerOffline": "Made with a newer LifePeek. Connect once to update; until then the walk or run is not shown.",
+    "newerOffline": "Made with a newer LifePeek. Connect once to update; until then the activity is not shown.",
     "update": "Update now",
     "servings": "This link asked for {{food}} ×{{asked}}; showing ×{{shown}}, the nearest amount this version allows.",
     "tooMany": "A meal can have at most {{n}} foods, so these in the link were left out: {{foods}}.",
@@ -1442,7 +1442,16 @@
     "kinds": {
       "walk": "Walk",
       "walkBrisk": "Brisk walk",
-      "run": "Run"
+      "run": "Run",
+      "sitClass": "Sitting in class",
+      "football": "Football",
+      "cricket": "Cricket",
+      "badminton": "Badminton"
+    },
+    "groups": {
+      "move": "Walking and running",
+      "games": "Games",
+      "sitting": "Sitting"
     },
     "bout": "{{kind}} {{min}} min, from {{start}}",
     "edit": "Change {{bout}}",
@@ -1457,11 +1466,11 @@
     "save": "Save",
     "remove": "Remove",
     "yours": "Your plan",
-    "resting": "Resting: no walk or run yet.",
-    "full": "At most {{n}} walks or runs. Remove one to add another.",
+    "resting": "Resting: no activity yet.",
+    "full": "At most {{n}} activities. Remove one to add another.",
     "overlap": "That overlaps {{bout}}. Pick another time.",
     "fromLink": "Made by a link. You can remove it here, not change it.",
-    "moves": "In this model, walking and running change breathing, the heart and blood, the muscles and the skin. Muscles and skin change only with them. The food’s journey, blood sugar and energy taken in stay the same."
+    "moves": "In this model, walking, running, games and sitting in class change breathing, the heart and blood, the muscles and the skin. Muscles and skin change only with them. The food’s journey, blood sugar and energy taken in stay the same."
   },
   "mealSheet": {
     "food": "Food",
@@ -1577,7 +1586,11 @@
         "rest": "resting",
         "walk": "walking",
         "walkBrisk": "brisk walking",
-        "run": "running"
+        "run": "running",
+        "sitClass": "sitting in class",
+        "football": "playing football",
+        "cricket": "playing cricket",
+        "badminton": "playing badminton"
       },
       "now": {
         "organ": "Lungs",
@@ -1591,20 +1604,20 @@
         "info": "About the breathing speed",
         "why": "The clock moves hours in seconds. Breathing is drawn at its true speed for {{time}}."
       },
-      "moves": "Moves mostly with walking or running; the meal moves it a little.",
+      "moves": "Moves mostly with activity; the meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute",
       "children": "Most children your age (12–15): 15–21 a minute at rest",
       "summary": {
         "rest": "At rest, breathing stays about the same after a meal: about {{n}} a minute.",
-        "restReason": "Breathing moves mostly with walking or running. Try a walk.",
-        "peak": "Fastest during the {{doing}}: about {{n}} a minute (rest {{rest}}).",
+        "restReason": "Breathing moves mostly with activity, like walking or running. Try a walk.",
+        "peak": "Fastest while {{doing}}: about {{n}} a minute (rest {{rest}}).",
         "deeper": "Each breath is deeper too: about {{from}} mL at rest, {{to}} mL then.",
         "runBook": "Older NCERT Class 7 book: up to 25 a minute in hard exercise; hard running goes higher.",
         "compare": "Fastest: about {{run}} a minute with this plan, {{kept}} with the kept one.",
         "same": "Breathing is about the same in both: about {{n}} a minute."
       },
       "graph": {
-        "flat": "{{name}}: about {{value}} all the way, with no walk or run.",
+        "flat": "{{name}}: about {{value}} all the way, with no activity.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
       },
       "count": {
@@ -1656,7 +1669,11 @@
         "rest": "resting",
         "walk": "walking",
         "walkBrisk": "brisk walking",
-        "run": "running"
+        "run": "running",
+        "sitClass": "sitting in class",
+        "football": "playing football",
+        "cricket": "playing cricket",
+        "badminton": "playing badminton"
       },
       "now": {
         "organ": "Heart",
@@ -1671,7 +1688,7 @@
         "info": "About the heart’s speed",
         "why": "The clock moves hours in seconds. The heart is drawn at its true speed for {{time}}, up to 150 beats a minute. Its beat is enlarged to be seen, and the blood’s dashes run at most twice as fast as at rest."
       },
-      "moves": "Moves mostly with walking or running; a meal moves it a little.",
+      "moves": "Moves mostly with activity; a meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute",
       "children": "Most children your age (12–15): 62–96 a minute at rest",
       "bp": {
@@ -1707,10 +1724,10 @@
       },
       "summary": {
         "rest": "At rest, the heart stays at about {{n}} beats a minute after this meal.",
-        "restReason": "The heart moves mostly with walking or running. Try a walk.",
+        "restReason": "The heart moves mostly with activity, like walking or running. Try a walk.",
         "meal": "After this meal, up to {{up}} beats a minute more: about {{n}}, at {{time}}.",
         "mealReason": "While the gut takes in the food, more blood flows to it.",
-        "peak": "Fastest during the {{doing}}: about {{n}} beats a minute (rest {{rest}}).",
+        "peak": "Fastest while {{doing}}: about {{n}} beats a minute (rest {{rest}}).",
         "pumped": "The heart pumps about {{to}} L of blood a minute then (rest {{from}} L), most of the extra to the muscles.",
         "slowed": "The drawing slows above 150 a minute; the number stays true.",
         "compare": "Fastest: about {{run}} beats a minute with this plan, {{kept}} with the kept one.",
@@ -1726,15 +1743,19 @@
       }
     },
     "effort": {
-      "moves": "Moves only with walking or running.",
+      "moves": "Moves only with activity.",
       "doing": {
         "rest": "resting",
         "walk": "walking",
         "walkBrisk": "brisk walking",
-        "run": "running"
+        "run": "running",
+        "sitClass": "sitting in class",
+        "football": "playing football",
+        "cricket": "playing cricket",
+        "badminton": "playing badminton"
       },
       "graph": {
-        "flat": "{{name}}: about {{value}} all the way, with no walk or run.",
+        "flat": "{{name}}: about {{value}} all the way, with no activity.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
       },
       "muscles": {
@@ -1754,8 +1775,8 @@
         },
         "summary": {
           "rest": "At rest, muscles use about the same energy all day; the meal does not change it.",
-          "restReason": "Muscles work harder only with walking or running. Try a walk.",
-          "peak": "During the {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
+          "restReason": "Muscles work harder only with activity. Try a walk.",
+          "peak": "While {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
           "compare": "At the most, muscles use about {{run}}× their resting energy with this plan, {{kept}}× with the kept one.",
           "same": "Muscles work about the same in both plans.",
           "compareRest": "At the most, muscles use about {{most}}× their resting energy with {{which}}; with the other they stay at rest.",
@@ -1786,8 +1807,8 @@
         "notFat": "Sweat is water and salt, not fat leaving.",
         "summary": {
           "rest": "At rest the skin makes no sweat from moving; the meal does not change that.",
-          "restReason": "Sweat comes only with walking or running here. Try a walk.",
-          "peak": "Most sweat during the {{doing}}: about {{value}}.",
+          "restReason": "Sweat comes only with activity here. Try a walk.",
+          "peak": "Most sweat while {{doing}}: about {{value}}.",
           "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
           "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
           "same": "Sweat is about the same in both: about {{value}} in all."
@@ -2035,7 +2056,11 @@
     "doing": {
       "walk": "walking",
       "walkBrisk": "brisk walking",
-      "run": "running"
+      "run": "running",
+      "sitClass": "sitting in class",
+      "football": "playing football",
+      "cricket": "playing cricket",
+      "badminton": "playing badminton"
     }
   },
   "count": {

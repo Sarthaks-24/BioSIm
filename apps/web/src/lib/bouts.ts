@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import type { ActivityBout } from '@lifepeek/engine'
-import type { ActivityBand } from '../anatomy/human/bands.ts'
+import type { ActivityBout, ActivityKind } from '@lifepeek/engine'
+import { KIND_BAND, type ActivityBand } from '../anatomy/human/bands.ts'
 import { useClock } from '../state/clock.ts'
 import { useRunStore } from '../state/run.ts'
 
@@ -10,13 +10,18 @@ import { useRunStore } from '../state/run.ts'
  * components/ActivitySheet.tsx (lazy).
  */
 
-/** What the body is doing at a moment: resting, or one of the kinds offered (architecture §0; anatomy/human/bands.ts). */
+/** The body's pose at a moment: resting, walk, brisk walk or run (architecture §0; anatomy/human/bands.ts). */
 export type { ActivityBand }
 
-/** The kind the body is doing at `min` (a bout runs from its start to its end), else 'rest'. */
-export function activityBandAt(bouts: readonly ActivityBout[], min: number): ActivityBand {
-  const b = bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)
-  return b && (b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run') ? b.kind : 'rest'
+/** The kind the body is doing at `min` (a bout runs from its start to its end), else 'rest': the words. */
+export function activityKindAt(bouts: readonly ActivityBout[], min: number): ActivityKind | 'rest' {
+  return bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)?.kind ?? 'rest'
+}
+
+/** The pose of the kind the body is doing at `min` (KIND_BAND: a game takes the nearest still pose). */
+export const activityBandAt = (bouts: readonly ActivityBout[], min: number): ActivityBand => {
+  const kind = activityKindAt(bouts, min)
+  return (KIND_BAND as Readonly<Record<string, ActivityBand>>)[kind] ?? (kind as ActivityBand)
 }
 
 /**

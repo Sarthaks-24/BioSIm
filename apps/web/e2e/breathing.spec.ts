@@ -45,9 +45,7 @@ test('a link lights breathing: lungs, chip, three graphs, the book line and the 
   await expect(graphs.locator('[data-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute')
   await expect(graphs.locator('[data-band-key]')).toContainText('Most children your age (12–15): 15–21')
   if (test.info().project.name !== 'phone')
-    await expect(graphs.locator('[data-strip-note]').first()).toContainText(
-      'Moves mostly with walking or running; the meal moves it a little.',
-    )
+    await expect(graphs.locator('[data-strip-note]').first()).toContainText('Moves mostly with activity; the meal moves it a little.')
   expect(errors).toEqual([])
 })
 

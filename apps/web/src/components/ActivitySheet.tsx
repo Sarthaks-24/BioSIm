@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ActivityBout } from '@lifepeek/engine'
+import type { ActivityBout, ActivityKind } from '@lifepeek/engine'
 import { addEnglish } from '../i18n/index.ts'
 import { Segmented } from './kit/index.ts'
 import activityText from 'virtual:lifepeek-en/activity'
@@ -11,15 +11,21 @@ addEnglish(activityText)
 /**
  * The Activity half of the meal sheet (E-3b-ui, ui-ux §5; architecture §0). Loaded the first time
  * it is shown (R71/R74: the pack-manifest's lazy tier, never the precache). Ready plans first, one
- * tap each; then "Make your own": What · From · How long. The choices are the frozen ones: walk,
- * brisk walk, run; from 0:00 to 5:50 in 10-minute steps; 5, 10, 20, 30 or 60 minutes; at most 3
+ * tap each; then "Make your own": What · From · How long. The choices: the seven kinds in three
+ * groups (walking and running; games: football, cricket, badminton; sitting in class; the last four
+ * since v3.2, R114); from 0:00 to 5:50 in 10-minute steps; 5, 10, 20, 30 or 60 minutes; at most 3
  * bouts, none overlapping. A choice that can't be made says why. No bout is "Resting".
  * A link may hold bouts outside these choices (codec: up to 8, start to 48 h, 5–120 min); they
  * are drawn and named, and here they can only be removed ("Made by a link").
  */
 
-type Kind = 'walk' | 'walkBrisk' | 'run'
-const KINDS: readonly Kind[] = ['walk', 'walkBrisk', 'run']
+/** The kinds offered, grouped as the sheet shows them (each group one row of choices). */
+const GROUPS: readonly (readonly [group: 'move' | 'games' | 'sitting', kinds: readonly ActivityKind[]])[] = [
+  ['move', ['walk', 'walkBrisk', 'run']],
+  ['games', ['football', 'cricket', 'badminton']],
+  ['sitting', ['sitClass']],
+]
+const KINDS: readonly ActivityKind[] = GROUPS.flatMap(([, kinds]) => kinds)
 const LENGTHS = [5, 10, 20, 30, 60] as const
 /** 0:00 to 5:50 in 10-minute steps. */
 const STARTS = Array.from({ length: 36 }, (_, i) => i * 10)
@@ -33,7 +39,7 @@ const PLANS: readonly { bout: ActivityBout; home?: true }[] = [
 
 /** Whether the sheet itself could have made this bout (else a link did). */
 const offered = (b: ActivityBout) =>
-  (KINDS as readonly string[]).includes(b.kind) && STARTS.includes(b.startMin) && (LENGTHS as readonly number[]).includes(b.durMin)
+  KINDS.includes(b.kind) && STARTS.includes(b.startMin) && (LENGTHS as readonly number[]).includes(b.durMin)
 
 const overlaps = (a: ActivityBout, b: ActivityBout) => a.startMin < b.startMin + b.durMin && b.startMin < a.startMin + a.durMin
 
@@ -61,7 +67,7 @@ interface Props {
 export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock, emoji, onDone, place = true }: Props) {
   const { t } = useTranslation()
   const editing = edit != null ? bouts[edit] : undefined
-  const [kind, setKind] = useState<Kind>(editing && (KINDS as readonly string[]).includes(editing.kind) ? (editing.kind as Kind) : 'walk')
+  const [kind, setKind] = useState<ActivityKind>(editing && KINDS.includes(editing.kind) ? editing.kind : 'walk')
   const [startMin, setStart] = useState(editing && STARTS.includes(editing.startMin) ? editing.startMin : 30)
   const [durMin, setDur] = useState<number>(editing && (LENGTHS as readonly number[]).includes(editing.durMin) ? editing.durMin : 20)
   const [why, setWhy] = useState<string | null>(null)
@@ -125,15 +131,28 @@ export default function ActivitySheet({ edit, max, bouts, setBouts, label, clock
             <h3 id={`${fromId}-own`} className={heading}>
               {edit == null ? t('activity.own') : label(editing!)}
             </h3>
-            <Segmented
-              label={t('activity.what')}
-              options={KINDS.map((k) => ({ id: k, label: t(`activity.kinds.${k}`) }))}
-              value={kind}
-              onChange={(k) => {
-                setKind(k)
-                setWhy(null)
-              }}
-            />
+            {/* One choice in three rows: a row's kinds are pressed only when one of them is chosen. */}
+            <div role="group" aria-labelledby={`${fromId}-what`} className="flex flex-col gap-1">
+              <span id={`${fromId}-what`} className="text-control font-semibold">
+                {t('activity.what')}
+              </span>
+              {GROUPS.map(([group, kinds]) => (
+                <div key={group} data-kind-group={group} className="flex flex-col">
+                  <span id={`${fromId}-${group}`} className="text-caption text-ink-muted">
+                    {t(`activity.groups.${group}`)}
+                  </span>
+                  <Segmented
+                    labelledBy={`${fromId}-${group}`}
+                    options={kinds.map((k) => ({ id: k, label: t(`activity.kinds.${k}`) }))}
+                    value={kind}
+                    onChange={(k) => {
+                      setKind(k)
+                      setWhy(null)
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
             <label className="flex flex-wrap items-center gap-2 text-control">
               <span className="font-semibold">{t('activity.from')}</span>
               <select
