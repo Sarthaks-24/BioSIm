@@ -25,7 +25,8 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
   it('every lesson has a release, classes, a title and its question (system lessons), and a link to its system and time', () => {
     for (const c of CHAPTERS)
       for (const l of c.lessons) {
-        expect(['v2', 'v3.0'], l.key).toContain(l.release)
+        // v3.1: lymph's lesson (U-5, R18).
+        expect(['v2', 'v3.0', 'v3.1'], l.key).toContain(l.release)
         expect(l.classes.length, l.key).toBeGreaterThan(0)
         expect((en.teach.lessons as Record<string, string>)[l.key], l.key).toBeTruthy()
         const url = new URL(l.href(true), 'https://example.org')
@@ -46,7 +47,7 @@ describe('Science: each system’s sources are its catalog rows’ (X-1, no new 
   const cited = (rows: Iterable<{ id: string; sourceIds?: readonly string[] }>) => [...new Set([...rows].flatMap((r) => r.sourceIds ?? []))]
   const all = Object.values({ ...run.RUN_SIGNALS, ...run.RUN_EVENTS }) as { id: string; sourceIds?: readonly string[] }[]
   const effort = Object.values(run.EFFORT_SIGNALS) as { id: string; sourceIds?: readonly string[] }[]
-  // The v3.1 rows (S-5 lymph, S-6 control) are not public yet: Lymph & germ defence stays drawing only until they ship.
+  // The packs' own events (v3.1's S-5 lymph and S-6 control's too) are their systems', not Digestion's.
   const packEvents = new Set([
     ...Object.keys(run.CIRCULATION_EVENTS),
     ...Object.keys(run.KIDNEY_EVENTS),
@@ -63,8 +64,9 @@ describe('Science: each system’s sources are its catalog rows’ (X-1, no new 
     expect(SYSTEM_SOURCES.kidneys).toEqual(cited([...Object.values(run.KIDNEY_SIGNALS), ...Object.values(run.KIDNEY_EVENTS)]))
     expect(SYSTEM_SOURCES.muscles).toEqual(cited(effort.filter((r) => r.id.startsWith('muscle.'))))
     expect(SYSTEM_SOURCES.skin).toEqual(cited(effort.filter((r) => r.id.startsWith('skin.'))))
+    expect(SYSTEM_SOURCES.lymph).toEqual(cited([...Object.values(run.LYMPH_SIGNALS), ...Object.values(run.LYMPH_EVENTS)]))
     // Drawing only: no numbers, no sources.
-    expect([SYSTEM_SOURCES.lymph, SYSTEM_SOURCES.bones]).toEqual([[], []])
+    expect(SYSTEM_SOURCES.bones).toEqual([])
   })
 
   it('every one is in the page’s reference list (its anchor)', () => {

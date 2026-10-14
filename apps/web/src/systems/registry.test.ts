@@ -176,20 +176,27 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
     ])
   })
 
-  it("lymph's map (A-11a) is a Drawing-only layer in the full framing, its labels inside it, its tones apart", () => {
-    expect(LYMPH).toMatchObject({ draw: 'layer', slots: [], camera: { framing: 'full' }, pack: 'lymph' })
+  it("lymph's map (A-11a) is a layer in the full framing, its labels inside it, its tones apart; the meal moves it since U-5", () => {
+    expect(LYMPH).toMatchObject({ draw: 'layer', camera: { framing: 'full' }, pack: 'lymph', inputs: ['meal'], public: true })
     expect(flatProblems(LYMPH, LYMPH_TONES, Object.keys(LYMPH_LABELS), LYMPH_LABELS)).toEqual([])
     // Without its own table, its labels are not the body's organs.
     expect(flatProblems(LYMPH, LYMPH_TONES, ['spleen'])).toEqual(['lymph: label spleen has no callout (anatomy/callouts.ts)'])
     expect(flatProblems(LYMPH, LYMPH_TONES, [])).toEqual(['lymph: has no labels (systems/check.ts FLAT_CALLOUTS)'])
   })
 
-  it("lymph's pack (A-11a) brings no rows, its UI with the card, its drawing and its English", async () => {
+  it("lymph's pack (U-5) brings its rows and moment, two graphs, the germ-defence card, its drawing and its English", async () => {
     const pack = PACKS.lymph!
-    expect((await pack.rows()).default).toEqual([])
-    const ui = (await pack.ui!()).default.lymph!
+    expect((await pack.rows()).default.map((r) => r.id)).toEqual(['lymph.fatFlowRate', 'blood.triglyceride', 'event.triglyceridePeak'])
+    const { default: uis, DEFS } = await pack.ui!()
+    const ui = uis.lymph!
     expect(ui.card).toBeTypeOf('function')
-    expect(ui.moments(null as never)).toEqual([])
+    expect(ui.note).toBeTypeOf('function')
+    expect(DEFS!.lymph!.slots!.map((s) => [s.id, s.signals, s.unit])).toEqual([
+      ['road', ['lymph.fatFlowRate'], 'g/min'],
+      ['fat', ['blood.triglyceride'], 'mg/dL'],
+    ])
+    // Blood fat: no band and no threshold line (model §2.10).
+    expect(DEFS!.lymph!.slots![1]!.reference).toBeUndefined()
     expect((await pack.drawing!()).default.lymph).toBeTypeOf('function')
     expect(pack.text).toBeTypeOf('function')
   })

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
+import { valueAt, type RunResult } from '@lifepeek/engine'
 import type { LayerProps } from '../../registry/types.ts'
 import type { View } from '../../anatomy/human/base.ts'
 import type { ActivityBand } from '../../anatomy/human/bands.ts'
@@ -8,6 +9,7 @@ import type { Spline3, XYZ } from '../../anatomy/spline.ts'
 import type { LimbKit, PosedLimbs } from '../../anatomy/human/limbs.ts'
 import {
   LABELS,
+  LYMPH_ROUTE,
   LYMPH_SAC,
   MAIN_DUCT,
   NECK_VEIN,
@@ -21,29 +23,42 @@ import {
 import { LYMPH_TONE } from '../../anatomy/tones/lymph.ts'
 import type { LayerKit } from '../../flat/layerKit.ts'
 import { useProjector } from '../../hooks/useProjector.ts'
+import { onTick } from '../../lib/ticker.ts'
+import { useClock } from '../../state/clock.ts'
+import { MAX_DOTS, ROAD, ROUTE_SEC, dotShown, fatDots, seriesOf } from './fat.ts'
 
 /**
  * The static lymph map (A-11a; anatomy plan §2.7), drawn over the base body in the `full` framing:
  * lymph vessels from the feet, the hands, the head and the gut; merged node clusters (neck, armpit,
  * gut, groin); the main lymph duct climbing to the left neck vein and the short right duct to the
- * right one; the spleen and the thymus. Nothing moves and nothing flashes: it is Drawing only (no
- * lymph model in v3.0; S-5 adds the fat road in v3.1). It is drawn again only when the picture's
- * size, the pose or the projector look changes. The vessels of the arms and legs follow the band's
+ * right one; the spleen and the thymus. The map itself never moves or flashes; it is drawn again only
+ * when the picture's size, the pose or the projector look changes. The vessels of the arms and legs follow the band's
  * still pose (the limb curves, loaded with the legs), so a walk never leaves a vessel in the air.
  * Until the legs' chunk is here (or if it can't arrive: offline, never saved) the map is drawn on
  * the body the flat body draws then, the resting one with no legs: the trunk's and the resting
  * arms' vessels, never a blank picture (R93 #6). It asks for the legs again when the internet is back.
  *
- * It imports nothing from the stage's chunk: the flat body hands it what it needs (`kit`, flat/layerKit.ts),
- * and the few lines of the flat body's maths it shares are copied here (`frame`, the outline shade).
+ *
+ * Fat dots (U-5, v3.1; anatomy plan §2.7): while lymph carries the meal's fat to the blood
+ * (`lymph.fatFlowRate` at the clock's minute), teal diamonds (digestion's fat shape and colour) run
+ * along the web-side lymph route (anatomy/human/lymph.ts LYMPH_ROUTE): from the gut up the main duct
+ * into the left neck vein. As many as the fat arriving (fat.ts `fatDots`), none for a meal without
+ * fat (cola, water) and none once the fat has all gone by. They move on the real clock (lib/ticker.ts,
+ * at most 20 updates a second), at a steady drawn speed; with motion reduced they stand still.
+ *
+ * It imports nothing from the stage's chunk but the meal clock's: the flat body hands it what it
+ * needs (`kit`, flat/layerKit.ts), and the few lines of the flat body's maths it shares are copied
+ * here (`frame`, the outline shade, the particles' edge).
  */
 
-export default function LymphLayer({ view, band, width, height, kit }: LayerProps) {
+export default function LymphLayer({ sim, view, band, width, height, reduced, kit }: LayerProps) {
   const { t } = useTranslation()
   const canvas = useRef<HTMLCanvasElement>(null)
   const projector = useProjector()
   const { posed, failed } = usePosedLimbs(band, kit)
   const [drawn, setDrawn] = useState(false)
+  const fat = useRef<HTMLCanvasElement>(null)
+  const dots = useFatDots(fat, sim, width, height, view, kit, reduced)
 
   // The parts' names (anatomy plan §6): the first three on a narrow picture, the rest with room.
   const roomy = width >= 460
@@ -86,9 +101,124 @@ export default function LymphLayer({ view, band, width, height, kit }: LayerProp
         className="absolute inset-0"
         style={{ width, height }}
       />
+      <canvas
+        ref={fat}
+        aria-hidden="true"
+        data-fat-dots={dots}
+        data-fat={reduced ? 'still' : 'moving'}
+        className="pointer-events-none absolute inset-0"
+        style={{ width, height }}
+      />
       {overlay}
     </>
   )
+}
+
+/** The particles' dark edge (anatomy/tones/base.ts PARTICLE_EDGE, copied: lymph.test checks it). */
+export const DOT_EDGE = '#141a2e'
+
+/**
+ * The lymph route in CSS px of a `w` × `h` picture of `view` (anatomy/human/lymph.ts LYMPH_ROUTE): the
+ * gut's vessel front-on, then the main duct as the map draws it (a curve through its points, seen
+ * with the limbs' weak perspective), to where it joins the left neck vein.
+ */
+export function fatRoute(base: LimbKit, w: number, h: number, view: View): Pt[] {
+  const { X, Y } = frame(w, h, view)
+  const p = new base.Vec3()
+  const duct = new base.Spline3(LYMPH_ROUTE.duct, 0.5)
+  const pts: Pt[] = [
+    ...LYMPH_ROUTE.flat.map(([x, y]) => [x, y] as Pt),
+    ...Array.from({ length: 41 }, (_, i) => seen(duct.getPointAt(i / 40, p))),
+    seen(LYMPH_ROUTE.into),
+  ]
+  return pts.map(([x, y]) => [X(x), Y(y)])
+}
+
+/** A point `u` (0–1) of the way along a polyline, by length. */
+export function pointAlong(pts: readonly Pt[], cum: readonly number[], u: number): Pt {
+  const d = u * cum[cum.length - 1]!
+  let i = 1
+  while (i < cum.length - 1 && cum[i]! < d) i++
+  const seg = cum[i]! - cum[i - 1]! || 1
+  const k = (d - cum[i - 1]!) / seg
+  const [a, b] = [pts[i - 1]!, pts[i]!]
+  return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]
+}
+
+/**
+ * The fat dots on their own canvas: how many follow the fat lymph carries at the clock's minute
+ * (re-rendering only when that number changes), moved along the route on the real clock while there
+ * are any and motion is allowed. Returns how many are drawn (the canvas's `data-fat-dots`).
+ */
+function useFatDots(
+  canvas: RefObject<HTMLCanvasElement | null>,
+  sim: RunResult,
+  w: number,
+  h: number,
+  view: View,
+  kit: LayerKit,
+  reduced: boolean,
+): number {
+  const n = useClock(
+    useCallback(
+      (s: { simMin: number }) => {
+        const road = seriesOf(sim, ROAD)
+        return road ? fatDots(valueAt(road, s.simMin, sim.stepMin)) : 0
+      },
+      [sim],
+    ),
+  )
+  const route = useMemo(() => {
+    if (w === 0 || h === 0) return null
+    const pts = fatRoute(kit.base, w, h, view)
+    const cum = [0]
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1]! + Math.hypot(pts[i]![0] - pts[i - 1]![0], pts[i]![1] - pts[i - 1]![1]))
+    return { pts, cum, r: Math.max(3.5, 0.05 * frame(w, h, view).scale) }
+  }, [w, h, view, kit])
+  const phase = useRef(0)
+
+  useEffect(() => {
+    const el = canvas.current
+    if (!el || !route) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+    el.width = Math.round(w * dpr)
+    el.height = Math.round(h * dpr)
+    const ctx = el.getContext('2d')
+    if (!ctx) return
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h)
+      const { r } = route
+      ctx.fillStyle = LYMPH_TONE.fat
+      ctx.strokeStyle = DOT_EDGE
+      ctx.lineWidth = 1.25
+      ctx.lineJoin = 'round'
+      for (let i = 0; i < MAX_DOTS; i++) {
+        if (!dotShown(i, n)) continue
+        const [x, y] = pointAlong(route.pts, route.cum, (phase.current + i / MAX_DOTS) % 1)
+        // Digestion's fat particle: a diamond, a little taller than wide (flat/FlatBody.tsx).
+        ctx.beginPath()
+        ctx.moveTo(x, y - r * 1.2)
+        ctx.lineTo(x + r, y)
+        ctx.lineTo(x, y + r * 1.2)
+        ctx.lineTo(x - r, y)
+        ctx.closePath()
+        ctx.fill()
+        ctx.stroke()
+      }
+    }
+    draw()
+    if (reduced || n === 0) return
+    let since = 0
+    return onTick((dt) => {
+      phase.current = (phase.current + dt / ROUTE_SEC) % 1
+      since += dt
+      if (since < 0.05) return
+      since = 0
+      draw()
+    })
+  }, [canvas, route, n, reduced, w, h])
+  return n
 }
 
 /** Each label, its weight, and whether it stays on a narrow picture (the plan's first three). */

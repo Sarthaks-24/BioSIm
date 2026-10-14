@@ -82,6 +82,27 @@ export const NODES: readonly { x: number; y: number; r: number; mirror: boolean 
   { x: 0.4, y: -1.62, r: 0.05, mirror: true },
 ]
 
+/** The gut's lymph vessel: from the lacteals of the small intestine, past the gut nodes, to the sac. */
+const GUT_VESSEL: readonly (readonly [number, number])[] = [
+  [0.45, -0.75],
+  [0.25, -0.5],
+  [0.02, -0.45],
+  [-0.1, -0.28],
+  [0.12, -0.18],
+  [0.04, 0.02],
+]
+
+/**
+ * The web-side route `'lymph'` (anatomy plan §2.7, U-5; R99): the road the meal's fat takes, along
+ * which the flat map draws fat dots while lymph carries fat (`lymph.fatFlowRate`). From the gut's
+ * lacteals, along the gut's vessel past its nodes to the sac, up the main lymph duct, into the left
+ * neck vein, where the fat joins the blood (OpenStax §21.1: lacteals carry dietary fat as chyle).
+ * Web-side only: the engine's particles, its pins and hero.json are unchanged. `flat` is drawn
+ * front-on as it is; the duct is a curve (Spline3, tension 0.5) through `duct`, seen as the map
+ * sees it (systems/lymph/LymphLayer.tsx `fatRoute`).
+ */
+export const LYMPH_ROUTE = { route: 'lymph', flat: GUT_VESSEL, duct: MAIN_DUCT, into: NECK_VEIN_JOIN } as const
+
 /**
  * Trunk and head vessels (each a polyline in scene units, the viewer's right side), all ending at a
  * node, the sac or a duct. `mirror`: drawn on both sides; the left side's arm and neck vessels go to
@@ -99,17 +120,7 @@ export const TRUNK_VESSELS: readonly { pts: readonly (readonly [number, number])
     mirror: true,
   },
   // From the gut, past its nodes, to the sac.
-  {
-    pts: [
-      [0.45, -0.75],
-      [0.25, -0.5],
-      [0.02, -0.45],
-      [-0.1, -0.28],
-      [0.12, -0.18],
-      [0.04, 0.02],
-    ],
-    mirror: false,
-  },
+  { pts: GUT_VESSEL, mirror: false },
   {
     pts: [
       [-0.5, -0.55],

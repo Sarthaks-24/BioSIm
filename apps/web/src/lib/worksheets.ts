@@ -17,13 +17,14 @@ export interface Sheet {
 }
 
 export const SHEETS = {
-  flagship: { link: '/sim?a=roti:1,water:1&b=roti:1,water:1&t=30&layer=digestion&act=walk.60.20', sketch: { task: 1, hours: 3 } },
+  flagship: { link: '/sim?a=roti:1,water:1&b=roti:1,water:1&t=51&layer=circulation&act=walk.60.20', sketch: { task: 1, hours: 3 } },
   stomachRace: { link: '/sim?a=cola:1&b=cheeseburger:1,fries:1&t=35', sketch: { task: 1, hours: 6 } },
   rotiDal: { link: '/sim?a=roti:1,dal:1&b=white-rice:1&t=57', sketch: { task: 2, hours: 4 } },
   colaFour: { link: '/sim?a=cola:1&b=cola:4&t=120', sketch: { task: 2, hours: 6 } },
   breathRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=breathing&act=run.30.10', sketch: { task: 3, hours: 2 } },
   heartWalk: { link: '/sim?a=roti:1,dal:1&b=roti:1,dal:1&t=70&layer=circulation&act=walk.60.20', sketch: { task: 3, hours: 4 } },
   drinkWater: { link: '/sim?a=water:4&b=water:1&t=60&layer=kidneys', sketch: { task: 0, hours: 4 } },
+  fatRoad: { link: '/sim?a=cheeseburger:1,fries:1&b=roti:1&t=240&layer=lymph', sketch: { task: 1, hours: 12 } },
   musclesRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=muscles&act=run.30.10', sketch: { task: 3, hours: 2 } },
   sweatRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=skin&act=run.30.10', sketch: { task: 3, hours: 2 } },
 } as const satisfies Record<string, Sheet>

@@ -10,7 +10,7 @@ import {
 } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
-import { EFFORT_SIGNALS } from '@lifepeek/engine/run'
+import { EFFORT_SIGNALS, LYMPH_EVENTS, LYMPH_SIGNALS } from '@lifepeek/engine/run'
 import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
@@ -21,9 +21,13 @@ const PACK_ROWS: readonly SignalMeta[] = [
   ...Object.values(EFFORT_SIGNALS),
   ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
   ...KIDNEY_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+  // U-5 (v3.1): lymph's two graphs.
+  ...Object.values(LYMPH_SIGNALS),
 ]
 /** Their moments (Heart & blood's gut-flow peak, the kidneys' first urge and half the meal's water): the dock names them (`signals.event.*.name`). */
 const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS].filter((r): r is EventMeta<RunEventId> => !('kind' in r))
+/** v3.1 packs' moments whose UI half has shipped (U-5: lymph's blood fat near its highest). */
+const PACK_EVENTS_V31 = [...Object.values(LYMPH_EVENTS)] as EventMeta<RunEventId>[]
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -53,6 +57,7 @@ export function catalogKeys(): KeyUse {
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }
+  for (const row of PACK_EVENTS_V31) required.add(`${row.i18nKey}.name`)
   required.add('signals.event.never')
   for (const s of SIGNAL_STATUSES) for (const sub of ['label', 'help']) required.add(`status.${s}.${sub}`)
   required.add('status.howWeKnow')

@@ -11,6 +11,7 @@ import { SHEETS, type SheetKey } from './worksheets.ts'
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
+import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { FILTER_ML_PER_MIN } from '../systems/kidneys/water.ts'
 
@@ -203,5 +204,21 @@ describe('worksheets: the numbers the answers say are the model’s', () => {
     const sweat = peak(r, 'skin.sweatRate')
     expect(numbers(skin[3]!.m)).toEqual([sweat.min, round(sweat.v, 10)])
     expect(sweat.min).toBe(end)
+  })
+
+  it('how fat reaches the blood (U-5): each meal’s highest blood fat, the burger’s for hours (R90), and the fat each brings', () => {
+    const l = LYMPH_LESSON
+    const [burger, roti] = [sim(l.meal, l.activity), sim(l.kept, l.keptActivity)]
+    const { tasks, exit } = text('fatRoad')
+    const most = (r: RunResult) => Math.max(...r.signals.get('blood.triglyceride' as never)!.values)
+    expect(numbers(tasks[1]!.m)).toEqual([round(most(burger)), round(most(roti)), round(at(roti, 'blood.triglyceride', 0))])
+    // "Stays up for hours": the burger’s blood fat keeps within 3 mg/dL of its highest for over 2 h.
+    const top = most(burger)
+    const near = burger.signals.get('blood.triglyceride' as never)!.values.filter((v) => v >= top - 3).length * burger.stepMin
+    expect(near).toBeGreaterThan(120)
+    expect(numbers(tasks[3]!.k)).toEqual([3, 2])
+    expect(numbers(exit.m)).toEqual([round(burger.meal.total.fatG), round(roti.meal.total.fatG)])
+    // The burger’s food leaves the stomach slowly (half its energy after more than 2 h), the reason the exit answer gives.
+    expect(moment(burger, 'event.stomachHalfEmpty')).toBeGreaterThan(120)
   })
 })

@@ -3,6 +3,7 @@ import { pickerSystems, type SlotId, type SystemId, type SystemLesson } from '..
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
+import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { LESSONS, presetHref, type Lesson } from './presets.ts'
 import { LESSON_PACKS } from './offlineSave.ts'
@@ -71,7 +72,12 @@ const fromSystem = (l: SystemLesson, classes: readonly number[], pack: string): 
 export const CHAPTERS: readonly Chapter[] = [
   { key: 'nutrition', c10: true, lessons: LESSONS.map(fromPreset) },
   { key: 'respiration', c10: true, lessons: [fromSystem(BREATHING_LESSON, [6, 7, 10], 'breathing')] },
-  { key: 'transport', c10: true, lessons: [fromSystem(CIRCULATION_LESSON, [7, 10], 'circulation')] },
+  {
+    key: 'transport',
+    c10: true,
+    // U-5 (v3.1): lymph's lesson, after the heart's (NCERT Class 10's order: blood, then lymph).
+    lessons: [fromSystem(CIRCULATION_LESSON, [7, 10], 'circulation'), fromSystem(LYMPH_LESSON, [10], 'lymph')],
+  },
   { key: 'excretion', c10: true, lessons: [fromSystem(KIDNEYS_LESSON, [10], 'kidneys')] },
   {
     key: 'movement',
