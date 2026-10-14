@@ -9,6 +9,7 @@ import { BREATHING_SIGNALS } from './catalog/breathing.ts'
 import { EFFORT_SIGNALS } from './catalog/effort.ts'
 import { CIRCULATION_SIGNALS } from './catalog/circulation.ts'
 import { KIDNEY_SIGNALS } from './catalog/kidneys.ts'
+import { LYMPH_SIGNALS } from './catalog/lymph.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -286,6 +287,17 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
       'Plasma filtered by both kidneys per minute (GFR), 125 mL/min, the same all day here. Caption and table only, never graphed.',
     retired: ['kidney.gfr', 'kidney.filtrationMlMin'],
   },
+  // The lymph pack's rows (core/catalog/lymph.ts, S-5, v3.1).
+  'lymph.fatFlowRate': {
+    definition:
+      'Fat from the meal reaching the blood through the lymph per minute (g/min): the fat the gut absorbs, packed into chyle and carried by the lacteals after a lag (Model estimate).',
+    retired: [],
+  },
+  'blood.triglyceride': {
+    definition:
+      'Blood fat (plasma triglyceride, mg/dL): 80 fasting plus the meal fat in the plasma spread over 29 dL, one lumped pool. No band and no threshold line.',
+    retired: [],
+  },
 }
 
 /** Definition and retired names of every event row. */
@@ -339,6 +351,11 @@ export const EVENT_DOCS: { readonly [Id in RunEventId]: CatalogDocs } = {
       "First minute when half of the meal's absorbed water has left as extra urine. Absent when the meal has under 1 mL of water, or it does not happen within 48 h.",
     retired: ['event.firstVoid', 'event.mostMealWaterPassed'],
   },
+  // The lymph pack's event (core/catalog/lymph.ts, S-5).
+  'event.triglyceridePeak': {
+    definition: 'First minute when blood.triglyceride is highest. Absent if it rises by less than 1 mg/dL (a meal without fat).',
+    retired: [],
+  },
 }
 
 /** Every signal row: active, the packs' lazy rows, and reserved (tests and docs). */
@@ -348,5 +365,6 @@ export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
   ...EFFORT_SIGNALS,
   ...KIDNEY_SIGNALS,
   ...CIRCULATION_SIGNALS,
+  ...LYMPH_SIGNALS,
   ...RESERVED_SIGNALS,
 }

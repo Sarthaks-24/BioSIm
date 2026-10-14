@@ -17,6 +17,7 @@ export {
   effortModule,
   circulationModule,
   waterModule,
+  lymphModule,
 } from './modules/index.ts'
 // Every row a run's signals can carry: the lean catalog's and the packs' lazy rows (architecture §1.3).
 export { RUN_EVENTS, RUN_EVENT_IDS, RUN_SIGNALS, RUN_SIGNAL_IDS, isRunEvent, isRunSignal } from './core/catalog/rows.ts'
@@ -25,6 +26,7 @@ export { EFFORT_SIGNALS, EFFORT_SIGNAL_IDS } from './core/catalog/effort.ts'
 export { CIRCULATION_EVENTS, CIRCULATION_EVENT_IDS, CIRCULATION_SIGNALS, CIRCULATION_SIGNAL_IDS } from './core/catalog/circulation.ts'
 export { PACK_PARAMS, type PackParams } from './packParams.ts'
 export { KIDNEY_EVENTS, KIDNEY_EVENT_IDS, KIDNEY_SIGNALS, KIDNEY_SIGNAL_IDS } from './core/catalog/kidneys.ts'
+export { LYMPH_EVENTS, LYMPH_EVENT_IDS, LYMPH_SIGNALS, LYMPH_SIGNAL_IDS } from './core/catalog/lymph.ts'
 export { ABSORB_RATE_ID, CARBS_OUT, LEFTOVERS_IN_COLON, LEFT_WATER, stomachArrivalMin } from './modules/gut.ts'
 export { ACTIVITY_CODES, ACTIVITY_MET, activityProblems } from './modules/activity.ts'
 export { ENERGY_TOTAL } from './modules/energy.ts'
