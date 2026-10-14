@@ -127,7 +127,7 @@ Rules for the reviewer:
 | Key | English | Hindi | Status |
 |---|---|---|---|
 | `about.title` | About LifePeek | LifePeek का परिचय | draft |
-| `about.lead` | Compare what happens to two meals inside your body. Free, no login, works offline once loaded. | देखिए कि दो भोजनों के साथ आपके शरीर के अंदर क्या होता है, और उनकी तुलना कीजिए। मुफ़्त, बिना लॉगिन, और एक बार लोड होने के बाद इंटरनेट के बिना भी चलता है। | draft |
+| `about.lead` | Compare what happens to two meals inside a typical healthy body (a model, not yours). Free, no login, works offline once loaded. | देखिए कि दो भोजनों के साथ एक सामान्य स्वस्थ शरीर (एक मॉडल, आपका शरीर नहीं) के अंदर क्या होता है, और उनकी तुलना कीजिए। मुफ़्त, बिना लॉगिन, और एक बार लोड होने के बाद इंटरनेट के बिना भी चलता है। | draft |
 | `about.makerTitle` | Who made it | इसे किसने बनाया | draft |
 | `about.maker` | LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources. | LifePeek को {{name}} ने बनाया है। इसकी हर संख्या का स्रोत दिया गया है, और गलती की हर रिपोर्ट को प्रकाशित स्रोतों से जाँचा जाता है। | draft |
 | `about.sourcesTitle` | Where the numbers come from | संख्याएँ कहाँ से आती हैं | draft |
