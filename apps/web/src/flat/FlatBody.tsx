@@ -26,6 +26,7 @@ import { DIGESTION } from '../systems/digestion/def.ts'
 import type { LayerComponent } from '../registry/types.ts'
 import type { SystemDef } from '../systems/registry.ts'
 import { limbsFor, loadLimbs } from './registry.ts'
+import { LAYER_KIT } from './layerKit.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { quality } from '../three/quality.ts'
 import { useProjector } from '../hooks/useProjector.ts'
@@ -149,7 +150,17 @@ export default function FlatBody({
       <canvas ref={still} aria-hidden="true" className="absolute" />
       <canvas ref={moving} aria-hidden="true" className="absolute" />
       {!organs && Layer && w > 0 && h > 0 && (
-        <Layer sim={sim} label={label} view={view} band={band} width={w} height={h} reduced={reduced} projector={projector} />
+        <Layer
+          sim={sim}
+          label={label}
+          view={view}
+          band={band}
+          width={w}
+          height={h}
+          kit={LAYER_KIT}
+          reduced={reduced}
+          projector={projector}
+        />
       )}
       {overlay}
     </div>

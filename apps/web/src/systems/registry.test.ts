@@ -6,7 +6,7 @@ import hi from '../i18n/hi.json'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { UNIT_KEYS } from '../registry/units.ts'
 import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
-import { FLAT_CALLOUTS, flatProblems, systemProblems, type CheckContext } from './check.ts'
+import { flatProblems, systemProblems, type CheckContext } from './check.ts'
 import type { ToneSet } from '../anatomy/tones/base.ts'
 import type { Callout } from '../anatomy/callouts.ts'
 import { TONES as LYMPH_TONES } from '../anatomy/tones/lymph.ts'
@@ -28,6 +28,8 @@ import {
   type SystemDef,
 } from './registry.ts'
 import { DIGESTION } from './digestion/def.ts'
+import { LYMPH } from './lymph/def.ts'
+import { LABELS as LYMPH_LABELS } from '../anatomy/human/lymph.ts'
 import { uiOf } from './ui.ts'
 
 // The stage's English loader is a build-time module (scripts/i18n-sections.mjs); digestion's UI needs only this.
@@ -144,12 +146,11 @@ describe('systems registry (architecture §5.2)', () => {
 
 describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
   it.each(SYSTEMS.map((s) => [s.id, s] as const))('%s has a flat drawing, a VIEW, checked outlines and callouts', async (_id, s) => {
-    // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download);
-    // a layer's label places are in its own anatomy file (anatomy/human/<id>.ts LABELS).
+    // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download),
+    // and a layer that places its own labels keeps them in anatomy/human/<id>.ts `LABELS` (lymph's).
     const { TONES } = (await import(`../anatomy/tones/${s.id}.ts`)) as { TONES: ToneSet }
-    const labels =
-      s.draw === 'layer' ? ((await import(`../anatomy/human/${s.id}.ts`)) as { LABELS: Record<string, Callout> }).LABELS : undefined
-    expect(flatProblems(s, TONES, undefined, labels)).toEqual([])
+    const { LABELS } = (await import(`../anatomy/human/${s.id}.ts`)) as { LABELS?: Record<string, Callout> }
+    expect(LABELS ? flatProblems(s, TONES, Object.keys(LABELS), LABELS) : flatProblems(s, TONES)).toEqual([])
   })
 
   it('names what is wrong with a row', () => {
@@ -172,16 +173,22 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
     ])
   })
 
-  it("the lymph tones (A-11a's, with the spleen) pass the same checks", () => {
-    const lymph: SystemDef = {
-      ...DIGESTION,
-      id: 'lymph',
-      pack: 'lymph',
-      camera: { framing: 'full' },
-      draw: 'layer',
-    }
-    expect(flatProblems(lymph, LYMPH_TONES, FLAT_CALLOUTS.digestion)).toEqual([])
-    expect(flatProblems(lymph, LYMPH_TONES)).toEqual(['lymph: has no labels (systems/check.ts FLAT_CALLOUTS)'])
+  it("lymph's map (A-11a) is a Drawing-only layer in the full framing, its labels inside it, its tones apart", () => {
+    expect(LYMPH).toMatchObject({ draw: 'layer', slots: [], camera: { framing: 'full' }, pack: 'lymph' })
+    expect(flatProblems(LYMPH, LYMPH_TONES, Object.keys(LYMPH_LABELS), LYMPH_LABELS)).toEqual([])
+    // Without its own table, its labels are not the body's organs.
+    expect(flatProblems(LYMPH, LYMPH_TONES, ['spleen'])).toEqual(['lymph: label spleen has no callout (anatomy/callouts.ts)'])
+    expect(flatProblems(LYMPH, LYMPH_TONES, [])).toEqual(['lymph: has no labels (systems/check.ts FLAT_CALLOUTS)'])
+  })
+
+  it("lymph's pack (A-11a) brings no rows, its UI with the card, its drawing and its English", async () => {
+    const pack = PACKS.lymph!
+    expect((await pack.rows()).default).toEqual([])
+    const ui = (await pack.ui!()).default.lymph!
+    expect(ui.card).toBeTypeOf('function')
+    expect(ui.moments(null as never)).toEqual([])
+    expect((await pack.drawing!()).default.lymph).toBeTypeOf('function')
+    expect(pack.text).toBeTypeOf('function')
   })
 })
 
@@ -202,13 +209,14 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('breathing', [], false)).toBe('digestion')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
-    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing'])
+    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'lymph'])
   })
 
   it('‹ › and [ ] step round the picker’s rows', () => {
     expect(stepSystem('digestion', true, 1)).toBe('breathing')
-    expect(stepSystem('breathing', true, 1)).toBe('digestion')
-    expect(stepSystem('digestion', true, -1)).toBe('breathing')
+    expect(stepSystem('breathing', true, 1)).toBe('lymph')
+    expect(stepSystem('lymph', true, 1)).toBe('digestion')
+    expect(stepSystem('digestion', true, -1)).toBe('lymph')
     // One row: stepping stays on it.
     expect(stepSystem('digestion', false, 1)).toBe('digestion')
   })

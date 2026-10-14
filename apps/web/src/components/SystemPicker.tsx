@@ -48,6 +48,7 @@ export default function SystemPicker({
   onPick,
   run,
   first,
+  drawing,
   format,
   doing,
 }: {
@@ -59,6 +60,8 @@ export default function SystemPicker({
   run: RunResult
   /** A row's first graph, once its pack has brought its graphs (systems/registry.ts). */
   first: (id: SystemId) => GraphSlotDef | undefined
+  /** A Drawing-only row (R11: nothing moves it, so no value): lymph's map and card. */
+  drawing: (id: SystemId) => boolean
   /** The stage's own number writer and bout reader (lib/formatSignal.ts, lib/bouts.ts), handed in. */
   format: (value: number, meta: SignalMeta, t: TFunction, lang: string) => string
   doing: (bouts: readonly ActivityBout[], min: number) => string
@@ -115,6 +118,11 @@ export default function SystemPicker({
                           }`}
                         >
                           <span className="text-control text-ink">{t(`systems.${id}.name`)}</span>
+                          {drawing(id) && (
+                            <span className="ml-auto">
+                              <StatusTag status="illustration" quiet />
+                            </span>
+                          )}
                           {v && (
                             <>
                               <span className="tabular text-caption text-ink-muted">

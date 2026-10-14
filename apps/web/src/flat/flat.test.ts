@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { simulate } from '@lifepeek/engine/run'
 import { ACTIVITY_BANDS } from '../anatomy/human/bands.ts'
+import { LIVER_OUTLINE } from '../anatomy/human/digestion.ts'
 import { FILL_SIGNAL, gramsIn } from '../anatomy/bodyState.ts'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { drivenAt, levelGate } from './drives.ts'
@@ -62,10 +63,56 @@ describe('the four still poses, drawn (R4, R16, R32)', () => {
     expect(new Set(svgs).size).toBe(4)
   })
 
-  it('at rest the arms hang beside the body; a brisk walk and a run bend one over the belly', () => {
+  it('at rest the arms hang beside the body; a brisk walk and a run bring one bent arm forward', () => {
     expect(figure('rest').over).toHaveLength(0)
     expect(figure('rest').under).toHaveLength(2)
     for (const band of ['walkBrisk', 'run'] as const) expect(figure(band).over.length, band).toBeGreaterThan(0)
+  })
+
+  it('every posed limb is one clean outline (R88): one shape per arm, nothing crossing itself, no separate marks', () => {
+    // Two segments of a polygon that cross (not just touch at a shared corner).
+    const crossings = (pts: [number, number][]) => {
+      let n = 0
+      const seg = (i: number) => [pts[i]!, pts[(i + 1) % pts.length]!] as const
+      for (let i = 0; i < pts.length; i++)
+        for (let j = i + 2; j < pts.length; j++) {
+          if (i === 0 && j === pts.length - 1) continue
+          const [[ax, ay], [bx, by]] = seg(i)
+          const [[cx, cy], [dx, dy]] = seg(j)
+          const den = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx)
+          if (den === 0) continue
+          const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den
+          const k = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den
+          if (t > 1e-9 && t < 1 - 1e-9 && k > 1e-9 && k < 1 - 1e-9) n++
+        }
+      return n
+    }
+    for (const band of ACTIVITY_BANDS.filter((b) => b !== 'rest')) {
+      const f = figure(band)
+      expect(f.under.length + f.over.length, band).toBe(2)
+      for (const pts of [...f.under, ...f.over, f.body]) expect(crossings(pts), band).toBe(0)
+      expect(Object.keys(f).sort(), band).toEqual(['body', 'ground', 'over', 'under'])
+    }
+  })
+
+  it("a bent arm's hand stays at the torso's side, clear of the organs drawn inside it", () => {
+    // Inside a polygon (even–odd rule).
+    const inside = (poly: readonly (readonly [number, number])[], [x, y]: readonly [number, number]) => {
+      let c = false
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i]!
+        const [xj, yj] = poly[j]!
+        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c
+      }
+      return c
+    }
+    for (const band of ACTIVITY_BANDS)
+      for (const pts of figure(band).over) {
+        // The hand: the outline's points far from the shoulder (the lowest-x half of the arm's tip region).
+        const tip = pts.reduce((a, p) => (Math.abs(p[0]) < Math.abs(a[0]) ? p : a))
+        expect(inside(LIVER_OUTLINE, tip), band).toBe(false)
+        expect(Math.abs(tip[0]), band).toBeGreaterThan(0.5)
+      }
   })
 })
 

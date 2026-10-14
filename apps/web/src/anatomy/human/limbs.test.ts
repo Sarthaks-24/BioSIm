@@ -43,9 +43,9 @@ describe('legs and poses (anatomy plan §1, D7)', () => {
     expect(bend('walkBrisk')).toBeLessThan(bend('run'))
   })
 
-  it('bent knees show their kneecap; a bent elbow brings the hand in front of the belly', () => {
-    expect(posedLimbs('rest').legs.every((l) => l.kneecap === null)).toBe(true)
-    expect(posedLimbs('run').legs.every((l) => l.kneecap !== null)).toBe(true)
+  it('a bent knee shows its kneecap in the outline (no separate mark); a bent elbow brings the hand forward', () => {
+    expect(posedLimbs('rest').legs.every((l) => l.radius === legRadius)).toBe(true)
+    for (const l of posedLimbs('run').legs) expect(l.radius(KNEE_U)).toBeGreaterThan(legRadius(KNEE_U))
     expect(posedLimbs('rest').arms.some((a) => a.front)).toBe(false)
     for (const band of ['walkBrisk', 'run'] as const)
       expect(
@@ -67,10 +67,10 @@ describe('legs and poses (anatomy plan §1, D7)', () => {
       }
   })
 
-  it('a resting arm is ARM; a posed arm keeps its root in the shoulder', () => {
+  it('a resting arm is ARM; a posed arm is one curve with its root in the shoulder', () => {
     for (const band of ACTIVITY_BANDS)
       for (const a of posedLimbs(band).arms) {
-        const root = a.parts[0]!.curve.getPointAt(0)
+        const root = a.curve.getPointAt(0)
         expect(root.x * a.side).toBeCloseTo(ARM.getPointAt(0).x, 5)
         expect(root.y).toBeCloseTo(ARM.getPointAt(0).y, 5)
       }

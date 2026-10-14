@@ -132,6 +132,7 @@ export default function SystemTitle({ run }: { run: RunResult }) {
               lit={layer}
               run={run}
               first={(id) => systemOf(id)?.slots[0]}
+              drawing={(id) => !systemOf(id)?.inputs.length}
               format={formatSignal}
               doing={activityBandAt}
               onPick={(id) => {

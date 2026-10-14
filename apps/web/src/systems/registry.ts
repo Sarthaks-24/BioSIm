@@ -5,6 +5,7 @@ import type { Moment } from '../lib/moments.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
+import { LYMPH } from './lymph/def.ts'
 
 /**
  * The systems registry (W-1, architecture §0, §5.1 and §5.2): every body system the stage can
@@ -127,6 +128,8 @@ export interface SystemUi {
   note?: ComponentType<{ slot: GraphSlotDef }>
   /** Its lessons (each with its release, R18), for Teach once the row is public (X-1). */
   lessons?: readonly SystemLesson[]
+  /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
+  card?: ComponentType
 }
 
 /** A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with its release (R18). */
@@ -196,7 +199,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, LYMPH]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 

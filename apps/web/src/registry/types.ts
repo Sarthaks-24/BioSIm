@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import type { ActiveSignalId, OrganismId, ProfileId, RunResult } from '@lifepeek/engine'
 import type { Framing, View } from '../anatomy/human/base.ts'
 import type { ActivityBand } from '../anatomy/human/bands.ts'
+import type { LayerKit } from '../flat/layerKit.ts'
 import type { SystemDef, SystemId } from '../systems/registry.ts'
 
 /**
@@ -35,6 +36,8 @@ export interface LayerProps {
   reduced: boolean
   /** Projector mode: the heavier outlines (flat/look.ts FLAT_LOOK.projector). */
   projector: boolean
+  /** What the layer borrows from the stage (flat/layerKit.ts): handed over, never imported. */
+  kit: LayerKit
 }
 /** A layer drawn over the base body. */
 export type LayerComponent = ComponentType<LayerProps>

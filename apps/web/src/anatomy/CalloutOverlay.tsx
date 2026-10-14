@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { XYZ } from './spline.ts'
 import type { StageId } from '@lifepeek/engine'
-import { CALLOUTS, layoutCallouts, type CalloutId, type CalloutInput } from './callouts.ts'
+import { CALLOUTS, layoutCallouts, type Callout, type CalloutId, type CalloutInput } from './callouts.ts'
 
 /**
  * The organ labels over a body picture, as plain DOM (crisp, translatable, no WebGL text): a pill
@@ -11,8 +11,8 @@ import { CALLOUTS, layoutCallouts, type CalloutId, type CalloutInput } from './c
  * (layoutCallouts), so labels never overlap and never leave the picture, in any language.
  */
 
-export interface CalloutSpec {
-  key: CalloutId
+export interface CalloutSpec<K extends string = CalloutId> {
+  key: K
   text: string
   /** 'active' = dark pill, 'stage' = light pill, 'context' = faint (organs not on the food's path). */
   tone: 'active' | 'stage' | 'context'
@@ -53,9 +53,14 @@ export interface Callouts {
 
 /**
  * The label overlay for one picture. `onMeasured` runs when a label's size changes (new language,
- * new active organ), so the picture can lay them out again.
+ * new active organ), so the picture can lay them out again. `table`: where each label sits, the
+ * body's organs by default; a system's flat layer passes its own (anatomy/human/<system>.ts LABELS).
  */
-export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callouts {
+export function useCallouts<K extends string = CalloutId>(
+  specs: CalloutSpec<K>[],
+  onMeasured: () => void,
+  table: Readonly<Record<K, Callout>> = CALLOUTS as Record<string, Callout> as Record<K, Callout>,
+): Callouts {
   const labels = useRef<Record<string, HTMLSpanElement | null>>({})
   const leaders = useRef<Record<string, SVGGElement | null>>({})
   const sizes = useRef(new Map<string, { w: number; h: number }>())
@@ -88,7 +93,7 @@ export function useCallouts(specs: CalloutSpec[], onMeasured: () => void): Callo
       // A short picture (a phone's, under 200 px) labels only the active organ (FP-1); the narrow
       // one (useCalloutSpecs) did already, so a phone shows at most the active organ and 3 more.
       if (spec.hidden || !box || (height < 200 && spec.tone !== 'active')) continue
-      const c = CALLOUTS[spec.key]
+      const c = table[spec.key]
       const a = project(c.anchor)
       const l = project(c.at)
       if (!a || !l) continue

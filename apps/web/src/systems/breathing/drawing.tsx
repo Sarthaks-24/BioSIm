@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt } from '@lifepeek/engine'
 import {
@@ -162,39 +162,8 @@ function paintRibs(ctx: CanvasRenderingContext2D, m: Frame) {
   ctx.globalAlpha = 1
 }
 
+/** The labels, most needed first: a short picture (a phone's) names only the lungs and the diaphragm. */
 const LABEL_KEYS: readonly BreathingLabel[] = ['lungs', 'diaphragm', 'trachea', 'nasal']
-/** Room kept round a label (px). */
-const GAP = 4
-
-interface LabelBox {
-  key: BreathingLabel
-  x: number
-  y: number
-  /** The leader from the organ to the label's inner edge. */
-  from: readonly [number, number]
-  to: readonly [number, number]
-}
-
-/**
- * Places the labels beside their organs (anatomy/callouts.ts does the same for Digestion): each at
- * its point, on its side, pushed inside the picture; one that would overlap a label already placed
- * (they go in LABEL_KEYS order) is left out rather than drawn over it.
- */
-function placeLabels(sizes: readonly ({ w: number; h: number } | null)[], m: Frame, w: number, h: number): LabelBox[] {
-  const out: (LabelBox & { w: number; h: number })[] = []
-  LABEL_KEYS.forEach((key, i) => {
-    const size = sizes[i]
-    if (!size) return
-    const c = LABELS[key]
-    const x = Math.min(Math.max(GAP, c.side === 'right' ? m.X(c.at.x) : m.X(c.at.x) - size.w), w - GAP - size.w)
-    const y = Math.min(Math.max(GAP, m.Y(c.at.y) - size.h / 2), h - GAP - size.h)
-    const clash = out.some((o) => x < o.x + o.w + GAP && o.x < x + size.w + GAP && y < o.y + o.h + GAP && o.y < y + size.h + GAP)
-    if (clash || x < 0 || y < 0) return
-    const to = [c.side === 'right' ? x : x + size.w, y + size.h / 2] as const
-    out.push({ key, x, y, w: size.w, h: size.h, from: [m.X(c.anchor.x), m.Y(c.anchor.y)], to })
-  })
-  return out
-}
 
 /**
  * Breathing's flat picture (U-2; anatomy plan §2.1), over the base body in the `chest` framing:
@@ -208,7 +177,7 @@ function placeLabels(sizes: readonly ({ w: number; h: number } | null)[], m: Fra
  * fps). Nothing changes colour. With motion reduced: one still frame, half breathed in, with arrows
  * for air in and out. A short picture (a phone's) names only the lungs and the diaphragm.
  */
-export function LungsLayer({ sim, view, width: w, height: h, reduced, projector }: LayerProps) {
+export function LungsLayer({ sim, view, width: w, height: h, reduced, projector, kit }: LayerProps) {
   const { t } = useTranslation()
   const back = useRef<HTMLCanvasElement>(null)
   const muscle = useRef<HTMLCanvasElement>(null)
@@ -271,14 +240,21 @@ export function LungsLayer({ sim, view, width: w, height: h, reduced, projector 
     return reduced ? undefined : onTick(draw)
   }, [sim, reduced, w, h, view]) // eslint-disable-line react-hooks/exhaustive-deps -- `m` follows w, h and view
 
-  // The labels: placed when the size or the language changes.
-  const texts = LABEL_KEYS.map((k) => t(`sys.breathing.label.${k}`))
-  const [boxes, setBoxes] = useState<LabelBox[]>([])
-  const spans = useRef<(HTMLSpanElement | null)[]>([])
-  useLayoutEffect(() => {
-    const sizes = spans.current.map((el, i) => (el && (h >= 260 || i < 2) ? { w: el.offsetWidth, h: el.offsetHeight } : null))
-    setBoxes(placeLabels(sizes, m, w, h))
-  }, [w, h, view, texts.join('|')]) // eslint-disable-line react-hooks/exhaustive-deps -- `m` follows w, h and view
+  // The labels, laid out like Digestion's (the stage's label overlay, handed over in `kit`), with
+  // breathing's own places (anatomy/human/breathing.ts LABELS); placed when the size or the words change.
+  const specs = useMemo(
+    () =>
+      LABEL_KEYS.map((key, i) => ({
+        key,
+        text: t(`sys.breathing.label.${key}`),
+        tone: i ? ('stage' as const) : ('active' as const),
+        hidden: h < 260 && i > 1,
+      })),
+    [t, h],
+  )
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h)
+  const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), LABELS)
+  useEffect(() => void placeLabels())
 
   const path = (pts: Outline) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${m.X(x)} ${m.Y(y)}`).join('')
   const arrow = (x: number, down: boolean) => {
@@ -307,29 +283,8 @@ export function LungsLayer({ sim, view, width: w, height: h, reduced, projector 
             <path d={path(BRONCHI[1]!.path)} />
           </g>
         )}
-        {boxes.map((b) => (
-          <g key={b.key} className="text-ink-muted">
-            <line x1={b.from[0]} y1={b.from[1]} x2={b.to[0]} y2={b.to[1]} stroke="currentColor" strokeOpacity="0.85" />
-            <circle cx={b.from[0]} cy={b.from[1]} r="2.75" fill="currentColor" stroke="white" strokeWidth="1.25" />
-          </g>
-        ))}
       </svg>
-      {LABEL_KEYS.map((key, i) => {
-        const box = boxes.find((b) => b.key === key)
-        return (
-          <span
-            key={key}
-            data-callout={key}
-            ref={(el) => {
-              spans.current[i] = el
-            }}
-            style={box ? { transform: `translate(${box.x}px, ${box.y}px)` } : { visibility: 'hidden' }}
-            className="absolute top-0 left-0 rounded-full bg-surface-raised/90 px-2 py-0.5 text-xs leading-tight whitespace-nowrap text-ink ring-1 ring-ink/15"
-          >
-            {texts[i]}
-          </span>
-        )
-      })}
+      {overlay}
     </div>
   )
 }

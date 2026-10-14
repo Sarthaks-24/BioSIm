@@ -73,18 +73,10 @@ describe('translations', () => {
   const units = Object.values(UNIT_KEY).flatMap((k) => [`units.${k}`, `units.words.${k}`])
   // The English-only texts a build without Hindi swaps in (scripts/i18n-sections.mjs).
   const englishOnly = Object.values(ENGLISH_ONLY)
-  const built = new Set([
-    ...catalog.required,
-    ...catalog.optional,
-    ...registry.required,
-    ...registry.optional,
-    ...registry.englishOnly,
-    ...units,
-    ...englishOnly,
-  ])
+  const built = new Set([...catalog.required, ...catalog.optional, ...registry.required, ...registry.optional, ...units, ...englishOnly])
 
   it('every catalog and registry key exists as text', () => {
-    const missing = [...catalog.required, ...registry.required, ...registry.englishOnly].filter((k) => typeof fe.get(k) !== 'string')
+    const missing = [...catalog.required, ...registry.required].filter((k) => typeof fe.get(k) !== 'string')
     expect(missing).toEqual([])
   })
 

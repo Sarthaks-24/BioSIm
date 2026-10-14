@@ -66,12 +66,12 @@ describe.each(entries)('registry: %s', (id, { organism, systems, organs }) => {
 })
 
 describe('registry i18n', () => {
-  it('every registry key is text in English and Hindi', () => {
-    const missing = [...registryKeys().required].flatMap((k) =>
-      Object.entries({ en, hi })
-        .filter(([, json]) => typeof text(json, k) !== 'string')
-        .map(([lang]) => `${lang}: ${k}`),
-    )
+  it('every registry key is text in English, and in Hindi for the public systems', () => {
+    // A hidden row is English first (R47; systems/check.ts): its Hindi is due when it goes public.
+    const missing = [
+      ...[...registryKeys().required].filter((k) => typeof text(en, k) !== 'string').map((k) => `en: ${k}`),
+      ...[...registryKeys((s) => s.public).required].filter((k) => typeof text(hi, k) !== 'string').map((k) => `hi: ${k}`),
+    ]
     expect(missing).toEqual([])
   })
 })

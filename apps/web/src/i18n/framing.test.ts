@@ -85,6 +85,17 @@ const BANNED_EN = [
   'immunity booster',
   'boost immunity',
   'boosts immunity',
+  // Germ defence (model §2.11, A-11a): the card says what white cells do, never that a food or a
+  // drink "boosts" them (a common claim in India); no immunity score either.
+  'immunity boost*',
+  'immune boost*',
+  'immunity-boost*',
+  'immune-boost*',
+  'boost your immunity',
+  'boosts your immunity',
+  'boosting immunity',
+  'boost the immune system',
+  'boosts the immune system',
   'superfood*',
   'brain food',
   'sugar for the brain',
@@ -152,6 +163,12 @@ const BANNED_HI = [
   'जलाएँ',
   'जलाओ',
   'जलाई',
+  // Germ defence (model §2.11, council lymph-immune-repro): no "immunity-raising" drinks or foods.
+  'काढ़ा',
+  'काढ़े',
+  'इम्यूनिटी बढ़ा*',
+  'इम्युनिटी बढ़ा*',
+  'रोग प्रतिरोधक क्षमता बढ़ा*',
 ]
 
 /**
@@ -267,6 +284,25 @@ describe('framing lint: stems, scoped words and the activity rule (content-i18n 
       ['energy.activityRate', 'Energy used by moving, in kcal/h'],
     ]
     expect(findBanned('test', planted, ALL).map((hit) => hit.split(':')[0])).toEqual(['test › a', 'test › b'])
+    // The germ-defence words (model §2.11), in both languages; the card's own lines pass.
+    const immunity: [string, string][] = [
+      ['a', 'Haldi milk is an immunity booster'],
+      ['b', 'Amla boosts immunity'],
+      ['c', 'An immune-boosting drink'],
+      ['d', 'रोज़ काढ़ा पिएँ'],
+      ['e', 'यह इम्यूनिटी बढ़ाए'],
+      ['f', 'रोग प्रतिरोधक क्षमता बढ़ाने वाला खाना'],
+      ['sys.lymph.card.barrier.text', en.sys.lymph.card.barrier.text],
+      ['sys.lymph.card.memory.text', en.sys.lymph.card.memory.text],
+    ]
+    expect([...new Set(findBanned('test', immunity, ALL).map((hit) => hit.split(':')[0]))]).toEqual([
+      'test › a',
+      'test › b',
+      'test › c',
+      'test › d',
+      'test › e',
+      'test › f',
+    ])
     expect(findScoped('test', planted).map((hit) => hit.split(':')[0])).toEqual([
       'test › sys.kidneys.now.idle',
       'test › sys.kidneys.now.busy',

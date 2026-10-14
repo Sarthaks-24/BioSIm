@@ -24,19 +24,27 @@ const n = (v: number) => {
   return Object.is(r, -0) ? '0' : String(r)
 }
 
-/** The few Canvas 2D calls FlatBody's still layer and stomach make, recorded as SVG paths. */
+/** The few Canvas 2D calls FlatBody's still layer, the posed body and the stomach make, recorded as SVG paths. */
 class SvgRecorder {
   fillStyle = '#000'
   strokeStyle = '#000'
   lineWidth = 1
   lineJoin: CanvasLineJoin = 'miter'
   lineCap: CanvasLineCap = 'butt'
+  globalCompositeOperation: GlobalCompositeOperation = 'source-over'
   readonly out: string[] = []
+  private saved: [string, GlobalCompositeOperation][] = []
   private d: string[] = []
   private last = ''
 
   clearRect() {}
   setTransform() {}
+  save() {
+    this.saved.push([this.fillStyle, this.globalCompositeOperation])
+  }
+  restore() {
+    ;[this.fillStyle, this.globalCompositeOperation] = this.saved.pop() ?? [this.fillStyle, this.globalCompositeOperation]
+  }
   beginPath() {
     this.d = []
     this.last = ''
@@ -70,6 +78,8 @@ class SvgRecorder {
     this.ellipse(x, y, r, r, 0)
   }
   fill() {
+    // Clearing what is under a shape (an arm in front of the body): the shape drawn next covers it.
+    if (this.globalCompositeOperation === 'destination-out') return
     this.out.push(`<path d="${this.d.join('')}" fill="${this.fillStyle}"/>`)
   }
   stroke() {

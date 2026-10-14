@@ -1,6 +1,7 @@
 import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import { ORGANISMS } from './index.ts'
+import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
 const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS]
@@ -42,28 +43,24 @@ export function catalogKeys(): KeyUse {
 
 /**
  * Organisms, their profiles, systems (with life process, known limits and graph slots) and organs.
- * A hidden system's own keys (its name, its group's name) are `optional` in Hindi: English first,
- * Hindi before it goes public (R47; systems/check.ts asks a public row for both).
+ * `system`: only the systems it accepts (the public ones need Hindi, a hidden one English first).
  */
-export function registryKeys(): KeyUse & { englishOnly: Set<string> } {
+export function registryKeys(system: (s: SystemDef) => boolean = () => true): KeyUse {
   const required = new Set<string>()
-  const englishOnly = new Set<string>()
   for (const { organism, systems, organs } of Object.values(ORGANISMS)) {
     required.add(`${organism.i18nKey}.name`)
     for (const p of organism.profiles) for (const sub of ['tag', 'desc']) required.add(`${PROFILES[p].i18nKey}.${sub}`)
-    for (const s of systems) {
-      const need = s.public ? required : englishOnly
-      need.add(`${s.i18nKey}.name`)
-      need.add(`lifeProcess.${s.lifeProcess}`)
+    for (const s of systems.filter(system)) {
+      required.add(`${s.i18nKey}.name`)
+      required.add(`lifeProcess.${s.lifeProcess}`)
       for (const k of s.knownLimits) required.add(k)
       // Each graph's tab name, its limits and its ring labels (systems/registry.ts GraphSlotDef).
       for (const slot of s.slots) {
-        required.add(`stage.strips.${slot.id}`)
+        required.add(tabKey(slot))
         for (const k of [...(slot.limits ?? []), ...Object.values(slot.marks ?? {})]) required.add(k)
       }
     }
     for (const o of organs) required.add(o.i18nKey)
   }
-  for (const k of required) englishOnly.delete(k)
-  return { required, optional: new Set(), englishOnly }
+  return { required, optional: new Set() }
 }

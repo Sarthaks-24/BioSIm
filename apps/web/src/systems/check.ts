@@ -87,12 +87,11 @@ export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
 /**
  * The labels each system's picture can show (anatomy/callouts.ts), for the flat registry check: each
  * must sit inside its framing. Here, not in the row, so the first download does not carry the list;
- * a new system adds its labels here with its drawing.
+ * a new system adds its labels here with its drawing, or keeps its own table with its drawing
+ * (anatomy/human/<system>.ts `LABELS`, which registry.test hands to flatProblems: lymph's).
  */
 export const FLAT_CALLOUTS: { readonly [S in SystemId]?: readonly string[] } = {
   digestion: ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine', 'liver', 'pancreas'],
-  // Its own labels' places are in anatomy/human/breathing.ts (LABELS), which load with its pack.
-  breathing: ['nasal', 'trachea', 'lungs', 'diaphragm'],
 }
 
 /** A tone's outline in the flat body (flat/look.ts), as hex, for the contrast checks. */

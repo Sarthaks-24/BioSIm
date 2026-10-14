@@ -68,7 +68,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const keptRun = useRunStore((s) => s.kept)
   const { organism } = ORGANISMS[DEFAULT_ORGANISM]
   const slots = useSlots(run)
-  const { stripSummary, note: Note } = useSystemUi()
+  const { stripSummary, card: Card, note: Note } = useSystemUi()
   // The picked tab lives in a store, so the key map can switch it too (1–3, and S, B, E: lib/keys.ts).
   const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
@@ -89,40 +89,46 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
       <h2 id="graphs-title" className="sr-only">
         {t('stage.graphs')}
       </h2>
-      {tabbed && (
-        <Segmented
-          label={t('stage.graphs')}
-          options={slots.map((s) => ({ id: s.id, label: t(tabKey(s)) }))}
-          value={shown ?? ''}
-          onChange={useStripTab.getState().show}
-          // On the projector the tab is the graph's only title (the strip hides its own): title size,
-          // from 640 px up. On a phone the three tabs keep their usual size, so none is cut (B10).
-          className="sm:in-data-[contrast=high]:*:text-title"
-        />
-      )}
-      <StripStack weights={visible.map(() => 1)}>
-        {visible.map((slot) => {
-          const [id, secondId] = slot.signals
-          return (
-            <RunStrip
-              key={slot.id}
-              slot={slot}
-              summarize={stripSummary}
-              series={run.signals.get(id) as ChartableSeries}
-              second={secondId ? run.signals.get(secondId) : null}
-              range={slot.range ?? organism.signalOverrides[id]?.displayRange}
-              note={Note && <Note slot={slot} />}
-              run={run}
-              kept={kept}
-              runName={runName}
-              keptName={keptName}
-              profile={profile}
-              tabbed={tabbed}
-              className="flex-1"
+      {/* A Drawing-only row (R11: lymph in v3.0) has no graphs: its card stands in their place. */}
+      {Card && !slots.length && <Card />}
+      {slots.length > 0 && (
+        <>
+          {tabbed && (
+            <Segmented
+              label={t('stage.graphs')}
+              options={slots.map((s) => ({ id: s.id, label: t(tabKey(s)) }))}
+              value={shown ?? ''}
+              onChange={useStripTab.getState().show}
+              // On the projector the tab is the graph's only title (the strip hides its own): title size,
+              // from 640 px up. On a phone the three tabs keep their usual size, so none is cut (B10).
+              className="sm:in-data-[contrast=high]:*:text-title"
             />
-          )
-        })}
-      </StripStack>
+          )}
+          <StripStack weights={visible.map(() => 1)}>
+            {visible.map((slot) => {
+              const [id, secondId] = slot.signals
+              return (
+                <RunStrip
+                  key={slot.id}
+                  slot={slot}
+                  summarize={stripSummary}
+                  series={run.signals.get(id) as ChartableSeries}
+                  second={secondId ? run.signals.get(secondId) : null}
+                  range={slot.range ?? organism.signalOverrides[id]?.displayRange}
+                  note={Note && <Note slot={slot} />}
+                  run={run}
+                  kept={kept}
+                  runName={runName}
+                  keptName={keptName}
+                  profile={profile}
+                  tabbed={tabbed}
+                  className="flex-1"
+                />
+              )
+            })}
+          </StripStack>
+        </>
+      )}
       {/* What the live region reads out when the clock stops: the lines on the graphs in view. */}
       <StripAnnouncer slots={slots} shown={visible} run={run} kept={kept} />
     </section>

@@ -202,6 +202,9 @@ const BUDGETS = [
   { name: 'lazy total (raw)', lazyTotal: true, max: Infinity, mode: 'report' },
   // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
   { name: 'engine (lazy)', roots: [ENGINE], minus: SIM_ROOTS, max: 45 * KB, mode: 'report' },
+  // A-11a: the germ-defence card (anatomy plan §8: ≤ 5 KB gz), checked with all of the lymph pack's
+  // code (its Now line and the map too: one chunk, systems/lymph/pack.ts), so the card is under it.
+  { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
