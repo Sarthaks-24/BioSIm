@@ -23,21 +23,27 @@ export function drivenAt(sim: RunResult, organ: OrganDef, tMin: number): Partial
  * only half a step past a boundary (hysteresis), so a value sitting on a boundary never flickers,
  * and at most once a real second per organ, however fast the clock is dragged or played.
  * `bounds` are the values between steps, ascending; `nowMs` is the real clock (performance.now).
+ * `step`: a step's size in the drive's units, for the hysteresis; by default the mean gap between
+ * bounds, and with one bound (two steps) a fifth of that bound's size (R93 #14: one bound still
+ * gets hysteresis). A value that is not a number keeps the step shown.
  */
-export function levelGate(bounds: readonly number[], minGapMs = 1000) {
-  // Half a step (the mean step) past a boundary before the shown step moves.
-  const half = bounds.length > 1 ? (bounds[bounds.length - 1]! - bounds[0]!) / (bounds.length - 1) / 2 : 0
+export function levelGate(bounds: readonly number[], minGapMs = 1000, step?: number) {
+  // Half a step past a boundary before the shown step moves.
+  const size =
+    step ?? (bounds.length > 1 ? (bounds[bounds.length - 1]! - bounds[0]!) / (bounds.length - 1) : Math.abs(bounds[0] ?? 0) / 5 || 1)
+  const half = size / 2
   const count = (value: number, margin: number) => bounds.filter((b) => value >= b + margin).length
-  let step = -1
+  let shown = -1
   let changedAt = -Infinity
   return (value: number, nowMs: number): number => {
-    if (step < 0) return (step = count(value, 0))
+    if (!Number.isFinite(value)) return Math.max(shown, 0)
+    if (shown < 0) return (shown = count(value, 0))
     const raw = count(value, 0)
-    const target = raw > step ? Math.max(step, count(value, half)) : raw < step ? Math.min(step, count(value, -half)) : step
-    if (target !== step && nowMs - changedAt >= minGapMs) {
-      step = target
+    const target = raw > shown ? Math.max(shown, count(value, half)) : raw < shown ? Math.min(shown, count(value, -half)) : shown
+    if (target !== shown && nowMs - changedAt >= minGapMs) {
+      shown = target
       changedAt = nowMs
     }
-    return step
+    return shown
   }
 }

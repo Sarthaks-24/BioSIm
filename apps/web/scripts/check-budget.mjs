@@ -173,6 +173,12 @@
 //   186.515 KB on v3 94aa67e (+1.23; the title alone +0.55). The pack and the picker share no module
 //   with the stage (props, written-out helpers; a vite group keeps the clock and the registry one
 //   chunk): a shared module is otherwise split out of the route chunk (+1.9 KB measured).
+//   FIX-V3 (2026-10-14, branch v3; R93): focus goes back to the chip that opened the meal sheet (its
+//   logic loads with the sheet) and to a sensible chip after ✕, the bout marks' download is tried
+//   again, links name the layer with bouts: /sim 186.520 → 186.876 KB on v3 a2354c5 (+0.36), engine
+//   10.662 KB. New enforced checks: the v3 ratchets (ledger `v3`: /sim 187.076, /sim + engine
+//   197.838 KB), the system-chunk imports, and every lazy JS file in a pack-manifest entry (the legs'
+//   chunk was in none) or on the allow-list.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -303,17 +309,79 @@ let trackAOver = false
   }
 }
 
-// Every lazy chunk works offline (plan qa-fixes §3.2, as R71 changed it): precached at install, or
-// in the lazy tier, which the service worker keeps on first use ("lp-lazy"). Enforced since T10 (FP-9).
-let unprecached = 0
+// v3 ratchets (R93 #8, #9; enforced): /sim's first download, and /sim plus the engine chunk (what
+// a cold start downloads before the first run), may not pass the last row of the ledger's `v3`
+// table: measured + 0.2 KB (/sim) and + 0.3 KB (/sim + engine) when the row was written. A WP that
+// grows either adds its own row (its measured sizes, its new ratchets), so every growth is a line
+// someone signed. The 194 KB cap (R42) stays above them and never moves.
+const ratchetProblems = []
 {
-  const precached = new Set(precacheFiles())
-  const lazy = new Set()
-  for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
-  const missing = [...lazy].filter((f) => !precached.has(f) && !tiers.lazy.has(f))
-  unprecached = missing.length
+  const ledger = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'budget-ledger.json'), 'utf8'))
+  const last = ledger.v3?.rows?.at(-1)
+  const sim = rows.find((r) => r.name.startsWith('/sim')).bytes / KB
+  const engine = rows.find((r) => r.name.startsWith('engine')).bytes / KB
+  if (!last) ratchetProblems.push('budget-ledger.json has no v3 ratchet row')
+  else {
+    if (sim > last.simRatchetKB)
+      ratchetProblems.push(`/sim ${sim.toFixed(3)} KB is over the v3 ratchet ${last.simRatchetKB} KB (${last.wp})`)
+    if (sim + engine > last.simEngineRatchetKB)
+      ratchetProblems.push(
+        `/sim + engine ${(sim + engine).toFixed(3)} KB is over the v3 ratchet ${last.simEngineRatchetKB} KB (${last.wp})`,
+      )
+    console.log(
+      `\nv3 ratchets (enforce; ledger row ${last.wp}): /sim ${sim.toFixed(3)} of ${last.simRatchetKB} KB; /sim + engine ${(sim + engine).toFixed(3)} of ${last.simEngineRatchetKB} KB: ${ratchetProblems.length ? 'FAILS' : 'ok'}`,
+    )
+  }
+}
+
+// The lazy-layer trap (R93 #8; enforced): a system's lazy code (a dynamic entry under src/systems/)
+// may import statically, of /sim's first download, only the chunks every lazy part can count on:
+// the entry (index), React's jsx-runtime, i18n and the kit. A stage module it imports is split out of
+// /sim's route chunk with everything the two share (+1.9 KB gz on /sim for the lymph map before
+// flat/layerKit.ts). Two named exceptions cost /sim nothing: the route chunk itself (a whole chunk,
+// nothing is cut out of it) and `clock`, a chunk group in vite.config.ts whose contents are fixed
+// (U-2: the meal clock and the registry, which the breathing pack reads). A chunk outside /sim's
+// first download (the pack's words, code it shares with the engine) moves nothing out of /sim; the
+// engine's side of it is in the /sim + engine ratchet above.
+const SYSTEM_SHARED = ['jsx-runtime', 'i18n', 'kit']
+const SYSTEM_SHARED_GROUPS = ['clock']
+const trapProblems = []
+{
+  const simKeys = new Set()
+  const walk = (key) => {
+    if (simKeys.has(key) || !manifest[key]) return
+    simKeys.add(key)
+    for (const dep of manifest[key].imports ?? []) walk(dep)
+  }
+  SIM_ROOTS.forEach(walk)
+  const allowed = (dep) =>
+    dep === 'index.html' ||
+    SIM_ROOTS.includes(dep) ||
+    [...SYSTEM_SHARED, ...SYSTEM_SHARED_GROUPS].some((n) => new RegExp(`^_*${n}-`).test(dep))
+  for (const [key, chunk] of Object.entries(manifest)) {
+    if (!chunk.isDynamicEntry || !key.startsWith('src/systems/')) continue
+    for (const dep of chunk.imports ?? [])
+      if (simKeys.has(dep) && !allowed(dep))
+        trapProblems.push(`${key} imports ${dep} statically: of /sim only index, jsx-runtime, i18n, kit (hand it over, flat/layerKit.ts)`)
+  }
+}
+console.log(
+  `System chunks take from /sim only index, jsx-runtime, i18n, kit, the route, clock (enforce): ${trapProblems.length ? 'FAILS' : 'ok'}`,
+)
+
+// Every lazy JS file works offline once saved (plan qa-fixes §3.2, as R71 and R93 #7 changed it): it is
+// in at least one entry of pack-manifest.json, so Teach's "Save for class offline" saves it, or on
+// this allow-list of files a lesson never needs (the "new version" note and its service-worker helper).
+const OFFLINE_ALLOW = ['src/components/UpdateToast.tsx', '../../node_modules/workbox-window/build/workbox-window.prod.es5.mjs']
+let unsaved = 0
+{
+  const inEntry = new Set(Object.values(tiers.packs).flatMap((p) => p.files))
+  const allowed = new Set(OFFLINE_ALLOW.map((k) => manifest[k]?.file).filter(Boolean))
+  const lazyJs = [...tiers.lazy].filter((f) => f.endsWith('.js'))
+  const missing = lazyJs.filter((f) => !inEntry.has(f) && !allowed.has(f))
+  unsaved = missing.length
   console.log(
-    `\nLazy chunks offline (precached or lazy tier): ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; neither: ${missing.join(', ')})` : ' ok'}`,
+    `\nLazy JS in a pack-manifest entry or allow-listed (enforce): ${lazyJs.length - missing.length} of ${lazyJs.length}${missing.length ? ` (FAILS; in no entry: ${missing.join(', ')})` : ' ok'}`,
   )
 }
 
@@ -400,7 +468,12 @@ if (guardProblems.length) {
   process.exit(1)
 }
 
-if (rows.some((r) => r.failed) || trackAOver || unprecached) {
+if (ratchetProblems.length || trapProblems.length) {
+  console.error(`\nA v3 ratchet or the system-chunk check failed:\n  ${[...ratchetProblems, ...trapProblems].join('\n  ')}`)
+  process.exit(1)
+}
+
+if (rows.some((r) => r.failed) || trackAOver || unsaved) {
   console.error('\nAn enforced size budget is over. See apps/web/scripts/check-budget.mjs.')
   process.exit(1)
 }

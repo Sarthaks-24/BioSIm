@@ -86,16 +86,20 @@ export function loadPack(pack: PackId): Promise<void> | null {
   let p = loading.get(pack)
   if (!p) {
     const def = LAZY_PACKS[pack]
+    // All or nothing: the rows, UI and drawing are kept only once every part has arrived, so a
+    // half-loaded pack never shows its UI without its words (a failed part means Try again).
     p = def
-      ? Promise.all([
-          def.rows().then((m) => registerSignals(pack, m.default)),
-          def.ui?.().then((m) => {
-            Object.assign(UIS, m.default)
-            for (const [id, parts] of Object.entries(m.DEFS ?? {})) Object.assign(systemOf(id)!, parts)
-          }),
-          def.text && loadSection(`sys.${pack}`, def.text),
-          def.drawing?.().then((m) => Object.assign(DRAWINGS, m.default)),
-        ]).then(() => void ready.add(pack))
+      ? Promise.all([def.rows(), def.ui?.(), def.text && loadSection(`sys.${pack}`, def.text), def.drawing?.()]).then(
+          ([rows, ui, , drawing]) => {
+            registerSignals(pack, rows.default)
+            if (ui) {
+              Object.assign(UIS, ui.default)
+              for (const [id, parts] of Object.entries(ui.DEFS ?? {})) Object.assign(systemOf(id)!, parts)
+            }
+            if (drawing) Object.assign(DRAWINGS, drawing.default)
+            ready.add(pack)
+          },
+        )
       : Promise.reject(new Error(`The ${pack} pack is not built`))
     p.catch(() => loading.delete(pack))
     loading.set(pack, p)

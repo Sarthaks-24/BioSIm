@@ -15,9 +15,15 @@ export const MAX_SHEET_BOUTS = 3
 /**
  * The meal sheet's state: closed, or open on its Food or Activity tab, maybe changing one bout
  * (`edit`: its place in the plan). A store, so a bout chip can open it on that bout (E-3b-ui).
+ * `switched`: the reader moved between Food and Activity, so the focus stays on that switch.
+ * `returnTo`: the chip that opened it, which gets the focus back when it closes (else the chip now
+ * in its place, else "+ Add"; R93 #10).
  */
-export type MealSheet = { tab: 'food' | 'activity'; edit?: number } | null
-export const useMealSheet = create<{ open: MealSheet }>(() => ({ open: null }))
+export type MealSheet = { tab: 'food' | 'activity'; edit?: number; switched?: boolean } | null
+export const useMealSheet = create<{ open: MealSheet; returnTo: HTMLElement | null }>(() => ({ open: null, returnTo: null }))
+
+/** Opens the meal sheet from a chip's button (`from`), which gets the focus back when it closes. */
+export const openMealSheet = (open: NonNullable<MealSheet>, from: HTMLElement) => useMealSheet.setState({ open, returnTo: from })
 
 /**
  * The food search is downloaded the first time it is opened, with the stage's other sheets
@@ -46,6 +52,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
   const full = meal.length >= MAX_ITEMS
   const opener = useRef<HTMLButtonElement>(null)
   const open = useMealSheet((s) => s.open)
+  const returnTo = useMealSheet((s) => s.returnTo)
   const [attempt, setAttempt] = useState(0)
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
 
@@ -58,12 +65,18 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
 
   const show = () => {
     useRunStore.setState({ capBlocked: false })
-    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' } })
+    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' }, returnTo: null })
   }
 
+  // The focus goes back (FoodSearch.tsx `focusBack`, with the sheet's code: not first paint) to the
+  // chip that opened it, else the chip now in its place, else this button (R93 #10).
   const close = () => {
-    useMealSheet.setState({ open: null })
-    opener.current?.focus()
+    const add = opener.current
+    useMealSheet.setState({ open: null, returnTo: null })
+    import('./Sheets.tsx').then(
+      (m) => m.focusBack(add),
+      () => add?.focus(),
+    )
   }
 
   return (
@@ -75,6 +88,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
         onClick={show}
         disabled={full && bouts >= MAX_SHEET_BOUTS}
         aria-haspopup="dialog"
+        data-add-food=""
         title={full ? t('stage.mealFull', { n: MAX_ITEMS }) : undefined}
         // Next to food chips "+" alone is clear (the words stay its name); with no food yet the
         // words show, as the first thing to do.
@@ -95,6 +109,9 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
             <foodSearch.Component
               anchor={anchor}
               tab={open.tab}
+              // Switching Food | Activity keeps the focus on the switch; opening places it (R93 #11).
+              place={!open.switched}
+              from={returnTo}
               // If it does not arrive, this boundary's box says so, as for the food search.
               activity={
                 <activitySheet.Component
@@ -106,9 +123,10 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
                   clock={clockText}
                   emoji={BOUT_EMOJI}
                   onDone={close}
+                  place={!open.switched}
                 />
               }
-              onTab={(tab) => useMealSheet.setState({ open: { tab } })}
+              onTab={(tab) => useMealSheet.setState({ open: { tab, switched: true } })}
               onClose={close}
             />
           </Suspense>

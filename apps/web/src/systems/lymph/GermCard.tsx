@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StatusTag } from '../../components/kit/index.ts'
 import { LYMPH_TONE } from '../../anatomy/tones/lymph.ts'
@@ -77,7 +77,8 @@ function Skin({ cut }: { cut: boolean }) {
   )
 }
 
-const PICTURES: Record<Panel, () => ReactNode> = {
+/** Each panel's picture; `arrow` is the id of the card's arrowhead marker (one per card: useId). */
+const PICTURES: Record<Panel, (arrow: string) => ReactNode> = {
   barrier: () => (
     <>
       <path d="M0 70H120V84H0Z" fill={SKIN} stroke="currentColor" strokeWidth="1.5" />
@@ -99,13 +100,13 @@ const PICTURES: Record<Panel, () => ReactNode> = {
       <Germ x={214} y={50} />
     </>
   ),
-  cut: () => (
+  cut: (arrow) => (
     <>
       <Skin cut />
       <Germ x={90} y={40} />
       <Germ x={116} y={52} />
       <Germ x={118} y={108} />
-      <path d="M142 34 124 58M117 84v8" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#lp-arrow)" />
+      <path d="M142 34 124 58M117 84v8" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd={`url(#${arrow})`} />
     </>
   ),
   fight: () => (
@@ -148,6 +149,10 @@ const PICTURES: Record<Panel, () => ReactNode> = {
 export default function GermCard() {
   const { t } = useTranslation()
   const [at, setAt] = useState(0)
+  // Ids of this card's own (two cards on a page never share one; R93 #15).
+  const id = useId()
+  const titleId = `${id}-title`
+  const arrow = `${id}-arrow`
   const panel = PANELS[at]!
   const k = (leaf: string) => t(`sys.lymph.card.${panel}.${leaf}`)
   // aria-disabled, not disabled: the button keeps the focus when the last (or first) panel shows.
@@ -156,9 +161,9 @@ export default function GermCard() {
   const go = (to: number) => to >= 0 && to < PANELS.length && setAt(to)
   const dim = (off: boolean) => (off ? { opacity: 0.4 } : undefined)
   return (
-    <section data-card="germs" aria-labelledby="germ-card-title" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink">
+    <section data-card="germs" aria-labelledby={titleId} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink">
       <header className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h3 id="germ-card-title" className="text-title font-extrabold">
+        <h3 id={titleId} className="text-title font-extrabold">
           {t('sys.lymph.card.title')}
         </h3>
         <StatusTag status="illustration" />
@@ -172,11 +177,11 @@ export default function GermCard() {
         style={{ flex: '0 1 14rem', minHeight: '3.5rem' }}
       >
         <defs>
-          <marker id="lp-arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <marker id={arrow} viewBox="0 0 8 8" refX="6" refY="4" markerWidth="6" markerHeight="6" orient="auto">
             <path d="M0 0 8 4 0 8z" fill="currentColor" />
           </marker>
         </defs>
-        {PICTURES[panel]()}
+        {PICTURES[panel](arrow)}
       </svg>
       <div aria-live="polite">
         <h4 className="font-semibold">
@@ -184,9 +189,10 @@ export default function GermCard() {
         </h4>
         <p className="text-control">{k('text')}</p>
       </div>
-      <nav aria-label={t('sys.lymph.card.title')} className="flex items-center justify-between gap-2">
+      {/* Back and Next: plain buttons in a row (not a landmark: they step this card only). */}
+      <div className="flex items-center justify-between gap-2">
         <button type="button" aria-disabled={at === 0} onClick={() => go(at - 1)} className={step} style={dim(at === 0)}>
-          ‹ {t('sys.lymph.card.back')}
+          <span aria-hidden="true">‹</span> {t('sys.lymph.card.back')}
         </button>
         <span className="text-caption text-ink-muted">{t('sys.lymph.card.step', { n: at + 1, total: PANELS.length })}</span>
         <button
@@ -196,9 +202,9 @@ export default function GermCard() {
           className={step}
           style={dim(at === PANELS.length - 1)}
         >
-          {t('sys.lymph.card.next')} ›
+          {t('sys.lymph.card.next')} <span aria-hidden="true">›</span>
         </button>
-      </nav>
+      </div>
       <footer className="border-t border-border text-caption text-ink-muted" style={{ paddingTop: '0.5rem' }}>
         <p className="text-ink">{t('sys.lymph.card.cells')}</p>
         <p>{t('sys.lymph.card.source')}</p>

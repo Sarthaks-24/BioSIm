@@ -78,6 +78,21 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
   }, [])
   const settled = useSettled(wrapper)
   const [drawn, setDrawn] = useState(false)
+  // The canvas's `webglcontextlost` listener, removed when this body goes. Fiber 9 calls
+  // forceContextLoss() on the canvas when it unmounts (a system with no 3D layer was lit): that
+  // loss is ours, not the GPU's, and must not turn 3D off for the rest of the visit.
+  const lostListener = useRef<{ canvas: HTMLCanvasElement; listener: (e: Event) => void } | null>(null)
+  const lost = useRef(onContextLost)
+  lost.current = onContextLost
+  useEffect(
+    () => () => {
+      const l = lostListener.current
+      l?.canvas.removeEventListener('webglcontextlost', l.listener)
+      lostListener.current = null
+      lost.current = undefined
+    },
+    [],
+  )
 
   return (
     // data-particles says whether the food tumbles (reduced motion: "still"); the reduced-motion test reads it.
@@ -101,10 +116,12 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
           role="img"
           onCreated={({ gl, camera, invalidate: redraw }) => {
             invalidate.current = () => redraw()
-            gl.domElement.addEventListener('webglcontextlost', (e) => {
+            const listener = (e: Event) => {
               e.preventDefault()
-              onContextLost?.()
-            })
+              lost.current?.()
+            }
+            gl.domElement.addEventListener('webglcontextlost', listener)
+            lostListener.current = { canvas: gl.domElement, listener }
             // The ?debug=fps overlay (BodyView) reads draw calls and triangles from here; the e2e
             // label check projects the organs itself, with the camera.
             Object.assign(window, { __lifepeekGl: gl.info, __lifepeekCamera: camera })
