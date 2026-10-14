@@ -151,10 +151,11 @@ test('the hot-pan lesson on Teach (v3.1, R109): first under Control and coordina
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
   await goto(page, '/teach')
   const chapter = page.locator('[data-chapter="control"]')
-  await expect(chapter.locator('[data-lesson]').evaluateAll((els) => els.map((e) => e.getAttribute('data-lesson')))).resolves.toEqual([
-    'reflexHotPan',
-    'insulinCola',
-  ])
+  // Once Teach's list is drawn: the reflex (Ch 6.1), then insulin (Ch 6.3).
+  const rows = chapter.locator('[data-lesson]')
+  await expect(rows).toHaveCount(2)
+  await expect(rows.nth(0)).toHaveAttribute('data-lesson', 'reflexHotPan')
+  await expect(rows.nth(1)).toHaveAttribute('data-lesson', 'insulinCola')
   const row = chapter.locator('[data-lesson="reflexHotPan"]')
   await expect(row).toHaveAttribute('data-release', 'v3.1')
   await expect(row).toContainText('Why do you pull your hand back before you feel the pain?')
