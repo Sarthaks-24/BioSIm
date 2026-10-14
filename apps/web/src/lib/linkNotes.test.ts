@@ -48,6 +48,13 @@ describe('link notes', () => {
     ])
   })
 
+  it('a link to a row behind the teacher switch, while it is off, never names it (R117, R120 #5)', () => {
+    const notes = notesFor(`v=${MODEL_VERSION}&a=cola:1&layer=reproduction`)
+    expect(notes).toEqual(['This link’s body system isn’t available here, so it shows Digestion.'])
+    for (const note of notes) expect(note).not.toMatch(/reproduction|growing up/i)
+    expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&layer=reproduction&preview=1&act=walk.0.10`).join(' ')).not.toMatch(/reproduction/i)
+  })
+
   it('since v3.2 a football, cricket, badminton or sitting-in-class bout opens with no note (R114; before, it was dropped and named)', () => {
     const act = 'sitClass.0.45,football.60.30,cricket.120.60'
     expect(notesFor(`v=${MODEL_VERSION}&a=cola:1&act=${act}&bact=badminton.0.30`)).toEqual([])

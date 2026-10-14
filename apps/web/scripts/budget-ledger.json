@@ -165,6 +165,24 @@
         "engineKB": 12.471,
         "simRatchetKB": 189.69,
         "simEngineRatchetKB": 202.261
+      },
+      {
+        "wp": "FIX-F2",
+        "at": "2026-10-14",
+        "on": "v3 7fd594c (/sim 189.563 measured) + FIX-F2 (R120 #3, #6, #12, #19, #20): the teacher switch as a tiny store with listeners (state/run.ts drops a lit, loading or failed row behind it when it goes off; setLayer and linkQuery never ask for or write it; the link is rewritten), [ ] stepping from the row on its way, Try again moving focus to the title and keeping its status, focus to the title when a system switch takes the focused control away, and the live region naming the shown system when the switch goes off: /sim 189.563 -> 189.899 (+0.336: Simulator chunk +0.249, clock chunk group +0.087; zustand in the registry measured 190.054, kept out), engine 12.471 unchanged. The link note, picker, panels, sheet and the summaries' words are lazy.",
+        "simKB": 189.899,
+        "engineKB": 12.471,
+        "simRatchetKB": 190.099,
+        "simEngineRatchetKB": 202.67
+      },
+      {
+        "wp": "FIX-F1 + T32 + FIX-F2 (merged)",
+        "at": "2026-10-14",
+        "on": "v3 after merging wp/t32-teach and wp/fix-f2 onto FIX-F1 (00f1f69), measured after both merges: /sim 189.953, engine 12.627 (/sim + engine 202.580). FIX-F1 had no row (under the ratchet: /sim +0.011, /sim + engine +0.167 from the worker's one-run-at-a-time queue in the engine chunk, engine 12.471 -> 12.627); T32 is Teach only (a lazy route: no /sim change); FIX-F2's row measured /sim 189.899 on 7fd594c, and with FIX-F1's +0.011 and gzip's sharing it lands at 189.953 (+0.054 over that row). Teach now hears the teacher switch's store (its own chunk). New ratchets: measured + 0.2 (/sim) and + 0.3 (/sim + engine).",
+        "simKB": 189.953,
+        "engineKB": 12.627,
+        "simRatchetKB": 190.153,
+        "simEngineRatchetKB": 202.88
       }
     ]
   },

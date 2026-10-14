@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { decodeShareState } from '@lifepeek/engine'
 import * as run from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
-import { systemOf, teacherSwitch } from '../systems/registry.ts'
+import { setTeacherSwitch, systemOf, teacherSwitch } from '../systems/registry.ts'
 import { CHAPTERS, flagshipPacks, shownChapters } from './lessons.ts'
 import { HEART_PAUSE, PAUSES, pausesFor } from './flagshipPauses.ts'
 import { LESSON_PACKS } from './offlineSave.ts'
@@ -38,7 +38,7 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
     const keys = (preview: boolean) => shownChapters(preview).flatMap((c) => c.lessons.map((l) => l.key))
     expect(keys(false)).not.toContain('cycleHormones')
     expect(keys(true)).not.toContain('cycleHormones')
-    teacherSwitch.on = true
+    setTeacherSwitch(true)
     try {
       expect(shownChapters(false).map((c) => c.key)).toEqual(CHAPTERS.map((c) => c.key))
       expect(keys(false)).toEqual(CHAPTERS.flatMap((c) => c.lessons.map((l) => l.key)))
@@ -49,7 +49,24 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
           .lessons.map((l) => l.key),
       ).toEqual(['cycleHormones'])
     } finally {
-      teacherSwitch.on = false
+      setTeacherSwitch(false)
+    }
+  })
+
+  it('Teach hears the teacher switch (its store, FIX-F2): on and off again, the chapter comes and goes without a reload', () => {
+    const heard: boolean[] = []
+    const chapters = () => shownChapters(false).map((c) => c.key)
+    const stop = teacherSwitch.subscribe((on) => heard.push(on))
+    try {
+      expect(chapters()).not.toContain('reproduction')
+      setTeacherSwitch(true)
+      expect(chapters()).toContain('reproduction')
+      setTeacherSwitch(false)
+      expect(chapters()).not.toContain('reproduction')
+      expect(heard).toEqual([true, false])
+    } finally {
+      stop()
+      setTeacherSwitch(false)
     }
   })
 
@@ -98,11 +115,11 @@ describe('"Save for class offline" keeps what each lesson opens (T12d, R71)', ()
     expect(repro.packs).toEqual([...LESSON_PACKS, 'reproduction'])
     const listed = () => shownChapters(false).flatMap((c) => c.lessons.flatMap((l) => l.packs))
     expect(listed()).not.toContain('reproduction')
-    teacherSwitch.on = true
+    setTeacherSwitch(true)
     try {
       expect(listed()).toContain('reproduction')
     } finally {
-      teacherSwitch.on = false
+      setTeacherSwitch(false)
     }
   })
 })

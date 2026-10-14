@@ -243,6 +243,8 @@ export default function Overlay({
         ref={panel}
         role="dialog"
         aria-labelledby={titleId}
+        // A sheet over a dimmed page is modal (R120 #19); a popover and "More" (modeless) are not.
+        aria-modal={!wide && !modeless ? true : undefined}
         tabIndex={-1}
         data-overlay={wide ? 'popover' : 'sheet'}
         style={{

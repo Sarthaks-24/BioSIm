@@ -253,7 +253,14 @@ export default function Panels() {
   const say = useSay()
   const [tab, setTab] = useState<Tab>('cycle')
   return (
-    <section data-card="reproduction" aria-label={say('panels')} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto text-ink">
+    // It scrolls, so the keyboard can reach it, and its scrolling keys scroll it (lib/keys.ts `data-scroll`; R120 #19).
+    <section
+      data-card="reproduction"
+      data-scroll=""
+      tabIndex={0}
+      aria-label={say('panels')}
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto text-ink"
+    >
       <Segmented
         label={say('panels')}
         options={[

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import type { TFunction } from 'i18next'
-import { valueAt, type ActivityBout, type MealItem, type RunResult } from '@lifepeek/engine'
+import { ACTIVITY_KINDS, PARAMS, valueAt, type ActivityBout, type MealItem, type RunResult } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
 import en from '../../i18n/en.json'
 import { lookupFood } from '../../data/foods.ts'
@@ -26,6 +26,9 @@ import {
   doingAt,
   dropCount,
   hatchStep,
+  isLight,
+  LIGHT_KINDS,
+  LIGHT_MET,
   lastKindAt,
   peakOf,
   seriesOf,
@@ -234,6 +237,14 @@ describe('the pictures follow the pose (R32, U-1a)', () => {
     for (const step of steps.slice(1)) expect(step).toBeGreaterThanOrEqual(2)
   })
 
+  it('each kind keeps its step whichever step it comes from: football the cross-hatch, the other games the denser hatch (R120 #18)', () => {
+    const want = { walk: 1, sitClass: 1, walkBrisk: 2, cricket: 2, badminton: 2, football: 3, run: 3 } as const
+    for (const [k, step] of Object.entries(want)) {
+      const v = at(run([bout(k as ActivityBout['kind'])]), 'muscle.energyRate', 45)
+      for (const prev of [0, 1, 2, 3]) expect(hatchStep(v, prev), `${k} (${Math.round(v)} kcal/h) from step ${prev}`).toBe(step)
+    }
+  })
+
   it('12 drop places, inside the picture; the arms’ drops move with the pose', () => {
     const [rest, runPose] = [dropPlaces(posedFor('rest')), dropPlaces(posedFor('run'))]
     expect(rest).toHaveLength(12)
@@ -331,6 +342,29 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
     expect(s.headline).toMatch(/^Most sweat while walking: about 3[0-9]0 mL an hour\.$/)
     expect(s.reason).toMatch(/^About 1[0-9]{2} mL of sweat in all\. Sweat is water and salt, not fat leaving\.$/)
     expect(skinSummary(r, run(), t, 'en')!.headline).toMatch(/^Sweat in all: about \d+ mL with this plan, 0 mL with the kept one\.$/)
+  })
+
+  it('sitting in class (1.8 MET, light): a light-activity line, no "×" and no sweat figure; the model’s numbers stay (R120 #9)', () => {
+    expect(isLight('sitClass')).toBe(true)
+    expect([...LIGHT_KINDS]).toEqual(ACTIVITY_KINDS.filter((k) => PARAMS.activity.met[k] < LIGHT_MET))
+    for (const k of ['walk', 'walkBrisk', 'run', 'football', 'cricket', 'badminton'] as const) expect(isLight(k), k).toBe(false)
+    expect(isLight('rest')).toBe(false)
+    const r = run([bout('sitClass', 45)])
+    // The engine still makes its numbers (graphs and the Now line read them).
+    expect(peakOf(seriesOf(r, 'skin.sweatRate')!, 1).value).toBeGreaterThan(50)
+    const m = musclesSummary(r, null, t, 'en')!
+    expect(m.headline).toBe('While sitting in class (light activity), muscles work only a little harder than at rest.')
+    expect(m.key).toBeUndefined()
+    const s = skinSummary(r, null, t, 'en')!
+    expect(s.headline).toBe(
+      'While sitting in class (light activity), there is only a little sweat from moving, much less than in a walk or a game.',
+    )
+    expect(`${s.headline} ${s.reason ?? ''}`).not.toMatch(/\d|mL/)
+    expect(s.key).toBeUndefined()
+    // A walk or run with it says what it said before.
+    const both = run([bout('sitClass', 45), { kind: 'run', startMin: 120, durMin: 10 }])
+    expect(musclesSummary(both, null, t, 'en')!.headline).toMatch(/^While running, muscles use about \d+× their resting energy/)
+    expect(skinSummary(both, null, t, 'en')!.headline).toMatch(/^Most sweat while running: about \d+ mL an hour\.$/)
   })
 
   it('each graph’s sentence: flat at rest, or its start, its highest and when', () => {

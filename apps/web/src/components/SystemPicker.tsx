@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type RefObject } from 'react'
+import { useId, useRef, type KeyboardEvent, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActivityBout, type RunResult, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
 import type { TFunction } from 'i18next'
@@ -83,6 +83,7 @@ export default function SystemPicker({
     }
   }
   const list = useRef<HTMLDivElement>(null)
+  const groupId = useId()
   // ↑ ↓ Home End between the rows (Tab goes through them too).
   const onKeyDown = (e: KeyboardEvent) => {
     const buttons = [...(list.current?.querySelectorAll<HTMLButtonElement>('[data-system-row]') ?? [])]
@@ -101,9 +102,10 @@ export default function SystemPicker({
             const shown = rows.filter((id) => ids.includes(id))
             if (!shown.length) return null
             return (
-              <section key={group} aria-label={t(`lifeProcess.${group}`)} className="grid gap-1">
+              // Named by its heading's words, once (R120 #19), not by a copy of them.
+              <section key={group} aria-labelledby={`${groupId}-${group}`} className="grid gap-1">
                 <h3 className="text-caption font-semibold text-ink-muted">
-                  {t(`lifeProcess.${group}`)}
+                  <span id={`${groupId}-${group}`}>{t(`lifeProcess.${group}`)}</span>
                   {/* The teacher switch's row shows only while it is on, and says so (R-1, ui-ux §10). */}
                   {group === 'reproduction' && (
                     <span

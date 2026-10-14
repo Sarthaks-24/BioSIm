@@ -188,6 +188,9 @@ describe('the words are the model’s numbers (ui-ux §6, §7)', () => {
     const burger = run([...one('cheeseburger'), ...one('fries')])
     expect(at(burger, INSULIN, 480)).toBeGreaterThan(2)
     expect(en.limits.insulinHigh).toContain('stays raised for hours')
+    // The 2-hour figure is about the lab test, said as such, with its study (V-6: Takahashi 2018, 62 young women, 5.8× at 120 min; R120 #8).
+    expect(en.limits.insulinHigh).toMatch(/75 g glucose drink \(the lab sugar test, not one of the app’s foods\)/)
+    expect(en.limits.insulinHigh).toMatch(/young women measured about 6×: Takahashi 2018/)
   })
 })
 
@@ -293,5 +296,15 @@ describe('what the pack writes out matches the stage and Digestion’s anatomy',
 
   it('its row: the control pack, the upper framing, 0–12 h, public (U-6 acceptance)', () => {
     expect([HORMONES.pack, HORMONES.camera.framing, HORMONES.graphWindowMin, HORMONES.public]).toEqual(['control', 'upper', 720, true])
+  })
+})
+
+describe('the other hormones’ lines follow their source (R120 #20)', () => {
+  it('ghrelin as OpenStax A&P 2e Table 23.6 has it: made by the stomach when fasting, rising just before meals, acting on the brain for hunger', () => {
+    // Table 23.6: "Stomach mucosa, mainly fundus"; "Fasting state (levels increase just prior to meals)";
+    // target "Hypothalamus"; "Regulates food intake, primarily by stimulating hunger and satiety".
+    const hunger = en.sys.control.others.hunger
+    expect(hunger.source).toBe('OpenStax Anatomy and Physiology 2e, §23.4, Table 23.6')
+    expect(hunger.text).toBe('Made by the stomach while fasting; it rises just before meals and acts on the brain to make us feel hungry.')
   })
 })

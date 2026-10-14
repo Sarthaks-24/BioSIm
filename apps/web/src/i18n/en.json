@@ -771,9 +771,9 @@
   "about": {
     "title": "About LifePeek",
     "tagline": "LifePeek: peek inside living things",
-    "lead": "Compare what happens to two meals inside your body. Free, no login, works offline once loaded.",
+    "lead": "Compare what happens to two meals inside a typical healthy body (a model, not yours). Free, no login, works offline once loaded.",
     "makerTitle": "Who made it",
-    "maker": "LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources.",
+    "maker": "LifePeek is made by {{name}}. Every number in it is cited or marked as a model estimate, and every report of a mistake is checked against published sources.",
     "medicalTitle": "Not medical advice",
     "medical": "LifePeek is an educational model of a typical healthy adult. It does not model children, pregnancy, diabetes or digestive illness. Its numbers are typical ranges, not measurements of any person, and must not be used to choose a diet, treat an illness or change medicine. If you have diabetes or any health concern, talk to a doctor or a qualified dietitian.",
     "sourcesTitle": "Where the numbers come from",
@@ -1253,7 +1253,7 @@
     "bloodFatLate": "After a big meal of solid food, blood fat peaks later here than in studies (often after 6 h instead of 3–4 h), because food leaves the stomach slowly in this model. Read the hours as rough.",
     "bloodFatIndia": "Blood fat before eating is 80 mg/dL here. Many Indian adults start higher: 116 mg/dL on average in the ICMR-INDIAB study (Joshi 2014). People differ.",
     "insulinOpenLoop": "Insulin here follows the sugar coming in from food; it does not pull blood sugar back down. Blood sugar is the same line as in Digestion, from studies of real meals, which already include what insulin does.",
-    "insulinHigh": "Two hours after a sugary drink the model’s insulin is higher than in studies (about 9× where young adults measured about 6×), and after a big solid meal it stays raised for hours, because the stomach empties slowly here.",
+    "insulinHigh": "Two hours after a 75 g glucose drink (the lab sugar test, not one of the app’s foods), the model’s insulin is higher than in a study (about 9×, where young women measured about 6×: Takahashi 2018), and after a big solid meal it stays raised for hours, because the stomach empties slowly here.",
     "insulinSugarOnly": "Only sugar and starch from food raise insulin in this model. In real life protein and fat raise it a little too; here an egg leaves it at 1×.",
     "insulinHealthy": "This is a healthy body that makes its own insulin. In diabetes (madhumeh) the body makes too little insulin or its cells answer it less; this model does not show that, and a family glucometer’s numbers can’t be compared with it.",
     "brainGlucoseConstant": "The brain uses about 4.4 g of sugar an hour here (about 106 g a day), the same all day: studies measured 100–145 g a day. Between meals the liver keeps it supplied, so no meal changes it."
@@ -1530,6 +1530,7 @@
     "time": "This link’s time is past the end of the model’s {{hours}} hours, so it opens at the end.",
     "who": "This version doesn’t know the person this link asks for, so it shows the typical adult.",
     "layer": "This version doesn’t have the body system this link asks for (“{{asked}}”), so it shows {{shown}}.",
+    "layerOff": "This link’s body system isn’t available here, so it shows {{shown}}.",
     "activity": "This version can’t show these activities from the link, so they were left out: {{bouts}}.",
     "bout": "{{kind}} from {{start}}, {{min}} min",
     "kinds": {
@@ -1714,7 +1715,7 @@
       },
       "moves": "Moves mostly with activity; the meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute",
-      "children": "Most children your age (12–15): 15–21 a minute at rest",
+      "children": "Most children aged 12–15: 15–21 a minute at rest",
       "summary": {
         "rest": "At rest, breathing stays about the same after a meal: about {{n}} a minute.",
         "restReason": "Breathing moves mostly with activity, like walking or running. Try a walk.",
@@ -1804,7 +1805,7 @@
       },
       "moves": "Moves mostly with activity; a meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute",
-      "children": "Most children your age (12–15): 62–96 a minute at rest",
+      "children": "Most children aged 12–15: 62–96 a minute at rest",
       "bp": {
         "value": "Blood pressure 120/80: book value, held.",
         "held": "About the same all day in this model: it is not worked out here.",
@@ -1891,6 +1892,7 @@
           "rest": "At rest, muscles use about the same energy all day; the meal does not change it.",
           "restReason": "Muscles work harder only with activity. Try a walk.",
           "peak": "While {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
+          "light": "While {{doing}} (light activity), muscles work only a little harder than at rest.",
           "compare": "At the most, muscles use about {{run}}× their resting energy with this plan, {{kept}}× with the kept one.",
           "same": "Muscles work about the same in both plans.",
           "compareRest": "At the most, muscles use about {{most}}× their resting energy with {{which}}; with the other they stay at rest.",
@@ -1923,6 +1925,7 @@
           "rest": "At rest the skin makes no sweat from moving; the meal does not change that.",
           "restReason": "Sweat comes only with activity here. Try a walk.",
           "peak": "Most sweat while {{doing}}: about {{value}}.",
+          "light": "While {{doing}} (light activity), there is only a little sweat from moving, much less than in a walk or a game.",
           "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
           "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
           "same": "Sweat is about the same in both: about {{value}} in all."
@@ -1953,7 +1956,7 @@
           "model": "held near 37 °C, not worked out; the extra heat of moving leaves as sweat, about 170 mL in a 10-minute run (model estimate)",
           "why": "The body keeps its temperature in a narrow range, so the model holds it steady and works out the sweat instead. The book says 37.0 °C is an average of many healthy people: a person’s normal can be a little different."
         },
-        "ask": "Why do you sweat in a run, when your body temperature hardly changes?"
+        "ask": "Why do you sweat in a run, when body temperature hardly changes?"
       }
     },
     "kidneys": {
@@ -2144,7 +2147,7 @@
         },
         "hunger": {
           "name": "Hunger signal (ghrelin, from the stomach)",
-          "text": "Rises before meals and helps make us feel hungry.",
+          "text": "Made by the stomach while fasting; it rises just before meals and acts on the brain to make us feel hungry.",
           "source": "OpenStax Anatomy and Physiology 2e, §23.4, Table 23.6"
         }
       },

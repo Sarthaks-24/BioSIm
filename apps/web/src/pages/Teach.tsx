@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type MouseEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +18,7 @@ import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'
 import type { SheetKey } from '../lib/worksheets.ts'
 import { canSave, isSaved, save } from '../lib/offlineSave.ts'
+import { teacherSwitch } from '../systems/registry.ts'
 
 // A lesson's printable worksheet (X-3): its code, words, print CSS and QR codes load when one is opened.
 const Worksheet = lazy(() => import('../components/Worksheet.tsx'))
@@ -106,6 +107,8 @@ export default function Teach() {
   const { t, i18n } = useTranslation()
   const { search } = useLocation()
   const preview = isPreview(search)
+  // The teacher switch (R117; a store of its own, FIX-F2): its chapter comes and goes with it, no reload.
+  useSyncExternalStore(teacherSwitch.subscribe, () => teacherSwitch.on)
   const chapters = shownChapters(preview)
   const lessons = chapters.flatMap((c) => c.lessons)
   const flagship = flagshipShown(preview)

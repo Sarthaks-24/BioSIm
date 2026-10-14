@@ -24,6 +24,7 @@ import {
   stepSystem,
   systemForLink,
   systemOf,
+  setTeacherSwitch,
   teacherSwitch,
   type PackId,
   type SystemDef,
@@ -243,10 +244,8 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
   })
 })
 
-/** The settings sheet's setter, without its storage (components/stage/KeysHelp.tsx `setGrowingUp`). */
-const setSwitch = (on: boolean) => {
-  teacherSwitch.on = on
-}
+/** The settings sheet's setter (components/stage/KeysHelp.tsx). */
+const setSwitch = setTeacherSwitch
 
 describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   const walk: ActivityBout[] = [{ kind: 'walk', startMin: 30, durMin: 20 }]

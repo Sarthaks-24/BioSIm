@@ -5,7 +5,7 @@ import type { RunResult } from '@lifepeek/engine'
 import { activityKindAt } from '../lib/bouts.ts'
 import { formatSignal } from '../lib/formatSignal.ts'
 import { useRunStore } from '../state/run.ts'
-import { pickerSystems, stepSystem, systemOf } from '../systems/registry.ts'
+import { pickerSystems, stepSystem, systemOf, teacherSwitch } from '../systems/registry.ts'
 import { announce } from './graphs/StripAnnouncer.tsx'
 import { LoadBoundary, LoadFailedBox, lazyWithRetry } from './LoadBoundary.tsx'
 import { ChevronDownIcon } from './kit/index.ts'
@@ -24,10 +24,13 @@ const prefetch = () => void load().catch(() => {})
 export const usePicker = create<{ open: boolean }>(() => ({ open: false }))
 export const openPicker = () => usePicker.setState({ open: true })
 
-/** Lights the picker's row before (−1) or after (+1) the lit one: `‹ ›`, and [ and ] (ui-ux §3.2). */
+/**
+ * Lights the picker's row before (−1) or after (+1) the lit one: `‹ ›`, and [ and ] (ui-ux §3.2).
+ * While a row is on its way, from that row: pressed quickly, each press moves on (R120 #6).
+ */
 export function stepLayer(dir: 1 | -1) {
-  const { layer, preview, setLayer } = useRunStore.getState()
-  setLayer(stepSystem(layer, preview, dir))
+  const { layer, preview, switching, setLayer } = useRunStore.getState()
+  setLayer(stepSystem(switching && !switching.failed ? switching.to : layer, preview, dir))
 }
 
 /** How long a pack may load before the title says it is on its way (it usually arrives sooner), and before it adds that the connection is slow (R71). */
@@ -50,17 +53,39 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const layer = useRunStore((s) => s.layer)
   const preview = useRunStore((s) => s.preview)
   const switching = useRunStore((s) => s.switching)
+  // Switched off, the graphs' live region says the system now shown, so its last words never name
+  // the row behind the switch (state/run.ts has already gone back to Digestion; R120 #3).
+  useEffect(() => teacherSwitch.subscribe((on) => on || announce(t(`systems.${useRunStore.getState().layer}.name`))), [t])
   const open = usePicker((s) => s.open)
   const button = useRef<HTMLButtonElement>(null)
   const [attempt, setAttempt] = useState(0)
   // 0: nothing said yet, 1: "Getting the lungs ready…", 2: the connection is slow.
   const [said, setSaid] = useState(0)
+  // Try again was pressed: "Getting the lungs ready…" at once, so the status stays (R120 #12).
+  const retried = useRef(false)
   useEffect(() => {
-    setSaid(0)
+    setSaid(retried.current ? 1 : 0)
+    retried.current = false
     if (!switching || switching.failed) return
     const ids = [setTimeout(() => setSaid(1), SAY_MS), setTimeout(() => setSaid(2), SLOW_MS)]
     return () => ids.forEach(clearTimeout)
   }, [switching])
+  // A switch that takes the focused control away (the 3D view's "Whole body" when a flat-only row
+  // is lit, a graph tab of the old row) puts focus on the title, not on the page (R120 #19). The
+  // row is lit once its pack is in, so its view comes in the same render.
+  const focused = useRef<Element | null>(null)
+  useEffect(
+    () =>
+      useRunStore.subscribe((s, prev) => {
+        if (s.layer !== prev.layer) focused.current = document.activeElement
+      }),
+    [],
+  )
+  useEffect(() => {
+    const was = focused.current
+    focused.current = null
+    if (was && !was.isConnected && document.activeElement === document.body) button.current?.focus()
+  }, [layer])
   const rows = pickerSystems(preview)
   const many = rows.length > 1
   const close = () => usePicker.setState({ open: false })
@@ -112,7 +137,12 @@ export default function SystemTitle({ run }: { run: RunResult }) {
           {switching.failed && (
             <button
               type="button"
-              onClick={() => useRunStore.getState().setLayer(switching.to)}
+              onClick={() => {
+                // The button goes away as the pack is asked for again: focus to the title first (R120 #12).
+                button.current?.focus()
+                retried.current = true
+                useRunStore.getState().setLayer(switching.to)
+              }}
               className="min-h-11 rounded-control bg-surface-sunk px-3 font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
             >
               {t('graph.retry')}

@@ -210,6 +210,13 @@
 //   K-1 (2026-10-14, branch wp/k1-kinds from v3 a1e66ad; v3.2, R114): four more activity kinds shown.
 //   /sim takes their chip names and pictures and the pose each is drawn in: 189.182 -> 189.298 KB
 //   (+0.116). Ledger row K-1.
+//   FIX-F2 (2026-10-14, branch wp/fix-f2 from v3 7fd594c; R120): the teacher switch's store and
+//   its going off mid-load, [ ] during a load, Try again's and a system switch's focus: /sim
+//   189.563 -> 189.899 KB (+0.336). Ledger row FIX-F2.
+//   FIX-F1 + T32 + FIX-F2 merged into v3 (2026-10-14): FIX-F1 (no row, under the ratchet: the
+//   worker's one-run-at-a-time queue, engine 12.471 -> 12.627 KB), T32 (Teach only, a lazy route)
+//   and FIX-F2 measure /sim 189.953 KB, /sim + engine 202.580 KB together. Ledger row
+//   "FIX-F1 + T32 + FIX-F2 (merged)": ratchets 190.153 / 202.88.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'

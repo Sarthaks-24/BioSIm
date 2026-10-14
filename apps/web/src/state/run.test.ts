@@ -6,6 +6,7 @@ import { DEFAULT_LAYER, DEFAULT_MEAL, DEFAULT_RUN_PROFILE, INITIAL_RUN, linkQuer
 import { useClock } from './clock.ts'
 import * as engine from '@lifepeek/engine/run'
 import { computeRun, runKey } from '../hooks/useRun.ts'
+import { setTeacherSwitch } from '../systems/registry.ts'
 
 const run = () => useRunStore.getState()
 const search = (href: string) => href.split('?')[1] ?? ''
@@ -191,6 +192,43 @@ describe('keep, unkeep, swap', () => {
     run().keep()
     expect(run().kept?.activity).toEqual(run().activity)
     expect(linkQuery(run(), 0)).toContain('bact=walk.30.20%2Crun.120.10')
+  })
+})
+
+describe('the teacher switch going off (R117, R120 #3)', () => {
+  it('while its row is on its way: nothing lit, nothing loading, no link names it', () => {
+    setTeacherSwitch(true)
+    try {
+      run().loadLink('v=3&a=roti:1')
+      run().setLayer('reproduction')
+      expect(run().switching).toEqual({ to: 'reproduction', failed: false })
+      expect(written()).toContain('layer=reproduction')
+      setTeacherSwitch(false)
+      expect(run().switching).toBeNull()
+      expect(run().layer).toBe('digestion')
+      expect(written()).not.toContain('reproduction')
+    } finally {
+      setTeacherSwitch(false)
+    }
+  })
+
+  it('after it failed to arrive: Try again (or any ask) opens Digestion; a link never keeps it', () => {
+    setTeacherSwitch(true)
+    run().loadLink('v=3&a=roti:1')
+    run().setLayer('reproduction')
+    // A failed load, then the switch goes off (the store's own reset aside, a late Try again still asks for it).
+    useRunStore.setState({ switching: { to: 'reproduction', failed: true } })
+    setTeacherSwitch(false)
+    expect(run().switching).toBeNull()
+    run().setLayer('reproduction')
+    expect(run().switching).toBeNull()
+    expect(run().layer).toBe('digestion')
+    // Even a state that still names it (lit or on its way) writes no `layer=reproduction`.
+    for (const state of [{ layer: 'reproduction' as const }, { switching: { to: 'reproduction' as const, failed: true } }])
+      expect(linkQuery({ ...run(), ...state }, 0)).not.toContain('reproduction')
+    expect(linkQuery({ ...run(), layer: 'reproduction', activity: [{ kind: 'walk', startMin: 0, durMin: 10 }] }, 0)).toContain(
+      'layer=digestion',
+    )
   })
 })
 
