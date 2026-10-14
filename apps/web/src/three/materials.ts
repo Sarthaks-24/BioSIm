@@ -1,5 +1,5 @@
 import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
-import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones.ts'
+import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones/base.ts'
 import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
 import { ORGANS } from './geometry.ts'
 

@@ -1,5 +1,11 @@
 import { isChartable, type SignalMeta, type Unit } from '@lifepeek/engine'
 import { PACK_OF, type CatalogRow, type PackId, type SystemDef } from './registry.ts'
+import { FRAMINGS, type View } from '../anatomy/human/base.ts'
+import { CALLOUTS, type CalloutId } from '../anatomy/callouts.ts'
+import type { ToneSet } from '../anatomy/tones/base.ts'
+import { FLAT_LOOK, outlineOf, rgb } from '../flat/look.ts'
+import { CVD_MIN, LINE_MIN, NORMAL_MIN, contrast, cvdDeltaE, deltaE } from '../lib/colorCheck.ts'
+import { THEME } from '../lib/colors.ts'
 
 /**
  * The systems registry's integrity rules (architecture §5.2), as plain sentences that name the
@@ -75,5 +81,56 @@ export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
       else if (row.unit !== slot.unit) say(`${which} is in ${row.unit}, not the slot's ${slot.unit}`)
     }
   })
+  return out
+}
+
+/** A tone's outline in the flat body (flat/look.ts), as hex, for the contrast checks. */
+const flatInk = (hex: string, look: keyof typeof FLAT_LOOK) =>
+  `#${outlineOf(rgb(hex), FLAT_LOOK[look])
+    .map((v) => Math.round(v).toString(16).padStart(2, '0'))
+    .join('')}`
+
+/**
+ * The flat registry's rules (A-0; anatomy plan §1, §2.0, §5): a system's row has a flat drawing (the
+ * body's own for Digestion, a lazy layer for every other), a framing with a VIEW, tones whose
+ * outlines stand out from the page and from each other where organs touch, and labels that sit
+ * inside its picture. `tones` is the row's tone set (anatomy/tones/<id>.ts, loaded with its pack).
+ */
+export function flatProblems(s: SystemDef, tones: ToneSet): string[] {
+  const out: string[] = []
+  const say = (what: string) => out.push(`${s.id}: ${what}`)
+  const view = (FRAMINGS as Partial<Record<string, View>>)[s.camera.framing]
+  if (!view) say(`framing ${s.camera.framing} has no VIEW (anatomy/human/base.ts FRAMINGS)`)
+  if (s.draw === 'body' && s.id !== 'digestion')
+    say('is drawn by the body, but only Digestion is: it needs its own flat layer (draw.layerFlat)')
+
+  const names = Object.keys(tones.tones)
+  if (s.id !== 'digestion' && names.length > 5) say(`${names.length} tones: at most 5 (anatomy plan §5)`)
+  for (const look of ['normal', 'projector'] as const) {
+    const page = THEME[look].surfacePage
+    for (const [name, hex] of Object.entries(tones.tones)) {
+      const c = contrast(flatInk(hex, look), page)
+      if (c < LINE_MIN) say(`tone ${name}: its ${look} outline is ${c.toFixed(2)}:1 on the page, under ${LINE_MIN}:1`)
+    }
+  }
+  for (const [a, b] of tones.neighbours) {
+    const [ta, tb] = [tones.tones[a], tones.tones[b]]
+    if (!ta || !tb) {
+      say(`neighbours ${a}/${b} name a tone it does not have`)
+      continue
+    }
+    const cvd = cvdDeltaE(ta, tb)
+    const normal = deltaE(ta, tb)
+    if (cvd < CVD_MIN || normal < NORMAL_MIN)
+      say(`neighbours ${a}/${b} are too alike: CVD ΔE ${cvd.toFixed(1)}, normal ΔE ${normal.toFixed(1)}`)
+  }
+
+  if (s.callouts.length === 0) say('has no labels (callouts)')
+  const inside = (p: { x: number; y: number }) => !!view && p.x >= view.minX && p.x <= view.maxX && p.y >= view.minY && p.y <= view.maxY
+  for (const id of s.callouts) {
+    const c = (CALLOUTS as Partial<Record<string, (typeof CALLOUTS)[CalloutId]>>)[id]
+    if (!c) say(`label ${id} has no callout (anatomy/callouts.ts)`)
+    else if (!inside(c.anchor) || !inside(c.at)) say(`label ${id} is outside its ${s.camera.framing} framing`)
+  }
   return out
 }

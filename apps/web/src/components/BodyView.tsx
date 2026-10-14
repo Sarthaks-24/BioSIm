@@ -1,7 +1,11 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { RunResult } from '@lifepeek/engine'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
 import FlatBody from '../flat/FlatBody.tsx'
 import { hasWebGL, sayFlat } from '../lib/webgl.ts'
+import { useRunStore } from '../state/run.ts'
+import { DIGESTION } from '../systems/digestion/def.ts'
+import { systemOf } from '../systems/registry.ts'
 
 const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
 
@@ -11,18 +15,24 @@ const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
  * notes say why (stage/Notes.tsx), in a line of their own, not over the body.
  *
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
+ * `band`: the activity band at this minute (anatomy/human/bands.ts): the flat body's still pose.
+ *
+ * A lit system with no 3D layer (every new system in v3.0, flat first: R43) is drawn flat on every
+ * device, with no "can't show 3D" note: that is its picture, not a fallback.
  */
-export default function BodyView({ sim, label }: { sim: RunResult; label: string }) {
+export default function BodyView({ sim, label, band = 'rest' }: { sim: RunResult; label: string; band?: ActivityBand }) {
   const [lost, setLost] = useState(false)
-  const flat = <FlatBody sim={sim} label={label} />
+  const system = systemOf(useRunStore((s) => s.layer)) ?? DIGESTION
+  const flatOnly = system.draw !== 'body' && !system.draw.layer3d
+  const flat = <FlatBody sim={sim} label={label} band={band} system={system} />
   const fallback = (
     <>
-      <FlatBody sim={sim} label={label} final />
-      <SayFlat />
+      <FlatBody sim={sim} label={label} band={band} system={system} final />
+      {!flatOnly && <SayFlat />}
     </>
   )
   const body =
-    !hasWebGL() || lost ? (
+    !hasWebGL() || lost || flatOnly ? (
       fallback
     ) : (
       <WebGLBoundary fallback={fallback}>

@@ -1,8 +1,10 @@
-import type * as HumanAnatomy from '../../anatomy/human.ts'
+import type * as Base from '../../anatomy/human/base.ts'
+import type * as Digestion from '../../anatomy/human/digestion.ts'
+import type * as Lymph from '../../anatomy/human/lymph.ts'
 import type { OrganDef } from '../types.ts'
 
-/** The exports of anatomy/human.ts, so a typo in `anatomyRef` fails the typecheck. */
-type HumanAnatomyRef = keyof typeof HumanAnatomy
+/** The exports of the anatomy files (anatomy/human/), so a typo in `anatomyRef` fails the typecheck. */
+type HumanAnatomyRef = keyof typeof Base | keyof typeof Digestion | keyof typeof Lymph
 
 /** Names reuse the v1 keys: the gut stages under `stages.<id>.name`, the other organs under `anatomy.<id>`. */
 export const HUMAN_ORGANS: readonly OrganDef<HumanAnatomyRef>[] = [

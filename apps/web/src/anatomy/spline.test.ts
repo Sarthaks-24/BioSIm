@@ -2,10 +2,14 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { CatmullRomCurve3, Vector3 } from 'three'
-import * as human from './human.ts'
+import * as base from './human/base.ts'
+import * as digestion from './human/digestion.ts'
+import * as lymph from './human/lymph.ts'
+import * as skeleton from './human/skeleton.ts'
 import { Spline3, Vec3 } from './spline.ts'
 
-/** Every curve the anatomy exports, by name. */
+/** Every curve the anatomy files export, by name (limbs.ts builds its curves per pose: limbs.test.ts). */
+const human = { ...base, ...digestion, ...lymph, ...skeleton }
 const curves = Object.entries(human).filter((e): e is [string, Spline3] => e[1] instanceof Spline3)
 
 /** The same curve built with three.js, as the anatomy was before spline.ts. */
@@ -20,7 +24,7 @@ const threeOf = (c: Spline3) =>
 describe('Spline3 (anatomy curves without three.js)', () => {
   it('covers every anatomy curve', () => {
     expect(curves.map(([name]) => name).sort()).toEqual(
-      ['APPENDIX', 'ARM', 'ESOPHAGUS', 'LARGE_INTESTINE', 'PANCREAS', 'PHARYNX', 'SMALL_INTESTINE', 'STOMACH'].sort(),
+      ['APPENDIX', 'ARM', 'ESOPHAGUS', 'LARGE_INTESTINE', 'PANCREAS', 'PHARYNX', 'SMALL_INTESTINE', 'SPINE', 'STERNUM', 'STOMACH'].sort(),
     )
   })
 

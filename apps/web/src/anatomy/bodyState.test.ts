@@ -4,7 +4,8 @@ import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { ORGANISMS } from '../registry/index.ts'
 import { FILL_SIGNAL, bodyStateAt, gramsIn } from './bodyState.ts'
-import { STOMACH_EMPTY, armRadius, stomachFill, stomachFillRadius, stomachRadius, tumble } from './human.ts'
+import { armRadius } from './human/base.ts'
+import { STOMACH_EMPTY, stomachFill, stomachFillRadius, stomachRadius, tumble } from './human/digestion.ts'
 
 const run = (...foods: string[]) =>
   simulate({ items: foods.map((foodId) => ({ foodId, servings: 1 })), profile: DEFAULT_PROFILE.human }, { lookup: lookupFood })

@@ -1,5 +1,5 @@
 import type { StageId } from '@lifepeek/engine'
-import { MOUTH } from './human.ts'
+import { MOUTH } from './human/digestion.ts'
 import type { XYZ } from './spline.ts'
 
 /**

@@ -16,9 +16,9 @@ import {
 } from 'three'
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
+import { ARM, TORSO_PROFILE, armRadius } from '../anatomy/human/base.ts'
 import {
   APPENDIX,
-  ARM,
   ESOPHAGUS,
   GALLBLADDER,
   LARGE_INTESTINE,
@@ -26,17 +26,14 @@ import {
   PANCREAS,
   PHARYNX,
   SMALL_INTESTINE,
-  SPLEEN,
   STOMACH,
   STOMACH_EMPTY,
   STOMACH_STRETCH,
-  TORSO_PROFILE,
-  armRadius,
   stomachRadius,
   stomachStretchWeight,
-} from '../anatomy/human.ts'
+} from '../anatomy/human/digestion.ts'
 import type { Spline3 } from '../anatomy/spline.ts'
-import { ILEUM_TONE, JEJUNUM_TONE, LIT_ORGANS, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones.ts'
+import { ILEUM_TONE, JEJUNUM_TONE, LIT_ORGANS, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones/digestion.ts'
 
 /**
  * Every organ is modelled in code from the anatomy curves, so the models, the flat fallback and
@@ -203,17 +200,9 @@ function buildGallbladder(): BufferGeometry {
   })
 }
 
-function buildSpleen(): BufferGeometry {
-  return sculpt(new SphereGeometry(1, 24, 16), (v) => {
-    // Bean shape: concave on the side facing the stomach.
-    const dent = v.x < 0 ? 1 - 0.35 * Math.exp(-(v.y * v.y) / 0.2) : 1
-    v.set(SPLEEN.center.x + v.x * 0.07 * dent, SPLEEN.center.y + v.y * 0.15, SPLEEN.center.z + v.z * 0.06)
-  })
-}
-
 /**
- * The skin shell: torso, head and tapering arms, plus the spleen as a ghost (it is not a
- * digestive organ in NCERT, so it is not lit with the digestion layer). Drawn as a rim only.
+ * The skin shell: torso, head and tapering arms, drawn as a rim only. The spleen is not part of it
+ * (A-0): it belongs to the lymph system (anatomy/human/lymph.ts) and is drawn with that layer.
  */
 function buildShell(): BufferGeometry {
   const profile = ([...TORSO_PROFILE, [0, 2.5]] as [number, number][]).map(([x, y]) => new Vector2(x!, y!))
@@ -235,7 +224,7 @@ function buildShell(): BufferGeometry {
     arm.deleteAttribute('along')
     return arm
   })
-  return mergeGeometries([torso, head, ...arms, buildSpleen()])!
+  return mergeGeometries([torso, head, ...arms])!
 }
 
 /** Organs of the digestion layer, in the order the shader's state array uses. */

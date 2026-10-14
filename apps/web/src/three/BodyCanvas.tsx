@@ -14,7 +14,7 @@ import {
 } from 'three'
 import { NUTRIENT_KINDS, activeStage, type NutrientKind, type RunResult, type StageId } from '@lifepeek/engine'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
-import { particlePosition, tumble } from '../anatomy/human.ts'
+import { particlePosition, tumble } from '../anatomy/human/digestion.ts'
 import { bodyStateAt } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
 import { useMotion } from '../state/motion.ts'

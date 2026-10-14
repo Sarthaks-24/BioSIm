@@ -6,7 +6,9 @@ import hi from '../i18n/hi.json'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { UNIT_KEYS } from '../registry/units.ts'
 import { PACK_SYSTEMS } from '../../scripts/pack-manifest.mjs'
-import { systemProblems, type CheckContext } from './check.ts'
+import { flatProblems, systemProblems, type CheckContext } from './check.ts'
+import type { ToneSet } from '../anatomy/tones/base.ts'
+import { TONES as LYMPH_TONES } from '../anatomy/tones/lymph.ts'
 import { PACKS } from './packs.ts'
 import {
   PACK_IDS,
@@ -127,6 +129,46 @@ describe('systems registry (architecture §5.2)', () => {
       if (s.draw === 'body') continue
       expect((await s.draw.layerFlat()).default, s.id).toBeTypeOf('function')
     }
+  })
+})
+
+describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
+  it.each(SYSTEMS.map((s) => [s.id, s] as const))('%s has a flat drawing, a VIEW, checked outlines and callouts', async (_id, s) => {
+    // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download).
+    const { TONES } = (await import(`../anatomy/tones/${s.id}.ts`)) as { TONES: ToneSet }
+    expect(flatProblems(s, TONES)).toEqual([])
+    if (s.draw !== 'body') expect((await s.draw.layerFlat()).default).toBeTypeOf('function')
+  })
+
+  it('names what is wrong with a row', () => {
+    const tones = {
+      tones: { lungs: '#e8909c', pinkish: '#e8949e', d: '#444444', a: '#111111', b: '#222222', c: '#333333' },
+      neighbours: [
+        ['lungs', 'pinkish'],
+        ['lungs', 'windpipe'],
+      ] as const,
+    }
+    const bad: SystemDef = { ...DIGESTION, id: 'breathing', camera: { framing: 'side' as never }, callouts: ['mouth', 'kidney' as never] }
+    expect(flatProblems(bad, tones)).toEqual([
+      'breathing: framing side has no VIEW (anatomy/human/base.ts FRAMINGS)',
+      'breathing: is drawn by the body, but only Digestion is: it needs its own flat layer (draw.layerFlat)',
+      'breathing: 6 tones: at most 5 (anatomy plan §5)',
+      'breathing: neighbours lungs/pinkish are too alike: CVD ΔE 0.7, normal ΔE 0.9',
+      'breathing: neighbours lungs/windpipe name a tone it does not have',
+      'breathing: label mouth is outside its side framing',
+      'breathing: label kidney has no callout (anatomy/callouts.ts)',
+    ])
+  })
+
+  it("the lymph tones (A-11a's, with the spleen) pass the same checks", () => {
+    const lymph: SystemDef = {
+      ...DIGESTION,
+      id: 'lymph',
+      pack: 'lymph',
+      camera: { framing: 'full' },
+      draw: { layerFlat: async () => ({ default: () => null }) },
+    }
+    expect(flatProblems(lymph, LYMPH_TONES)).toEqual([])
   })
 })
 

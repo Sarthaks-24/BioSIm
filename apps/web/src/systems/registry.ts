@@ -2,7 +2,8 @@ import type { ComponentType, RefObject } from 'react'
 import type { TFunction } from 'i18next'
 import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
-import type { CameraPreset, LayerComponent, LifeProcess, Loader, OrganId } from '../registry/types.ts'
+import type { CalloutId } from '../anatomy/callouts.ts'
+import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 
 /**
@@ -120,7 +121,8 @@ export interface SystemDef {
   lifeProcess: LifeProcess
   /** 'sim' = moves with the meal clock; 'real' = always running; 'both' = has loops of each kind. */
   clock: Clock | 'both'
-  camera?: CameraPreset
+  /** Its framing (the flat VIEW: torso, chest, upper or full; anatomy plan §1), later its 3D preset. */
+  camera: SystemCamera
   /** Organs lit when this system is on. */
   organs: readonly OrganId[]
   /** Its graphs, at most 3, in key order (1–3). Empty for a drawing-only row (R11). */
@@ -132,6 +134,8 @@ export interface SystemDef {
    * Otherwise a layer over the base body; the flat layer is required, like the flat body.
    */
   draw: 'body' | { layerFlat: Loader<LayerComponent>; layer3d?: Loader<LayerComponent> }
+  /** The labels its picture can show (anatomy/callouts.ts): each must sit inside its framing. */
+  callouts: readonly CalloutId[]
   /** Its pack (architecture §0): the lazy chunks and the text section `sys.<pack>`. */
   pack: PackId
   inputs: readonly InputKind[]

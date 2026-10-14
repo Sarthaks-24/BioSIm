@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react'
 import type { ActiveSignalId, OrganismId, ProfileId, RunResult } from '@lifepeek/engine'
+import type { Framing, View } from '../anatomy/human/base.ts'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
 import type { SystemDef, SystemId } from '../systems/registry.ts'
 
 /**
@@ -12,11 +14,23 @@ import type { SystemDef, SystemId } from '../systems/registry.ts'
  * `registry.test.ts` checks every reference; `i18n.test.ts` marks the keys used.
  */
 
-/** A layer's props: the run it draws. Settled when the first layer ships. */
+/**
+ * A flat layer's props (A-0): the run it draws, and the picture it draws over. The base body
+ * (flat/FlatBody.tsx) draws the outline in the system's framing and in the band's pose; the layer
+ * draws its organs over it in the same scene units (FlatBody's `frame(width, height, view)` maps
+ * them to the picture's CSS pixels) and places its own labels.
+ */
 export interface LayerProps {
   sim: RunResult
   /** Accessible description of what the picture shows. */
   label: string
+  /** The scene box the picture shows (the system's framing). */
+  view: View
+  /** The activity band at this minute: the pose the body is drawn in. */
+  band: ActivityBand
+  /** The picture's size in CSS px. */
+  width: number
+  height: number
 }
 /** A layer drawn over the base body. */
 export type LayerComponent = ComponentType<LayerProps>
@@ -35,10 +49,19 @@ export type OrganId = 'mouth' | 'esophagus' | 'stomach' | 'smallIntestine' | 'la
 export type InsideViewId = 'villus' | 'stomachWall' | 'liverLobule'
 
 type Vec3 = readonly [number, number, number]
-/** Where the 3D camera eases to when the system's layer is on (scene units, see anatomy/human.ts). */
+/** Where the 3D camera eases to when the system's layer is on (scene units, see anatomy/human/base.ts). */
 export interface CameraPreset {
   position: Vec3
   target: Vec3
+}
+
+/**
+ * How a system's picture is framed (anatomy plan §1): the flat VIEW is its framing's box
+ * (anatomy/human/base.ts FRAMINGS); from v3.1 a 3D layer also gives its camera preset.
+ */
+export interface SystemCamera {
+  framing: Framing
+  preset3d?: CameraPreset
 }
 
 export interface OrganismDef {
@@ -59,11 +82,21 @@ export interface OrganDef<Ref extends string = string> {
   id: OrganId
   /** The full key of the organ's name (reuses `stages.<id>.name` or `anatomy.<id>`). */
   i18nKey: string
-  /** The export of the organism's anatomy file (`anatomy/human.ts`) that holds its curve or point. */
+  /** The export of the organism's anatomy files (`anatomy/human/*.ts`) that holds its curve or point. */
   anatomyRef: Ref
-  /** Visual channel ← signal. The stomach's fill follows how much food is in it. */
-  drives?: Partial<Record<'fill' | 'glow' | 'pulse', ActiveSignalId>>
+  /**
+   * Visual channel ← signal: the only path from data to the picture (anatomy plan D4), shared by the
+   * flat and 3D bodies (flat/drives.ts reads them). The stomach's fill follows how much food is in it.
+   */
+  drives?: Partial<Record<DriveChannel, ActiveSignalId>>
 }
+
+/**
+ * The channels a signal can drive (anatomy plan D4, §4): `fill` (how full: a size), `level` (one
+ * lightness step, with hysteresis), `flow` (dash speed or density) and `pulse` (a rhythm's rate;
+ * size only). None changes a colour per beat (flash safety, WCAG 2.3.1).
+ */
+export type DriveChannel = 'fill' | 'level' | 'flow' | 'pulse'
 
 /** A zoomed-in view of one organ (bundle D). Shared across organisms: a villus is a villus. */
 export interface InsideViewDef {

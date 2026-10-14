@@ -1,6 +1,6 @@
 import { activeStage, valueAt, type ActiveSignalId, type RunResult, type StageId } from '@lifepeek/engine'
 import { ORGANISMS } from '../registry/index.ts'
-import { stomachFill } from './human.ts'
+import { stomachFill } from './human/digestion.ts'
 
 /**
  * What the body picture shows at one moment, read from the run's signals. The 3D body and the

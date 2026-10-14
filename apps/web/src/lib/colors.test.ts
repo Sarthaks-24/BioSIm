@@ -29,7 +29,8 @@ import {
   oklch,
   pairs,
 } from './colorCheck.ts'
-import { ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PARTICLE_EDGE } from '../anatomy/tones.ts'
+import { PARTICLE_EDGE } from '../anatomy/tones/base.ts'
+import { TONES } from '../anatomy/tones/digestion.ts'
 import { outlineInk } from '../three/look.ts'
 import { FLAT_LOOK, css as flatCss, outlineOf, rgb } from '../flat/look.ts'
 
@@ -176,30 +177,8 @@ describe('graph line colours', () => {
   })
 })
 
-/**
- * Organs (and parts of the small intestine) that touch in the picture, front-on. The audit below
- * checks each pair; a new organ joins this list with its neighbours.
- */
-const NEIGHBOURS: readonly (readonly [string, string])[] = [
-  ['esophagus', 'stomach'],
-  ['esophagus', 'liver'],
-  ['stomach', 'liver'],
-  ['stomach', 'pancreas'],
-  ['stomach', 'smallIntestine'],
-  ['stomach', 'jejunum'],
-  ['stomach', 'largeIntestine'],
-  ['liver', 'gallbladder'],
-  ['gallbladder', 'smallIntestine'],
-  ['gallbladder', 'pancreas'],
-  ['pancreas', 'smallIntestine'],
-  ['pancreas', 'jejunum'],
-  ['smallIntestine', 'largeIntestine'],
-  ['jejunum', 'largeIntestine'],
-  ['ileum', 'largeIntestine'],
-]
-
-/** Every tone the audit knows by name: the organs plus the small intestine's two ends. */
-const TONE_BY_NAME: Record<string, string> = { ...ORGAN_TONE, jejunum: JEJUNUM_TONE, ileum: ILEUM_TONE }
+/** Digestion's tones by name (the organs plus the small intestine's two ends), and the pairs that touch (tones/digestion.ts). */
+const { tones: TONE_BY_NAME, neighbours: NEIGHBOURS } = TONES
 
 /** Tones the food passes through (particles are checked against these). */
 const FOOD_PATH = ['esophagus', 'stomach', 'smallIntestine', 'jejunum', 'ileum', 'largeIntestine'] as const

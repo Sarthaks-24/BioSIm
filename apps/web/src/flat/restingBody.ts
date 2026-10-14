@@ -1,6 +1,10 @@
 import { simulate } from '@lifepeek/engine/run'
 import { bodyStateAt } from '../anatomy/bodyState.ts'
+import { FRAMINGS, type Framing } from '../anatomy/human/base.ts'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
 import { VIEW, frame, paintStill, paintStomach } from './FlatBody.tsx'
+import { LIMB_KIT } from '../anatomy/human/kit.ts'
+import { paintFigure, takeKit } from './limbs.ts'
 
 /**
  * The picture on Home (R15, T9b): the stage's flat body at rest (no meal, as /sim draws it before a
@@ -99,4 +103,26 @@ export function restingBodySvg(): string {
     '</svg>',
     '',
   ].join('\n')
+}
+
+/**
+ * The base body in one band's still pose, whole (the `full` framing), as an SVG document: the
+ * flat body's own painters, as above. Used to look at and test the four poses (flat.test.ts)
+ * without a browser; the stage never runs it.
+ */
+export function poseSvg(band: ActivityBand, framing: Framing = 'full'): string {
+  const view = FRAMINGS[framing]
+  const w = Math.round((view.maxX - view.minX) * 100)
+  const h = Math.round((view.maxY - view.minY) * 100)
+  const state = bodyStateAt(simulate({ items: [] }, { lookup: () => undefined, particles: 0 }), 0)
+  takeKit(LIMB_KIT)
+  const rec = new SvgRecorder()
+  paintStill(rec as unknown as CanvasRenderingContext2D, w, h, state, {
+    view,
+    organs: false,
+    figure: (ctx, X, Y, scale) => paintFigure(ctx, X, Y, scale, band),
+  })
+  return [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`, ...rec.out, '</svg>', ''].join(
+    '\n',
+  )
 }

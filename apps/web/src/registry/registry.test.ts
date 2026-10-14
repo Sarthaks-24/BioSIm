@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_PROFILE, ORGANISM_PROFILES, SIGNALS, isActiveSignal, type ActiveSignalId, type OrganismId } from '@lifepeek/engine'
 import { PROVIDES } from '@lifepeek/engine/run'
-import * as humanAnatomy from '../anatomy/human.ts'
+import * as base from '../anatomy/human/base.ts'
+import * as digestion from '../anatomy/human/digestion.ts'
+import * as lymph from '../anatomy/human/lymph.ts'
 import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { ORGANISMS } from './index.ts'
@@ -9,7 +11,7 @@ import { registryKeys } from './i18nKeys.ts'
 import { UNIT_KEYS } from './units.ts'
 
 /** Each organism's anatomy file. A new organism must add its own here (the type requires it). */
-const ANATOMY: { readonly [O in OrganismId]: Record<string, unknown> } = { human: humanAnatomy }
+const ANATOMY: { readonly [O in OrganismId]: Record<string, unknown> } = { human: { ...base, ...digestion, ...lymph } }
 
 /** The text at a dotted key in a nested JSON object, or undefined. */
 function text(json: unknown, key: string): unknown {
