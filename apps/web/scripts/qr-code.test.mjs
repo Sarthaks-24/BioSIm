@@ -17,10 +17,10 @@ describe('Teach QR code at build time (T11, R79)', () => {
     expect(qrAddress('https://example.org')).toBe(`https://example.org${QR_PATH}`)
   })
 
-  it('for the planned address, is module for module the hand-made code it replaces (qrcode@1.5.4 CLI, level M)', async () => {
+  it('for the planned address, is the expected code (qrcode@1.5.4, level M; versionless path, 37 modules)', async () => {
     const svg = await qrSvg(qrAddress(DEFAULT_SITE_URL))
-    expect(sha(modules(svg))).toBe('a9b50dc934045c2b8b726f9ce99163982d2fd113cda99c1647008eee78ff6670')
-    expect(svg).toContain('viewBox="0 0 41 41"')
+    expect(sha(modules(svg))).toBe('5fbdcf9ac43230df7f3249cafd37205e52359652aa32452c80094234d343200a')
+    expect(svg).toContain('viewBox="0 0 37 37"')
   })
 
   it('follows the address: another site gets another code, of error level M and a quiet zone of 4', async () => {

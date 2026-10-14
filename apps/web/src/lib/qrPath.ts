@@ -3,5 +3,9 @@
  * cola alone at 0 min (presets.test.ts checks it against TASKS). The QR picture is made from it at
  * build time, with the site address (VITE_SITE_URL) in front (scripts/qr-code.mjs, R79). A file of
  * its own with no imports, so the build script can read it.
+ *
+ * No `v=`: a printed code outlives a model version, and a link without one opens on the current
+ * model with no "made with an older model" note (state/run.ts linkModelVersion null). It is also a
+ * smaller code (37 modules, not 41), easier for a phone across a classroom.
  */
-export const QR_PATH = '/sim?v=2&a=cola:1'
+export const QR_PATH = '/sim?a=cola:1'
