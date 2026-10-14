@@ -92,7 +92,7 @@ function NervesLayer({ sim, view, width: w, height: h, reduced, projector, kit }
     </g>
   )
   const carotids = [CAROTID, mirror(CAROTID)]
-  const dot = Math.max(3, px(0.035))
+  const dot = Math.max(2.5, px(0.024))
   const arrow = (pts: Outline) => {
     const [x, y] = [m.X(pts[2]![0]), m.Y(pts[2]![1])]
     const s = Math.max(4, px(0.04))
@@ -117,7 +117,7 @@ function NervesLayer({ sim, view, width: w, height: h, reduced, projector, kit }
       >
         {/* The nerves first, the cord over their roots. */}
         {NERVES.map((n, i) => tube(n, 0.022, NERVE_TONE.nerve, `n${i}`))}
-        {carotids.map((c, i) => tube(c, 0.04, NERVE_TONE.artery, `a${i}`))}
+        {carotids.map((c, i) => tube(c, 0.028, NERVE_TONE.artery, `a${i}`))}
         <rect
           x={m.X(-CORD.width / 2)}
           y={m.Y(CORD.top)}

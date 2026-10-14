@@ -146,28 +146,30 @@ export default function NerveDemo() {
       <p className="text-control">{say('lead')}</p>
 
       <svg
-        viewBox="0 0 300 150"
+        viewBox="0 0 300 155"
         role="img"
         aria-label={say('picture')}
         className="w-full text-ink"
-        style={{ flex: '0 0 auto', maxHeight: '14rem' }}
+        // The picture gives way first in a short graph row (a phone's): the counters and Play stay whole.
+        style={{ flex: '0 1 14rem', minHeight: '6rem' }}
       >
         {/* The brain (fore-brain, cerebellum) and the spinal cord under it. */}
         <ellipse cx="60" cy="27" rx="34" ry="20" fill={NERVE_TONE.brain} stroke={ink(NERVE_TONE.brain)} strokeWidth="1.25" />
         <ellipse cx="80" cy="45" rx="10" ry="6" fill={NERVE_TONE.brain} stroke={ink(NERVE_TONE.brain)} strokeWidth="1.25" />
         <rect x="55" y="44" width="10" height="100" rx="5" fill={NERVE_TONE.cord} stroke={ink(NERVE_TONE.cord)} strokeWidth="1.25" />
         {label(100, 14, say('brainPart'), 'start')}
-        {label(36, 140, say('cordPart'), 'end')}
-        {/* The arm (a faint outline), its muscle, the hand and the hot pan. */}
+        {label(50, 148, say('cordPart'), 'end')}
+        {/* The arm (a faint skin), its muscle, the hand and the hot pan. */}
         <path
-          d="M70 84 C120 78 200 82 248 90 M70 122 C120 126 200 118 248 106"
-          fill="none"
+          d="M68 79 C120 74 200 79 246 89 L246 104 C205 110 180 126 150 128 C115 130 90 130 68 128 Z"
+          fill="currentColor"
+          fillOpacity="0.05"
           stroke="currentColor"
           strokeOpacity="0.3"
           strokeWidth="1.25"
         />
         <ellipse cx="150" cy="117" rx="24" ry="7" fill={MUSCLE} fillOpacity="0.35" stroke={ink(MUSCLE)} strokeWidth="1.25" />
-        {label(150, 136, say('effector'))}
+        {label(150, 142, say('effector'))}
         <g
           data-hand={pulled ? 'back' : 'on'}
           style={{ transform: pulled ? 'translateY(-10px)' : undefined, transition: reduced ? undefined : 'transform 250ms ease-out' }}
@@ -198,10 +200,10 @@ export default function NerveDemo() {
           <path d={path(MOTOR)} />
         </g>
         <circle cx={AT.receptor[0]} cy={AT.receptor[1]} r="3" fill={NERVE_TONE.nerve} stroke={ink(NERVE_TONE.nerve)} />
-        {label(214, 80, say('sensory'))}
-        {label(110, 104, say('motor'))}
-        {label(98, 96, say('relay'), 'start')}
-        {label(262, 84, say('receptor'))}
+        {label(165, 72, say('sensory'))}
+        {label(98, 125, say('motor'))}
+        {label(50, 101, say('relay'), 'end')}
+        {label(270, 84, say('receptor'))}
         {/* The two signals: ink, a filled dot and a ring. */}
         <circle data-signal="brain" cx={brainAt[0]} cy={brainAt[1]} r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
         <circle data-signal="reflex" cx={reflexAt[0]} cy={reflexAt[1]} r="4.5" fill="currentColor" />
