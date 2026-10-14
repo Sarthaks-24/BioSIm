@@ -42,6 +42,9 @@
     "shareCopied": "Link copied",
     "reportError": "Report a mistake",
     "noWebgl": "Your device can’t show 3D here, so you’re seeing the flat diagram. Everything else works the same.",
+    "slow3d": "Slow connection, still loading. Digestion works meanwhile.",
+    "needsInternet": "This part needs internet once. Open it once with internet.",
+    "failed3d": "Couldn’t load the 3D body. Check internet and tap Try again.",
     "afterEating": "after eating",
     "capReached": "That would make the meal bigger than {{kcal}} kcal. The model isn't reliable for meals that big."
   },
@@ -127,6 +130,15 @@
     "title": "Using LifePeek in class",
     "lead": "LifePeek is built for a projector and a 40-minute lesson on nutrition and digestion (for example, the “Life Processes” chapter).",
     "scienceLink": "How the model works, and where its numbers come from",
+    "offline": {
+      "lead": "No internet in class? Save the lessons on this device first. Only the basics are saved when LifePeek is first opened; the 3D body and the panels load when first used.",
+      "saveAll": "Save all for class offline",
+      "save": "Save for class offline",
+      "saving": "Saving…",
+      "saved": "Ready for class offline ✓",
+      "notSaved": "Not saved for offline",
+      "failed": "Couldn’t save. Check internet and try again."
+    },
     "plan": "A 40-minute lesson plan",
     "steps": [
       "Predict: ask the class which leaves the stomach first, a can of cola or a burger with fries, and which raises blood sugar more.",

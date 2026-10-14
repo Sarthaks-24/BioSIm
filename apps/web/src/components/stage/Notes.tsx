@@ -5,12 +5,15 @@ import { MODEL_VERSION, type Simulation } from '@lifepeek/engine'
 import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { readPref, writePref } from '../../lib/prefs.ts'
-import { useFlat } from '../../lib/webgl.ts'
+import { retry3d, useBodyNote, type BodyNote } from '../../lib/webgl.ts'
 import { useRunStore } from '../../state/run.ts'
 import { MEDICAL_HREF } from '../MedicalNote.tsx'
 import { LoadBoundary, lazyWithRetry } from '../LoadBoundary.tsx'
 import { CloseIcon, InfoIcon } from '../kit/index.ts'
 import type LinkNotes from './LinkNotes.tsx'
+
+/** What the body's note says (lib/webgl.ts). */
+const BODY_NOTE = { webgl: 'sim.noWebgl', slow: 'sim.slow3d', offline: 'sim.needsInternet', failed: 'sim.failed3d' } as const
 
 /** The notes about an opened link (and a meal too big, which only a link makes) load only when one shows (size budget). */
 const linkNotes = lazyWithRetry<ComponentProps<typeof LinkNotes>>(() => import('./LinkNotes.tsx'))
@@ -19,7 +22,8 @@ const linkNotes = lazyWithRetry<ComponentProps<typeof LinkNotes>>(() => import('
  * Short notes under the meal bar, only when they apply: the first-visit medical note (until
  * "Got it"), the notes about an opened link (LinkNotes: Hindi later, an older or newer version,
  * foods that no longer exist, what changed on load, a meal over the size the model is good for),
- * and why the body is the flat diagram (no 3D here; until its ✕: FP-5, U9).
+ * and why the body is the flat diagram (no 3D here, the 3D file slow, needing the internet once, or
+ * failed with Try again: R71; until its ✕: FP-5, U9).
  * The "too big" alert for a food being added sits where it is added (food sheet, servings).
  */
 export default function Notes({ run, kept }: { run: Simulation; kept: Simulation | null }) {
@@ -34,8 +38,10 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
       s.changes.length > 0,
   )
   const [firstRun, setFirstRun] = useState(() => readPref('medicalNoteSeen') !== '1')
-  const [flatSeen, setFlatSeen] = useState(false)
-  const flat = useFlat() && !flatSeen
+  // The body note closed with ✕: that one stays closed, another one shows.
+  const [bodySeen, setBodySeen] = useState<BodyNote>('')
+  const bodyNote = useBodyNote()
+  const flat = bodyNote !== bodySeen && bodyNote
 
   const over = [run.meal.overCap, !!kept?.meal.overCap]
   const link = linked || over.includes(true)
@@ -78,10 +84,19 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
         )}
         {flat && (
           <li className="flex items-center gap-2 text-caption text-ink-muted">
-            <p className="min-w-0 flex-1">{t('sim.noWebgl')}</p>
+            <p className="min-w-0 flex-1">{t(BODY_NOTE[flat])}</p>
+            {flat === 'failed' && (
+              <button
+                type="button"
+                onClick={retry3d}
+                className="min-h-11 shrink-0 rounded-control bg-surface-sunk px-3 font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
+              >
+                {t('graph.retry')}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setFlatSeen(true)}
+              onClick={() => setBodySeen(flat)}
               aria-label={t('stage.close')}
               title={t('stage.close')}
               className="grid size-11 shrink-0 place-items-center rounded-control hover:bg-surface-sunk hover:text-ink lg:size-9"

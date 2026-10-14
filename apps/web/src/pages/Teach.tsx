@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { LESSONS, QR_PATH, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
@@ -11,6 +11,7 @@ import { shortMealNames } from '../components/stage/mealText.ts'
 import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'
+import { LESSON_PACKS, canSave, isSaved, save } from '../lib/offlineSave.ts'
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(teachText)
@@ -55,10 +56,48 @@ const Chevron = () => (
   </svg>
 )
 
+/** A lesson's offline state: not known yet, saved, not saved, being saved, or the save failed. */
+type Offline = 'unknown' | 'saved' | 'not' | 'saving' | 'failed'
+
+/**
+ * "Save for class offline" (T12d, R71): each lesson's state, and saving one lesson or all. On v2
+ * every lesson needs the same files (lib/offlineSave.ts), so saving one saves them all; each
+ * lesson still says its own state, ready for lessons that need different parts (v3 packs).
+ */
+function useOffline() {
+  const [state, setState] = useState<Record<string, Offline>>({})
+  const check = () =>
+    Promise.all(LESSONS.map(async (l) => [l.key, (await isSaved(LESSON_PACKS)) ? 'saved' : 'not'] as const)).then((all) =>
+      setState(Object.fromEntries(all)),
+    )
+  useEffect(() => {
+    if (canSave()) void check()
+  }, [])
+  const run = async (keys: string[]) => {
+    setState((s) => ({ ...s, ...Object.fromEntries(keys.map((k) => [k, 'saving'])) }))
+    const ok = await save(LESSON_PACKS).catch(() => false)
+    if (ok) await check()
+    else setState((s) => ({ ...s, ...Object.fromEntries(keys.map((k) => [k, 'failed'])) }))
+  }
+  return { state, run }
+}
+
+const SAVE_BUTTON = 'min-h-11 shrink-0 rounded-full border border-border px-4 font-semibold hover:bg-surface-sunk lg:min-h-9'
+
 const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-surface-sunk focus-visible:bg-surface-sunk sm:px-3 sm:-mx-3 sm:rounded-lg'
 
 export default function Teach() {
   const { t, i18n } = useTranslation()
+  const offline = useOffline()
+  const saveable = canSave()
+  const allSaved = LESSONS.every((l) => offline.state[l.key] === 'saved')
+  const offlineText: Record<Offline, string> = {
+    unknown: '',
+    saved: t('teach.offline.saved'),
+    not: t('teach.offline.notSaved'),
+    saving: t('teach.offline.saving'),
+    failed: t('teach.offline.failed'),
+  }
   const list = (key: string) => t(key, { returnObjects: true }) as string[]
   const meals = (l: { meal: Lesson['meal']; kept?: Lesson['kept'] }) =>
     l.kept?.length
@@ -84,9 +123,22 @@ export default function Teach() {
 
       <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.lessonsTitle')}</h2>
       <p className="mb-3 text-ink-muted">{t('teach.lessonsLead')}</p>
+      {saveable && (
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="basis-full text-ink-muted">{t('teach.offline.lead')}</p>
+          <button
+            type="button"
+            disabled={allSaved || LESSONS.some((l) => offline.state[l.key] === 'saving')}
+            onClick={() => void offline.run(LESSONS.map((l) => l.key))}
+            className={`${SAVE_BUTTON} disabled:opacity-60`}
+          >
+            {t('teach.offline.saveAll')}
+          </button>
+        </div>
+      )}
       <ul className="divide-y divide-border border-y border-border">
         {LESSONS.map((l) => (
-          <li key={l.key}>
+          <li key={l.key} data-lesson={l.key}>
             <Link to={presetHref(l)} onClick={(e) => openLesson(e, l)} className={ROW}>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
@@ -102,6 +154,23 @@ export default function Teach() {
               </span>
               <Chevron />
             </Link>
+            {saveable && offline.state[l.key] && offline.state[l.key] !== 'unknown' && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-3 text-sm sm:px-3 sm:-mx-3">
+                <span role="status" className={offline.state[l.key] === 'saved' ? 'font-semibold text-ink' : 'text-ink-muted'}>
+                  {offlineText[offline.state[l.key]!]}
+                </span>
+                {(offline.state[l.key] === 'not' || offline.state[l.key] === 'failed') && (
+                  <button
+                    type="button"
+                    onClick={() => void offline.run([l.key])}
+                    aria-label={`${t('teach.offline.save')}: ${t(`teach.lessons.${l.key}`)}`}
+                    className={SAVE_BUTTON}
+                  >
+                    {t('teach.offline.save')}
+                  </button>
+                )}
+              </div>
+            )}
           </li>
         ))}
       </ul>

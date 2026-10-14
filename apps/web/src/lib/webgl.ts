@@ -18,26 +18,41 @@ export function hasWebGL(): boolean {
   return cached
 }
 
-/** Whether the stage shows the flat body because 3D can't be drawn here (no WebGL, or it failed). */
-let flat = false
-const listeners = new Set<() => void>()
+/**
+ * What the stage's notes say about the body (stage/Notes.tsx), set by components/BodyView.tsx:
+ * - `webgl`: 3D can't be drawn here (no WebGL, or it failed), the flat body stands in for good;
+ * - `slow`: the 3D file is still loading after 6 s, the flat body meanwhile (R71);
+ * - `offline`: the 3D file was never saved and there is no internet: it needs the internet once;
+ * - `failed`: it didn't load with the internet on: Try again (`retry3d`).
+ * The meal, the time and the flat body stay; the screen is never cleared (R71).
+ */
+export type BodyNote = '' | 'webgl' | 'slow' | 'offline' | 'failed'
 
-/** The flat body stands in for the 3D one for good (components/BodyView.tsx). */
-export function sayFlat() {
-  if (flat) return
-  flat = true
+let note: BodyNote = ''
+/** How many times the 3D body was asked for again (Try again, or the internet came back). */
+let tries = 0
+const listeners = new Set<() => void>()
+const subscribe = (l: () => void) => {
+  listeners.add(l)
+  return () => void listeners.delete(l)
+}
+
+/** Sets the body's note; with `onlyIf`, only while that note is shown. */
+export function sayBody(next: BodyNote, onlyIf?: BodyNote) {
+  if (note === next || (onlyIf !== undefined && note !== onlyIf)) return
+  note = next
   listeners.forEach((l) => l())
 }
 
-/**
- * True once the flat body stands in for the 3D one: the stage's notes say why, in one line that can
- * be dismissed (FP-5, U9: the note used to lie over the body and the food pieces' key).
- */
-export const useFlat = () =>
-  useSyncExternalStore(
-    (l) => {
-      listeners.add(l)
-      return () => void listeners.delete(l)
-    },
-    () => flat,
-  )
+/** Asks for the 3D body again (BodyView remounts it). */
+export function retry3d() {
+  tries++
+  note = ''
+  listeners.forEach((l) => l())
+}
+
+// Back online: a 3D body that needed the internet is asked for again.
+if (typeof window !== 'undefined') window.addEventListener('online', () => note === 'offline' && retry3d())
+
+export const useBodyNote = () => useSyncExternalStore(subscribe, () => note)
+export const use3dTries = () => useSyncExternalStore(subscribe, () => tries)

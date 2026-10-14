@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import i18nSections from './scripts/i18n-sections.mjs'
 import prerenderHead from './scripts/prerender-head.mjs'
+import cacheTiersPlugin, { LAZY_CACHE } from './scripts/cache-tiers.mjs'
 import { siteUrl } from './scripts/site-url.mjs'
 
 /**
@@ -16,6 +17,9 @@ const HINDI = ENV.VITE_HINDI === '1'
 /** The production address, the one build constant (scripts/site-url.mjs): VITE_SITE_URL or the planned name. */
 const SITE_URL = siteUrl(ENV.VITE_SITE_URL)
 
+/** Which built files the service worker saves at install, and which on first use (T12d, R71). */
+const tiers = cacheTiersPlugin()
+
 export default defineConfig({
   plugins: [
     react(),
@@ -24,6 +28,8 @@ export default defineConfig({
     i18nSections(),
     // Each page's head in the built HTML, the 404 page, sitemap.xml and robots.txt (T12a).
     prerenderHead({ site: SITE_URL }),
+    // dist/pack-manifest.json and the precache list: the core only (scripts/cache-tiers.mjs).
+    tiers,
     VitePWA({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
@@ -31,7 +37,9 @@ export default defineConfig({
       // Registered by components/UpdateToast.tsx after the page has loaded, which also offers the
       // reload when a new version is waiting (council round 3): no extra script in index.html.
       injectRegister: false,
-      includeAssets: ['favicon.svg'],
+      // The icons and favicon are in the precache by globPatterns once each (these would add them twice).
+      includeAssets: [],
+      includeManifestIcons: false,
       manifest: {
         name: 'LifePeek — Digestion Simulator',
         short_name: 'LifePeek',
@@ -63,7 +71,13 @@ export default defineConfig({
         shortcuts: [{ name: 'For teachers', short_name: 'Teach', url: '/teach', icons: [{ src: '/icon-192.png', sizes: '192x192' }] }],
       },
       workbox: {
+        // Load on demand, small cache (R71): at install only the core (scripts/cache-tiers.mjs: the
+        // shell, every page's code with the stage, the digestion model and the engine, the English
+        // core text, the latin fonts, the icons, the resting body). The other hashed files (the 3D
+        // body, the stage's on-use parts, the latin-ext fonts) are cached the first time they are
+        // used (lp-lazy below), or ahead of class by Teach's "Save for class offline".
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+        manifestTransforms: [tiers.manifestTransform],
         // stats.json changes every week without a new app version, so it is not precached: the
         // network first, and offline the last copy that was fetched (the /stats page).
         // The share image and the install screenshots are for other sites and the install dialog,
@@ -75,6 +89,8 @@ export default defineConfig({
           'stats.json',
           'og-image.png',
           'screenshots/**',
+          // Over the size tripwire below, and lazy anyway: kept out here so the build doesn't warn.
+          'assets/BodyCanvas-*',
           // The per-page HTML and the 404 page are for the server (scripts/prerender-head.mjs);
           // offline, the service worker serves index.html for every page.
           '*/index.html',
@@ -87,9 +103,26 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: { cacheName: 'stats', networkTimeoutSeconds: 5, expiration: { maxEntries: 1 } },
           },
+          {
+            // Lazy files, the first time they are used: hashed names under /assets/ only (a new
+            // version has new names, so the cached copy is never stale), never a .woff fallback.
+            // Not the share image, screenshots, robots, sitemap, notices or /api: they are not here.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/[^/]+-[\w-]{8}\.(?:js|css|woff2|svg|png)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: LAZY_CACHE,
+              cacheableResponse: { statuses: [200] },
+              // A module script asks with an Origin header and a server may answer "Vary: Origin"
+              // (vite preview does): a copy saved by Teach's "Save for class offline" (no Origin)
+              // must still match. Same-origin files with hashed names: one answer per name.
+              matchOptions: { ignoreVary: true },
+              // About 40 files: two versions of every lazy part; old versions age out.
+              expiration: { maxEntries: 40, maxAgeSeconds: 90 * 24 * 60 * 60, purgeOnQuotaError: true },
+            },
+          },
         ],
-        // The 3D chunk is large; still cache it so the app works offline in class.
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // A tripwire (R71): no precached file over 512 KB. The 3D body (about 970 KB) is lazy.
+        maximumFileSizeToCacheInBytes: 512 * 1024,
         // Plain files that must reach the server, not the app shell.
         navigateFallbackDenylist: [
           /^\/api\//,

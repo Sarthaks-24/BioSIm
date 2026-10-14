@@ -51,7 +51,7 @@ jobs:
       # with `npm run links -w @lifepeek/web -- --external`.
       - name: Links in the built site
         run: npm run links -w @lifepeek/web
-      # Enforces /sim ≤ 190 KB, the Home ratchet (147 KB), Track A ≤ +1.0 KB (R66) and the precache of every lazy chunk.
+      # Enforces /sim ≤ 190 KB, the Home ratchet (147 KB), Track A ≤ +1.0 KB (R66), and the precache: the core only, ≤ 1300 KB raw (R71).
       - name: Size budgets (and the Track A ledger)
         run: npm run budget -w @lifepeek/web
       # Report-only until the user gives the project email (B20, §4 gate): then add --enforce.

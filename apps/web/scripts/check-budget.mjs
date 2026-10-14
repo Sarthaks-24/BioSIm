@@ -114,12 +114,21 @@
 //   bd0f7b4 (−0.40; ledger row −0.40, planned −0.2), Home 144.66 → 144.27 KB. This script now
 //   enforces the Home ratchet (147 KB, B26), the Track A total (R66: ≤ +1.0 KB over eee16c9, no
 //   slack) and that every lazy chunk is precached.
+//   T12 (2026-10-14): load on demand, small cache (R71). The precache is the core only
+//   (scripts/cache-tiers.mjs): 47 entries / 1777.6 KB → 35 / 756.4 KB raw; the 3D body, the
+//   stage's on-use parts, the "new version" note and the latin-ext fonts are cached on first use
+//   (lp-lazy, 1040 KB). The precache cap goes 2600 → 1300 KB, a ratchet that only moves down, and
+//   "every lazy chunk is precached" becomes: every core file is precached, no lazy file is, nothing
+//   else hashed is. The lazy total is reported. With T12a's build the bundler moved react-router's
+//   hooks chunk into the entry (/sim 187.998 → 186.851 KB); the 3D body's slow, offline and failed
+//   notes and its Try again (R71) took it back up: /sim 187.998 → 187.321 KB on main 1c1bbd5 (−0.68).
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
+import { tiersOf } from './cache-tiers.mjs'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
@@ -138,7 +147,10 @@ const BUDGETS = [
     max: 270 * KB,
     mode: 'enforce',
   },
-  { name: 'precache (raw)', precache: true, max: 2600 * KB, mode: 'enforce' },
+  // The core only (R71): a ratchet that only moves down; it grows only by an explicit ruling (R74).
+  { name: 'precache (raw)', precache: true, max: 1300 * KB, mode: 'enforce' },
+  // What loads on first use (lp-lazy): reported, not capped (R71).
+  { name: 'lazy total (raw)', lazyTotal: true, max: Infinity, mode: 'report' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
@@ -184,9 +196,12 @@ function precacheFiles() {
   return [...new Set([...sw.matchAll(/url:"([^"]+)"/g)].map((m) => m[1]))]
 }
 
+const tiers = tiersOf(dist)
+
 const rows = BUDGETS.map((b) => {
   let bytes
   if (b.precache) bytes = precacheFiles().reduce((sum, f) => sum + size(f), 0)
+  else if (b.lazyTotal) bytes = [...tiers.lazy].reduce((sum, f) => sum + size(f), 0)
   else {
     const already = new Set(b.minus ? staticFiles(b.minus) : [])
     bytes = staticFiles(b.roots)
@@ -197,7 +212,7 @@ const rows = BUDGETS.map((b) => {
   return { ...b, bytes, over, failed: over && b.mode === 'enforce' }
 })
 
-const kb = (n) => `${(n / KB).toFixed(1)} KB`
+const kb = (n) => (n === Infinity ? '–' : `${(n / KB).toFixed(1)} KB`)
 const pad = (s, n) => String(s).padEnd(n)
 console.log(`${pad('Budget', 18)}${pad('Size', 12)}${pad('Max', 12)}${pad('Mode', 9)}Result`)
 for (const r of rows) {
@@ -229,21 +244,25 @@ let trackAOver = false
   )
 }
 
-// Every lazy chunk is precached (plan qa-fixes §3.2), so a part loaded on first use works offline.
-// Enforced since T10 (FP-9).
-let unprecached = 0
+// The precache is the core tier exactly (T12d, R71; scripts/cache-tiers.mjs): every core file is
+// in it (a cold offline start of the stage works), no lazy file is (the 3D body above all), and no
+// other hashed file. Replaces T10's "every lazy chunk is precached".
+let tierProblems = 0
 {
   const precached = new Set(precacheFiles())
-  const lazy = new Set()
-  for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
-  const missing = [...lazy].filter((f) => !precached.has(f))
-  unprecached = missing.length
+  const missing = [...tiers.core].filter((f) => !precached.has(f))
+  const lazyIn = [...tiers.lazy].filter((f) => precached.has(f))
+  const stray = [...precached].filter((f) => f.startsWith('assets/') && !tiers.core.has(f))
+  tierProblems = missing.length + lazyIn.length + stray.length
+  const list = (what, files) => (files.length ? ` FAILS, ${what}: ${files.join(', ')}.` : '')
   console.log(
-    `\nLazy chunks precached: ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; missing: ${missing.join(', ')})` : ' ok'}`,
+    `
+Precache: ${precached.size} files, the core's ${tiers.core.size - missing.length} of ${tiers.core.size}; lazy (lp-lazy): ${tiers.lazy.size} files, none precached.` +
+      (tierProblems ? list('core files missing', missing) + list('lazy files precached', lazyIn) + list('not in any tier', stray) : ' ok'),
   )
 }
 
-if (rows.some((r) => r.failed) || trackAOver || unprecached) {
+if (rows.some((r) => r.failed) || trackAOver || tierProblems) {
   console.error('\nAn enforced size budget is over. See apps/web/scripts/check-budget.mjs.')
   process.exit(1)
 }

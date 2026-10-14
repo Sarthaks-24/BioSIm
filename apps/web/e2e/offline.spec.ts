@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
-import { GATE_ROUTES, SIM_BODY, gateSteps, modeFor } from './helpers/gate.ts'
+import { GATE_ROUTES, SIM_BODY, gateSteps, modeFor, onlyIn } from './helpers/gate.ts'
 
-// Works offline in class: after one visit the service worker holds the whole app, so the page
-// reloads without a network and still plays.
+// Works offline in class: after one visit the service worker holds the core (the stage, the
+// digestion model and the engine; T12d), so the page reloads without a network and still plays.
 
 for (const route of GATE_ROUTES.offline) {
   test(`works offline after the first visit: ${route.url}`, async ({ page, context }) => {
@@ -22,6 +22,114 @@ for (const route of GATE_ROUTES.offline) {
     await context.setOffline(false)
   })
 }
+
+// Load on demand, small cache (T12d, R71). Only the core is saved at install: the stage with its
+// flat body, the digestion model and the engine. The 3D body loads on first use.
+
+/** Waits until the service worker is active, which is after it has saved the core (its precache). */
+const installed = (page: Page) =>
+  page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+
+const NEEDS_INTERNET = 'This part needs internet once. Open it once with internet.'
+
+test('a cold offline start of the stage: the core runs with the flat body; the 3D body says it needs the internet once', async ({
+  page,
+  context,
+}) => {
+  onlyIn('desktop')
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  // Home only: the stage, its parts and the 3D body were never opened on this device.
+  await page.goto('/')
+  await installed(page)
+  await context.setOffline(true)
+  try {
+    await page.goto('/sim?v=2&a=cola:1')
+    await expect(page.getByRole('img', { name: SIM_BODY, exact: true })).toBeVisible()
+    await expect(page.getByText(NEEDS_INTERNET)).toBeVisible()
+    await expect(page.locator('[data-body="flat"]')).toBeVisible()
+    await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+    // No reload (main.tsx's stale-file reload is for when the internet is on): the stage just plays.
+    await page.getByRole('button', { name: 'Play' }).click()
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+    // The precache is the core only: no 3D file in any cache.
+    const cached3d = await page.evaluate(async () => {
+      for (const name of await caches.keys())
+        for (const req of await (await caches.open(name)).keys()) if (/BodyCanvas-/.test(req.url)) return req.url
+      return null
+    })
+    expect(cached3d).toBeNull()
+  } finally {
+    await context.setOffline(false)
+  }
+  // Back online: the 3D body is asked for again by itself.
+  await expect(page.locator('[data-body="3d"]')).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+})
+
+test('"Save for class offline" on /teach: each lesson says so, and a lesson then opens offline in 3D', async ({ page, context }) => {
+  onlyIn('desktop')
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/teach')
+  await installed(page)
+  const lessons = page.locator('[data-lesson]')
+  const count = await lessons.count()
+  expect(count).toBeGreaterThan(0)
+  await expect(lessons.getByText('Not saved for offline')).toHaveCount(count)
+  await page.getByRole('button', { name: 'Save all for class offline' }).click()
+  await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count, { timeout: 30_000 })
+  await expect(page.getByRole('button', { name: 'Save all for class offline' })).toBeDisabled()
+  const href = await lessons.first().getByRole('link').getAttribute('href')
+  await context.setOffline(true)
+  try {
+    await page.goto(href!)
+    await expect(page.locator('[data-body="3d"]')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+    // The stage's on-use parts were saved too: the table sheet opens offline.
+    await page.locator('body').press('t')
+    await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+    // Still saved after a reload, offline.
+    await page.goto('/teach')
+    await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count)
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
+test.describe('a stale file after a deploy (vite:preloadError)', () => {
+  // The service worker would answer from its cache; the test needs the file to fail.
+  test.use({ serviceWorkers: 'block' })
+
+  test('online: the page reloads once and the part loads', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+    let failed = 0
+    await page.route(/\/BodyCanvas-[\w-]+\.js$/, (route) => (failed++ ? route.continue() : route.abort()))
+    let loads = 0
+    page.on('load', () => loads++)
+    await page.goto('/sim?v=2&a=cola:1')
+    await expect(page.locator('[data-body="3d"]')).toBeVisible({ timeout: 30_000 })
+    expect(failed).toBe(2)
+    expect(loads).toBe(2)
+    await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+  })
+
+  test('online, failing again after the reload: "Try again" (no loop), and the flat body stays', async ({ page }) => {
+    onlyIn('desktop')
+    await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+    let online = false
+    await page.route(/\/BodyCanvas-[\w-]+\.js$/, (route) => (online ? route.continue() : route.abort()))
+    await page.goto('/sim?v=2&a=cola:1')
+    const note = page.getByText('Couldn’t load the 3D body. Check internet and tap Try again.')
+    await expect(note).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-body="flat"]')).toBeVisible()
+    online = true
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.locator('[data-body="3d"]')).toBeVisible({ timeout: 30_000 })
+    await expect(note).toHaveCount(0)
+  })
+})
 
 // A classroom laptop keeps a tab open for days (council round 3): when a new version is waiting,
 // the open page says so and offers a reload, instead of keeping the old app until every tab is

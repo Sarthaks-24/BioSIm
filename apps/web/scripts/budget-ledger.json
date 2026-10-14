@@ -112,6 +112,16 @@
       "plannedNetKB": 0,
       "measuredNetKB": -0.45,
       "measuredAt": "2026-10-14"
+    },
+    {
+      "fp": "T12",
+      "step": "T12",
+      "what": "web basics + load on demand (titles, 3D load notes)",
+      "grossKB": 0.1,
+      "clawbackKB": 0,
+      "plannedNetKB": 0.1,
+      "measuredNetKB": -0.68,
+      "measuredAt": "2026-10-14"
     }
   ]
 }

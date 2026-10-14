@@ -46,7 +46,10 @@ const router = createBrowserRouter([
 // Reload once to pick up the new version instead of failing.
 // The flag stops a reload loop; it's cleared once the app has run for a while, so a later update
 // in the same tab can reload again.
+// Offline, a reload could not fetch it either: the part says it needs the internet once and the
+// page stays as it is (components/BodyView.tsx, LoadBoundary.tsx; R71).
 window.addEventListener('vite:preloadError', (e) => {
+  if (!navigator.onLine) return
   try {
     if (sessionStorage.getItem('lifepeek:reloaded')) return
     sessionStorage.setItem('lifepeek:reloaded', '1')
