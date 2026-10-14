@@ -1,11 +1,12 @@
 import { useCallback, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
+import CountYoursButton from '../../components/CountYoursButton.tsx'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SystemUi } from '../registry.ts'
-import { breathRate, doingAt, seriesOf } from './breath.ts'
+import { breathRate, countModel, doingAt, seriesOf } from './breath.ts'
 import { BREATHING_LESSON } from './lesson.ts'
 import { breathingStripSummary, breathingSummary } from './summary.ts'
 
@@ -164,17 +165,31 @@ function RhythmChip({ run }: { run: RunResult }) {
 
 /**
  * The lines under each breathing graph (ui-ux §6, R10, R29, R57): what moves it; under breaths a
- * minute also the older NCERT Class 7 book's 15–18 and the key to the children's band.
+ * minute also the older NCERT Class 7 book's 15–18 with "Count yours" beside it (X-2), and the key
+ * to the children's band.
  */
-function StripNote({ slot }: { slot: GraphSlotDef }) {
+function StripNote({ slot, run }: { slot: GraphSlotDef; run: RunResult }) {
   const { t } = useTranslation()
+  // The timer's lines, made when it opens: the model's value at that minute of the meal clock.
+  const countLines = () => {
+    const m = countModel(run, useClock.getState().simMin)
+    const model = !m
+      ? ''
+      : m.active
+        ? t('sys.breathing.count.modelActive', { rest: m.rest, n: m.active.n, doing: t(`sys.breathing.doing.${m.active.doing}`) })
+        : t('sys.breathing.count.model', { rest: m.rest })
+    return { book: t('sys.breathing.book'), model, band: t('sys.breathing.children') }
+  }
   return (
     <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
       {/* A short window keeps its plot: the summary says the same. */}
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.breathing.moves')}</p>
       {slot.reference && (
         <>
-          <p data-book="">{t('sys.breathing.book')}</p>
+          <p className="flex flex-wrap items-center gap-x-2">
+            <span data-book="">{t('sys.breathing.book')}</span>
+            <CountYoursButton kind="breaths" lines={countLines} className="-my-2 lg:-my-1" />
+          </p>
           <p data-band-key="" className="flex items-center gap-1.5">
             <span
               aria-hidden="true"

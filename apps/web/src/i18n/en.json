@@ -1062,6 +1062,10 @@
       "lesson": {
         "title": "Why do you breathe faster when you run?",
         "question": "How many breaths a minute during the run, and at rest?"
+      },
+      "count": {
+        "model": "This model: about {{rest}} a minute at rest, for one resting grown-up.",
+        "modelActive": "This model: about {{rest}} a minute at rest, {{n}} a minute {{doing}}."
       }
     },
     "circulation": {
@@ -1160,6 +1164,10 @@
       "lesson": {
         "title": "Where does the blood go after a meal, and in a walk?",
         "question": "How much blood goes to the muscles during the walk, and at rest?"
+      },
+      "count": {
+        "model": "This model: about {{rest}} a minute at rest, for one resting grown-up.",
+        "modelActive": "This model: about {{rest}} a minute at rest, {{n}} a minute {{doing}}."
       }
     },
     "effort": {
@@ -1265,5 +1273,25 @@
       "walkBrisk": "brisk walking",
       "run": "running"
     }
+  },
+  "count": {
+    "open": "Count yours",
+    "howBreaths": "Sit still. Press Start, then count your breaths until the timer ends.",
+    "howPulse": "Put two fingers on the inside of your wrist to find your pulse. Press Start and count the beats.",
+    "start": "Start",
+    "stop": "Stop",
+    "again": "Count again",
+    "ready": "Get ready",
+    "seconds": "seconds left",
+    "left": "{{n}} seconds left",
+    "started": "Started. Count now.",
+    "stopped": "Stopped.",
+    "timeUp": "Time’s up",
+    "done": "Stop. Multiply your count by 4 to get a minute.",
+    "examples": "For example:",
+    "exampleBreaths": "{{n}} breaths in 15 s = {{m}} a minute",
+    "examplePulse": "{{n}} beats in 15 s = {{m}} a minute",
+    "private": "Nothing you count is typed in or saved.",
+    "notCheck": "Not a health check. Counts differ between people and from minute to minute."
   }
 }

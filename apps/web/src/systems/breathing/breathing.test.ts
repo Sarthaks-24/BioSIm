@@ -14,7 +14,7 @@ import { MAX_BREATH_HZ } from '../../flat/rhythm.ts'
 import { activityBandAt } from '../../lib/bouts.ts'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import { createTicker } from '../../lib/ticker.ts'
-import { STILL_BREATH, breathRate, doingAt, fillAt, lungScale, seriesOf } from './breath.ts'
+import { STILL_BREATH, breathRate, countModel, doingAt, fillAt, lungScale, seriesOf } from './breath.ts'
 import { BREATHING_LESSON } from './lesson.ts'
 import { breathingStripSummary, breathingSummary, peakOf, valueText } from './summary.ts'
 
@@ -176,5 +176,23 @@ describe('the real clock (lib/ticker.ts, architecture §1.7)', () => {
     expect(page.ticker.running()).toBe(false)
     stop()
     expect(page.ticker.running()).toBe(false)
+  })
+})
+
+describe('"Count yours" model line (X-2, content §8.3)', () => {
+  it('rest, and the activity at the clock minute or else the first bout; never the word "normal"', () => {
+    const none = countModel(run(), 100)!
+    expect(none).toEqual({ rest: Math.round(rate(run(), 0)) })
+    expect(t('sys.breathing.count.model', { rest: none.rest })).toBe(
+      `This model: about ${none.rest} a minute at rest, for one resting grown-up.`,
+    )
+    const r = run([walk])
+    expect(countModel(r, 40)).toEqual({ rest: Math.round(rate(r, 0)), active: { n: Math.round(rate(r, 40)), doing: 'walk' } })
+    expect(countModel(r, 200)).toEqual({ rest: Math.round(rate(r, 0)), active: { n: Math.round(rate(r, 40)), doing: 'walk' } })
+    // A bout from minute 0: the rest value is after it.
+    const early = run([{ kind: 'run', startMin: 0, durMin: 10 }])
+    expect(countModel(early, 100)!.rest).toBe(Math.round(rate(early, 10)))
+    const words = JSON.stringify([en.count, en.sys.breathing.count])
+    expect(words).not.toMatch(/normal/i)
   })
 })

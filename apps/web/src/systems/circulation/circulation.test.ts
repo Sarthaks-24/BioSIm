@@ -21,6 +21,7 @@ import {
   SQUEEZED,
   atriaScale,
   beatRate,
+  countModel,
   dashDensity,
   dashSpeed,
   doingAt,
@@ -256,5 +257,20 @@ describe('the book, the children’s band and "Why does the model differ from th
     expect(t('sys.circulation.why.after.why')).toContain('no slow after-exercise rise')
     expect(t('sys.circulation.why.exam')).toBe('In the exam, write the book’s value.')
     expect(t('sys.circulation.why.title')).toBe('Why does the model differ from the book?')
+  })
+})
+
+describe('"Count yours" model line (X-2, content §8.3)', () => {
+  it('the pulse at rest, and in the walk at the clock minute or else the first bout; never the word "normal"', () => {
+    const none = countModel(run(), 100)!
+    expect(none).toEqual({ rest: Math.round(rate(run(), 0)) })
+    expect(t('sys.circulation.count.model', { rest: none.rest })).toBe(
+      `This model: about ${none.rest} a minute at rest, for one resting grown-up.`,
+    )
+    const r = run([walk])
+    const walking = { n: Math.round(rate(r, 40)), doing: 'walk' }
+    expect(countModel(r, 40)).toEqual({ rest: Math.round(rate(r, 0)), active: walking })
+    expect(countModel(r, 200)).toEqual({ rest: Math.round(rate(r, 0)), active: walking })
+    expect(JSON.stringify(en.sys.circulation.count)).not.toMatch(/normal/i)
   })
 })

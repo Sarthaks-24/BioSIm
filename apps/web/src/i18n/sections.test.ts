@@ -67,6 +67,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   picker: ['components/SystemPicker.tsx'],
   // registry/i18nKeys.ts is the tests' list of keys (never in a download).
   lifeProcess: ['components/SystemPicker.tsx', 'registry/i18nKeys.ts'],
+  count: ['components/CountYours.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

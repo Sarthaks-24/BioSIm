@@ -1,11 +1,12 @@
 import { useCallback, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
+import CountYoursButton from '../../components/CountYoursButton.tsx'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SlotPick, SystemUi } from '../registry.ts'
-import { beatRate, doingAt, seriesOf } from './beat.ts'
+import { beatRate, countModel, doingAt, seriesOf } from './beat.ts'
 import { CIRCULATION_LESSON } from './lesson.ts'
 import { circulationStripSummary, circulationSummary } from './summary.ts'
 
@@ -299,8 +300,18 @@ function FlowPick({ pick }: { pick: SlotPick }) {
  * children's band; under blood pumped a minute the blood-pressure card (a book value, held, not
  * worked out); under where blood goes, beside a kept plan, which flow is shown.
  */
-function StripNote({ slot, pick }: { slot: GraphSlotDef; pick?: SlotPick }) {
+function StripNote({ slot, pick, run }: { slot: GraphSlotDef; pick?: SlotPick; run: RunResult }) {
   const { t } = useTranslation()
+  // "Count yours" (X-2): the pulse timer's lines, made when it opens (the model's value at that minute).
+  const countLines = () => {
+    const m = countModel(run, useClock.getState().simMin)
+    const model = !m
+      ? ''
+      : m.active
+        ? t('sys.circulation.count.modelActive', { rest: m.rest, n: m.active.n, doing: t(`sys.circulation.doing.${m.active.doing}`) })
+        : t('sys.circulation.count.model', { rest: m.rest })
+    return { book: t('sys.circulation.book'), model, band: t('sys.circulation.children') }
+  }
   return (
     <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
       {pick && <FlowPick pick={pick} />}
@@ -308,8 +319,9 @@ function StripNote({ slot, pick }: { slot: GraphSlotDef; pick?: SlotPick }) {
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.circulation.moves')}</p>
       {slot.reference && (
         <>
-          <p data-book="" className="flex flex-wrap gap-x-2">
-            <span>{t('sys.circulation.book')}</span>
+          <p className="flex flex-wrap items-center gap-x-2">
+            <span data-book="">{t('sys.circulation.book')}</span>
+            <CountYoursButton kind="pulse" lines={countLines} className="-my-2 lg:-my-1" />
           </p>
           <WhyCard />
           <p data-band-key="" className="flex items-center gap-1.5">
