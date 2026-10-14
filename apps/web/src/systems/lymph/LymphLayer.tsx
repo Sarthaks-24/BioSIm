@@ -1,0 +1,272 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { LayerProps } from '../../registry/types.ts'
+import type { View } from '../../anatomy/human/base.ts'
+import type { ActivityBand } from '../../anatomy/human/bands.ts'
+import type { CalloutSpec } from '../../anatomy/CalloutOverlay.tsx'
+import type { Spline3, XYZ } from '../../anatomy/spline.ts'
+import type { LimbKit, PosedLimbs } from '../../anatomy/human/limbs.ts'
+import {
+  LABELS,
+  LYMPH_SAC,
+  MAIN_DUCT,
+  NECK_VEIN,
+  NODES,
+  RIGHT_DUCT,
+  THYMUS,
+  TRUNK_VESSELS,
+  spleenPoint,
+  type LymphLabel,
+} from '../../anatomy/human/lymph.ts'
+import { LYMPH_TONE } from '../../anatomy/tones/lymph.ts'
+import type { LayerKit } from '../../flat/layerKit.ts'
+import { useProjector } from '../../hooks/useProjector.ts'
+
+/**
+ * The static lymph map (A-11a; anatomy plan §2.7), drawn over the base body in the `full` framing:
+ * lymph vessels from the feet, the hands, the head and the gut; merged node clusters (neck, armpit,
+ * gut, groin); the main lymph duct climbing to the left neck vein and the short right duct to the
+ * right one; the spleen and the thymus. Nothing moves and nothing flashes: it is Drawing only (no
+ * lymph model in v3.0; S-5 adds the fat road in v3.1). It is drawn again only when the picture's
+ * size, the pose or the projector look changes. The vessels of the arms and legs follow the band's
+ * still pose (the limb curves, loaded with the legs), so a walk never leaves a vessel in the air.
+ *
+ * It imports nothing from the stage's chunk: the flat body hands it what it needs (`kit`, flat/layerKit.ts),
+ * and the few lines of the flat body's maths it shares are copied here (`frame`, the outline shade).
+ */
+
+export default function LymphLayer({ view, band, width, height, kit }: LayerProps) {
+  const { t } = useTranslation()
+  const canvas = useRef<HTMLCanvasElement>(null)
+  const projector = useProjector()
+  const posed = usePosedLimbs(band, kit)
+  const [drawn, setDrawn] = useState(false)
+
+  // The parts' names (anatomy plan §6): the first three on a narrow picture, the rest with room.
+  const roomy = width >= 460
+  const specs = useMemo<CalloutSpec<LymphLabel>[]>(
+    () => LABEL_ORDER.map(([key, tone, top]) => ({ key, text: t(`sys.lymph.map.${key}`), tone, hidden: !roomy && !top })),
+    [t, roomy],
+  )
+  const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), LABELS)
+  const placeLabels = () => {
+    if (width > 0 && height > 0) {
+      const { X, Y } = frame(width, height, view)
+      place((p) => [X(p.x), Y(p.y)], width, height)
+    }
+  }
+  useEffect(placeLabels)
+
+  useEffect(() => {
+    const el = canvas.current
+    if (!el || !posed || width === 0 || height === 0) return
+    // The flat body's pixel-ratio cap (three/quality.ts: 1.5 device pixels per CSS px at most).
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+    el.width = Math.round(width * dpr)
+    el.height = Math.round(height * dpr)
+    const ctx = el.getContext('2d')
+    if (!ctx) return
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    paintLymph(ctx, width, height, view, posed, projector)
+    setDrawn(true)
+  }, [width, height, view, posed, projector])
+
+  return (
+    <>
+      <canvas
+        ref={canvas}
+        aria-hidden="true"
+        data-layer="lymph"
+        data-drawn={drawn ? '' : undefined}
+        className="absolute inset-0"
+        style={{ width, height }}
+      />
+      {overlay}
+    </>
+  )
+}
+
+/** Each label, its weight, and whether it stays on a narrow picture (the plan's first three). */
+const LABEL_ORDER: readonly (readonly [LymphLabel, CalloutSpec['tone'], boolean])[] = [
+  ['nodes', 'stage', true],
+  ['mainDuct', 'stage', true],
+  ['spleen', 'stage', true],
+  ['vessels', 'stage', false],
+  ['rightDuct', 'context', false],
+  ['thymus', 'context', false],
+  ['neckVein', 'context', false],
+]
+
+/**
+ * The band's posed limbs, once the legs' chunk is here (the flat body loads it for the `full`
+ * framing too, so this waits on the same promise); null until then, and the map waits with the legs.
+ */
+function usePosedLimbs(band: ActivityBand, kit: LayerKit): Posed | null {
+  const [posed, setPosed] = useState<Posed | null>(null)
+  useEffect(() => {
+    let live = true
+    kit.loadLimbs().then(
+      (m) => live && setPosed({ limbs: m.posedLimbs(band), base: m.limbKit(), legRadius: m.legRadius }),
+      () => {},
+    )
+    return () => {
+      live = false
+    }
+  }, [band, kit])
+  return posed?.limbs.band === band ? posed : null
+}
+
+/** A pose's limbs, the body base the legs' chunk was handed, and the legs' radius (all from that chunk). */
+interface Posed {
+  limbs: PosedLimbs
+  base: LimbKit
+  legRadius: (u: number) => number
+}
+
+type Pt = [number, number]
+
+/** Scene units → CSS px, front-on, fitting `view` (flat/FlatBody.tsx `frame`, copied: see above). */
+function frame(w: number, h: number, view: View) {
+  const scale = Math.min(w / (view.maxX - view.minX), h / (view.maxY - view.minY))
+  const oy = h / 2 + ((view.maxY + view.minY) / 2) * scale
+  return { scale, X: (x: number) => w / 2 + x * scale, Y: (y: number) => oy - y * scale }
+}
+
+/**
+ * The limbs' weak perspective (flat/limbs.ts `project`: a camera 30 units in front, level with the
+ * chest), so a vessel lies on the limb the base body draws.
+ */
+const seen = (p: XYZ, dx = 0): Pt => {
+  const s = 30 / (30 - p.z)
+  return [(p.x + dx) * s, 1 + (p.y - 1) * s]
+}
+
+/** The flat look (flat/look.ts FLAT_LOOK): the outline's shade of a tone and its width, normal and projector. */
+const LOOK = { normal: { ink: 0.42, line: 1.25 }, projector: { ink: 0.2, line: 2 } }
+const hex = (c: string, k = 1) => `rgb(${[1, 3, 5].map((i) => Math.round(parseInt(c.slice(i, i + 2), 16) * k)).join(',')})`
+/** The neck veins: the blood's, drawn faint in the skin's line colour (anatomy/tones/base.ts SKIN_LINE). */
+const VEIN = 'rgba(61,76,107,0.45)'
+
+/** A node cluster's main node on a side (NODES: armpit 3rd, groin 8th). */
+const node = (i: number, side: number): Pt => [NODES[i]!.x * side, NODES[i]!.y]
+
+/** Paints the map in CSS pixels of a `w` × `h` picture of `view`, the limbs' vessels in their pose. */
+export function paintLymph(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  view: View,
+  { limbs, base, legRadius }: Posed,
+  projector: boolean,
+) {
+  const { scale, X, Y } = frame(w, h, view)
+  const look = projector ? LOOK.projector : LOOK.normal
+  const p = new base.Vec3()
+  /** Samples of a curve from `u0` to `u1` (either way), shifted sideways by `dx(u)`, as the picture draws it. */
+  const along = (c: Spline3, u0: number, u1: number, n: number, dx: (u: number) => number = () => 0): Pt[] =>
+    Array.from({ length: n + 1 }, (_, i) => {
+      const u = u0 + ((u1 - u0) * i) / n
+      return seen(c.getPointAt(u, p), dx(u))
+    })
+  const through = (pts: readonly XYZ[]) => new base.Spline3(pts, 0.5)
+
+  // Vessels: the trunk's and the head's (mirrored where on both sides), then the limbs' in this pose:
+  // up the inside of each leg to the groin nodes (with a branch from the outer calf), up each arm
+  // from the hand to the armpit nodes.
+  const vessels: Pt[][] = TRUNK_VESSELS.flatMap(({ pts, mirror }) => {
+    const right = pts.map(([x, y]) => [x, y] as Pt)
+    return mirror ? [right, right.map(([x, y]) => [-x, y] as Pt)] : [right]
+  })
+  for (const { side, curve } of limbs.legs) {
+    // The inside of the leg is towards the midline: −x on the viewer's right leg.
+    const inner = (u: number) => -side * 0.3 * legRadius(u)
+    vessels.push([...along(curve, 0.93, 0.06, 40, inner), node(7, side)])
+    vessels.push(along(curve, 0.78, 0.5, 12, (u) => legRadius(u) * side * (0.45 - 0.75 * ((0.78 - u) / 0.28))))
+  }
+  for (const { side, parts } of limbs.arms) {
+    const pts =
+      limbs.band === 'rest'
+        ? along(base.ARM, 0.9, 0.16, 30).map(([x, y]) => [x * side, y] as Pt)
+        : parts
+            .flatMap(({ curve, range: [from, to] }) => {
+              // The stretch of ARM from the armpit (0.16) to the hand (0.9) that this part covers.
+              const a = Math.max(0.16, from)
+              const b = Math.min(0.9, to)
+              return b > a ? along(curve, (a - from) / (to - from), (b - from) / (to - from), 16) : []
+            })
+            .reverse()
+    vessels.push([...pts, node(2, side)])
+  }
+
+  ctx.clearRect(0, 0, w, h)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  // Readable on a 160 px picture and on a projector: never thinner than these, in CSS px.
+  const vesselW = Math.max(1.5, 0.026 * scale)
+  const ductW = Math.max(2.5, 0.055 * scale)
+  const path = (pts: readonly Pt[]) => {
+    ctx.beginPath()
+    pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
+  }
+  /** Tubes as wide strokes: every outline first, then every fill, so tubes that meet look joined. */
+  const tubes = (lines: readonly (readonly Pt[])[], c: string, width: number) => {
+    ctx.strokeStyle = hex(c, look.ink)
+    ctx.lineWidth = width + 2 * look.line
+    for (const l of lines) (path(l), ctx.stroke())
+    ctx.strokeStyle = c
+    ctx.lineWidth = width
+    for (const l of lines) (path(l), ctx.stroke())
+  }
+  /** Filled shapes, outlines first (so overlapping nodes merge into one cluster). */
+  const blobs = (shapes: readonly (() => void)[], c: string) => {
+    ctx.strokeStyle = hex(c, look.ink)
+    ctx.lineWidth = 2 * look.line
+    for (const s of shapes) (s(), ctx.stroke())
+    ctx.fillStyle = c
+    for (const s of shapes) (s(), ctx.fill())
+  }
+  const ellipse = (x: number, y: number, rx: number, ry: number, tilt: number, min: number) => () => {
+    ctx.beginPath()
+    ctx.ellipse(X(x), Y(y), Math.max(min, rx * scale), Math.max(min, ry * scale), tilt, 0, Math.PI * 2)
+  }
+
+  // The neck veins the ducts empty into: faint, they are the blood's.
+  ctx.strokeStyle = VEIN
+  ctx.lineWidth = ductW * 1.3
+  for (const side of [1, -1]) {
+    path(along(through(NECK_VEIN), 0, 1, 24).map(([x, y]) => [x * side, y]))
+    ctx.stroke()
+  }
+
+  const { vessel, node: nodeTone, spleen, thymus } = LYMPH_TONE
+  tubes(vessels, vessel, vesselW)
+  tubes([along(through(MAIN_DUCT), 0, 1, 60), along(through(RIGHT_DUCT), 0, 1, 12)], vessel, ductW)
+  const sac = LYMPH_SAC
+  blobs([ellipse(sac.center.x, sac.center.y, sac.rx, sac.ry, 0, ductW / 2 + 1)], vessel)
+
+  blobs(
+    NODES.flatMap(({ x, y, r, mirror }) =>
+      (mirror ? [1, -1] : [1]).map((side) => ellipse(x * side, y, r * 1.15, r, 0, Math.max(2.5, vesselW * 1.4))),
+    ),
+    nodeTone,
+  )
+  blobs(
+    [
+      () => {
+        ctx.beginPath()
+        for (let i = 0; i <= 32; i++) {
+          const a = (i / 32) * Math.PI * 2
+          spleenPoint({ x: Math.cos(a), y: Math.sin(a), z: 0 }, p)
+          if (i === 0) ctx.moveTo(X(p.x), Y(p.y))
+          else ctx.lineTo(X(p.x), Y(p.y))
+        }
+        ctx.closePath()
+      },
+    ],
+    spleen,
+  )
+  blobs(
+    THYMUS.map(({ x, y, rx, ry, tilt }) => ellipse(x, y, rx, ry, tilt, 2)),
+    thymus,
+  )
+}
