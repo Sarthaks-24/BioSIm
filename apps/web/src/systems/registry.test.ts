@@ -192,6 +192,29 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
   })
 })
 
+describe('the effort pack (U-1): muscles, skin and the bones card', () => {
+  it('brings its rows, three systems’ UI (a graph each for muscles and skin, a card for bones), three drawings and its English', async () => {
+    const pack = PACKS.effort!
+    expect((await pack.rows()).default.map((r) => r.id)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
+    const { default: uis, DEFS } = await pack.ui!()
+    expect(uis.bones!.card).toBeTypeOf('function')
+    expect(uis.skin!.chip).toBeTypeOf('function')
+    expect(DEFS!.muscles!.slots!.map((s) => s.signals)).toEqual([['muscle.energyRate']])
+    expect(DEFS!.skin!.slots!.map((s) => [s.signals, s.unit])).toEqual([[['skin.sweatRate'], 'mL/h']])
+    const drawings = (await pack.drawing!()).default
+    for (const id of ['muscles', 'skin', 'bones'] as const) expect(drawings[id], id).toBeTypeOf('function')
+    expect(pack.text).toBeTypeOf('function')
+  })
+
+  it('hidden until H-1; bones is Drawing only (no inputs, no graphs), all three in the full framing', () => {
+    for (const id of ['muscles', 'skin', 'bones'] as const)
+      expect(systemOf(id), id).toMatchObject({ public: false, pack: 'effort', draw: 'layer', camera: { framing: 'full' }, lifeProcess: 'movement' })
+    expect(systemOf('bones')).toMatchObject({ inputs: [], slots: [] })
+    expect(systemForLink('muscles', [], false)).toBe('digestion')
+    expect(systemForLink('skin', [], true)).toBe('skin')
+  })
+})
+
 describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   const walk: ActivityBout[] = [{ kind: 'walk', startMin: 30, durMin: 20 }]
   const hidden: SystemDef = { ...DIGESTION, id: 'breathing', i18nKey: 'systems.breathing', pack: 'breathing', public: false }
@@ -209,14 +232,15 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('breathing', [], false)).toBe('digestion')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
-    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'lymph'])
+    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'lymph', 'muscles', 'bones', 'skin'])
   })
 
   it('‹ › and [ ] step round the picker’s rows', () => {
     expect(stepSystem('digestion', true, 1)).toBe('breathing')
     expect(stepSystem('breathing', true, 1)).toBe('lymph')
-    expect(stepSystem('lymph', true, 1)).toBe('digestion')
-    expect(stepSystem('digestion', true, -1)).toBe('lymph')
+    expect(stepSystem('lymph', true, 1)).toBe('muscles')
+    expect(stepSystem('skin', true, 1)).toBe('digestion')
+    expect(stepSystem('digestion', true, -1)).toBe('skin')
     // One row: stepping stays on it.
     expect(stepSystem('digestion', false, 1)).toBe('digestion')
   })

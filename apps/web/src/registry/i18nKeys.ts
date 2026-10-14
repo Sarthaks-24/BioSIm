@@ -1,10 +1,11 @@
 import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
+import EFFORT_ROWS from '@lifepeek/engine/catalog/effort'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
-const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS]
+const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS, ...EFFORT_ROWS]
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which

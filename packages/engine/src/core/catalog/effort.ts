@@ -64,3 +64,7 @@ export const EFFORT_SIGNALS: { readonly [Id in EffortSignalId]: SignalMeta<Id> }
     validRange: { low: 0, high: 20000, basis: 'guard' },
   },
 }
+
+/** The pack's rows, as `registerSignals` takes them (the web's `rows` loader of the `effort` pack, U-1). */
+const rows: readonly SignalMeta[] = Object.values(EFFORT_SIGNALS)
+export default rows

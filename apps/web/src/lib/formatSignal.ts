@@ -42,6 +42,8 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   'breaths/min': 'breathsPerMin',
   mL: 'mL',
   'mL/min': 'mLPerMin',
+  // The effort pack's (U-1, R75): its texts load with that pack (systems/muscles/text.ts).
+  'mL/h': 'mLPerH',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */

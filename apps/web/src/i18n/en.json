@@ -235,11 +235,13 @@
       "gPerMin": "grams each minute",
       "breathsPerMin": "breaths in and out in one minute",
       "mL": "millilitres (1000 mL = 1 litre)",
-      "mLPerMin": "millilitres each minute"
+      "mLPerMin": "millilitres each minute",
+      "mLPerH": "millilitres each hour"
     },
     "breathsPerMin": "{{n}} breaths a minute",
     "mL": "{{n}} mL",
-    "mLPerMin": "{{n}} mL a minute"
+    "mLPerMin": "{{n}} mL a minute",
+    "mLPerH": "{{n}} mL an hour"
   },
   "anatomy": {
     "liver": "Liver",
@@ -593,6 +595,25 @@
         "short": "CO₂ for each O₂",
         "desc": "How much carbon dioxide is made for each unit of oxygen used: about 0.8 at rest, nearer 1 when the body runs mostly on sugar."
       }
+    },
+    "muscle": {
+      "energyRate": {
+        "name": "Energy used by muscles",
+        "short": "Muscles",
+        "desc": "How much energy the muscles use each hour. At rest they use a small, steady share of the body’s energy; walking or running adds all of its extra energy here, and most of it ends up as heat."
+      }
+    },
+    "skin": {
+      "sweatRate": {
+        "name": "Sweat made",
+        "short": "Sweat",
+        "desc": "How much sweat the skin makes each hour. In this model sweat carries away the extra heat of walking or running, so it comes only with them."
+      },
+      "sweatTotal": {
+        "name": "Sweat so far",
+        "short": "Sweat so far",
+        "desc": "All the sweat made since the start of the clock."
+      }
     }
   },
   "limits": {
@@ -607,7 +628,9 @@
     "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals.",
     "gasExchange": "Oxygen used and carbon dioxide made are worked out from the energy the body uses (Weir’s formula, without protein). The air in the lungs is taken to keep the same carbon dioxide, so the blood’s oxygen and carbon dioxide do not change here.",
     "breathSplit": "How the extra air is shared between faster and deeper breaths is a rule picked by hand (a model estimate): real people differ.",
-    "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster."
+    "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster.",
+    "muscleEnergy": "Resting muscle energy is worked out from studies of how much energy muscle uses and how much of the body is muscle, for a typical 65 kg adult (a model estimate). All the extra energy of walking or running is counted in the muscles, the heart’s and the breathing muscles’ extra work included.",
+    "sweatWarmRoom": "The model takes a warm room: all the extra heat of moving leaves as sweat, and sweat starts and stops with the walk or run. Body temperature is kept within a narrow range, not worked out. Room temperature is not part of this model. Sweat is water and salt, not fat."
   },
   "profiles": {
     "adult-ref": {
@@ -630,6 +653,18 @@
     "breathing": {
       "name": "Breathing",
       "what": "lungs"
+    },
+    "muscles": {
+      "name": "Muscles",
+      "what": "muscles"
+    },
+    "bones": {
+      "name": "Bones",
+      "what": "bones"
+    },
+    "skin": {
+      "name": "Skin & temperature",
+      "what": "skin"
     }
   },
   "lifeProcess": {
@@ -981,6 +1016,97 @@
       "lesson": {
         "title": "Why do you breathe faster when you run?",
         "question": "How many breaths a minute during the run, and at rest?"
+      }
+    },
+    "effort": {
+      "moves": "Moves only with walking or running.",
+      "doing": {
+        "rest": "resting",
+        "walk": "walking",
+        "walkBrisk": "brisk walking",
+        "run": "running"
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way, with no walk or run.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
+      },
+      "muscles": {
+        "strip": "Energy used by muscles",
+        "label": {
+          "legs": "Leg muscles",
+          "arms": "Arm muscles",
+          "belly": "Belly muscles",
+          "tendon": "Tendon"
+        },
+        "now": {
+          "organ": "Muscles",
+          "rest": "resting energy use",
+          "times": "about {{k}}× their resting energy",
+          "kept": "Kept: about {{k}}×",
+          "keptRest": "Kept: resting energy use"
+        },
+        "summary": {
+          "rest": "At rest, muscles use about the same energy all day; the meal does not change it.",
+          "restReason": "Muscles work harder only with walking or running. Try a walk.",
+          "peak": "During the {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
+          "compare": "At the most, muscles use about {{run}}× their resting energy with this plan, {{kept}}× with the kept one.",
+          "same": "Muscles work about the same in both plans."
+        },
+        "lesson": {
+          "title": "How much harder do muscles work in a run?",
+          "question": "How many times their resting energy do the muscles use during the run?"
+        }
+      },
+      "skin": {
+        "strip": "Sweat made",
+        "label": {
+          "skin": "Skin",
+          "sweat": "Sweat glands",
+          "vessels": "Skin blood vessels"
+        },
+        "now": {
+          "organ": "Skin",
+          "none": "no sweat from moving",
+          "rate": "about {{value}} of sweat",
+          "kept": "Kept: {{value}}",
+          "keptNone": "Kept: no sweat from moving"
+        },
+        "thermo": {
+          "title": "Body temperature",
+          "text": "kept within a narrow range",
+          "info": "About body temperature",
+          "why": "The model does not work out body temperature: it holds it steady, as the body does. Sweat takes the extra heat of moving away."
+        },
+        "notFat": "Sweat is water and salt, not fat leaving.",
+        "summary": {
+          "rest": "At rest the skin makes no sweat from moving; the meal does not change that.",
+          "restReason": "Sweat comes only with walking or running here. Try a walk.",
+          "peak": "Most sweat during the {{doing}}: about {{value}}.",
+          "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
+          "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
+          "same": "Sweat is about the same in both: about {{value}} in all."
+        },
+        "lesson": {
+          "title": "Where does the heat of a run go?",
+          "question": "How much sweat does the skin make in the run, and how much at rest?"
+        }
+      },
+      "bones": {
+        "label": {
+          "skull": "Skull",
+          "backbone": "Backbone",
+          "ribs": "Ribs",
+          "pelvis": "Pelvis",
+          "ballSocket": "Ball-and-socket joint",
+          "hinge": "Hinge joint"
+        },
+        "now": "Bones hold the body up and keep the organs inside safe; muscles pull on them to move it.",
+        "card": {
+          "title": "Bones",
+          "text": "Bones don’t change during one meal or one game.",
+          "joints": "The hip is a ball-and-socket joint: the leg can move in many directions. The knee is a hinge joint: it bends only one way, like a door.",
+          "tendons": "Muscles are joined to bones by tendons, and pull on them to move the body."
+        }
       }
     }
   },

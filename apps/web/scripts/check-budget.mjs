@@ -213,6 +213,9 @@ const BUDGETS = [
   { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
   // U-2: the body-system picker (ui-ux §9, architecture §4: ≤ 6 KB gz, lazy), with the Overlay it opens in.
   { name: 'picker (lazy)', roots: ['src/components/SystemPicker.tsx'], minus: SIM_ROOTS, max: 6 * KB, mode: 'enforce' },
+  // U-1: the effort pack (muscles, skin, the bones card: rows, words, English, three flat layers), one
+  // lazy module (systems/muscles/pack.ts); a system pack is at most 20 KB gz (ui-ux §9, anatomy plan §8).
+  { name: 'effort pack (lazy)', roots: ['src/systems/muscles/pack.ts'], minus: SIM_ROOTS, max: 20 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')
