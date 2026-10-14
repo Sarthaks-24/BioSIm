@@ -15,7 +15,7 @@ import {
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
 import { ARM, TORSO_PROFILE, armRadius } from '../anatomy/human/base.ts'
-import { LAYER_ATTRIBUTES } from './layer.ts'
+import { LAYER_ATTRIBUTES, type Tier } from './layer.ts'
 
 /**
  * The 3D body's geometry kit. Every organ is modelled in code from the anatomy curves, so the
@@ -157,19 +157,21 @@ export const smoothstep = (a: number, b: number, x: number) => {
 /**
  * The skin shell: torso, head and tapering arms, drawn as a rim only. The spleen is not part of it
  * (A-0): it belongs to the lymph system (anatomy/human/lymph.ts) and is drawn with that layer.
+ * `tier` 'low' (a 2 GB phone; anatomy plan §9, R99): half the sides round the torso, head and arms.
  */
-export function buildShell(): BufferGeometry {
+export function buildShell(tier: Tier = 'high'): BufferGeometry {
+  const r = (n: number) => (tier === 'low' ? n / 2 : n)
   const profile = ([...TORSO_PROFILE, [0, 2.5]] as [number, number][]).map(([x, y]) => new Vector2(x!, y!))
   // Flatter at the back than the front, like a real chest and belly.
-  const torso = sculpt(new LatheGeometry(profile, 64), (v) => v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5)))
+  const torso = sculpt(new LatheGeometry(profile, r(64)), (v) => v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5)))
 
-  const head = sculpt(new SphereGeometry(0.37, 48, 32), (v) => {
+  const head = sculpt(new SphereGeometry(0.37, r(48), r(32)), (v) => {
     const jaw = v.y < 0 ? 1 - 0.18 * (-v.y / 0.37) : 1
     v.set(v.x * 0.84 * jaw, v.y * 1.05 + 2.84, v.z * 0.95 * jaw + 0.02)
   })
 
   const arms = [1, -1].map((sgn) => {
-    const arm = organTube(ARM, { segments: 64, radial: 20, radius: armRadius, flatten: 0.85, caps: true })
+    const arm = organTube(ARM, { segments: 64, radial: r(20), radius: armRadius, flatten: 0.85, caps: true })
     if (sgn < 0) {
       arm.applyMatrix4(new Matrix4().makeScale(-1, 1, 1))
       arm.index!.array.reverse() // mirroring flips the winding; put it back
