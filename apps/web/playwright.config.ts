@@ -96,8 +96,7 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'reduced',
-    testMatch: ['motion.spec.ts', 'stage.spec.ts', 'breathing.spec.ts', 'circulation.spec.ts', 'effort.spec.ts'],
-    testMatch: ['motion.spec.ts', 'stage.spec.ts', 'breathing.spec.ts', 'circulation.spec.ts', 'count.spec.ts'],
+    testMatch: ['motion.spec.ts', 'stage.spec.ts', 'breathing.spec.ts', 'circulation.spec.ts', 'effort.spec.ts', 'count.spec.ts'],
     use: { viewport: desktop, reducedMotion: 'reduce', launchOptions: webgl },
   },
   {
