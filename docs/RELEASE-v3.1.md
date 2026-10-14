@@ -1,5 +1,7 @@
 # Release checklist (v3.1.0)
 
+> **Branch (R118):** this release ships from the local branch `release/3.1`, made from tag `v3.1-rc`. The `v3` branch tip already holds later work (3.1/3.2), so do not merge `v3` itself.
+
 v3.1 adds Class 10's Control and coordination and the road fat takes to the blood: lymph and
 blood-fat graphs, insulin (an open loop, not an injection guide), the hot-pan nerve demo, the
 optional 3D lungs, heart and kidneys, Teach's sixth chapter, and the engine worker (the maths can
@@ -12,7 +14,7 @@ only**: never `git push --tags`, never `--force`.
 
 ## 0. Where it stands
 
-    cd /e/BioSim && git checkout v3 && npm ci && npm run release-gate
+    cd /e/BioSim && git checkout release/3.1 && npm ci && npm run release-gate
 
 It says `NOT READY` with one item of yours: the CHANGELOG heading `3.1.0 (unreleased)` (you change
 it in step 3). Your v2.1 items (email, launch date, INDB date, `GOVERNANCE.md`) come from `main` in
@@ -32,8 +34,8 @@ step 2. Hindi is paused (R47): do **not** set `VITE_HINDI`.
 
 - [ ] Merge:
 
-      cd /e/BioSim && git checkout v3
-      cd /e/BioSim && git merge main -m "Merge main (v3.0.0) into v3"
+      cd /e/BioSim && git checkout release/3.1
+      cd /e/BioSim && git merge main -m "Merge main (v3.0.0) into release/3.1"
 
   `CHANGELOG.md` will probably conflict: keep **both** entries, `## 3.1.0 (unreleased)` on top and
   `## 3.0.0` (as released, without "unreleased") under it. Any other conflict: stop and ask.
@@ -59,7 +61,7 @@ step 2. Hindi is paused (R47): do **not** set `VITE_HINDI`.
 - [ ] Merge:
 
       cd /e/BioSim && git checkout main
-      cd /e/BioSim && git merge --no-ff v3 -m "Merge v3: LifePeek 3.1 (control and coordination, lymph, 3D)"
+      cd /e/BioSim && git merge --no-ff release/3.1 -m "Merge v3: LifePeek 3.1 (control and coordination, lymph, 3D)"
       cd /e/BioSim && npm ci && npm run check && npm run release-gate
 
   On `main` the Track A line stays a report too: `main` now has model version 3 and the ledger's
