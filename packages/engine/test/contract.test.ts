@@ -23,7 +23,7 @@ const report = goldenCoverage(calls)
  * Ratchet: the number of calls never goes down, so unwrapping a test (golden → plain it) fails here
  * even when other tests still cover its IDs. Raise these when you add tests.
  */
-const AT_LEAST = { golden: 65, fails: 6, pinned: 45 }
+const AT_LEAST = { golden: 71, fails: 8, pinned: 60 }
 
 describe('golden coverage', () => {
   it('the scan finds the wrapped physiology tests', () => {
@@ -99,12 +99,12 @@ describe('the coverage check itself', () => {
       call('golden', ['blood.sugar'], ['ada2001']),
       call('golden', ['blood.glucose'], ['smith1999', 'food:cola']),
       call('golden', ['blood.glucose'], []),
-      call('pinned', ['blood.insulin']),
+      call('pinned', ['liver.glycogenG']),
     ])
     expect(r.unknownIds).toEqual(['blood.sugar'])
     expect(r.unknownSources).toEqual(['smith1999'])
     expect(r.unsourcedGolden).toHaveLength(1)
-    expect(r.reservedTested).toEqual(['blood.insulin'])
+    expect(r.reservedTested).toEqual(['liver.glycogenG'])
   })
 
   it('known limits (golden.fails) do not count as sourced coverage', () => {

@@ -25,6 +25,7 @@ import type { EffortSignalId } from './catalog/effort.ts'
 import type { KidneyEventId, KidneySignalId } from './catalog/kidneys.ts'
 import type { CirculationEventId, CirculationSignalId } from './catalog/circulation.ts'
 import type { LymphEventId, LymphSignalId } from './catalog/lymph.ts'
+import type { ControlEventId, ControlSignalId } from './catalog/control.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
@@ -84,13 +85,7 @@ export const ACTIVE_SIGNAL_IDS = [
 ] as const
 
 /** Glossary rows 3, 7, 14–20. Reserved names: typed and documented, NOT produced yet. */
-export const RESERVED_SIGNAL_IDS = [
-  'gut.stomach.outflowRate',
-  'blood.insulin',
-  'liver.glucoseOutput',
-  'liver.glycogenG',
-  'brain.glucoseUse',
-] as const
+export const RESERVED_SIGNAL_IDS = ['gut.stomach.outflowRate', 'liver.glucoseOutput', 'liver.glycogenG'] as const
 
 /** Glossary "event.*" row. Points in time on the sim clock (timeline markers, summary sentences). */
 export const EVENT_IDS = [
@@ -110,15 +105,16 @@ export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
  * pack (core/catalog/<pack>.ts), so the first download carries only their type. The run chunk
  * knows every row (core/catalog/rows.ts). lungs.breathRate left the reserved list for the
  * breathing pack (S-2, model ACTIVATION_LOG), kidney.filtrationRate for the kidneys pack (S-4),
- * heart.rate for the circulation pack (S-3), units kept. The lymph pack's rows ship in v3.1 (S-5).
+ * heart.rate for the circulation pack (S-3), blood.insulin and brain.glucoseUse for the control pack
+ * (S-6), units kept. The lymph pack's rows ship in v3.1 (S-5), and the control pack's (S-6).
  */
-export type PackSignalId = BreathingSignalId | EffortSignalId | KidneySignalId | CirculationSignalId | LymphSignalId
+export type PackSignalId = BreathingSignalId | EffortSignalId | KidneySignalId | CirculationSignalId | LymphSignalId | ControlSignalId
 /** Every signal a run produces: the lean catalog's rows and the packs' rows. */
 export type RunSignalId = ActiveSignalId | PackSignalId
 export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId
 export type EventId = (typeof EVENT_IDS)[number]
-/** Lazy moments: a pack's events, rows in core/catalog/<pack>.ts like its signals (S-4's two bladder/water moments, S-3's gut-flow peak, S-5's blood-fat peak). */
-export type PackEventId = KidneyEventId | CirculationEventId | LymphEventId
+/** Lazy moments: a pack's events, rows in core/catalog/<pack>.ts like its signals (S-4's two bladder/water moments, S-3's gut-flow peak, S-5's blood-fat peak, S-6's insulin peak). */
+export type PackEventId = KidneyEventId | CirculationEventId | LymphEventId | ControlEventId
 /** Every moment a run can carry: the lean catalog's events and the packs'. */
 export type RunEventId = EventId | PackEventId
 export type CatalogId = SignalId | RunEventId

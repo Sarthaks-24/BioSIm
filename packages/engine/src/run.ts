@@ -27,6 +27,7 @@ export { CIRCULATION_EVENTS, CIRCULATION_EVENT_IDS, CIRCULATION_SIGNALS, CIRCULA
 export { PACK_PARAMS, type PackParams } from './packParams.ts'
 export { KIDNEY_EVENTS, KIDNEY_EVENT_IDS, KIDNEY_SIGNALS, KIDNEY_SIGNAL_IDS } from './core/catalog/kidneys.ts'
 export { LYMPH_EVENTS, LYMPH_EVENT_IDS, LYMPH_SIGNALS, LYMPH_SIGNAL_IDS } from './core/catalog/lymph.ts'
+export { CONTROL_EVENTS, CONTROL_EVENT_IDS, CONTROL_SIGNALS, CONTROL_SIGNAL_IDS } from './core/catalog/control.ts'
 export { ABSORB_RATE_ID, CARBS_OUT, LEFTOVERS_IN_COLON, LEFT_WATER, stomachArrivalMin } from './modules/gut.ts'
 export { ACTIVITY_CODES, ACTIVITY_MET, activityProblems } from './modules/activity.ts'
 export { ENERGY_TOTAL } from './modules/energy.ts'

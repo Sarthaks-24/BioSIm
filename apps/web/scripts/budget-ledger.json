@@ -93,6 +93,15 @@
         "engineKB": 11.166,
         "simRatchetKB": 188.689,
         "simEngineRatchetKB": 199.955
+      },
+      {
+        "wp": "S-6 (engine)",
+        "at": "2026-10-14",
+        "on": "v3 1f90664 (S-5) + wp/s6-insulin-eng, merged: insulin open loop and the brain's glucose use inside bloodSugar, in the engine chunk (rows blood.insulin, brain.glucoseUse, event.insulinPeak lazy in core/catalog/control.ts, shipsIn v3.1, not public; numbers in packParams.ts); /sim 188.489 -> 188.479 (-0.010), engine 11.166 -> 11.974 (+0.808)",
+        "simKB": 188.479,
+        "engineKB": 11.974,
+        "simRatchetKB": 188.679,
+        "simEngineRatchetKB": 200.753
       }
     ]
   },

@@ -697,7 +697,62 @@ export const SOURCES = {
     url: 'https://doi.org/10.1371/journal.pone.0096808',
     citation: 'Joshi SR, et al. Prevalence of dyslipidemia in urban and rural India: the ICMR–INDIAB study. PLoS One 2014;9:e96808.',
   },
-  // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
+  // ── V-6 (S-6, insulin open loop and the brain's glucose use), read 2026-10-14 ──
+  /** Checked 2026-10-14 (V-6, BioModels BIOMD0000000379 SBML, normal subject): α 0.05, β 0.11, K 2.3, S_b 1.8 pmol/kg/min, m2 0.484, m4 0.194, m5 0.0304, m6 0.6471, HE = m6 − m5·S, G_b 95, I_b 25 pmol/L. */
+  dallaman2007: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor:
+      'insulin secretion (α 0.05, β 0.11, K 2.3, basal 1.8 pmol/kg/min) and the liver share it removes (m2 0.484, m4 0.194, m5 0.0304, m6 0.6471)',
+    url: 'https://www.ebi.ac.uk/biomodels/BIOMD0000000379',
+    citation:
+      'Dalla Man C, Rizza RA, Cobelli C. Meal simulation model of the glucose-insulin system. IEEE Trans Biomed Eng 2007;54:1740–1749.',
+  },
+  /** Checked 2026-10-14 (V-6, full text, PMC3632184, p. S225): "the half-life of insulin is ~5 min". Duckworth 1998's 4–6 min was seen only through BioNumbers 103354. */
+  lebovitz2011: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'plasma insulin half-life about 5 min',
+    url: 'https://doi.org/10.2337/dc11-s225',
+    citation:
+      'Lebovitz HE. Insulin: potential negative consequences of early routine use in patients with type 2 diabetes. Diabetes Care 2011;34(Suppl 2):S225–S230.',
+  },
+  /** Checked 2026-10-14 (V-6, full text, PMC5831567, Table 2): normal type (n 39) insulin 6.2 ± 2.7, 74.1 ± 33.4, 42.3 ± 23.7, 36.1 ± 21.5 µU/mL at 0, 30, 60, 120 min. */
+  takahashi2018: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: '75 g OGTT: insulin peaks at the 30–60 min sample, 6–20× fasting, still about 6× at 120 min; spread ±45 %',
+    url: 'https://doi.org/10.1155/2018/5742497',
+    citation:
+      'Takahashi K, Nakamura H, Sato H, Matsuda H, Takada K, Tsuji T. Four plasma glucose and insulin responses to a 75 g OGTT in healthy young Japanese women. J Diabetes Res 2018;2018:5742497.',
+  },
+  /** Checked 2026-10-14 (V-6, abstract, PMC329589): normal subjects, basal 5.4 ± 0.5 nmol/h; 63 ± 5, 67 ± 5, 65 ± 6 nmol in the 4 h after each meal. */
+  polonsky1988: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'insulin made in the 4 h after a mixed meal: about 3× the basal output over 4 h (63–67 vs 21.6 nmol)',
+    url: 'https://doi.org/10.1172/JCI113339',
+    citation:
+      'Polonsky KS, Given BD, Van Cauter E. Twenty-four-hour profiles and pulsatile patterns of insulin secretion in normal and obese subjects. J Clin Invest 1988;81:442–448.',
+  },
+  /** Checked 2026-10-14 (V-6, full text, PMC3900881): the brain is "~2% of the body weight" and uses "~5.6 mg glucose per 100 g human brain tissue per minute". */
+  mergenthaler2013: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'brain glucose use 5.6 mg per 100 g per minute; brain about 2 % of body weight',
+    url: 'https://doi.org/10.1016/j.tins.2013.07.001',
+    citation:
+      'Mergenthaler P, Lindauer U, Dienel GA, Meisel A. Sugar for the brain: the role of glucose in physiological and pathological brain function. Trends Neurosci 2013;36:587–597.',
+  },
+  /** Checked 2026-10-14 (V-6, scanned full text, p. 14): "brain consumes 100 to 145 grams of glucose/24 hours, or 400 to 570 Calories/day". */
+  cahill1968: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'the brain uses 100–145 g of glucose a day',
+    url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC2441175/',
+    citation: 'Cahill GF Jr, Owen OE. Starvation and survival. Trans Am Clin Climatol Assoc 1968;79:13–20.',
+  },
+  // Bundles D/E/F add theirs (ferrannini1985, taylor1996, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
 export type RegisteredSourceId = keyof typeof SOURCES
@@ -880,6 +935,21 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'lymph.plasmaDl': { sources: ['openstax-ap2e-18'], basis: 'measured' },
   'lymph.fastingMgDl': { sources: ['liu2022'], basis: 'measured' },
   'lymph.peakMinRiseMgDl': { sources: [], basis: 'display' },
+  // Insulin, open loop, and the brain's glucose use (S-6; packParams.ts insulin, brain).
+  'insulin.alphaPerMin': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.betaPerMgDl': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.kDynamic': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.basalSecretion': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.liverM2': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.liverM4': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.liverM5': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.liverM6': { sources: ['dallaman2007'], basis: 'measured' },
+  'insulin.raGainPerGPerMin': { sources: ['takahashi2018'], basis: 'calibrated' },
+  'insulin.halfLifeMin': { sources: ['lebovitz2011'], basis: 'measured' },
+  'insulin.bandLow': { sources: ['takahashi2018'], basis: 'assumption' },
+  'insulin.bandHigh': { sources: ['takahashi2018'], basis: 'assumption' },
+  'insulin.peakMinRise': { sources: [], basis: 'display' },
+  'brain.glucoseGPerH': { sources: ['mergenthaler2013', 'cahill1968'], basis: 'measured' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

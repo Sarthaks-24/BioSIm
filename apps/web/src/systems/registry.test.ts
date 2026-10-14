@@ -81,7 +81,7 @@ describe('systems registry (architecture §5.2)', () => {
         { id: 'blood', signals: ['kidney.filtrationRate' as never], unit: 'kcal/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
-        { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
+        { id: 'gut', signals: ['liver.glucoseOutput' as never], unit: 'mg/dL' },
         // A pack's graph names its tab from the pack's own words.
         { id: 'insulin', tab: 'sys.control.strips.insulin', signals: ['gut.stomach.contentG'], unit: 'g' },
       ],
@@ -97,8 +97,8 @@ describe('systems registry (architecture §5.2)', () => {
       'hormones: slot 2 (blood) unit kcal/min has no text (registry/units.ts)',
       'hormones: slot 2 (blood) signal kidney.filtrationRate has no row registered by its pack',
       "hormones: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
-      'hormones: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
-      'hormones: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
+      'hormones: slot 4 (gut) signal liver.glucoseOutput is not provided by the engine (PROVIDES)',
+      'hormones: slot 4 (gut) signal liver.glucoseOutput has no row registered by its pack',
       "hormones: slot 5 (insulin)'s tab has no English text sys.control.strips.insulin",
     ])
   })

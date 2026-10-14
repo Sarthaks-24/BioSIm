@@ -165,19 +165,20 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
     ).toContain('event.glucosePeak: written by gas and lymph')
   })
 
-  it('a run of today’s modules has no rhythms; its moments are the five from events.ts, activity’s two, circulation’s one, water’s two and lymph’s one', () => {
+  it('a run of today’s modules has no rhythms; its moments are the five from events.ts, activity’s two, bloodSugar’s one, circulation’s one, water’s two and lymph’s one', () => {
     const sim = simulate(meal, { particles: 0 })
     expect(sim.rhythms.size).toBe(0)
     expect(HUMAN_MODULES.flatMap((m) => m.rhythms ?? [])).toEqual([])
     expect(HUMAN_MODULES.flatMap((m) => m.moments ?? [])).toEqual([
       'event.activityStart',
       'event.activityEnd',
+      'event.insulinPeak',
       'event.gutFlowPeak',
       'event.bladderFirstUrge',
       'event.halfMealWaterPassed',
       'event.triglyceridePeak',
     ])
-    expect(sim.moments.size).toBe(11)
+    expect(sim.moments.size).toBe(12)
     // Resting: the activity moments do not happen.
     expect(sim.moments.get('event.activityStart')?.atMin).toBeNull()
     expect(sim.moments.get('event.activityEnd')?.atMin).toBeNull()
