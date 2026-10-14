@@ -173,6 +173,12 @@
 //   186.515 KB on v3 94aa67e (+1.23; the title alone +0.55). The pack and the picker share no module
 //   with the stage (props, written-out helpers; a vite group keeps the clock and the registry one
 //   chunk): a shared module is otherwise split out of the route chunk (+1.9 KB measured).
+//   FIX-V3 (2026-10-14, branch v3; R93): focus goes back to the chip that opened the meal sheet (its
+//   logic loads with the sheet) and to a sensible chip after ✕, the bout marks' download is tried
+//   again, links name the layer with bouts: /sim 186.520 → 186.865 KB on v3 a2354c5 (+0.35), engine
+//   10.662 KB. New enforced checks: the v3 ratchets (ledger `v3`: /sim 187.065, /sim + engine
+//   197.827 KB), the system-chunk imports, and every lazy JS file in a pack-manifest entry (the legs'
+//   chunk was in none) or on the allow-list.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -326,18 +332,39 @@ const ratchetProblems = []
 }
 
 // The lazy-layer trap (R93 #8; enforced): a system's lazy code (a dynamic entry under src/systems/)
-// may import statically only the chunks every lazy part can count on: the entry (index), React's
-// jsx-runtime, i18n and the kit. A stage module it imports is split out of /sim's route chunk with
-// everything the two share (+1.9 KB gz on /sim for the lymph map before flat/layerKit.ts).
+// may import statically, of /sim's first download, only the chunks every lazy part can count on:
+// the entry (index), React's jsx-runtime, i18n and the kit. A stage module it imports is split out of
+// /sim's route chunk with everything the two share (+1.9 KB gz on /sim for the lymph map before
+// flat/layerKit.ts). Two named exceptions cost /sim nothing: the route chunk itself (a whole chunk,
+// nothing is cut out of it) and `clock`, a chunk group in vite.config.ts whose contents are fixed
+// (U-2: the meal clock and the registry, which the breathing pack reads). A chunk outside /sim's
+// first download (the pack's words, code it shares with the engine) moves nothing out of /sim; the
+// engine's side of it is in the /sim + engine ratchet above.
 const SYSTEM_SHARED = ['jsx-runtime', 'i18n', 'kit']
+const SYSTEM_SHARED_GROUPS = ['clock']
 const trapProblems = []
-for (const [key, chunk] of Object.entries(manifest)) {
-  if (!chunk.isDynamicEntry || !key.startsWith('src/systems/')) continue
-  for (const dep of chunk.imports ?? [])
-    if (dep !== 'index.html' && !SYSTEM_SHARED.some((n) => new RegExp(`^_*${n}-`).test(dep)))
-      trapProblems.push(`${key} imports ${dep} statically: only ${['index', ...SYSTEM_SHARED].join(', ')} (hand it over, flat/layerKit.ts)`)
+{
+  const simKeys = new Set()
+  const walk = (key) => {
+    if (simKeys.has(key) || !manifest[key]) return
+    simKeys.add(key)
+    for (const dep of manifest[key].imports ?? []) walk(dep)
+  }
+  SIM_ROOTS.forEach(walk)
+  const allowed = (dep) =>
+    dep === 'index.html' ||
+    SIM_ROOTS.includes(dep) ||
+    [...SYSTEM_SHARED, ...SYSTEM_SHARED_GROUPS].some((n) => new RegExp(`^_*${n}-`).test(dep))
+  for (const [key, chunk] of Object.entries(manifest)) {
+    if (!chunk.isDynamicEntry || !key.startsWith('src/systems/')) continue
+    for (const dep of chunk.imports ?? [])
+      if (simKeys.has(dep) && !allowed(dep))
+        trapProblems.push(`${key} imports ${dep} statically: of /sim only index, jsx-runtime, i18n, kit (hand it over, flat/layerKit.ts)`)
+  }
 }
-console.log(`System chunks import only index, jsx-runtime, i18n, kit (enforce): ${trapProblems.length ? 'FAILS' : 'ok'}`)
+console.log(
+  `System chunks take from /sim only index, jsx-runtime, i18n, kit, the route, clock (enforce): ${trapProblems.length ? 'FAILS' : 'ok'}`,
+)
 
 // Every lazy JS file works offline once saved (plan qa-fixes §3.2, as R71 and R93 #7 changed it): it is
 // in at least one entry of pack-manifest.json, so Teach's "Save for class offline" saves it, or on

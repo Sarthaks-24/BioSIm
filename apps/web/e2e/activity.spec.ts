@@ -148,3 +148,31 @@ test('6 foods and 3 bouts: every chip shown or counted in "+n", on one row (EN a
     }
   }
 })
+
+test('the meal sheet gives the focus back to the chip that opened it; ✕ moves it to a chip, never the page (R93 #10, #11)', async ({
+  page,
+}) => {
+  await open(page, '/sim?v=3&a=cola:1&act=walk.30.20,run.120.10')
+  await showChip(page, /^Change Walk 20 min, from 0:30/)
+  const walk = boutChip(page, /Walk 20 min, from 0:30/)
+  await expect(walk).toHaveAttribute('aria-haspopup', 'dialog')
+  await walk.click()
+  const sheet = page.locator('[data-activity-sheet]')
+  await expect(sheet).toBeVisible()
+  // The lengths are one group, named once, each read with its unit.
+  await expect(sheet.getByRole('group', { name: 'How long (minutes)' }).getByRole('button', { name: '20 min', exact: true })).toBeVisible()
+  // Switching to Food and back keeps the focus on the switch.
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Food', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Food', exact: true })).toBeFocused()
+  await dialog.getByRole('button', { name: 'Activity', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Activity', exact: true })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(sheet).toBeHidden()
+  await expect(walk).toBeFocused()
+  // ✕ on the walk: the focus goes to the chip now in its place (the run), not to the page.
+  await page.getByRole('button', { name: 'Remove Walk 20 min, from 0:30' }).click()
+  await expect.poll(() => param(page, 'act')).toBe('run.120.10')
+  await expect(page.locator(':focus')).toHaveCount(1)
+  expect(await page.evaluate(() => document.activeElement?.closest('[data-plan-strip]') != null)).toBe(true)
+})

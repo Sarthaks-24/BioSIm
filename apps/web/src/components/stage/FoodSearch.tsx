@@ -8,6 +8,30 @@ import { useRunStore } from '../../state/run.ts'
 import { CheckIcon, CloseIcon, IconButton, SearchIcon, Segmented } from '../kit/index.ts'
 import type { MealSheet } from './AddFoodSheet.tsx'
 
+/** The plan strip's chips' first buttons (a food's servings, a bout's change), in order. */
+const chipButtons = (near: Element | null | undefined) => [
+  ...(near?.closest('[data-plan-strip]')?.querySelectorAll('[data-chip] > button:first-child') ?? []),
+]
+
+/** Whether an element can take the focus: in the page and shown (not in a folded chip or a closed list). */
+const focusable = (el: Element | null | undefined): el is HTMLElement =>
+  el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0
+
+/** The chip that opened the sheet, and its place among the strip's chips (taken when the sheet shows). */
+let back: { from: HTMLElement | null; at: number } = { from: null, at: -1 }
+
+/**
+ * Where the focus goes when the meal sheet closes (R93 #10): the chip that opened it if it is still
+ * there, else the chip now at its place on the strip (the next one: that bout was removed), else
+ * `add` ("+ Add"). After the next frame: the sheet (a modal dialog, which keeps the focus inside)
+ * has gone by then, and the strip has its new chips.
+ */
+export function focusBack(add: HTMLElement | null) {
+  const { from, at } = back
+  back = { from: null, at: -1 }
+  requestAnimationFrame(() => ([from, chipButtons(add)[at]].find(focusable) ?? add)?.focus())
+}
+
 /**
  * The food search of "+ Add food" (UI-13): one list of every food with a search box on top. On a
  * phone it is a bottom sheet (thumbs reach it); from 1024 px up it opens under the button. A
@@ -19,6 +43,7 @@ export default function FoodSearch({
   anchor,
   tab = 'food',
   place = true,
+  from = null,
   activity,
   onTab = () => {},
   onClose,
@@ -28,6 +53,8 @@ export default function FoodSearch({
   tab?: NonNullable<MealSheet>['tab']
   /** Whether the half that shows takes the focus: not after the reader switched halves (R93 #11). */
   place?: boolean
+  /** The chip that opened it (none: "+ Add"), which gets the focus back (`focusBack`). */
+  from?: HTMLElement | null
   /** The Activity half (AddFoodSheet: ActivitySheet, loaded when first shown). */
   activity?: ReactNode
   onTab?: (tab: NonNullable<MealSheet>['tab']) => void
@@ -53,6 +80,9 @@ export default function FoodSearch({
   const inMeal = (foodId: string) => meal.some((i) => i.foodId === foodId)
   const close = () => dialog.current?.close()
   useBackCloses(close)
+
+  // The chip that opened the sheet, and where it is on the strip, before the sheet changes the plan.
+  useEffect(() => void (back = { from, at: chipButtons(from).indexOf(from!) }), [from])
 
   useEffect(() => {
     const d = dialog.current

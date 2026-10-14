@@ -20,35 +20,10 @@ export const MAX_SHEET_BOUTS = 3
  * in its place, else "+ Add"; R93 #10).
  */
 export type MealSheet = { tab: 'food' | 'activity'; edit?: number; switched?: boolean } | null
-export const useMealSheet = create<{ open: MealSheet; returnTo: HTMLElement | null; returnAt: number }>(() => ({
-  open: null,
-  returnTo: null,
-  returnAt: -1,
-}))
-
-/** The strip's chips' first buttons (a food's servings, a bout's change), in order. */
-const chipButtons = (near: Element | null | undefined) => [
-  ...(near?.closest('[data-plan-strip]')?.querySelectorAll('[data-chip] > button:first-child') ?? []),
-]
+export const useMealSheet = create<{ open: MealSheet; returnTo: HTMLElement | null }>(() => ({ open: null, returnTo: null }))
 
 /** Opens the meal sheet from a chip's button (`from`), which gets the focus back when it closes. */
-export const openMealSheet = (open: NonNullable<MealSheet>, from: HTMLElement) =>
-  useMealSheet.setState({ open, returnTo: from, returnAt: chipButtons(from).indexOf(from) })
-
-/** Whether an element can take the focus: in the page and shown (not in a folded chip or a closed list). */
-export const focusable = (el: Element | null | undefined): el is HTMLElement =>
-  el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0
-
-/**
- * Where the focus goes when the meal sheet closes: the chip that opened it if it is still there,
- * else the chip now at its place on the strip (the next one: that bout was removed), else `add`.
- * After the next frame: the sheet (a modal dialog, which keeps the focus inside) has gone by then,
- * and the strip has its new chips.
- */
-function focusBack(add: HTMLElement | null) {
-  const { returnTo, returnAt } = useMealSheet.getState()
-  requestAnimationFrame(() => ([returnTo, chipButtons(add)[returnAt]].find(focusable) ?? add)?.focus())
-}
+export const openMealSheet = (open: NonNullable<MealSheet>, from: HTMLElement) => useMealSheet.setState({ open, returnTo: from })
 
 /**
  * The food search is downloaded the first time it is opened, with the stage's other sheets
@@ -77,6 +52,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
   const full = meal.length >= MAX_ITEMS
   const opener = useRef<HTMLButtonElement>(null)
   const open = useMealSheet((s) => s.open)
+  const returnTo = useMealSheet((s) => s.returnTo)
   const [attempt, setAttempt] = useState(0)
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
 
@@ -89,12 +65,18 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
 
   const show = () => {
     useRunStore.setState({ capBlocked: false })
-    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' }, returnTo: null, returnAt: -1 })
+    useMealSheet.setState({ open: { tab: full ? 'activity' : 'food' }, returnTo: null })
   }
 
+  // The focus goes back (FoodSearch.tsx `focusBack`, with the sheet's code: not first paint) to the
+  // chip that opened it, else the chip now in its place, else this button (R93 #10).
   const close = () => {
-    focusBack(opener.current)
-    useMealSheet.setState({ open: null, returnTo: null, returnAt: -1 })
+    const add = opener.current
+    useMealSheet.setState({ open: null, returnTo: null })
+    import('./Sheets.tsx').then(
+      (m) => m.focusBack(add),
+      () => add?.focus(),
+    )
   }
 
   return (
@@ -129,6 +111,7 @@ export default function AddFoodSheet({ compact = false }: { compact?: boolean })
               tab={open.tab}
               // Switching Food | Activity keeps the focus on the switch; opening places it (R93 #11).
               place={!open.switched}
+              from={returnTo}
               // If it does not arrive, this boundary's box says so, as for the food search.
               activity={
                 <activitySheet.Component

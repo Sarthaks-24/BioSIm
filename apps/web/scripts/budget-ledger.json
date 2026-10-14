@@ -1,12 +1,29 @@
 {
   "about": "Track A (v2.1) size ledger, plan qa-fixes §0 and §1 (V8 frozen table). /sim first download, KB gzip (1 KB = 1000 bytes, as check-budget prints). Each FP's T-step fills `measuredNet` (its merged /sim minus the /sim before it) and `measuredAt` when it merges. An FP over its planned net goes lazy before merging. check-budget prints this table and fails when /sim is more than netLimitKB over the base (R66: +1.0 KB, from T10).",
-  "base": { "commit": "eee16c9", "simKB": 188.2 },
+  "base": {
+    "commit": "eee16c9",
+    "simKB": 188.2
+  },
   "main": {
     "commit": "adc6381",
     "simKB": 187.321,
     "about": "v3 only (R61, W-1): main's own /sim, for check-budget's v3 vs main line. Update it when main merges into v3."
   },
-  "netLimitKB": 1.0,
+  "netLimitKB": 1,
+  "v3": {
+    "about": "v3 ratchets (R93 #8, #9), enforced by check-budget: a v3 build may not pass the last row's simRatchetKB (/sim first download, KB gz) or simEngineRatchetKB (/sim + the engine chunk). Each row: measured + 0.2 KB (/sim) and + 0.3 KB (/sim + engine). A WP that grows either adds its own row here with its measured sizes, after the council accepts it; nothing else moves a ratchet. The 194 KB /sim cap (R42) never moves.",
+    "rows": [
+      {
+        "wp": "FIX-V3",
+        "at": "2026-10-14",
+        "on": "v3 a2354c5 + FIX-V3 (v3 alone: /sim 186.520, engine 10.662)",
+        "simKB": 186.865,
+        "engineKB": 10.662,
+        "simRatchetKB": 187.065,
+        "simEngineRatchetKB": 197.827
+      }
+    ]
+  },
   "rows": [
     {
       "fp": "FP-10",

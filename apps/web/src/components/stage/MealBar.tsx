@@ -7,7 +7,7 @@ import { useRunStore } from '../../state/run.ts'
 import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../LoadBoundary.tsx'
 import { FlagIcon, FoodChip, IconButton, LinkIcon, MoreIcon } from '../kit/index.ts'
 import { announce } from '../graphs/StripAnnouncer.tsx'
-import AddFoodSheet, { focusable, openMealSheet } from './AddFoodSheet.tsx'
+import AddFoodSheet, { openMealSheet } from './AddFoodSheet.tsx'
 import KeepButton from './KeepButton.tsx'
 import KeptTag, { LineSwatch } from './KeptTag.tsx'
 import Popover from './Popover.tsx'
@@ -212,7 +212,7 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
       const items = [...(list.current?.children ?? [])] as HTMLElement[]
       const li = items[Math.min(at, items.length - 1)]
       const target = li && (li.hidden ? plus.current : li.querySelector('button'))
-      ;(focusable(target) ? target : strip.current?.querySelector<HTMLElement>('[data-add-food]'))?.focus()
+      ;(target?.getClientRects().length ? target : strip.current?.querySelector<HTMLElement>('[data-add-food]'))?.focus()
     })
   }
   const chips: Chip[] = [
