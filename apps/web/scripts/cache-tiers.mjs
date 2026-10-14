@@ -8,7 +8,7 @@
 // working), Home's race, the link notes, the pictures they show (resting body, QR), the latin woff2
 // fonts and the icons. Everything else loads when first used and is runtime-cached: the 3D body
 // (three.js, about 970 KB), the stage's on-use parts (sheets, "More", "How we know", overlays, the
-// "⋯" panel, the report form), the "new version" note, the latin-ext fonts, every other system
+// "⋯" panel, the report form), the "new version" note, the latin-ext fonts, the engine worker (W-2), every other system
 // pack, Hindi. A new lazy part is lazy by default: the precache grows only by an explicit ruling
 // (R74), which is a new entry in CORE_ROOTS. The `.woff` fallbacks are never saved (no modern
 // browser asks for them).
@@ -65,6 +65,12 @@ export const THREE_D = 'src/three/BodyCanvas.tsx'
 export const LIMBS = 'src/flat/limbs.ts'
 /** What a system pack's drawing loads at run time besides its own chunks (the manifest can't see it). */
 const DRAWING_DEPS = [LIMBS]
+/**
+ * The engine worker (W-2, src/engine-worker.ts): an asset of the stage's chunk (its address), but
+ * lazy (R71, architecture §4): a page runs the engine itself until the worker is here, offline too.
+ * Saved with the stage's lesson, so a class saved for offline gets it.
+ */
+export const WORKER = /^assets\/engine-worker-[\w-]+\.js$/
 /** Hindi's one file (a Hindi build only: R47). */
 export const HINDI = 'src/i18n/hi.json'
 /** /sim's first download: what every lazy part can count on. */
@@ -134,7 +140,7 @@ function closure(manifest, roots, font) {
     if (!chunk) throw new Error(`cache-tiers: not in the build manifest: ${key}`)
     files.add(chunk.file)
     for (const css of chunk.css ?? []) files.add(css)
-    for (const asset of chunk.assets ?? []) if (!isFont(asset) || font(asset)) files.add(asset)
+    for (const asset of chunk.assets ?? []) if ((!isFont(asset) || font(asset)) && !WORKER.test(asset)) files.add(asset)
     for (const dep of chunk.imports ?? []) walk(dep)
   }
   roots.forEach(walk)
@@ -193,6 +199,7 @@ export function cacheTiers(manifest, assetFiles) {
   for (const [id, pack] of Object.entries(LESSON_PACKS))
     if (pack.roots.every((k) => manifest[k]))
       packs[id] = { webgl: !!pack.webgl, files: lazyOf(pack.webgl ? [...pack.roots, ...layers3d(manifest)] : pack.roots) }
+  if (packs.stage) packs.stage.files.push(...[...lazy].filter((f) => WORKER.test(f)))
   for (const id of Object.keys(PACK_SYSTEMS)) {
     if (id === 'core') continue
     const files = lazyOf(packRoots(manifest, id))

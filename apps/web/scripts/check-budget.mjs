@@ -202,11 +202,25 @@
 //   259.7 → 260.7 KB (+1.0, enforced ≤ 270), plus the 3D-layer check (each other layer a lazy chunk
 //   ≤ 20 KB). /sim 187.862 → 187.888 KB (+0.03: BodyView hands the row's layer to the 3D body),
 //   under the ratchet, so no ledger row.
+//   W-2 (2026-10-14, branch wp/w2-worker from v3 2a96599; v3.1): the engine worker. One classic iife
+//   file (src/engine-worker.ts, assets/engine-worker-*.js) holding the run; lazy (R71: in lp-lazy on
+//   first use, saved with the stage's lesson, never precached) and enforced at ≤ 45 KB gz / 150 raw.
+//   /sim takes only its address and the page side of the async run; the wire format and the worker's
+//   page side (toWire / fromWire, connectWorker) ride in the engine chunk. Ledger row W-2.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
-import { ENGINE, PACK_SYSTEMS, SIM_ROOTS, packManifest, staticFiles as manifestFiles, tierProblems, tiersOf } from './cache-tiers.mjs'
+import {
+  ENGINE,
+  PACK_SYSTEMS,
+  SIM_ROOTS,
+  WORKER,
+  packManifest,
+  staticFiles as manifestFiles,
+  tierProblems,
+  tiersOf,
+} from './cache-tiers.mjs'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
@@ -240,6 +254,9 @@ const BUDGETS = [
   { name: 'lazy total (raw)', lazyTotal: true, max: Infinity, mode: 'report' },
   // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
   { name: 'engine (lazy)', roots: [ENGINE], minus: SIM_ROOTS, max: 45 * KB, mode: 'report' },
+  // W-2: the engine worker, one lazy file (architecture §3.2: ≤ 45 KB gz / ≤ 150 KB raw, enforced).
+  { name: 'engine worker (lazy)', worker: 'gz', max: 45 * KB, mode: 'enforce' },
+  { name: 'engine worker (raw)', worker: 'raw', max: 150 * KB, mode: 'enforce' },
   // U-5 (v3.1): the lymph pack (its graphs' words, the germ-defence card, the map with its fat dots,
   // its English: one lazy module, systems/lymph/pack.ts), at most 20 KB gz like every system pack
   // (ui-ux §9, anatomy plan §8). A-11a's "germ card + map ≤ 5 KB" row measured the same chunk when it
@@ -285,11 +302,14 @@ function precacheFiles() {
 }
 
 const tiers = tiersOf(dist)
+/** The engine worker's file (W-2): lazy, one file. */
+const workerFiles = [...tiers.lazy].filter((f) => WORKER.test(f))
 
 const rows = BUDGETS.map((b) => {
   let bytes
   if (b.precache) bytes = precacheFiles().reduce((sum, f) => sum + size(f), 0)
   else if (b.lazyTotal) bytes = [...tiers.lazy].reduce((sum, f) => sum + size(f), 0)
+  else if (b.worker) bytes = workerFiles.reduce((sum, f) => sum + (b.worker === 'gz' ? gzip(f) : size(f)), 0)
   else {
     const already = new Set(b.minus ? staticFiles(b.minus) : [])
     bytes = staticFiles(b.roots)
@@ -515,6 +535,11 @@ const guardProblems = []
     if (text.includes('not in needs')) guardProblems.push(`${engine.file} still has ctx.get's development checks ("not in needs")`)
     if (!precacheFiles().includes(engine.file)) guardProblems.push(`${engine.file} is not precached: /sim would not run offline`)
   }
+  // W-2: one engine worker file, lazy (the tier checks keep it out of the precache), and it is the engine.
+  if (workerFiles.length !== 1) guardProblems.push(`expected one lazy engine worker file, found ${workerFiles.length}`)
+  for (const f of workerFiles)
+    if (!fs.readFileSync(path.join(dist, f), 'utf8').includes('simulate: unknown organism'))
+      guardProblems.push(`${f} is not the engine (no "simulate: unknown organism")`)
   console.log(`\nEngine not in /sim (enforce): ${guardProblems.length ? `FAILS\n  ${guardProblems.join('\n  ')}` : 'ok'}`)
 }
 
