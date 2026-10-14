@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { ActiveSignalId, ChartableSeries, ProfileId, Series, RunResult } from '@lifepeek/engine'
 import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
+import { windowEnd } from '../../lib/time.ts'
 import { stripDescription } from '../../lib/stripSummary.ts'
 import { useSheet } from '../../state/sheet.ts'
 import { tabKey, type GraphSlotDef, type SystemUi } from '../../systems/registry.ts'
@@ -124,7 +125,8 @@ export function RunStrip({
       },
     [second, t],
   )
-  const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
+  // Drawn to the bar's end: 48 h, or the lit system's window (lib/time.ts; the column is drawn again when it changes).
+  const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: Math.min(run.horizonMin, windowEnd()) }), [run.stepMin, run.horizonMin])
 
   // Read after the graph's name (aria-describedby) and above its table: this meal, then the kept one (G8).
   const description = useMemo(

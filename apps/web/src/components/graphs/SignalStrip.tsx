@@ -2,7 +2,7 @@ import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type Re
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActivityBout, type ChartableSeries, type Series } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
-import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS } from '../../lib/time.ts'
+import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS, windowEnd } from '../../lib/time.ts'
 import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks, type Domain } from '../../lib/axis.ts'
 import { formatNumber, formatSignal, unitLabel } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
@@ -401,7 +401,7 @@ export default function SignalStrip({
                     y2={Math.round(yAt(v, domain, height)) + 0.5}
                   />
                 ))}
-                {TIMELINE_TICKS.filter((m) => m > 0 && m < HORIZON_MIN && m !== KNEE_MIN).map((m) => (
+                {TIMELINE_TICKS.filter((m) => m > 0 && m < windowEnd() && m !== KNEE_MIN).map((m) => (
                   <line key={m} x1={Math.round(xAt(m, width)) + 0.5} x2={Math.round(xAt(m, width)) + 0.5} y1="0" y2={height} />
                 ))}
               </g>

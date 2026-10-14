@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { RunResult } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
 import { useSheet } from '../../state/sheet.ts'
-import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos } from '../../lib/time.ts'
+import { HORIZON_MIN, KNEE_FRACTION, KNEE_MIN, TIMELINE_TICKS, formatDuration, posToTime, timeToPos, windowEnd } from '../../lib/time.ts'
 import { posAt } from '../../lib/axis.ts'
 import { boutMoments, groupClose, hasPlan, hitAreas, momentNameKey, type Moment } from '../../lib/moments.ts'
 import { useRunStore } from '../../state/run.ts'
@@ -66,6 +66,8 @@ interface Marker {
 
 export default function Timeline({ run, kept }: { run: RunResult; kept: RunResult | null }) {
   const { t } = useTranslation()
+  // The bar's end: 48 h, or the lit system's window (the stage draws the dock again when it changes).
+  const end = windowEnd()
   // The lit system's key moments (SystemUi.moments, W-1).
   const { moments: momentsOf } = useSystemUi()
   const track = useRef<HTMLDivElement>(null)
@@ -113,15 +115,16 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
         const min = TIMELINE_TICKS[i]!
         const w = el.offsetWidth
         const x = timeToPos(min) * width
-        const left = min ? (min === HORIZON_MIN ? x - w : x - w / 2) : 0
-        const free = shown.every(([l, r]) => left >= r! + TICK_GAP || left + w <= l! - TICK_GAP)
+        const left = min ? (min === end ? x - w : x - w / 2) : 0
+        // Past a system's window (Kidneys & water: 0–12 h) a label has no place on the bar.
+        const free = min <= end && shown.every(([l, r]) => left >= r! + TICK_GAP || left + w <= l! - TICK_GAP)
         el.style.visibility = free ? '' : 'hidden'
         if (free) shown.push([left, left + w])
       }
     }
     fit()
     document.fonts.ready.then(fit)
-  }, [width, t])
+  }, [width, t, end])
 
   const markers = useMemo(() => {
     const marks: Mark[] = []
@@ -131,6 +134,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
     ] as const) {
       if (!sim || !hasPlan(sim)) continue
       for (const m of [...momentsOf(sim), ...boutMoments(sim)]) {
+        if (m.atMin > end) continue
         const name = t(momentNameKey(m.id, sim))
         const time =
           m.low != null && m.high != null
@@ -157,7 +161,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
       lines: moments.map((m) => m.line),
       ...hits[i]!,
     }))
-  }, [momentsOf, run, kept, t, width])
+  }, [momentsOf, run, kept, t, width, end])
 
   // Which names show: the marker under the pointer or the keyboard focus; else, after a marker was
   // pressed (a tap on a phone has no hover), every moment the paused clock is at, of both meals
@@ -214,7 +218,11 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
   }
 
   const knee = `${KNEE_FRACTION * 100}%`
-  const kneeLeft = useKneeSide(kneeLabel, width)
+  // A system's shorter window (ui-ux §4): "0–12 h shown · 48 h ›" at the bar's end, the knee's words left of its line.
+  const windowMin = useClock((s) => s.windowMin)
+  const wide = useClock((s) => s.wide)
+  const windowed = windowMin < HORIZON_MIN
+  const kneeLeft = useKneeSide(kneeLabel, width) || windowed
   return (
     <div className="relative select-none">
       {/*
@@ -229,8 +237,18 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
         className="pointer-events-none absolute top-0.5 text-caption leading-none whitespace-nowrap text-ink-muted max-sm:hidden"
         style={kneeLeft ? { right: `calc(${(1 - KNEE_FRACTION) * 100}% + 0.375rem)` } : { left: `calc(${knee} + 0.375rem)` }}
       >
-        {t('dock.squeezed', { from: formatDuration(KNEE_MIN, t), to: formatDuration(HORIZON_MIN, t) })}
+        {t('dock.squeezed', { from: formatDuration(KNEE_MIN, t), to: formatDuration(end, t) })}
       </span>
+      {windowed && (
+        <button
+          type="button"
+          data-window={end}
+          onClick={() => useClock.getState().setWindow(windowMin, !wide)}
+          className="absolute top-0 right-0 z-10 h-6 rounded-control px-1 text-caption leading-6 whitespace-nowrap text-ink-muted hover:text-ink"
+        >
+          {t(wide ? 'dock.windowAll' : 'dock.window', { to: formatDuration(windowMin, t), all: formatDuration(HORIZON_MIN, t) })}
+        </button>
+      )}
       {/* The dotted line, through the track only: the clock's words above it (phones) stay clear. */}
       <span
         aria-hidden="true"
@@ -246,7 +264,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
           tabIndex={0}
           aria-label={t('sim.timeline')}
           aria-valuemin={0}
-          aria-valuemax={HORIZON_MIN}
+          aria-valuemax={end}
           aria-describedby="scrubber-keys"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -285,7 +303,7 @@ export default function Timeline({ run, kept }: { run: RunResult; kept: RunResul
             aria-hidden="true"
             data-tick=""
             className={`tabular absolute top-[calc(var(--lane)-2px)] -translate-y-full text-caption leading-none whitespace-nowrap text-ink-muted ${
-              m === 0 ? '' : m === HORIZON_MIN ? '-translate-x-full' : '-translate-x-1/2'
+              m === 0 ? '' : m === end ? '-translate-x-full' : '-translate-x-1/2'
             }`}
             style={{ left: `${timeToPos(m) * 100}%` }}
           >

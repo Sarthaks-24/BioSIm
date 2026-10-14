@@ -1,10 +1,11 @@
 import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
+import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
-const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS]
+const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS, ...KIDNEY_ROWS.filter((r): r is SignalMeta => r.unit !== 'min')]
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -34,6 +35,8 @@ export function catalogKeys(): KeyUse {
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }
+  // A pack's moments (U-4: the kidneys'), named in the dock like the lean catalog's.
+  for (const row of KIDNEY_ROWS) if (row.unit === 'min') required.add(`${row.i18nKey}.name`)
   required.add('signals.event.never')
   for (const s of SIGNAL_STATUSES) for (const sub of ['label', 'help']) required.add(`status.${s}.${sub}`)
   required.add('status.howWeKnow')

@@ -27,11 +27,28 @@ export const PACK_SECTIONS = Object.keys(PACK_SYSTEMS)
 
 /**
  * The signals the stage graphs on its first paint (digestion's slots, systems/digestion/def.ts),
- * and the events (the dock's moments): their names stay in the core text. Every other signal's
- * texts load with "How we know", which is the only part that names them (R76; sections.test
- * checks this list against the registry's slots).
+ * and the lean catalog's events (the dock's moments, engine EVENT_IDS, and "never"): their names
+ * stay in the core text. Every other signal's texts load with "How we know", which is the only part
+ * that names them (R76; sections.test checks this list against the registry's slots). A pack's own
+ * moments (U-4: the bladder's first urge) are named in the lazy section, which its pack loads.
  */
-const GRAPHED_SIGNALS = ['gut.stomach.contentG', 'blood.glucose', 'energy.inRate', 'energy.usedRate', 'event']
+const CORE_EVENTS = [
+  'stomachHalfEmpty',
+  'glucosePeak',
+  'glucoseBackToBase',
+  'mostlyAbsorbed',
+  'firstLeftovers',
+  'activityStart',
+  'activityEnd',
+  'never',
+]
+const GRAPHED_SIGNALS = [
+  'gut.stomach.contentG',
+  'blood.glucose',
+  'energy.inRate',
+  'energy.usedRate',
+  ...CORE_EVENTS.map((e) => `event.${e}`),
+]
 
 /**
  * Sections only their own pages read, and the keys of them that every page needs (the footer's).

@@ -235,11 +235,13 @@
       "gPerMin": "grams each minute",
       "breathsPerMin": "breaths in and out in one minute",
       "mL": "millilitres (1000 mL = 1 litre)",
-      "mLPerMin": "millilitres each minute"
+      "mLPerMin": "millilitres each minute",
+      "mLPerH": "millilitres each hour"
     },
     "breathsPerMin": "{{n}} breaths a minute",
     "mL": "{{n}} mL",
-    "mLPerMin": "{{n}} mL a minute"
+    "mLPerMin": "{{n}} mL a minute",
+    "mLPerH": "{{n}} mL an hour"
   },
   "anatomy": {
     "liver": "Liver",
@@ -563,7 +565,13 @@
       "activityEnd": {
         "name": "Activity ends"
       },
-      "never": "Not within 48 h"
+      "never": "Not within 48 h",
+      "bladderFirstUrge": {
+        "name": "Bladder starts to feel full"
+      },
+      "halfMealWaterPassed": {
+        "name": "Half the meal’s water has left as urine"
+      }
     },
     "lungs": {
       "breathRate": {
@@ -593,6 +601,35 @@
         "short": "CO₂ for each O₂",
         "desc": "How much carbon dioxide is made for each unit of oxygen used: about 0.8 at rest, nearer 1 when the body runs mostly on sugar."
       }
+    },
+    "kidney": {
+      "urineRate": {
+        "name": "Urine made per hour",
+        "short": "Urine",
+        "desc": "How much urine the kidneys make each hour. Water from drinks and food makes more for an hour or two; water lost in sweat makes a little less for a while."
+      },
+      "urineTotal": {
+        "name": "Urine made so far",
+        "short": "Urine so far",
+        "desc": "All the urine made since the start: a steady day’s, about 1.5 L a day, plus what the meal’s water adds."
+      },
+      "bladderMl": {
+        "name": "Urine in the bladder",
+        "short": "Bladder",
+        "desc": "The urine stored in the bladder. At about 150 mL it starts to feel full; here it empties at 300 mL."
+      },
+      "filtrationRate": {
+        "name": "Blood filtered by the kidneys",
+        "short": "Filtered",
+        "desc": "How much liquid the kidneys filter out of the blood each minute, about 125 mL. Almost all of it is taken back; only a little leaves as urine."
+      }
+    },
+    "water": {
+      "bodyExtraMl": {
+        "name": "Water in the body above normal",
+        "short": "Extra water",
+        "desc": "Water from drinks and food that is in the body and has not yet left as urine. Below zero means sweat took more than you drank: the model assumes you drink it back over about 90 minutes."
+      }
     }
   },
   "limits": {
@@ -607,7 +644,11 @@
     "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals.",
     "gasExchange": "Oxygen used and carbon dioxide made are worked out from the energy the body uses (Weir’s formula, without protein). The air in the lungs is taken to keep the same carbon dioxide, so the blood’s oxygen and carbon dioxide do not change here.",
     "breathSplit": "How the extra air is shared between faster and deeper breaths is a rule picked by hand (a model estimate): real people differ.",
-    "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster."
+    "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster.",
+    "waterSteadyDay": "We assume a steady day: about 1.5 L of urine a day from other food and drink. The body is always well watered, so sweat is drunk back over about 90 minutes.",
+    "bladderEmpties": "At about 150 mL the bladder starts to feel full, and we can usually wait. Here it empties at 300 mL; a person chooses when.",
+    "gfrFixed": "The kidneys filter about 125 mL a minute all day here (90–140 in grown men). This model does not sleep: urine is not slower at night.",
+    "waterSimple": "The model has no salt: milk and ORS, which the body holds on to a little longer, count the same as plain water. Any drink’s water counts the same. The numbers are for a typical grown man."
   },
   "profiles": {
     "adult-ref": {
@@ -630,6 +671,10 @@
     "breathing": {
       "name": "Breathing",
       "what": "lungs"
+    },
+    "kidneys": {
+      "name": "Kidneys & water",
+      "what": "kidneys"
     }
   },
   "lifeProcess": {
@@ -762,7 +807,9 @@
     "moments": "Key moments",
     "marker": "{{name}}, {{time}}",
     "keptMarker": "Kept: {{name}}, {{time}}",
-    "usually": "{{time}} (usually {{low}} to {{high}})"
+    "usually": "{{time}} (usually {{low}} to {{high}})",
+    "window": "0–{{to}} shown · {{all}} ›",
+    "windowAll": "{{all}} shown · 0–{{to}} ›"
   },
   "graph": {
     "label": "Graph of {{name}}, from eating to 48 hours later",
@@ -981,6 +1028,64 @@
       "lesson": {
         "title": "Why do you breathe faster when you run?",
         "question": "How many breaths a minute during the run, and at rest?"
+      }
+    },
+    "kidneys": {
+      "strips": {
+        "urine": "Urine made per hour",
+        "water": "Water in the body above normal"
+      },
+      "label": {
+        "kidney": "Kidney",
+        "bladder": "Urinary bladder",
+        "ureter": "Ureter",
+        "artery": "Renal artery",
+        "vein": "Renal vein",
+        "urethra": "Urethra"
+      },
+      "background": {
+        "name": "A day without this meal",
+        "short": "A day without this meal",
+        "desc": "We assume a steady day: about 1.5 L of urine a day from other food and drink, about 62 mL an hour. The meal’s water adds to it."
+      },
+      "now": {
+        "organ": "Bladder",
+        "bladder": "{{n}} mL",
+        "rate": "urine {{n}} mL an hour",
+        "urge": "starts to feel full",
+        "kept": "Kept: urine {{n}} mL an hour"
+      },
+      "gauge": {
+        "urge": "feels full",
+        "empties": "empties",
+        "unit": "mL"
+      },
+      "moves": "Moves with water in food and drink, and with sweat.",
+      "below": "Below zero means sweat took more than you drank; the model assumes you drink it back over about 90 minutes.",
+      "filter": {
+        "value": "Kidneys filter about 125 mL a minute (about 180 L a day), the same all day here.",
+        "back": "Almost all of it is taken back: glucose in urine is 0 here.",
+        "source": "Source: OpenStax Anatomy and Physiology 2e, section 25.5"
+      },
+      "summary": {
+        "flat": "Urine stays about a steady day’s: about {{n}} mL an hour.",
+        "flatReason": "Urine moves with water in food and drink, and with sweat. This meal has little water.",
+        "peak": "Most urine: about {{n}} mL an hour, at {{time}} (a day without this meal: {{base}}).",
+        "half": "Half the meal’s water has left as urine by {{time}}.",
+        "sweat": "Less urine during and after moving, because sweat took some water: about {{n}} mL an hour at the least.",
+        "compare": "Half the meal’s water has left by {{run}} with this plan, {{kept}} with the kept one.",
+        "comparePeak": "Most urine: about {{run}} mL an hour with this plan, {{kept}} with the kept one.",
+        "compareWater": "Water in: {{run}} mL and {{kept}} mL. Any drink’s water counts the same.",
+        "same": "Urine is about the same in both: at most about {{n}} mL an hour."
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}.",
+        "low": "{{name}}: {{start}} at the start, {{low}} at the least, at {{time}}."
+      },
+      "lesson": {
+        "title": "Where does the water from a drink go?",
+        "question": "How much urine an hour at the most, with four glasses and with one?"
       }
     }
   },

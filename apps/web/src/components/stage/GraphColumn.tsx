@@ -68,7 +68,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const keptRun = useRunStore((s) => s.kept)
   const { organism } = ORGANISMS[DEFAULT_ORGANISM]
   const slots = useSlots(run)
-  const { stripSummary, card: Card, note: Note } = useSystemUi()
+  const { stripSummary, card: Card, note: Note, background } = useSystemUi()
   // The picked tab lives in a store, so the key map can switch it too (1–3, and S, B, E: lib/keys.ts).
   const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
@@ -113,7 +113,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
                   slot={slot}
                   summarize={stripSummary}
                   series={run.signals.get(id) as ChartableSeries}
-                  second={secondId ? run.signals.get(secondId) : null}
+                  second={secondId ? run.signals.get(secondId) : background?.(slot, run)}
                   range={slot.range ?? organism.signalOverrides[id]?.displayRange}
                   note={Note && <Note slot={slot} />}
                   run={run}

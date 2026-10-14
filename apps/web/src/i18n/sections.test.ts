@@ -36,6 +36,9 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/digestion/def.ts',
     // Breathing's graphs name their limits for the panel, as digestion's def does (U-2).
     'systems/breathing/ui.tsx',
+    // Kidneys' graphs and their background line, the same (U-4).
+    'systems/kidneys/ui.tsx',
+    'systems/kidneys/water.ts',
   ],
   stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
@@ -45,8 +48,14 @@ const ALLOWED: Record<string, readonly string[]> = {
   // The rings' notes are passed to the panel and read when it draws (Say), like the limits.
   graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
   // unitInWords is called by the panel only.
-  // The breathing pack's text brings the units section (systems/breathing/text.ts).
-  units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts', 'registry/units.ts', 'systems/breathing/summary.ts'],
+  // The breathing and kidneys packs' texts bring the units section (systems/<pack>/text.ts).
+  units: [
+    'components/graphs/HowWeKnowPanel.tsx',
+    'lib/formatSignal.ts',
+    'registry/units.ts',
+    'systems/breathing/summary.ts',
+    'systems/kidneys/summary.ts',
+  ],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
   mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],

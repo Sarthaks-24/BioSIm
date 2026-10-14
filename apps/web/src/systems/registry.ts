@@ -1,10 +1,23 @@
 import type { ComponentType, RefObject } from 'react'
 import type { TFunction } from 'i18next'
-import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, MealItem, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
+import type {
+  ActiveSignalId,
+  ActivityBout,
+  CatalogId,
+  Clock,
+  EventMeta,
+  MealItem,
+  RunEventId,
+  RunResult,
+  Series,
+  SignalMeta,
+  Unit,
+} from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
+import { KIDNEYS } from './kidneys/row.ts'
 import { LYMPH } from './lymph/def.ts'
 
 /**
@@ -130,6 +143,11 @@ export interface SystemUi {
   lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
   card?: ComponentType
+  /**
+   * A one-signal graph's second line that is not a signal of the run, the same for every meal (U-4:
+   * urine on a day without this meal, ui-ux §7). The same object for the same run, so the graph is drawn once.
+   */
+  background?: (slot: GraphSlotDef, run: RunResult) => Series | null
 }
 
 /** A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with its release (R18). */
@@ -199,7 +217,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, LYMPH]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, KIDNEYS, LYMPH]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 
@@ -225,7 +243,7 @@ export function systemForLink(asked: string | undefined, activity: readonly Acti
 }
 
 /** One catalog row as a pack registers it. */
-export type CatalogRow = SignalMeta | EventMeta
+export type CatalogRow = SignalMeta | EventMeta<RunEventId>
 
 const ROWS = new Map<CatalogId, CatalogRow>()
 const REGISTERED = new Map<PackId, Set<CatalogId>>()

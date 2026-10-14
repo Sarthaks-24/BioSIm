@@ -42,6 +42,8 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   'breaths/min': 'breathsPerMin',
   mL: 'mL',
   'mL/min': 'mLPerMin',
+  // The kidneys pack's (U-4): its text loads with the pack too.
+  'mL/h': 'mLPerH',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */
