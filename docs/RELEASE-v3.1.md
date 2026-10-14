@@ -1,10 +1,12 @@
 # Release checklist (v3.1.0)
 
+> **Branch (R118):** this release ships from the local branch `release/3.1`, made from tag `v3.1-rc`. The `v3` branch tip already holds later work (3.1/3.2), so do not merge `v3` itself.
+
 v3.1 adds Class 10's Control and coordination and the road fat takes to the blood: lymph and
 blood-fat graphs, insulin (an open loop, not an injection guide), the hot-pan nerve demo, the
 optional 3D lungs, heart and kidneys, Teach's sixth chapter, and the engine worker (the maths can
 run off the main thread on supported browsers). The model version stays 3, sealed: v3.1 adds new
-outputs only. The code side is done on the `v3` branch. What is left are **your** steps, in this
+outputs only. The code side is done on the local branch `release/3.1` (tag `v3.1-rc` plus the final audit's fixes that apply to 3.1, R120). What is left are **your** steps, in this
 order. Tick each box.
 
 Every command is for **Git Bash**, run from the main checkout `/e/BioSim`. Pushes go **by name
@@ -12,7 +14,7 @@ only**: never `git push --tags`, never `--force`.
 
 ## 0. Where it stands
 
-    cd /e/BioSim && git checkout v3 && npm ci && npm run release-gate
+    cd /e/BioSim && git checkout release/3.1 && npm ci && npm run release-gate
 
 It says `NOT READY` with one item of yours: the CHANGELOG heading `3.1.0 (unreleased)` (you change
 it in step 3). Your v2.1 items (email, launch date, INDB date, `GOVERNANCE.md`) come from `main` in
@@ -28,38 +30,38 @@ step 2. Hindi is paused (R47): do **not** set `VITE_HINDI`.
       git -C /e/BioSim log -1 --format=%s v3.0.0
       curl -s https://lifepeek.vercel.app/teach | grep -c "Control and coordination"   # 0: v3.0 has five chapters
 
-## 2. Bring `main` into `v3`, then check `v3`
+## 2. Bring `main` into `release/3.1`, then check `release/3.1`
 
 - [ ] Merge:
 
-      cd /e/BioSim && git checkout v3
-      cd /e/BioSim && git merge main -m "Merge main (v3.0.0) into v3"
+      cd /e/BioSim && git checkout release/3.1
+      cd /e/BioSim && git merge main -m "Merge main (v3.0.0) into release/3.1"
 
   `CHANGELOG.md` will probably conflict: keep **both** entries, `## 3.1.0 (unreleased)` on top and
   `## 3.0.0` (as released, without "unreleased") under it. Any other conflict: stop and ask.
-- [ ] All green on `v3` (the e2e run takes about 30–40 minutes; it builds its own test site):
+- [ ] All green on `release/3.1` (the e2e run takes about 30–40 minutes; it builds its own test site):
 
       cd /e/BioSim && npm ci && npm run check
       cd /e/BioSim && npm run budget -w @lifepeek/web
       cd /e/BioSim && CI=1 npm run e2e -w @lifepeek/web -- --workers=2
       cd /e/BioSim && npm run release-gate        # now lists only the CHANGELOG heading
 
-  `npm run budget` says "v3 build: report" on the Track A line (R115): on v3 the v3 ratchets and
+  `npm run budget` says "v3 build: report" on the Track A line (R115): on `release/3.1` the v3 ratchets and
   the 194 KB cap are the ones that must say `ok`.
 
 ## 3. Finish the CHANGELOG
 
-- [ ] In `CHANGELOG.md` change `## 3.1.0 (unreleased)` to `## 3.1.0`. Commit it on `v3`:
+- [ ] In `CHANGELOG.md` change `## 3.1.0 (unreleased)` to `## 3.1.0`. Commit it on `release/3.1`:
 
       cd /e/BioSim && git commit -am "v3.1.0: changelog"
       cd /e/BioSim && npm run release-gate        # must say READY
 
-## 4. Merge `v3` into `main`
+## 4. Merge `release/3.1` into `main`
 
 - [ ] Merge:
 
       cd /e/BioSim && git checkout main
-      cd /e/BioSim && git merge --no-ff v3 -m "Merge v3: LifePeek 3.1 (control and coordination, lymph, 3D)"
+      cd /e/BioSim && git merge --no-ff release/3.1 -m "Merge release/3.1: LifePeek 3.1 (control and coordination, lymph, 3D)"
       cd /e/BioSim && npm ci && npm run check && npm run release-gate
 
   On `main` the Track A line stays a report too: `main` now has model version 3 and the ledger's
