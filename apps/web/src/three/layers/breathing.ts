@@ -593,6 +593,8 @@ const LUNGS_3D: Layer3d = {
   write,
   framing: 'chest',
   food: false,
+  // The ribs and backbone for a bearing, as the flat drawing has its ribs (A-1a skeleton ghost).
+  landmarks: true,
   // Everything that grows, grows from the lungs' top, as the flat drawing's rhythm layer does.
   grow: { origins: ORGANS.map(() => [LUNG_TOP.x, LUNG_TOP.y, LUNG_TOP.z] as const) },
   rhythm: {
