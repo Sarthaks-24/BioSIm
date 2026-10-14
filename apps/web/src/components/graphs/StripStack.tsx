@@ -193,8 +193,20 @@ export function RunStrip({
           />
         </span>
       }
-      // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).
-      footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-muted" /> : note}
+      // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md); a
+      // pack that graphs blood sugar too keeps its own lines under it (Hormones' brain card, U-6).
+      footer={
+        glucose && note ? (
+          <div className="flex flex-col gap-0.5">
+            <MedicalNote text="graph" className="text-caption text-ink-muted" />
+            {note}
+          </div>
+        ) : glucose ? (
+          <MedicalNote text="graph" className="text-caption text-ink-muted" />
+        ) : (
+          note
+        )
+      }
       reference={slot.reference}
     />
   )

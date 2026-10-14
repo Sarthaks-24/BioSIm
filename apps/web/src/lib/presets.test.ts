@@ -169,25 +169,28 @@ describe('the flagship lesson, "One roti, one walk"', () => {
     expect(at(walked, 'skin.sweatTotal', p.t)).toBeGreaterThan(0)
   })
 
-  it('v3.1 · Hormones at the most insulin replaces the Digestion pause once Hormones may be lit: still at most five, in clock order (R38, U-6)', () => {
+  it('v3.1 · 1 · Hormones near the most insulin replaces the Digestion pause once Hormones may be lit: still five, in clock order (R38, U-6)', () => {
     for (const skin of [true, false]) {
       const pauses = pausesFor(skin, true)
       expect(pauses.length).toBe(5)
       expect(pauses.map((p) => p.t)).toEqual([...pauses.map((p) => p.t)].sort((a, b) => a - b))
       expect(pauses.map((p) => p.key)).not.toContain('stomach')
-      expect(pauses).toContain(INSULIN_PAUSE)
+      expect(pauses[0]).toEqual(INSULIN_PAUSE)
       // Each on a different system, but for the heart twice while skin is hidden (R34).
       expect(new Set(pauses.map((p) => p.system)).size).toBe(skin ? 5 : 4)
     }
     // Without Hormones the v3.0 lesson, unchanged.
     expect(pausesFor(true, false)).toEqual(pausesFor(true))
     const p = INSULIN_PAUSE
-    expect(p.t).toBe(Math.round(walked.moments.get('event.insulinPeak' as never)!.atMin!))
+    // Near the most insulin (within 15 %), on a 10-minute mark, before the heart's pause.
+    const peak = walked.moments.get('event.insulinPeak' as never)!.atMin!
+    expect(at(walked, 'blood.insulin', p.t)).toBeGreaterThan(0.85 * at(walked, 'blood.insulin', peak))
+    expect(p.t % 10).toBe(0)
+    expect(p.t).toBeLessThan(pause('blood').t)
     // "about 5 times its level before eating now": the model's insulin at the pause; the walk does not move it (D6).
     expect(numbers(model('insulin'))).toEqual([Math.round(at(walked, 'blood.insulin', p.t))])
     expect(at(rested, 'blood.insulin', p.t)).toBe(at(walked, 'blood.insulin', p.t))
-    // "Then it falls back": lower an hour later, and back near 1× within 4 h.
-    expect(at(walked, 'blood.insulin', p.t + 60)).toBeLessThan(at(walked, 'blood.insulin', p.t))
+    // "Then it falls back": back near 1× within 4 h.
     expect(at(walked, 'blood.insulin', 240)).toBeLessThan(1.1)
     // "as sugar from the roti reaches the blood": blood sugar above its start at the pause.
     expect(at(walked, 'blood.glucose', p.t)).toBeGreaterThan(at(walked, 'blood.glucose', 0) + 5)

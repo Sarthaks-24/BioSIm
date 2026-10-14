@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
 import WhyCard from '../../components/WhyCard.tsx'
@@ -115,21 +115,31 @@ const OTHERS = ['adrenaline', 'thyroxin', 'growth', 'hunger'] as const
 
 /**
  * "Other hormones ›" and its Drawing-only cards (R11, R13: the "Drawing only" tag, never a fourth
- * one, and no number): what each does, in a sentence, with its book or source. Opens in place like
- * "Why different? ›" (components/WhyCard.tsx), so the graph keeps its room until it is asked for.
+ * one, and no number): what each does, in a sentence, with its book or source. Opens over the graph,
+ * the width of the lines under it, so the graph keeps its size (a projector's column has no room to
+ * spare); Esc or the link again closes it, and the focus goes back to the link.
  */
 function OtherHormones() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const listId = useId()
+  const button = useRef<HTMLButtonElement>(null)
+  const onKey = (e: KeyboardEvent) => {
+    if (!open || e.key !== 'Escape') return
+    e.preventDefault()
+    setOpen(false)
+    button.current?.focus()
+  }
   return (
     <>
       <button
+        ref={button}
         type="button"
         data-others-open=""
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={onKey}
         className="inline-flex min-h-11 items-center self-start font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink lg:min-h-0"
       >
         {t('sys.control.others.open')}
@@ -139,7 +149,9 @@ function OtherHormones() {
           id={listId}
           data-others=""
           aria-label={t('sys.control.others.title')}
-          className="order-last basis-full rounded-control bg-surface-sunk px-2 py-1.5 text-ink"
+          tabIndex={-1}
+          onKeyDown={onKey}
+          className="absolute inset-x-0 bottom-full z-30 mb-1 max-h-[60vh] overflow-y-auto rounded-control border border-border bg-surface-raised px-3 py-2 text-ink shadow-[0_6px_24px_-8px_rgb(20_33_61/0.35)]"
         >
           <h3 className="flex flex-wrap items-center gap-x-2 font-semibold">
             {t('sys.control.others.title')} <StatusTag status="illustration" />
@@ -172,10 +184,10 @@ const WHY = 'sys.control.why'
 function StripNote({ slot }: { slot: GraphSlotDef }) {
   const { t } = useTranslation()
   return (
-    <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
+    <div data-strip-note={slot.id} className="relative flex flex-col gap-0.5 text-caption text-ink-muted">
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.control.moves')}</p>
       {slot.id === 'sugar' ? (
-        <p data-constant="brain" className="max-lg:hidden [@media(height<42.5rem)]:hidden">
+        <p data-constant="brain" className="max-lg:hidden in-data-[contrast=high]:hidden [@media(height<42.5rem)]:hidden">
           <span className="text-ink">{t('sys.control.brain.value')}</span> {t('sys.control.brain.back')}{' '}
           <span data-source="">{t('sys.control.brain.source')}</span>
         </p>
@@ -185,7 +197,7 @@ function StripNote({ slot }: { slot: GraphSlotDef }) {
             {t('sys.control.notGuide')}
           </p>
           <div className="flex flex-wrap items-center gap-x-3 [@media(height<42.5rem)]:hidden">
-            <span data-book="" className="max-lg:hidden">
+            <span data-book="" className="max-lg:hidden in-data-[contrast=high]:hidden">
               {t('sys.control.book')}
             </span>
             <WhyCard text={WHY} className="-my-2 lg:my-0" />

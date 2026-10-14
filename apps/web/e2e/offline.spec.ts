@@ -93,7 +93,7 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
   await installed(page)
   const lessons = page.locator('[data-lesson]')
   // Every chapter's lessons (all public since H-1), once the list is drawn.
-  await expect(lessons).toHaveCount(8)
+  await expect(lessons).toHaveCount(9)
   const count = await lessons.count()
   expect(count).toBeGreaterThan(0)
   await expect(lessons.getByText('Not saved for offline')).toHaveCount(count)

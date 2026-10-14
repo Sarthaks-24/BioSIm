@@ -147,7 +147,7 @@ function paintStill(ctx: CanvasRenderingContext2D, look: Look, m: Frame) {
   solid(ctx, HORMONE_TONE.pancreas, look, pancreasLine(look))
   // The stomach in front, see-through: a pale wash and a dashed outline.
   smooth(ctx, STOMACH_OUTLINE, m)
-  ctx.fillStyle = 'rgba(61,76,107,0.06)'
+  ctx.fillStyle = 'rgba(61,76,107,0.1)'
   ctx.fill()
   ctx.setLineDash([4, 3])
   ctx.strokeStyle = GHOST_LINE
