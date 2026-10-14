@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import type { TFunction } from 'i18next'
-import { valueAt, type ActivityBout, type MealItem, type RunResult } from '@lifepeek/engine'
+import { ACTIVITY_KINDS, PARAMS, valueAt, type ActivityBout, type MealItem, type RunResult } from '@lifepeek/engine'
 import { simulate } from '@lifepeek/engine/run'
 import en from '../../i18n/en.json'
 import { lookupFood } from '../../data/foods.ts'
@@ -27,6 +27,8 @@ import {
   dropCount,
   hatchStep,
   isLight,
+  LIGHT_KINDS,
+  LIGHT_MET,
   lastKindAt,
   peakOf,
   seriesOf,
@@ -344,6 +346,7 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
 
   it('sitting in class (1.8 MET, light): a light-activity line, no "×" and no sweat figure; the model’s numbers stay (R120 #9)', () => {
     expect(isLight('sitClass')).toBe(true)
+    expect([...LIGHT_KINDS]).toEqual(ACTIVITY_KINDS.filter((k) => PARAMS.activity.met[k] < LIGHT_MET))
     for (const k of ['walk', 'walkBrisk', 'run', 'football', 'cricket', 'badminton'] as const) expect(isLight(k), k).toBe(false)
     expect(isLight('rest')).toBe(false)
     const r = run([bout('sitClass', 45)])

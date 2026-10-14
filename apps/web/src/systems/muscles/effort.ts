@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PARAMS, type ActivityBout, type ActivityKind, type RunResult, type Series, type SignalMeta } from '@lifepeek/engine'
+import type { ActivityBout, ActivityKind, RunResult, Series, SignalMeta } from '@lifepeek/engine'
 import type { TFunction } from 'i18next'
 import { MAX_DROPS } from '../../anatomy/human/skin.ts'
 
@@ -24,13 +24,16 @@ export function doingAt(bouts: readonly ActivityBout[], min: number): Doing {
 }
 
 /**
- * Light activity: a kind below 3 MET, the 2024 Compendium's light band (sitting in class, 1.8; the
- * pose's band is rest: anatomy/human/bands.ts). Its summaries say so in words, with no "×" and no
- * sweat figure: the model puts all of its small extra energy on the muscles and sweat (R120 #9).
- * The engine's output is the same; only the words change.
+ * Light activity: the kinds below 3 MET, the 2024 Compendium's light band (sitting in class, 1.8;
+ * the pose's band is rest: anatomy/human/bands.ts). Their summaries say so in words, with no "×" and
+ * no sweat figure: the model puts all of its small extra energy on the muscles and sweat (R120 #9).
+ * The engine's output is the same; only the words change. Listed, not read from PARAMS: the pack
+ * may not import the engine's params chunk (check-budget); effort.test.ts checks the list is the
+ * kinds whose MET is below 3.
  */
 export const LIGHT_MET = 3
-export const isLight = (kind: Doing): boolean => kind !== 'rest' && PARAMS.activity.met[kind] < LIGHT_MET
+export const LIGHT_KINDS: ReadonlySet<ActivityKind> = new Set(['sitClass'])
+export const isLight = (kind: Doing): boolean => kind !== 'rest' && LIGHT_KINDS.has(kind)
 
 /**
  * The kind of the bout going on at `min`, or of the last one that ended before it: the muscles that
