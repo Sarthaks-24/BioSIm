@@ -211,3 +211,72 @@ test.describe('/sim stage', () => {
     await expect(page.getByRole('note').filter({ hasText: 'LifePeek के नए संस्करण' })).toBeVisible()
   })
 })
+
+/** What the 3D body holds on the GPU and in three/mount.ts's cache (BodyCanvas puts both on window). */
+function gpu(page: Page) {
+  return page.evaluate(() => {
+    const w = window as unknown as {
+      __lifepeekGl: { memory: { geometries: number; textures: number }; programs?: unknown[] }
+      __lifepeek3d: () => { layers: string[]; builds: number; uploaded: number }
+    }
+    const { geometries, textures } = w.__lifepeekGl.memory
+    return { geometries, textures, programs: w.__lifepeekGl.programs?.length ?? -1, ...w.__lifepeek3d() }
+  })
+}
+
+test('switching systems 20× leaves one WebGL context and the 3D body at its base (A-0 3D)', async ({ page }) => {
+  onlyIn('desktop', 'phone')
+  test.setTimeout(300_000)
+  // Every WebGL context the page makes, so a leaked one (made and never lost) shows. lib/webgl.ts's
+  // probe makes one, once, off the page: `onPage` counts only the bodies' live contexts.
+  await page.addInitScript(() => {
+    const made: WebGLRenderingContext[] = []
+    Object.assign(window, { __lpContexts: made })
+    const get = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+      const ctx = (get as (...a: unknown[]) => unknown).call(this, type, ...rest)
+      if (ctx && type.startsWith('webgl') && !made.includes(ctx as WebGLRenderingContext)) made.push(ctx as WebGLRenderingContext)
+      return ctx
+    } as typeof get
+  })
+  const contexts = () =>
+    page.evaluate(() => {
+      const made = (window as unknown as { __lpContexts: WebGLRenderingContext[] }).__lpContexts
+      const live = made.filter((c) => !c.isContextLost())
+      return { live: live.length, onPage: live.filter((c) => (c.canvas as HTMLCanvasElement).isConnected).length }
+    })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=cola:1&preview=1')
+  const ready = page.locator('[data-body="3d"][data-ready]')
+  await expect(ready).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(1000)
+  const base = await gpu(page)
+  expect(base.layers).toEqual(['high:digestion'])
+  const first = await contexts()
+  expect(first.onPage).toBe(1)
+  for (let i = 0; i < 20; i++) {
+    // `]`: the next system (breathing, drawn flat: the 3D body goes); `[`: back to digestion.
+    await page.locator('body').press(']')
+    await expect(page.locator('[data-layer="breathing"]')).toBeAttached({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+    if (i === 0 || i === 19) {
+      // No body on the page: nothing we cache is still known to a renderer (it would keep an old context alive).
+      await expect
+        .poll(
+          async () =>
+            (await page.evaluate(() => (window as unknown as { __lifepeek3d: () => { uploaded: number } }).__lifepeek3d())).uploaded,
+        )
+        .toBe(0)
+      await expect.poll(contexts).toEqual({ live: first.live - 1, onPage: 0 })
+    }
+    await page.locator('body').press('[')
+    await expect(ready).toBeVisible({ timeout: 30_000 })
+  }
+  await page.waitForTimeout(1000)
+  // One context on the page, and none left over from the 20 bodies before it.
+  expect(await contexts()).toEqual(first)
+  await expect(page.locator('[data-body="3d"] canvas')).toHaveCount(1)
+  const after = await gpu(page)
+  // Geometries, textures and programs back at base; digestion's mesh was built once, its arrays cached.
+  expect(after).toEqual(base)
+})
