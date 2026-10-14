@@ -3,6 +3,7 @@ import type { RunResult } from '@lifepeek/engine'
 import type { ActivityBand } from '../anatomy/human/bands.ts'
 import FlatBody from '../flat/FlatBody.tsx'
 import { useRunStore } from '../state/run.ts'
+import { packDrawing } from '../systems/load.ts'
 import { systemOf } from '../systems/registry.ts'
 import { hasWebGL, sayBody, use3dTries, type BodyNote } from '../lib/webgl.ts'
 import { isLoadError, lazyWithRetry } from './LoadBoundary.tsx'
@@ -27,17 +28,19 @@ export default function BodyView({ sim, label, band }: { sim: RunResult; label: 
   // Try again (or the internet coming back) asks for the 3D file again: a new boundary.
   const tries = use3dTries()
   const system = systemOf(useRunStore((s) => s.layer))
-  const flat = <FlatBody sim={sim} label={label} band={band} system={system} />
+  // Another system's flat drawing: lit only once its pack has loaded (state/run.ts setLayer), so it is here.
+  const layer = system && packDrawing(system.id)
+  const flat = <FlatBody sim={sim} label={label} band={band} system={system} layer={layer} />
   const fallback = (why: BodyNote) => (
     <>
-      <FlatBody sim={sim} label={label} band={band} system={system} final />
+      <FlatBody sim={sim} label={label} band={band} system={system} layer={layer} final />
       <Say why={why} />
     </>
   )
   const BodyCanvas = bodyCanvas.Component
   const body =
     system?.draw === 'layer' && !system.layer3d ? (
-      <FlatBody sim={sim} label={label} band={band} system={system} final />
+      <FlatBody sim={sim} label={label} band={band} system={system} layer={layer} final />
     ) : !hasWebGL() || lost ? (
       fallback('webgl')
     ) : (
