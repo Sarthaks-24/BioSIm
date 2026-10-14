@@ -16,6 +16,7 @@ import {
 } from '../src/index.ts'
 import {
   ENERGY_TOTAL,
+  HUMAN_MODEL,
   HUMAN_MODULES,
   RUN_SIGNALS,
   RUN_SIGNAL_IDS,
@@ -44,7 +45,7 @@ const mealOf = (m: string) => buildMeal(decodeMeal(m), lookup)
 const run = (m: string, activity: ActivityBout[] = []) => simulate(mealOf(m), { particles: 0, activity })
 const values = (sim: RunResult, id: RunSignalId) => sim.signals.get(id)!.values
 const N = 2881
-const setupOf = (m: string, activity: ActivityBout[] = [], params: Params = PARAMS) => ({
+const setupOf = (m: string, activity: ActivityBout[] = [], params: Params = HUMAN_MODEL.params) => ({
   input: { meal: mealOf(m), activity },
   params,
   profile: PROFILES['adult-ref'],

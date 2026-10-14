@@ -17,7 +17,7 @@ import {
   type Params,
   type RunResult,
 } from '../src/index.ts'
-import { ACTIVITY_CODES, ENERGY_TOTAL, HUMAN_MODULES, LEFT_WATER, activityProblems, runModules, simulate } from '../src/run.ts'
+import { ACTIVITY_CODES, ENERGY_TOTAL, HUMAN_MODEL, HUMAN_MODULES, LEFT_WATER, activityProblems, runModules, simulate } from '../src/run.ts'
 import { FULL, firstDiff, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 import { paramsWith } from './modules/ctx.ts'
@@ -36,7 +36,7 @@ const mealOf = (m: string) => buildMeal(decodeMeal(m), lookup)
 const run = (m: string, activity: ActivityBout[] = []) => simulate(mealOf(m), { particles: 0, activity })
 const values = (sim: RunResult, id: ActiveSignalId) => sim.signals.get(id)!.values
 /** The run's modules again, for the arrays they wrote (Float64, internal ones too). */
-const arrays = (m: string, activity: ActivityBout[] = [], params: Params = PARAMS) =>
+const arrays = (m: string, activity: ActivityBout[] = [], params: Params = HUMAN_MODEL.params) =>
   runModules(HUMAN_MODULES, { input: { meal: mealOf(m), activity }, params, profile: PROFILES['adult-ref'], n: 2881, stepMin: 1 }).signals
 const kg = PROFILES['adult-ref'].weightKg
 const R = PROFILES['adult-ref'].restingKcalPerDay / 1440

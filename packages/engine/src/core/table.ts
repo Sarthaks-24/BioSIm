@@ -5,7 +5,7 @@
  */
 import type { Meal } from '../meal.ts'
 import type { SimEvents } from '../events.ts'
-import { EVENTS, type EventId, type RunSignalId } from './catalog.ts'
+import { EVENTS, type EventId, type LeanEventId, type RunSignalId } from './catalog.ts'
 import { RUN_SIGNALS, RUN_SIGNAL_IDS } from './catalog/rows.ts'
 import type { SignalStore } from './module.ts'
 import type { SourceId } from './sources.ts'
@@ -39,7 +39,7 @@ export function buildSignalTable(meal: Meal, store: SignalStore): Map<RunSignalI
 
 /** One EventPoint per catalog event; atMin null when it does not happen within the run. */
 export function buildMoments(e: SimEvents): Map<EventId, EventPoint> {
-  const point = <Id extends EventId>(id: Id, atMin: number | null, range?: { low: number; high: number }): EventPoint<Id> => ({
+  const point = <Id extends LeanEventId>(id: Id, atMin: number | null, range?: { low: number; high: number }): EventPoint<Id> => ({
     meta: EVENTS[id],
     atMin,
     ...(range && atMin !== null ? { low: range.low, high: range.high } : {}),

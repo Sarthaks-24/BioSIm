@@ -9,7 +9,7 @@ import {
   type Written,
   type ActivityBout,
 } from '../../src/index.ts'
-import { runModules } from '../../src/run.ts'
+import { HUMAN_MODEL, runModules } from '../../src/run.ts'
 
 /** The human run length (48 h at 1-min steps). */
 export const N = Math.floor(PARAMS.horizonMin / PARAMS.stepMin) + 1
@@ -22,7 +22,7 @@ export function runAlone(
   module: ModelModule,
   meal: Meal,
   upstream: Partial<Record<ModuleSignalId, Written>> = {},
-  params: Params = PARAMS,
+  params: Params = HUMAN_MODEL.params,
   activity: readonly ActivityBout[] = [],
 ): SignalStore {
   const ids = Object.keys(upstream) as ModuleSignalId[]
@@ -40,9 +40,9 @@ export function runAlone(
     .signals
 }
 
-/** A deep copy of PARAMS with one number changed. */
+/** A deep copy of the human run's params (PARAMS + the packs') with one number changed. */
 export function paramsWith(path: string, value: number): Params {
-  const copy = structuredClone(PARAMS) as unknown as Record<string, unknown>
+  const copy = structuredClone(HUMAN_MODEL.params) as unknown as Record<string, unknown>
   const keys = path.split('.')
   let o = copy
   for (const k of keys.slice(0, -1)) o = o[k] as Record<string, unknown>

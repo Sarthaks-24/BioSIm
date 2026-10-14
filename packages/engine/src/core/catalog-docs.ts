@@ -7,6 +7,7 @@
 import { SIGNALS, type EventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
 import { BREATHING_SIGNALS } from './catalog/breathing.ts'
 import { EFFORT_SIGNALS } from './catalog/effort.ts'
+import { CIRCULATION_SIGNALS } from './catalog/circulation.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -74,17 +75,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     i18nKey: k('brain.glucoseUse'),
     reactsToMeal: false,
     shipsIn: 'bloodSugar',
-  },
-  'heart.rate': {
-    id: 'heart.rate',
-    unit: 'beats/min',
-    status: 'illustration',
-    clock: 'real',
-    kind: 'rhythm',
-    sourceIds: [],
-    i18nKey: k('heart.rate'),
-    reactsToMeal: false,
-    shipsIn: 'alwaysRunning',
   },
   'kidney.filtrationRate': {
     id: 'kidney.filtrationRate',
@@ -233,9 +223,30 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Glucose the brain uses per hour (cited constant; does not react to the meal).',
     retired: ['brain.glucoseUseGPerH'],
   },
+  // The circulation pack's rows (core/catalog/circulation.ts, S-3). heart.rate was reserved as a
+  // real-clock beat; it activated as a graphed sim-clock level with its unit kept (ACTIVATION_LOG).
   'heart.rate': {
-    definition: 'Resting heart rate of the profile, shown as a real-time beat. Never graphed.',
+    definition:
+      'Heart beats a minute: heart.output divided by heart.strokeVolume (66 at rest), at most 191 (220 − age). Graphed; the drawn beat follows it.',
     retired: ['heart.rateBpm', 'vitals.heartRate', 'rhythm.heart'],
+  },
+  'heart.output': {
+    definition:
+      'Blood the heart pumps a minute (cardiac output, L/min): resting O2 use over a 50 mL/L a–v O2 difference, plus 5.5 L per L of extra O2 used by moving, plus the gut’s extra flow after a meal.',
+    retired: [],
+  },
+  'heart.strokeVolume': {
+    definition: 'Blood pumped per beat (mL): 65 at rest, rising with the moving part of heart.output up to 1.4×, then flat.',
+    retired: [],
+  },
+  'blood.flow.gut': {
+    definition:
+      'Blood flowing through the gut a minute (mL/min): 24 % of resting heart.output, plus a rise that grows with the absorbed energy (fat and protein count fully, carbohydrate 0.6).',
+    retired: [],
+  },
+  'blood.flow.muscle': {
+    definition: 'Blood flowing through the skeletal muscles a minute (mL/min): 21 % of resting heart.output plus 90 % of the moving rise.',
+    retired: [],
   },
   // The breathing pack's rows (core/catalog/breathing.ts, S-2). lungs.breathRate was reserved as a
   // real-clock rhythm; it activated as a sim-clock level with its unit kept (ACTIVATION_LOG).
@@ -301,6 +312,11 @@ export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
     definition: 'Minute the last activity bout of the plan ends. Absent when the person only rests.',
     retired: [],
   },
+  // The circulation pack's event (lazy row, core/catalog/circulation.ts).
+  'event.gutFlowPeak': {
+    definition: 'First minute when blood.flow.gut is highest. Absent if it rises by less than 10 mL/min (water, a fasting rest).',
+    retired: [],
+  },
 }
 
 /** Every signal row: active, the packs' lazy rows, and reserved (tests and docs). */
@@ -308,5 +324,6 @@ export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
   ...SIGNALS,
   ...BREATHING_SIGNALS,
   ...EFFORT_SIGNALS,
+  ...CIRCULATION_SIGNALS,
   ...RESERVED_SIGNALS,
 }

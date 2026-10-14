@@ -15,7 +15,7 @@ import { N } from './ctx.ts'
  */
 
 const meal = buildMeal(decodeMeal('standard-meal:1,glucose-50:1'), lookup)
-const setup = { input: { meal, activity: [] }, params: PARAMS, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }
+const setup = { input: { meal, activity: [] }, params: HUMAN_MODEL.params, profile: PROFILES['adult-ref'], n: N, stepMin: PARAMS.stepMin }
 
 describe('module order (DAG)', () => {
   it('the frozen order is activity → gut → energy → bloodSugar → gas → effort → circulation → water → lymph', () => {

@@ -1,5 +1,6 @@
 import { buildMeal, type FoodLookup, type Meal } from './meal.ts'
 import { MODEL_VERSION, ORGANISM_PARAMS, PARAMS, type Params } from './params.ts'
+import { PACK_PARAMS } from './packParams.ts'
 import { ABSORBED_ID, NUTRIENT_KINDS, type NutrientKind } from './nutrients.ts'
 import { emptyingCurves } from './stomach.ts'
 import { computeEvents } from './events.ts'
@@ -15,15 +16,16 @@ import { LEFTOVERS_IN_COLON, stomachArrivalMin } from './modules/gut.ts'
 import { HUMAN_MODULES, PROVIDES } from './modules/index.ts'
 
 /**
- * The human model: MODEL_VERSION, the 48 h clock and the PARAMS set. This is the one place the
- * engine hands PARAMS to the model; modules get it from the run's context (`ctx.params`).
+ * The human model: MODEL_VERSION, the 48 h clock and the parameter set: PARAMS plus the packs'
+ * numbers (packParams.ts, which only this run chunk loads, R75). This is the one place the engine
+ * hands PARAMS to the model; modules get it from the run's context (`ctx.params`).
  */
 export const HUMAN_MODEL: OrganismModel<Params> = {
   id: 'human',
   modelVersion: MODEL_VERSION,
   horizonMin: PARAMS.horizonMin,
   stepMin: PARAMS.stepMin,
-  params: ORGANISM_PARAMS.human,
+  params: { ...ORGANISM_PARAMS.human, ...PACK_PARAMS },
   modules: HUMAN_MODULES,
   provides: PROVIDES.human,
 }
@@ -40,7 +42,7 @@ export interface SimOptions {
 
 /**
  * Runs the whole model for one meal, minute by minute for 48 h: the organism's modules in their
- * frozen order (modules/: activity → gut → energy → bloodSugar → effort; core/module.ts), then the key moments
+ * frozen order (modules/: activity → gut → energy → bloodSugar → gas → effort → circulation; core/module.ts), then the key moments
  * (events.ts) and the particles for the picture (particles.ts). The result (result.ts) is the
  * signal table plus the few things that are not signals; the view helpers (view.ts) read it.
  */

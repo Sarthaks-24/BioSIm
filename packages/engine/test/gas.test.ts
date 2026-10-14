@@ -17,7 +17,7 @@ import {
   type RunSignalId,
   type SignalStatus,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, ENERGY_TOTAL, HUMAN_MODULES, RUN_SIGNALS, gasModule, runModules, simulate } from '../src/run.ts'
+import { BREATHING_SIGNAL_IDS, ENERGY_TOTAL, HUMAN_MODEL, HUMAN_MODULES, RUN_SIGNALS, gasModule, runModules, simulate } from '../src/run.ts'
 import { FULL, firstDiff, gribokShake, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 
@@ -42,7 +42,7 @@ const runFood = (food: Food) =>
 const values = (sim: RunResult, id: RunSignalId) => sim.signals.get(id)!.values
 const setup = (m: string, activity: ActivityBout[] = []) => ({
   input: { meal: mealOf(m), activity },
-  params: PARAMS,
+  params: HUMAN_MODEL.params,
   profile: PROFILES['adult-ref'],
   n: 2881,
   stepMin: 1,

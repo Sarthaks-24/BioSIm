@@ -15,11 +15,14 @@ export {
   bloodSugarModule,
   gasModule,
   effortModule,
+  circulationModule,
 } from './modules/index.ts'
 // Every row a run's signals can carry: the lean catalog's and the packs' lazy rows (architecture §1.3).
-export { RUN_SIGNALS, RUN_SIGNAL_IDS, isRunSignal } from './core/catalog/rows.ts'
+export { RUN_EVENTS, RUN_EVENT_IDS, RUN_SIGNALS, RUN_SIGNAL_IDS, isRunEvent, isRunSignal } from './core/catalog/rows.ts'
 export { BREATHING_SIGNALS, BREATHING_SIGNAL_IDS } from './core/catalog/breathing.ts'
 export { EFFORT_SIGNALS, EFFORT_SIGNAL_IDS } from './core/catalog/effort.ts'
+export { CIRCULATION_EVENTS, CIRCULATION_EVENT_IDS, CIRCULATION_SIGNALS, CIRCULATION_SIGNAL_IDS } from './core/catalog/circulation.ts'
+export { PACK_PARAMS, type PackParams } from './packParams.ts'
 export { ABSORB_RATE_ID, CARBS_OUT, LEFTOVERS_IN_COLON, LEFT_WATER, stomachArrivalMin } from './modules/gut.ts'
 export { ACTIVITY_CODES, ACTIVITY_MET, activityProblems } from './modules/activity.ts'
 export { ENERGY_TOTAL } from './modules/energy.ts'

@@ -21,7 +21,7 @@ import {
   windowOf,
   type RunResult,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, EFFORT_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
+import { BREATHING_SIGNAL_IDS, EFFORT_SIGNAL_IDS, HUMAN_MODEL, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
 
 /**
  * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
@@ -39,7 +39,7 @@ const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 const modulesOf = (sim: RunResult) =>
   runModules(HUMAN_MODULES, {
     input: { meal: sim.meal, activity: sim.activity },
-    params: PARAMS,
+    params: HUMAN_MODEL.params,
     profile: PROFILES[sim.profile],
     n: sim.length,
     stepMin: sim.stepMin,

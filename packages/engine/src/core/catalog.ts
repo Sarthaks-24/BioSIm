@@ -21,6 +21,7 @@
 import type { SourceId } from './sources.ts'
 import type { BreathingSignalId } from './catalog/breathing.ts'
 import type { EffortSignalId } from './catalog/effort.ts'
+import type { CirculationEventId, CirculationSignalId } from './catalog/circulation.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
@@ -44,6 +45,7 @@ export type Unit =
   | 'mL'
   | 'ratio'
   | 'mL/h'
+  | 'L/min'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
 /** Which release produces the signal: 'v2.0' and 'v3.0' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
@@ -85,7 +87,6 @@ export const RESERVED_SIGNAL_IDS = [
   'liver.glucoseOutput',
   'liver.glycogenG',
   'brain.glucoseUse',
-  'heart.rate',
   'kidney.filtrationRate',
 ] as const
 
@@ -106,13 +107,17 @@ export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
  * Lazy rows (architecture §1.3): signals the engine produces whose rows arrive with their system's
  * pack (core/catalog/<pack>.ts), so the first download carries only their type. The run chunk
  * knows every row (core/catalog/rows.ts). lungs.breathRate left the reserved list for the
- * breathing pack (S-2, model ACTIVATION_LOG), unit kept.
+ * breathing pack (S-2, model ACTIVATION_LOG), unit kept; heart.rate for the circulation pack (S-3).
  */
-export type PackSignalId = BreathingSignalId | EffortSignalId
+export type PackSignalId = BreathingSignalId | EffortSignalId | CirculationSignalId
 /** Every signal a run produces: the lean catalog's rows and the packs' rows. */
 export type RunSignalId = ActiveSignalId | PackSignalId
 export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId
-export type EventId = (typeof EVENT_IDS)[number]
+/** The lean catalog's events (EVENTS, first download). */
+export type LeanEventId = (typeof EVENT_IDS)[number]
+/** Lazy events: rows in core/catalog/<pack>.ts, known to the run chunk (rows.ts RUN_EVENTS) and the pack. */
+export type PackEventId = CirculationEventId
+export type EventId = LeanEventId | PackEventId
 export type CatalogId = SignalId | EventId
 
 // ─── Metadata shapes ─────────────────────────────────────────────────────────────────────────
@@ -162,7 +167,7 @@ export interface EventMeta<Id extends EventId = EventId> {
   status: SignalStatus
   clock: 'sim'
   /** The signal the event is read from (the marker's "Show as table" points at it). */
-  foundOn: ActiveSignalId
+  foundOn: RunSignalId
   /** true ⇒ the point has low/high edges (between-person range). */
   hasRange: boolean
   sourceIds: readonly SourceId[]
@@ -456,7 +461,7 @@ export const SIGNALS: { readonly [Id in ActiveSignalId]: SignalMeta<Id> } = {
   },
 }
 
-export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
+export const EVENTS: { readonly [Id in LeanEventId]: EventMeta<Id> } = {
   'event.stomachHalfEmpty': {
     id: 'event.stomachHalfEmpty',
     unit: 'min',
@@ -540,4 +545,5 @@ export const EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
 
 export const isActiveSignal = (id: string): id is ActiveSignalId => (ACTIVE_SIGNAL_IDS as readonly string[]).includes(id)
 export const isSignalId = (id: string): id is SignalId => isActiveSignal(id) || (RESERVED_SIGNAL_IDS as readonly string[]).includes(id)
-export const isEventId = (id: string): id is EventId => Object.hasOwn(EVENTS, id)
+/** A lean-catalog event (EVENTS); the packs' events are core/catalog/rows.ts isRunEvent. */
+export const isEventId = (id: string): id is LeanEventId => Object.hasOwn(EVENTS, id)

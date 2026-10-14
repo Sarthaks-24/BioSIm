@@ -388,7 +388,129 @@ export const SOURCES = {
     url: 'https://ncert.nic.in/textbook/pdf/gesc106.pdf',
     citation: 'NCERT. Science, Textbook for Class VII, ch. 6 Respiration in Organisms. NCERT, New Delhi, reprint 2024-25.',
   },
-  // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
+  // ── Heart & blood (S-3), read in V-0, V-0b and V-3 ──
+  /**
+   * Checked 2026-10-14 (V-3, https://cvphysiology.com/cardiac-function/cf021, rev. 01/22/2023): "If
+   * CaO2 and CvO2 are 0.2 mL and 0.15 mL O2/ml blood, respectively, and VO2 is 250 mL O2/minute,
+   * then CO = 5000 mL/min" (a–v O2 difference 50 mL/L; a calibration, R49).
+   */
+  klabunde2023: {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'resting a–v O2 difference 50 mL per L (worked Fick example), so resting CO = VO2 / 50',
+    url: 'https://cvphysiology.com/cardiac-function/cf021',
+    citation: 'Klabunde RE. Measurement of Cardiac Output. Cardiovascular Physiology Concepts (CVPhysiology.com), revised 2023.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0, abstract, PMID 3948345): rest a–v O2 difference "5.8" vol% (58 mL/L);
+   * "stroke volume index from 41 to 58 ml/m2 (1.4-fold)", then "increased no further" (R50).
+   */
+  higginbotham1986: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'stroke volume rises 1.4-fold in upright exercise, then plateaus; measured rest a–v O2 58 mL/L',
+    url: 'https://doi.org/10.1161/01.res.58.2.281',
+    citation:
+      'Higginbotham MB, Morris KG, Williams RS, McHale PA, Coleman RE, Cobb FR. Regulation of stroke volume during submaximal and maximal upright exercise in normal man. Circ Res 1986;58:281–291.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0, abstract, PMID 15578205): cardiac output "increases as a linear
+   * function of oxygen uptake with a slope of approximately 5-6 during constant work rate
+   * exercise"; non-linear in ramp tests (a limit).
+   */
+  stringer2005: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'cardiac output rises about 5–6 L/min per L/min of extra O2 in steady exercise (slope 5.5)',
+    url: 'https://doi.org/10.1007/s00421-004-1258-3',
+    citation:
+      'Stringer WW, Whipp BJ, Wasserman K, Pórszász J, Christenson P, French WJ. Non-linear cardiac output dynamics during ramp-incremental cycle ergometry. Eur J Appl Physiol 2005;93:634–639.',
+  },
+  /** Checked 2026-10-13 (V-0, open full text PMC1431590, Fig. 1): healthy controls "Q= 5.8 (Vo 2 ) + 6.7". */
+  cook2005: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'cross-check of the CO slope: 5.8 L/min per L/min O2 in healthy controls',
+    url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1431590/',
+    citation:
+      'Cook L, Tomczak C, Busse E, Tsang J, Wojcik W, Haennel R. Impact of a right ventricular impedance sensor on the cardiovascular responses to exercise in pacemaker dependent patients. Indian Pacing Electrophysiol J 2005;5:160–174.',
+  },
+  /**
+   * Checked 2026-10-14 (V-3, abstract, PMID 8036905): a "mixed and heavy" meal of "about 1400-1600
+   * kcal"; "Cardiac output increased by about 1.3 l min-1 after the meal"; post-meal exercise CO
+   * "no different from … pure summation of the changes caused by eating alone and by exercise alone".
+   */
+  eriksen1994: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'calibration: a 1400–1600 kcal meal raises CO about 1.3 L/min; meal and exercise rises add up (D7)',
+    url: 'https://doi.org/10.1111/j.1748-1716.1994.tb09700.x',
+    citation:
+      'Eriksen M, Waaler BA. Priority of blood flow to splanchnic organs in humans during pre- and post-meal exercise. Acta Physiol Scand 1994;150:363–372.',
+  },
+  /**
+   * Checked 2026-10-14 (V-3, abstract, PMID 1877363): CO peaks "30 to 60 min after end of the
+   * meal"; "Two hours after a small meal cardiac output was nearly or fully back to pre-meal values,
+   * while cardiac output was still markedly elevated 2 hours after a large meal" (R52 wording).
+   */
+  waaler1991: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'meal CO peak 30–60 min after eating; small meal back by 2 h, large meal still raised (hold-outs)',
+    url: 'https://doi.org/10.1111/j.1748-1716.1991.tb09125.x',
+    citation: 'Waaler BA, Eriksen M, Toska K. The effect of meal size on postprandial increase in cardiac output. Acta Physiol Scand 1991;142:33–39.',
+  },
+  /**
+   * Checked 2026-10-14 (V-3, full text, Gut 33:497, Table III): isocaloric intraduodenal loads:
+   * "Responses were similar after the test meal, fat, and protein, but were significantly (p<0·05)
+   * less for carbohydrates" (SMA velocity rise about 0.2–0.3 of fat's for carbohydrate).
+   */
+  sieber1992: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'gut blood flow per kcal: fat and protein alike, carbohydrate less (weights 1 / 1 / 0.6, the 0.6 calibrated)',
+    url: 'https://doi.org/10.1136/gut.33.4.497',
+    citation: 'Sieber C, Beglinger C, Jäger K, Stalder GA. Intestinal phase of superior mesenteric artery blood flow in man. Gut 1992;33:497–501.',
+  },
+  /**
+   * Checked 2026-10-13 (V-0b, full PDF): CO peak rise "2.19 l/min" (1 MJ), "1.78 l/min" (2 MJ),
+   * "3.15 1/min" (3 MJ) after high-carbohydrate meals; CO stayed raised to 120 min after 3 MJ.
+   */
+  sidery1994: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'largest meal CO rise read (3.15 L/min, the gut-rise ceiling); bigger meals keep CO raised longer',
+    url: 'https://doi.org/10.1079/BJN19940190',
+    citation: 'Sidery MB, Macdonald IA. The effect of meal size on the cardiovascular responses to food ingestion. Br J Nutr 1994;71:835–848.',
+  },
+  /**
+   * Checked 2026-10-14 (V-3, openstax.org §19.4): "Normal range for SV would be 55–100 mL"; "the
+   * mean CO is 5.25 L/min, with a range of 4.0–8.0 L/min"; resting HR "60–100 bpm"; "SV can also
+   * increase from 70 to approximately 130 mL" (the book range, R50); maximum HR "220 bpm and
+   * subtracting the individual's age".
+   */
+  'openstax-ap2e-19': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'resting CO 4–8 L/min, HR 60–100, SV 55–100 mL (§19.4); maximum HR 220 − age',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/19-4-cardiac-physiology',
+    citation:
+      'Betts JG, et al. Anatomy and Physiology 2e, ch. 19 The Cardiovascular System: The Heart (§19.4 Cardiac Physiology). OpenStax, Houston TX, 2022.',
+  },
+  /**
+   * Checked 2026-10-14 (V-3, openstax.org §20.4, Table 20.3 "Systemic Blood Flow During Rest, Mild
+   * Exercise, and Maximal Exercise in a Healthy Young Individual", mL/min): skeletal muscle 1200 /
+   * 4500 / 12,500; gastrointestinal 1400 / 1100 / 600; total 5800 / 9500 / 17,500.
+   */
+  'openstax-ap2e-20': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'where blood goes: muscle 21 % and gut 24 % of resting CO; muscle takes ~90 % of the exercise rise (Table 20.3)',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/20-4-homeostatic-regulation-of-the-vascular-system',
+    citation:
+      'Betts JG, et al. Anatomy and Physiology 2e, ch. 20 The Cardiovascular System: Blood Vessels and Circulation (§20.4, Table 20.3). OpenStax, Houston TX, 2022.',
+  },
+  // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
 export type RegisteredSourceId = keyof typeof SOURCES
@@ -408,8 +530,9 @@ export function sourceById(id: SourceId): SourceEntry | undefined {
 export type ParamBasis = 'measured' | 'calibrated' | 'assumption' | 'display'
 
 /**
- * A2: which parameter (dotted path into PARAMS) rests on which source, and how. The numbers stay in
- * params.ts. Every number in PARAMS has a line here (test/contract.test.ts checks it).
+ * A2: which parameter (dotted path into PARAMS, or into packParams.ts's PACK_PARAMS) rests on which
+ * source, and how. The numbers stay in those files. Every number in either has a line here
+ * (test/contract.test.ts checks it).
  * An 'assumption' may still list a source when the source gives the context but not the number.
  */
 export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly RegisteredSourceId[]; basis: ParamBasis }>>> = {
@@ -515,6 +638,27 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'gas.breathRateExponent': { sources: [], basis: 'assumption' },
   'gas.deadSpaceMl': { sources: [], basis: 'assumption' },
   'gas.tidalMaxMl': { sources: [], basis: 'assumption' },
+
+  // Heart & blood (S-3, V-3; packParams.ts, run chunk only). a–v O2 50 mL/L is a calibration that
+  // keeps resting CO inside OpenStax's 4–8 L/min (R49); the CO slope is Stringer's 5–6 (Cook 5.8);
+  // the SV plateau 1.4× is Higginbotham's (R50); SV 65 mL sits inside OpenStax's 55–100 (HR 66);
+  // the flow shares are OpenStax Table 20.3; the gut weights follow Sieber (carbohydrate 0.6 is a
+  // calibration, V-3); K is fitted on Eriksen's 1.3 L/min; the rise ceiling is Sidery's largest.
+  'circulation.restAvdo2MlPerL': { sources: ['klabunde2023', 'higginbotham1986'], basis: 'calibrated' },
+  'circulation.coSlopeLPerLO2': { sources: ['stringer2005', 'cook2005'], basis: 'measured' },
+  'circulation.svRestMl': { sources: ['openstax-ap2e-19'], basis: 'assumption' },
+  'circulation.svRiseMax': { sources: ['higginbotham1986'], basis: 'measured' },
+  'circulation.svRiseAtCoLPerMin': { sources: ['higginbotham1986'], basis: 'assumption' },
+  'circulation.hrMax': { sources: ['openstax-ap2e-19'], basis: 'measured' },
+  'circulation.gutRestShare': { sources: ['openstax-ap2e-20'], basis: 'measured' },
+  'circulation.muscleRestShare': { sources: ['openstax-ap2e-20'], basis: 'measured' },
+  'circulation.muscleShareOfRise': { sources: ['openstax-ap2e-20'], basis: 'measured' },
+  'circulation.gutWeight.carbs': { sources: ['sieber1992', 'sidery1994'], basis: 'calibrated' },
+  'circulation.gutWeight.protein': { sources: ['sieber1992'], basis: 'measured' },
+  'circulation.gutWeight.fat': { sources: ['sieber1992'], basis: 'measured' },
+  'circulation.gutRiseMaxLPerMin': { sources: ['sidery1994'], basis: 'assumption' },
+  'circulation.gutHalfKcalPerMin': { sources: ['eriksen1994'], basis: 'calibrated' },
+  'circulation.gutPeakMinRiseMlPerMin': { sources: [], basis: 'display' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

@@ -12,7 +12,8 @@
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
-import { EVENTS, SIGNALS, type ActiveSignalId, type EventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { SIGNALS, type ActiveSignalId, type EventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { RUN_EVENTS } from './catalog/rows.ts'
 import type { ActivityBout } from './activity.ts'
 import type { ProfileDef } from './profile.ts'
 import type { EventPoint, Rhythm } from './signal.ts'
@@ -181,7 +182,7 @@ export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetu
       },
       putMoment(id, atMin, range) {
         once(m.moments, moments, 'putMoment', id)
-        moments.set(id, { meta: EVENTS[id], atMin, ...(range && atMin !== null ? { low: range.low, high: range.high } : {}) })
+        moments.set(id, { meta: RUN_EVENTS[id], atMin, ...(range && atMin !== null ? { low: range.low, high: range.high } : {}) })
       },
       putRhythm(id, rhythm) {
         once(m.rhythms, rhythms, 'putRhythm', id)

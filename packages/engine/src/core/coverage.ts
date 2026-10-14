@@ -7,8 +7,8 @@
  *   - every active 'assumption' signal needs a `golden()` or a `pinned()`, and a limitKey;
  *   - IDs and sources named in tests must exist.
  */
-import { EVENTS, EVENT_IDS, isEventId, isSignalId, type EventId, type RunSignalId } from './catalog.ts'
-import { RUN_SIGNALS, isRunSignal } from './catalog/rows.ts'
+import { isSignalId, type EventId, type RunSignalId } from './catalog.ts'
+import { RUN_EVENTS, RUN_EVENT_IDS, RUN_SIGNALS, isRunEvent, isRunSignal } from './catalog/rows.ts'
 import type { OrganismId } from './organism.ts'
 import { PROVIDES } from '../modules/index.ts'
 import { isRegisteredSource, sourceById } from './sources.ts'
@@ -56,8 +56,8 @@ export function goldenCoverage(calls: readonly GoldenCall[], organism: OrganismI
 
   for (const c of calls) {
     for (const id of c.ids) {
-      if (!isSignalId(id) && !isRunSignal(id) && !isEventId(id)) unknownIds.push(id)
-      else if (!isRunSignal(id) && !isEventId(id)) reservedTested.push(id)
+      if (!isSignalId(id) && !isRunSignal(id) && !isRunEvent(id)) unknownIds.push(id)
+      else if (!isRunSignal(id) && !isRunEvent(id)) reservedTested.push(id)
     }
     for (const s of c.sources) if (!isKnownSource(s)) unknownSources.push(s)
     const registered = c.sources.filter(isKnownSource)
@@ -72,11 +72,11 @@ export function goldenCoverage(calls: readonly GoldenCall[], organism: OrganismI
   const simulated = provided.filter((id) => RUN_SIGNALS[id].status === 'simulated')
   const assumption = provided.filter((id) => RUN_SIGNALS[id].status === 'assumption')
 
-  const cited = [...provided.flatMap((id) => RUN_SIGNALS[id].sourceIds), ...EVENT_IDS.flatMap((id) => EVENTS[id].sourceIds)]
+  const cited = [...provided.flatMap((id) => RUN_SIGNALS[id].sourceIds), ...RUN_EVENT_IDS.flatMap((id) => RUN_EVENTS[id].sourceIds)]
   const toVerifySources = cited.filter((s) => sourceById(s)?.check === 'toVerify')
 
   return {
-    missingSourced: [...simulated, ...EVENT_IDS].filter((id) => !sourced.has(id)),
+    missingSourced: [...simulated, ...RUN_EVENT_IDS].filter((id) => !sourced.has(id)),
     missingAny: assumption.filter((id) => !any.has(id)),
     missingLimit: assumption.filter((id) => !RUN_SIGNALS[id].limitKey),
     unknownIds: uniqueSorted(unknownIds),

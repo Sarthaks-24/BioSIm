@@ -5,6 +5,7 @@
  */
 
 import type { OrganismId } from './core/organism.ts'
+import type { PackParams } from './packParams.ts'
 
 /** Bumped whenever outputs change for the same input. Stored in share links as `v=`. */
 export const MODEL_VERSION = 3
@@ -268,18 +269,23 @@ export const PARAMS = {
 } as const
 
 /** Same shape as PARAMS, with plain `number`s instead of the literal values. */
-type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> }
+export type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> }
+
+/** The main-thread half of the parameter set: PARAMS's shape. */
+export type CoreParams = Widen<typeof PARAMS>
 
 /**
- * The shape of the human parameter set. Model modules take one of these as an argument (the
- * `ctx.params` rule) instead of reading PARAMS, so a test or a later organism can pass its own
- * numbers. PARAMS stays the human set.
+ * The shape of a run's parameter set: PARAMS and the packs' numbers (packParams.ts, run chunk only,
+ * R75). Model modules take one of these as an argument (the `ctx.params` rule) instead of reading
+ * PARAMS, so a test or a later organism can pass its own numbers. The human run's set is
+ * HUMAN_MODEL.params (simulate.ts).
  */
-export type Params = Widen<typeof PARAMS>
+export type Params = CoreParams & PackParams
 
 /**
- * Each organism's parameter set, for the screen's display thresholds (the graphs' "back near the
- * before-meal level"), read without loading the engine (E-2: HUMAN_MODEL, which also holds the
- * modules, is in the lazy `@lifepeek/engine/run` entry). The run uses the same object.
+ * Each organism's main-thread parameter set, for the screen's display thresholds (the graphs'
+ * "back near the before-meal level"), read without loading the engine (E-2: HUMAN_MODEL, which also
+ * holds the modules, is in the lazy `@lifepeek/engine/run` entry). The run uses these numbers plus
+ * the packs' (packParams.ts).
  */
-export const ORGANISM_PARAMS: { readonly [O in OrganismId]: Params } = { human: PARAMS }
+export const ORGANISM_PARAMS: { readonly [O in OrganismId]: CoreParams } = { human: PARAMS }
