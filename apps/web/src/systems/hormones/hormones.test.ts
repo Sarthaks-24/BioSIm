@@ -298,3 +298,13 @@ describe('what the pack writes out matches the stage and Digestion’s anatomy',
     expect([HORMONES.pack, HORMONES.camera.framing, HORMONES.graphWindowMin, HORMONES.public]).toEqual(['control', 'upper', 720, true])
   })
 })
+
+describe('the other hormones’ lines follow their source (R120 #20)', () => {
+  it('ghrelin as OpenStax A&P 2e Table 23.6 has it: made by the stomach when fasting, rising just before meals, acting on the brain for hunger', () => {
+    // Table 23.6: "Stomach mucosa, mainly fundus"; "Fasting state (levels increase just prior to meals)";
+    // target "Hypothalamus"; "Regulates food intake, primarily by stimulating hunger and satiety".
+    const hunger = en.sys.control.others.hunger
+    expect(hunger.source).toBe('OpenStax Anatomy and Physiology 2e, §23.4, Table 23.6')
+    expect(hunger.text).toBe('Made by the stomach while fasting; it rises just before meals and acts on the brain to make us feel hungry.')
+  })
+})

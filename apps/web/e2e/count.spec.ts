@@ -54,7 +54,7 @@ test('a timer only: no input, nothing stored or sent; big Start; the screen read
   await expect(dialog.locator('[data-count-examples]')).toContainText('5 breaths in 15 s = 20 a minute')
   await expect(dialog.locator('[data-count-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute')
   await expect(dialog.locator('[data-count-model]')).toHaveText(/^This model: about 1\d a minute at rest, [23]\d a minute walking\.$/)
-  await expect(dialog.locator('[data-count-band]')).toHaveText('Most children your age (12–15): 15–21 a minute at rest')
+  await expect(dialog.locator('[data-count-band]')).toHaveText('Most children aged 12–15: 15–21 a minute at rest')
   await expect(dialog).toContainText('Nothing you count is typed in or saved.')
 
   const projector = info.project.name === 'projector'
@@ -137,7 +137,7 @@ test('the heart’s row counts the pulse: wrist, 72–80 book line, the model’
   await expect(dialog.locator('[data-count-examples]')).toContainText('18 beats in 15 s = 72 a minute')
   await expect(dialog.locator('[data-count-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute')
   await expect(dialog.locator('[data-count-model]')).toHaveText(/^This model: about \d+ a minute at rest, \d+ a minute walking\.$/)
-  await expect(dialog.locator('[data-count-band]')).toHaveText('Most children your age (12–15): 62–96 a minute at rest')
+  await expect(dialog.locator('[data-count-band]')).toHaveText('Most children aged 12–15: 62–96 a minute at rest')
   await expect(dialog).not.toContainText(/normal/i)
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
