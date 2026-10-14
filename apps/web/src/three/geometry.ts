@@ -160,17 +160,38 @@ export const smoothstep = (a: number, b: number, x: number) => {
  * `tier` 'low' (a 2 GB phone; anatomy plan §9, R99): half the sides round the torso, head and arms.
  */
 export function buildShell(tier: Tier = 'high'): BufferGeometry {
+  return mergeGeometries([...shellTrunk(tier), ...shellArms(tier)])!
+}
+
+/**
+ * The shell's torso and head (position, normal). With limbs (A-1a: three/limbs.ts poses the arms and
+ * legs) the hips are flattened a little, so the thighs come out of the torso's sides as a
+ * mannequin's do, not out of a round bowl.
+ */
+export function shellTrunk(tier: Tier = 'high', limbs = false): BufferGeometry[] {
   const r = (n: number) => (tier === 'low' ? n / 2 : n)
   const profile = ([...TORSO_PROFILE, [0, 2.5]] as [number, number][]).map(([x, y]) => new Vector2(x!, y!))
   // Flatter at the back than the front, like a real chest and belly.
-  const torso = sculpt(new LatheGeometry(profile, r(64)), (v) => v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5)))
+  const torso = sculpt(new LatheGeometry(profile, r(64)), (v) => {
+    v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5))
+    // With legs the bowl tucks in behind the thighs' fronts, so no crease shows across them.
+    if (limbs) v.set(v.x, hips(v.y), v.z * (1 - 0.4 * smoothstep(-1.15, -1.6, v.y)))
+  })
 
   const head = sculpt(new SphereGeometry(0.37, r(48), r(32)), (v) => {
     const jaw = v.y < 0 ? 1 - 0.18 * (-v.y / 0.37) : 1
     v.set(v.x * 0.84 * jaw, v.y * 1.05 + 2.84, v.z * 0.95 * jaw + 0.02)
   })
+  return [torso, head]
+}
 
-  const arms = [1, -1].map((sgn) => {
+/** The torso's bowl, lifted towards the groin with legs (shellTrunk): below y −1.2 it is squeezed up by up to 40 %. */
+const hips = (y: number) => (y < -1.2 ? -1.2 + (y + 1.2) * (1 - 0.4 * smoothstep(-1.2, -1.78, y)) : y)
+
+/** The resting arms of the shell, hanging (the posed ones are three/limbs.ts's). */
+function shellArms(tier: Tier): BufferGeometry[] {
+  const r = (n: number) => (tier === 'low' ? n / 2 : n)
+  return [1, -1].map((sgn) => {
     const arm = organTube(ARM, { segments: 64, radial: r(20), radius: armRadius, flatten: 0.85, caps: true })
     if (sgn < 0) {
       arm.applyMatrix4(new Matrix4().makeScale(-1, 1, 1))
@@ -180,7 +201,6 @@ export function buildShell(tier: Tier = 'high'): BufferGeometry {
     arm.deleteAttribute('along')
     return arm
   })
-  return mergeGeometries([torso, head, ...arms])!
 }
 
 /** A part of a lit layer, before `layerGeometry` gives it the shared attribute set. */

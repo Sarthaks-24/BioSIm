@@ -5,6 +5,8 @@ import type { Framing } from '../anatomy/human/base.ts'
 import type { Callout, LabelBox } from '../anatomy/callouts.ts'
 import type { CalloutSpec, Project } from '../anatomy/CalloutOverlay.tsx'
 import type { Kit3d } from './kit.ts'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
+import type { LimbKit } from '../anatomy/human/limbs.ts'
 
 /**
  * One system's lit 3D layer (A-0 3D half; anatomy plan §1, §10). Digestion's is in the 3D body's
@@ -35,6 +37,12 @@ export interface Layer3d {
   framing?: Framing
   /** False: the meal's food particles are not drawn with it (they belong to Digestion's picture, as in the flat one). */
   food?: boolean
+  /**
+   * True: the faint skeleton ghost (A-1a; anatomy plan §1 landmarks) is drawn with it, as its flat
+   * drawing draws the ribs for a bearing (breathing, kidneys). The `full` framing and the whole-body
+   * view always have it. Never on a 2 GB phone (plan §9).
+   */
+  landmarks?: boolean
   /**
    * How `inflate` moves a vertex as its organ fills. Absent: out along its normal (the stomach). With
    * `grow`: away from its organ's point (`origins`, one per organ), by `inflate` × uFill[organ] of
@@ -127,6 +135,25 @@ export interface LayerState {
    * draws it then and clears this. 0 or absent: none.
    */
   later?: number
+}
+
+/**
+ * The 3D legs (A-1a; anatomy plan §1, §3, D7): the lazy chunk three/limbs.ts. It poses the shell's arms
+ * and legs from the same curves as the flat body's (anatomy/human/limbs.ts `posedLimbs`), one still
+ * pose per band (R4, R32; no swing: A-9b), and builds the merged skeleton ghost. Like a lit layer it
+ * gets three.js and the geometry kit from three/mount.ts (R104), so its chunk imports none of the 3D body.
+ */
+export interface Limbs3d {
+  /** Hands over the body base (anatomy/human/kit.ts LIMB_KIT), before the first build. */
+  takeKit(k: LimbKit): void
+  /**
+   * The limbs' skin in the band's pose, as separate parts with a position and a normal only:
+   * each arm, each thigh, shin and foot, and the joint caps (shoulder, elbow, knee, ankle) that
+   * overlap them. three/mount.ts merges them with the torso and head into one shell.
+   */
+  skin(band: ActivityBand, tier: Tier, kit: Kit3d): BufferGeometry[]
+  /** The skeleton ghost's parts in the band's pose (position, normal): three/mount.ts merges them into one mesh, ≤ 6k triangles (plan §1). */
+  ghost(band: ActivityBand, kit: Kit3d): BufferGeometry[]
 }
 
 /** Geometry tier (anatomy plan §9): a 2 GB phone builds lighter meshes. Part of the cache key. */
