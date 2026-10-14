@@ -68,7 +68,9 @@ export function breathingSummary(run: RunResult, kept: RunResult | null, t: TFun
     return { headline: t('sys.breathing.summary.compare', { run: text, kept: n(other.value) }), key: { text, line: 'run' } }
   }
   const rest = rate.values[0]!
-  const kind = doingAt(run.activity, peak.atMin)
+  // The bout the fastest breathing comes in, or just after (breathing slows over a minute or two: R86).
+  const bout = run.activity.find((b) => peak.atMin >= b.startMin && peak.atMin <= b.startMin + b.durMin + 5)
+  const kind = bout ? doingAt([bout], bout.startMin) : 'rest'
   if (kind === 'rest' || isFlat(rate))
     return { headline: t('sys.breathing.summary.rest', { n: n(rest) }), reason: t('sys.breathing.summary.restReason') }
   const text = n(peak.value)

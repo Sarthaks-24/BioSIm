@@ -18,7 +18,7 @@ import { MAX_BREATH_HZ, drawnRate } from '../../flat/rhythm.ts'
 /** The lungs' resting volume (functional residual capacity) the swell is drawn against, in mL. Display only. */
 export const FRC_ML = 2400
 /** Drawn swell over the cube-root swell: a resting breath must show on a phone. */
-export const GAIN = 1.25
+export const GAIN = 1.7
 
 /** How full the lungs are at `phase` (0…1 of one breath): 0 breathed out, 1 breathed in; a smooth (cosine) breath. */
 export const fillAt = (phase: number) => 0.5 - 0.5 * Math.cos(2 * Math.PI * phase)

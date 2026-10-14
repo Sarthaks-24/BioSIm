@@ -121,6 +121,14 @@ export default defineConfig({
               test: /vite[\\/]preload-helper|[\\/]i18next[\\/]dist[\\/]|react-i18next[\\/]dist[\\/]es[\\/]initReactI18next|lifepeek-en[\\/-]core|src[\\/]i18n[\\/](index|language|text)\.ts/,
               includeDependenciesRecursively: false,
             },
+            // U-2: the meal clock and the systems registry, one chunk of the stage's (as before U-2).
+            // The breathing pack and the picker read the clock; left to itself the bundler then cut
+            // the registry into a chunk of its own (+0.18 KB gz on /sim, measured). Only these modules.
+            {
+              name: 'clock',
+              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|lymph[\\/]def))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              includeDependenciesRecursively: false,
+            },
           ],
         },
       },
