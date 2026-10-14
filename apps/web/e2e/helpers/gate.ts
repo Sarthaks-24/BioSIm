@@ -657,3 +657,33 @@ export function redCheck(bug: keyof typeof RED_LIST, problems: string[]) {
   test.info().annotations.push({ type: 'red', description: `${bug} ${seen}` })
   verdict(`red ${bug}`, mode, problems)
 }
+
+/**
+ * Rapid taps on a meal's servings (R120 #7, #20): the stage's meal store's own setter, as the
+ * servings buttons call it, one value every `gapMs`. Each is a new current run. The store is found
+ * among the page's loaded chunks (the export whose state has `setServings`).
+ */
+export async function tapServings(page: Page, foodId: string, servings: number[], gapMs: number) {
+  await page.evaluate(
+    async ({ foodId, servings, gapMs }) => {
+      type Store = { getState(): { setServings(id: string, n: number): boolean } }
+      let store: Store | undefined
+      const urls = performance
+        .getEntriesByType('resource')
+        .map((e) => e.name)
+        .filter((u) => /\/assets\/[^/]+\.js$/.test(u) && !/engine-worker-/.test(u))
+      for (const url of urls) {
+        const mod = (await import(url)) as Record<string, unknown>
+        store ??= Object.values(mod).find(
+          (v): v is Store => typeof v === 'function' && typeof (v as Partial<Store>).getState?.()?.setServings === 'function',
+        )
+      }
+      if (!store) throw new Error('the meal store was not found')
+      for (const n of servings) {
+        store.getState().setServings(foodId, n)
+        await new Promise((r) => setTimeout(r, gapMs))
+      }
+    },
+    { foodId, servings, gapMs },
+  )
+}
