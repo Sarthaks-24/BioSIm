@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { ActivityBout, MealItem } from '@lifepeek/engine'
+import type { ActivityBout, ActivityKind, MealItem } from '@lifepeek/engine'
 import { mealNames, shortMealNames } from './mealText.ts'
 
 /**
@@ -7,8 +7,16 @@ import { mealNames, shortMealNames } from './mealText.ts'
  * mealText.ts alone, so it never downloads these.
  */
 
-/** Each kind's picture on its chip (in place of a food's). Kinds not offered yet never reach the stage. */
-export const BOUT_EMOJI: Readonly<Record<string, string>> = { walk: '🚶', walkBrisk: '🚶', run: '🏃' }
+/** Each kind's picture on its chip (in place of a food's). */
+export const BOUT_EMOJI: { readonly [K in ActivityKind]: string } = {
+  walk: '🚶',
+  walkBrisk: '🚶',
+  run: '🏃',
+  sitClass: '🪑',
+  football: '⚽',
+  cricket: '🏏',
+  badminton: '🏸',
+}
 
 /** Minutes on the meal clock as h:mm ("0:30", "5:50"), as the link notes write them. */
 export const clockText = (min: number) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}`

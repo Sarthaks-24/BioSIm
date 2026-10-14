@@ -59,7 +59,7 @@ const PLANS = [
 ]
 export const SEAL_GRID: readonly string[] = MEALS.flatMap((m) => PLANS.map((a) => `${m}|${a}`))
 
-/** One grid case: `meal|act`, as in a share link's `m` and `act` (hidden kinds too; simulate checks the limits). */
+/** One grid case: `meal|act`, as in a share link's `m` and `act` (every kind; simulate checks the limits). */
 export function runCase(key: string): RunResult {
   const [meal, act] = key.split('|') as [string, string]
   const activity = act

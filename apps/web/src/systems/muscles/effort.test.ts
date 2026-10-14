@@ -18,7 +18,7 @@ import { MUSCLES_TONE } from '../../anatomy/tones/muscles.ts'
 import { SKIN_TONE } from '../../anatomy/tones/skin.ts'
 import { FLAT_LOOK } from '../../flat/look.ts'
 import { loadLimbs } from '../../flat/registry.ts'
-import { activityBandAt } from '../../lib/bouts.ts'
+import { activityKindAt } from '../../lib/bouts.ts'
 import { luminance } from '../../lib/colorCheck.ts'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import {
@@ -75,7 +75,7 @@ describe('muscles and skin move only with walking or running (R75)', () => {
       expect(musclesSummary(r, null, t, 'en')!.headline).toBe(t('sys.effort.muscles.summary.rest'))
       expect(skinSummary(r, null, t, 'en')!.headline).toBe(t('sys.effort.skin.summary.rest'))
     }
-    expect(t('sys.effort.moves')).toBe('Moves only with walking or running.')
+    expect(t('sys.effort.moves')).toBe('Moves only with activity.')
   })
 
   it('rest and each kind of bout visibly differ: one hatch step each, more drops, the vessels widen', () => {
@@ -138,7 +138,14 @@ describe('data → picture, scrub-safe (anatomy plan §2.4, §2.5, §4)', () => 
 
   it('what the body is doing and which bout the muscles just worked in', () => {
     const bouts = [bout('walk'), { kind: 'run', startMin: 100, durMin: 10 } as ActivityBout]
-    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityBandAt(bouts, min))
+    for (const min of [0, 30, 45, 49.9, 50, 101, 200]) expect(doingAt(bouts, min)).toBe(activityKindAt(bouts, min))
+    const games: ActivityBout[] = [
+      { kind: 'sitClass', startMin: 0, durMin: 45 },
+      { kind: 'football', startMin: 60, durMin: 30 },
+      { kind: 'cricket', startMin: 100, durMin: 20 },
+      { kind: 'badminton', startMin: 130, durMin: 10 },
+    ]
+    for (const min of [10, 50, 70, 110, 135, 200]) expect(doingAt(games, min)).toBe(activityKindAt(games, min))
     expect(lastKindAt(bouts, 10)).toBeNull()
     expect(lastKindAt(bouts, 55)).toBe('walk')
     expect(lastKindAt(bouts, 120)).toBe('run')
@@ -211,6 +218,20 @@ describe('the pictures follow the pose (R32, U-1a)', () => {
     expect(WORKING.walkBrisk.every((g) => WORKING.run.includes(g))).toBe(true)
     expect(WORKING.walk).not.toContain('forearm')
     expect(WORKING.run).toContain('belly')
+  })
+
+  it('the four kinds shown since v3.2 (R114) have working groups and hatch them: sitting a little, the games more', () => {
+    const kinds = ['sitClass', 'cricket', 'badminton', 'football'] as const
+    for (const k of kinds) expect(WORKING[k].length, k).toBeGreaterThan(0)
+    for (const k of ['football', 'cricket', 'badminton'] as const)
+      expect(
+        WORKING.walk.every((g) => WORKING[k].includes(g)),
+        k,
+      ).toBe(true)
+    expect(WORKING.sitClass).not.toContain('thighFront')
+    const steps = kinds.map((k) => hatchStep(at(run([bout(k)]), 'muscle.energyRate', 45)))
+    expect(steps[0]).toBe(1)
+    for (const step of steps.slice(1)) expect(step).toBeGreaterThanOrEqual(2)
   })
 
   it('12 drop places, inside the picture; the arms’ drops move with the pose', () => {
@@ -290,7 +311,7 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
     const s = musclesSummary(r, null, t, 'en')!
     const k = Math.round(peakOf(seriesOf(r, 'muscle.energyRate')!, 1).value / at(r, 'muscle.energyRate', 0))
     expect(k).toBeGreaterThan(30)
-    expect(s.headline).toBe(`During the run, muscles use about ${k}× their resting energy; most ends up as heat.`)
+    expect(s.headline).toBe(`While running, muscles use about ${k}× their resting energy; most ends up as heat.`)
     expect(s.headline).not.toMatch(/kcal/)
     expect(musclesSummary(r, run(), t, 'en')!.headline).toBe(
       `At the most, muscles use about ${k}× their resting energy with this plan; with the other they stay at rest.`,
@@ -307,14 +328,14 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
   it('skin in a walk: about 330 mL an hour, the total, and that sweat is not fat', () => {
     const r = run([bout('walk')])
     const s = skinSummary(r, null, t, 'en')!
-    expect(s.headline).toMatch(/^Most sweat during the walk: about 3[0-9]0 mL an hour\.$/)
+    expect(s.headline).toMatch(/^Most sweat while walking: about 3[0-9]0 mL an hour\.$/)
     expect(s.reason).toMatch(/^About 1[0-9]{2} mL of sweat in all\. Sweat is water and salt, not fat leaving\.$/)
     expect(skinSummary(r, run(), t, 'en')!.headline).toMatch(/^Sweat in all: about \d+ mL with this plan, 0 mL with the kept one\.$/)
   })
 
   it('each graph’s sentence: flat at rest, or its start, its highest and when', () => {
     expect(effortStripSummary('skin.sweatRate' as never, run(), t, 'en')).toBe(
-      'Sweat made: about 0 mL an hour all the way, with no walk or run.',
+      'Sweat made: about 0 mL an hour all the way, with no activity.',
     )
     expect(effortStripSummary('muscle.energyRate' as never, run([bout('walk')]), t, 'en')).toMatch(
       /^Energy used by muscles: 14 kcal\/h at the start, \d+ kcal\/h at the most, at \d+ min\.$/,

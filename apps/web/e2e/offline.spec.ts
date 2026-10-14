@@ -184,7 +184,7 @@ test('a waiting new version offers a reload, from the keyboard too', async ({ pa
 })
 
 // A link made by a newer LifePeek (FP-6, architecture §2; in production before any v=3 link):
-// offline it says so, and that the walk or run is not shown until the app updates; online, once
+// offline it says so, and that the activity is not shown until the app updates; online, once
 // the new version's service worker is waiting, "Update now" lets it take over and reopens the
 // link whole (the address stays as the link came). English only (Hindi is report-only, R47).
 // On v3 (MODEL_VERSION 3) a newer link is v=4.

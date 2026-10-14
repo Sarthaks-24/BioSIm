@@ -120,7 +120,7 @@ describe('share links: activity (act, bact; E-3b-eng, architecture §2)', () => 
     expect(decode('a=cola:1&act=&bact=')).toEqual(decode('a=cola:1'))
   })
 
-  it('drops and names what it cannot show: hidden or unknown kinds, out of limits, overlaps, past the eighth', () => {
+  it('drops and names what it cannot show: unknown kinds, out of limits, overlaps, past the eighth', () => {
     const changes: { param: string; asked: string }[] = []
     const bouts = decodeActivity(
       'football.0.30,jog.40.10,walk.2881.5,walk.10.4,run.0.121,walk.100.20,run.110.10,<script>,walk.300.20',
@@ -128,18 +128,11 @@ describe('share links: activity (act, bact; E-3b-eng, architecture §2)', () => 
       changes,
     )
     expect(bouts).toEqual([
+      { kind: 'football', startMin: 0, durMin: 30 },
       { kind: 'walk', startMin: 100, durMin: 20 },
       { kind: 'walk', startMin: 300, durMin: 20 },
     ])
-    expect(changes.map((c) => c.asked)).toEqual([
-      'football.0.30',
-      'jog.40.10',
-      'walk.2881.5',
-      'walk.10.4',
-      'run.0.121',
-      '<script>',
-      'run.110.10',
-    ])
+    expect(changes.map((c) => c.asked)).toEqual(['jog.40.10', 'walk.2881.5', 'walk.10.4', 'run.0.121', '<script>', 'run.110.10'])
     expect(changes.every((c) => c.param === 'act')).toBe(true)
     // At most 8 bouts; a bout may start the minute the one before it ends.
     const nine = Array.from({ length: 9 }, (_, i) => `walk.${i * 20}.20`).join(',')
@@ -220,10 +213,16 @@ describe('share links: what changed on load (changes)', () => {
   it('reads activity bouts it can show, and names each one it drops (R21)', () => {
     expect(decode('v=3&a=cola:1&act=walk.120.20')).not.toHaveProperty('changes')
     expect(decode('v=3&a=cola:1&act=walk.120.20').act).toEqual([{ kind: 'walk', startMin: 120, durMin: 20 }])
-    expect(decode('v=3&act=football.0.30,walk.120.20&bact=run.0.200').changes).toEqual([
-      { param: 'act', asked: 'football.0.30' },
-      { param: 'bact', asked: 'run.0.200' },
-    ])
+    expect(decode('v=3&act=football.0.30,walk.120.20&bact=run.0.200').changes).toEqual([{ param: 'bact', asked: 'run.0.200' }])
+  })
+
+  it('since v3.2 the four kinds that were hidden open from a link with no note (R114), and go back out the same', () => {
+    const act = 'sitClass.0.45,football.60.30,cricket.120.60,badminton.200.20'
+    const s = decode(`v=3&a=cola:1&act=${act}&bact=badminton.0.30`)
+    expect(s).not.toHaveProperty('changes')
+    expect(s.act?.map((b) => b.kind)).toEqual(['sitClass', 'football', 'cricket', 'badminton'])
+    expect(s.bact).toEqual([{ kind: 'badminton', startMin: 0, durMin: 30 }])
+    expect(encodeShareState(s).get('act')).toBe(act)
   })
 
   it('a huge link is read only so far, and the rest is one change', () => {
@@ -292,13 +291,10 @@ describe('share links: what changed on load (changes)', () => {
         ['fr', 'pseudo'],
       ],
       act: [
-        ['', 'walk.120.20', 'walk.30.20,run.240.10', 'walkBrisk.0.5,walk.5.120'],
-        ['football.0.30', 'walk.0.4', 'walk.2881.20', 'walk.2880.5', 'run.2870.20', 'walk.0.20,run.10.10', 'jog.1.10', 'walk.30', '<x>'],
+        ['', 'walk.120.20', 'walk.30.20,run.240.10', 'walkBrisk.0.5,walk.5.120', 'football.0.30', 'sitClass.0.45,badminton.60.20'],
+        ['walk.0.4', 'walk.2881.20', 'walk.2880.5', 'run.2870.20', 'walk.0.20,run.10.10', 'jog.1.10', 'walk.30', '<x>'],
       ],
-      bact: [
-        ['', 'run.0.30'],
-        ['cricket.0.30', 'run.0.121'],
-      ],
+      bact: [['', 'run.0.30', 'cricket.0.30'], ['run.0.121']],
       bo: [['', 'frog'], []],
       utm_source: [['', 'whatsapp'], []],
     }

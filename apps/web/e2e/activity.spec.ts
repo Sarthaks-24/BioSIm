@@ -92,6 +92,48 @@ test('a link with act and bact opens with its bouts and writes them back; Keep k
   expect(param(page, 'b')).toBe('roti:1')
 })
 
+// K-1 (R114): football, cricket, badminton and sitting in class, shown since v3.2. Each is added from
+// its group in the sheet, goes into the link and opens from it as written with no note, Keep keeps
+// it, and the body takes the nearest still pose (anatomy/human/bands.ts KIND_BAND).
+for (const [kind, name, group, band] of [
+  ['football', 'Football', 'Games', 'run'],
+  ['cricket', 'Cricket', 'Games', 'walkBrisk'],
+  ['badminton', 'Badminton', 'Games', 'walkBrisk'],
+  ['sitClass', 'Sitting in class', 'Sitting', 'rest'],
+] as const) {
+  test(`${name}: added from the sheet, a link round trip with no note, kept, drawn in the ${band} pose`, async ({ page }) => {
+    test.slow() // three page loads and a round trip
+    await open(page, '/sim?v=3&a=roti:1')
+    await openActivity(page)
+    const sheet = page.locator('[data-activity-sheet]')
+    await expect(sheet.getByRole('group', { name: 'What' })).toBeVisible()
+    const choice = sheet.getByRole('group', { name: group, exact: true }).getByRole('button', { name, exact: true })
+    await choice.click()
+    await expect(choice).toHaveAttribute('aria-pressed', 'true')
+    // One choice in all three rows: the walk is no longer pressed.
+    await expect(sheet.getByRole('button', { name: 'Walk', exact: true })).toHaveAttribute('aria-pressed', 'false')
+    await sheet.locator('[data-put]').click()
+    await expect(page.getByRole('dialog')).toBeHidden()
+    await expect.poll(() => param(page, 'act')).toBe(`${kind}.30.20`)
+    await showChip(page, new RegExp(`^Change ${name} 20 min, from 0:30`))
+
+    // The link opens as written, with no note (before v3.2 it was dropped and named).
+    const link = `/sim?v=3&a=cola:1&b=cola:1&t=40&act=${kind}.30.20&bact=${kind}.120.10`
+    expect(await linkRoundTripProblems(page, link)).toEqual([])
+    await expect(page.locator('[data-stage] [role="note"]')).toHaveCount(0)
+    await expect(page.locator('[data-chip="bout"]')).toHaveCount(1)
+    await expect(page.locator('[data-kept-tag]')).toContainText(`Kept: Cola + ${name.toLowerCase()} 10 min, from 2:00`)
+    await expect(page.locator('[data-activity-band]')).toHaveAttribute('data-activity-band', band)
+
+    // Keep: the meal and its bout become the kept run.
+    await open(page, `/sim?v=3&a=roti:1&act=${kind}.30.20`)
+    const keep = page.getByRole('button', { name: 'Keep to compare' })
+    if (!(await keep.isVisible())) await page.getByRole('button', { name: 'More actions' }).click()
+    await keep.click()
+    await expect.poll(() => param(page, 'bact')).toBe(`${kind}.30.20`)
+  })
+}
+
 test('a walk alone: the clock says "from the start", and Keep keeps it', async ({ page }) => {
   await open(page, '/sim?v=3&a=')
   await page.locator('[data-try-bout]').click()

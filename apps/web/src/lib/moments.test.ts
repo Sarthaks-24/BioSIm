@@ -4,7 +4,7 @@ import { simulate } from '@lifepeek/engine/run'
 import { lookupFood } from '../data/foods.ts'
 import { HORIZON_MIN } from './time.ts'
 import { boutMoments, groupClose, hasPlan, hitAreas, momentNameKey, runMoments } from './moments.ts'
-import { activityBandAt } from './bouts.ts'
+import { activityBandAt, activityKindAt } from './bouts.ts'
 
 const sim = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookupFood), { particles: 0 })
 
@@ -107,5 +107,16 @@ describe('activity bouts on the clock (E-3b-ui)', () => {
 
   it('the body’s band: the bout’s kind from its start to its end, else resting', () => {
     expect([0, 30, 49, 50, 125, 130].map((m) => activityBandAt(bouts, m))).toEqual(['rest', 'walk', 'walk', 'rest', 'run', 'rest'])
+  })
+
+  it('a kind with no pose of its own takes the nearest still pose (R114, R32): sitting rests, football runs, cricket and badminton walk briskly', () => {
+    const plan = [
+      { kind: 'sitClass', startMin: 0, durMin: 45 },
+      { kind: 'football', startMin: 60, durMin: 30 },
+      { kind: 'cricket', startMin: 100, durMin: 20 },
+      { kind: 'badminton', startMin: 130, durMin: 10 },
+    ] as const
+    expect([10, 50, 70, 110, 135].map((m) => activityKindAt(plan, m))).toEqual(['sitClass', 'rest', 'football', 'cricket', 'badminton'])
+    expect([10, 50, 70, 110, 135].map((m) => activityBandAt(plan, m))).toEqual(['rest', 'rest', 'run', 'walkBrisk', 'walkBrisk'])
   })
 })

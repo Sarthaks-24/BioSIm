@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ActivityBout, RunResult, Series, SignalMeta } from '@lifepeek/engine'
+import type { ActivityBout, ActivityKind, RunResult, Series, SignalMeta } from '@lifepeek/engine'
 import type { TFunction } from 'i18next'
 import { MAX_DROPS } from '../../anatomy/human/skin.ts'
 
@@ -13,26 +13,24 @@ import { MAX_DROPS } from '../../anatomy/human/skin.ts'
 /** A run's series by ID (the pack's IDs are not in the lean catalog's type). */
 export const seriesOf = (run: RunResult, id: string): Series | undefined => run.signals.get(id as never)
 
-export type Doing = 'rest' | 'walk' | 'walkBrisk' | 'run'
+export type Doing = ActivityKind | 'rest'
 
 /**
- * What the body is doing at `min`: a bout's kind, else 'rest' (lib/bouts.ts activityBandAt, written
+ * What the body is doing at `min`: a bout's kind, else 'rest' (lib/bouts.ts activityKindAt, written
  * out; effort.test.ts checks they agree).
  */
 export function doingAt(bouts: readonly ActivityBout[], min: number): Doing {
-  const b = bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)
-  return b && (b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run') ? b.kind : 'rest'
+  return bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)?.kind ?? 'rest'
 }
 
 /**
  * The kind of the bout going on at `min`, or of the last one that ended before it: the muscles that
  * worked in it stay hatched while their energy comes back down (the model's off-kinetics, R86).
  */
-export function lastKindAt(bouts: readonly ActivityBout[], min: number): Exclude<Doing, 'rest'> | null {
+export function lastKindAt(bouts: readonly ActivityBout[], min: number): ActivityKind | null {
   let last: ActivityBout | null = null
   for (const b of bouts) if (b.startMin <= min && (!last || b.startMin > last.startMin)) last = b
-  const kind = last?.kind
-  return kind === 'walk' || kind === 'walkBrisk' || kind === 'run' ? kind : null
+  return last?.kind ?? null
 }
 
 /**

@@ -224,7 +224,7 @@ function PlanStrip({ meal, activity }: { meal: readonly MealItem[]; activity: re
     ...activity.map((b, i) => () => (
       <FoodChip
         kind="bout"
-        emoji={BOUT_EMOJI[b.kind] ?? '🚶'}
+        emoji={BOUT_EMOJI[b.kind]}
         name={boutLabel(b, t)}
         onEdit={(button) => openMealSheet({ tab: 'activity', edit: i }, button)}
         onRemove={removing(meal.length + i, () => useRunStore.getState().setActivity(activity.filter((_, j) => j !== i)))}

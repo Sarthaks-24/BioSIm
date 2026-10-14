@@ -50,13 +50,10 @@ export function peakOf(series: Series, stepMin: number): { value: number; atMin:
 /** Within 1 % of the first value all the way: the graph is flat ("about the same all the way"). */
 export const isFlat = (series: Series) => series.values.every((v) => Math.abs(v - series.values[0]!) <= 0.01 * Math.abs(series.values[0]!))
 
-/** "Run" → "run" inside a sentence (components/stage/boutText.ts inSentence). */
-const lower = (text: string) => text.charAt(0).toLocaleLowerCase() + text.slice(1)
-
 /**
  * The summary: a meal at rest says how little the heart moves (and to try a walk) or, after a bigger
  * meal, how many beats more and when; with a walk or a run, the fastest beat and in which bout
- * ("Fastest during the run: about 160 beats a minute (rest 66)."), the blood pumped then, and above
+ * ("Fastest while running: about 160 beats a minute (rest 66)."), the blood pumped then, and above
  * 150 a minute that the drawing is slowed. Beside a kept plan: both fastest rates, or that they are the same.
  */
 export function circulationSummary(run: RunResult, kept: RunResult | null, t: TFunction, lang: string): Summary | null {
@@ -90,7 +87,7 @@ export function circulationSummary(run: RunResult, kept: RunResult | null, t: TF
   const at = Math.round(peak.atMin / run.stepMin)
   const pumped = t('sys.circulation.summary.pumped', { from: num(output.values[0]!, lang, 1), to: num(output.values[at]!, lang, 1) })
   return {
-    headline: t('sys.circulation.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), n: text, rest: n(rest) }),
+    headline: t('sys.circulation.summary.peak', { doing: t(`sys.circulation.doing.${kind}`), n: text, rest: n(rest) }),
     key: { text, line: 'run' },
     reason: peak.value > 150 ? `${pumped} ${t('sys.circulation.summary.slowed')}` : pumped,
   }

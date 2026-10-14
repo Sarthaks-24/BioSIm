@@ -69,9 +69,9 @@ const walk20: ActivityBout = { kind: 'walk', startMin: 30, durMin: 20 }
 const run10: ActivityBout = { kind: 'run', startMin: 240, durMin: 10 }
 
 describe('the activity plan (core/activity.ts)', () => {
-  it('seven kinds; walk, brisk walk and run are offered, the other four stay hidden (V-0 item 9)', () => {
+  it('seven kinds, all offered since v3.2 (V-0 item 9, R114: the last four rows re-read, none estimated)', () => {
     expect(ACTIVITY_KINDS).toEqual(['walk', 'walkBrisk', 'run', 'sitClass', 'football', 'cricket', 'badminton'])
-    expect(PUBLIC_ACTIVITY_KINDS).toEqual(['walk', 'walkBrisk', 'run'])
+    expect(PUBLIC_ACTIVITY_KINDS).toEqual(ACTIVITY_KINDS)
   })
 
   it('≤ 8 bouts, from minute 0 and ending by 2880 (R84), 5–120 min, whole minutes, no overlap (a bout may start as another ends)', () => {
@@ -105,7 +105,7 @@ describe('activity: Compendium METs and the cost of moving', () => {
   golden(
     ['energy.activityRate', 'energy.activityTotal'],
     ['herrmann2024'],
-    '2024 Compendium rows: walk 17190 = 3.8, brisk 17200 = 4.8, run 12050 = 9.3; hidden 09065 1.8, 15610 7.0, 15150 4.8, 15030 5.5',
+    '2024 Compendium rows: walk 17190 = 3.8, brisk 17200 = 4.8, run 12050 = 9.3; sitClass 09065 1.8, football 15610 7.0, cricket 15150 4.8, badminton 15030 5.5',
     () => {
       expect(PARAMS.activity.met).toEqual({
         walk: 3.8,

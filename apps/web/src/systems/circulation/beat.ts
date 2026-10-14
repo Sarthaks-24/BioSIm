@@ -1,4 +1,4 @@
-import { valueAt, type ActivityBout, type RunResult, type Series } from '@lifepeek/engine'
+import { valueAt, type ActivityBout, type ActivityKind, type RunResult, type Series } from '@lifepeek/engine'
 import { MAX_DRAWN_HZ, drawnRate } from '../../flat/rate.ts'
 
 /**
@@ -72,13 +72,12 @@ export const restingOutput = (output: Series) => output.values.reduce((a, b) => 
 export const seriesOf = (run: RunResult, id: string): Series | undefined => run.signals.get(id as never)
 
 /**
- * What the body is doing at `min`: a bout's kind (walk, walkBrisk, run), else 'rest' (lib/bouts.ts
- * activityBandAt, written out so the pack shares no code with the stage; circulation.test.ts checks
+ * What the body is doing at `min`: a bout's kind (any of the seven), else 'rest' (lib/bouts.ts
+ * activityKindAt, written out so the pack shares no code with the stage; circulation.test.ts checks
  * they agree).
  */
-export function doingAt(bouts: readonly ActivityBout[], min: number): 'rest' | 'walk' | 'walkBrisk' | 'run' {
-  const b = bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)
-  return b && (b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run') ? b.kind : 'rest'
+export function doingAt(bouts: readonly ActivityBout[], min: number): ActivityKind | 'rest' {
+  return bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)?.kind ?? 'rest'
 }
 
 /**
@@ -87,25 +86,16 @@ export function doingAt(bouts: readonly ActivityBout[], min: number): 'rest' | '
  * the run's first bout. No `active` when the plan has no walk or run. (Breathing's breath.ts has
  * its own: the packs share no code.)
  */
-export function countModel(
-  run: RunResult,
-  min: number,
-): { rest: number; active?: { n: number; doing: 'walk' | 'walkBrisk' | 'run' } } | null {
+export function countModel(run: RunResult, min: number): { rest: number; active?: { n: number; doing: ActivityKind } } | null {
   const rate = seriesOf(run, 'heart.rate')
   if (!rate) return null
   const at = (m: number) => Math.round(valueAt(rate, m, run.stepMin))
-  const bouts = run.activity
-    .filter((b) => b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run')
-    .sort((a, b) => a.startMin - b.startMin)
+  const bouts = [...run.activity].sort((a, b) => a.startMin - b.startMin)
   let restMin = 0
   for (const b of bouts) if (restMin >= b.startMin && restMin < b.startMin + b.durMin) restMin = b.startMin + b.durMin
   const doing = doingAt(run.activity, min)
   const first = bouts[0]
   const active =
-    doing !== 'rest'
-      ? { n: at(min), doing }
-      : first
-        ? { n: at(first.startMin + first.durMin / 2), doing: first.kind as 'walk' | 'walkBrisk' | 'run' }
-        : undefined
+    doing !== 'rest' ? { n: at(min), doing } : first ? { n: at(first.startMin + first.durMin / 2), doing: first.kind } : undefined
   return { rest: at(restMin), ...(active && { active }) }
 }

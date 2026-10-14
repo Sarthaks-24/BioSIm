@@ -1,3 +1,4 @@
+import type { ActivityKind } from '@lifepeek/engine'
 import type { Callout } from '../callouts.ts'
 
 /** A scene point (base.ts `v`, written out: this file loads with the `effort` pack and shares no code with the first paint). */
@@ -125,15 +126,25 @@ export const TENDONS: readonly LimbStretch[] = [
   { limb: 'arm', u0: 0.81, u1: 0.88, off: 0, w: 0.4 },
 ]
 
+const LEGS: readonly MuscleGroup[] = ['hip', 'thighFront', 'thighInner', 'shin', 'calf']
+const ARMS: readonly MuscleGroup[] = ['shoulder', 'upperArm', 'forearm']
+const TRUNK: readonly MuscleGroup[] = ['belly', 'sideBelly']
+
 /**
  * Which groups work in each kind of activity (a drawing's choice: the model counts all the extra
  * energy of moving in the muscles together, model §2.7). The legs in every walk or run; the arms
- * swing bent in a brisk walk and a run; the belly holds the trunk in a run.
+ * swing bent in a brisk walk and a run; the belly holds the trunk in a run. Sitting in class holds
+ * the trunk up and writes with the forearm. The games use the legs, arms and trunk as a run does;
+ * cricket and badminton swing the arm across the chest too (a bat, a racket).
  */
-export const WORKING: { readonly [K in 'walk' | 'walkBrisk' | 'run']: readonly MuscleGroup[] } = {
-  walk: ['hip', 'thighFront', 'thighInner', 'shin', 'calf'],
-  walkBrisk: ['hip', 'thighFront', 'thighInner', 'shin', 'calf', 'shoulder', 'upperArm', 'forearm'],
-  run: ['hip', 'thighFront', 'thighInner', 'shin', 'calf', 'shoulder', 'upperArm', 'forearm', 'belly', 'sideBelly'],
+export const WORKING: { readonly [K in ActivityKind]: readonly MuscleGroup[] } = {
+  walk: LEGS,
+  walkBrisk: [...LEGS, ...ARMS],
+  run: [...LEGS, ...ARMS, ...TRUNK],
+  sitClass: [...TRUNK, 'forearm'],
+  football: [...LEGS, ...ARMS, ...TRUNK],
+  cricket: [...LEGS, ...ARMS, ...TRUNK, 'chest'],
+  badminton: [...LEGS, ...ARMS, ...TRUNK, 'chest'],
 }
 
 /** The labels muscles' picture shows (anatomy plan §6). */

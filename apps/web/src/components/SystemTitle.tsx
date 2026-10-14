@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState, type ComponentProps } from 'reac
 import { useTranslation } from 'react-i18next'
 import { create } from 'zustand'
 import type { RunResult } from '@lifepeek/engine'
-import { activityBandAt } from '../lib/bouts.ts'
+import { activityKindAt } from '../lib/bouts.ts'
 import { formatSignal } from '../lib/formatSignal.ts'
 import { useRunStore } from '../state/run.ts'
 import { pickerSystems, stepSystem, systemOf } from '../systems/registry.ts'
@@ -136,7 +136,7 @@ export default function SystemTitle({ run }: { run: RunResult }) {
               first={(id) => systemOf(id)?.slots[0]}
               tag={(id) => systemOf(id)?.tag ?? (systemOf(id)?.inputs.length ? undefined : 'illustration')}
               format={formatSignal}
-              doing={activityBandAt}
+              doing={activityKindAt}
               onPick={(id) => {
                 useRunStore.getState().setLayer(id)
                 announce(t(`systems.${id}.name`))

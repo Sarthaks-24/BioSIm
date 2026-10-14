@@ -180,7 +180,10 @@ export const SOURCES = {
    * mL/kg/min relative to a standardized RMR of 3.5 mL/kg/min"; pacompendium.com "1 MET = 3.5
    * ml/kg/min", "METS to Kcal/min = multiply METS x 3.5 x body weight in kg then divide by 200".
    * Rows read on pacompendium.com, none marked estimated: 17190 3.8, 17200 4.8, 12050 9.3, 07021 1.0;
-   * hidden kinds 09065 1.8, 15610 7.0, 15150 4.8, 15030 5.5.
+   * and (public since v3.2, R114; re-read 2026-10-14, none red) 09065 1.8 "Sitting – in class,
+   * general, including note-taking or class discussion", 15610 7.0 "Soccer, casual, general (Taylor
+   * Code 540)", 15150 4.8 "Cricket, batting, bowling, fielding", 15030 5.5 "Badminton, social singles
+   * and doubles, general".
    */
   herrmann2024: {
     kind: 'dataset',
