@@ -9,8 +9,8 @@ import type { SystemDef } from '../registry.ts'
  * estimate": the hormone curves are study medians moved onto the book's 28-day cycle with a drawn
  * line between them (data.ts says why).
  *
- * Hidden (`public: false`) until the user flips it (🛑, the card's acceptance): until then only a
- * `?preview=1` session with the switch on offers it. Only what the title, the picker and links need
+ * Public since R117: the per-session teacher switch (off by default) is its only gate, so the row
+ * shows (in any session) only after a teacher turns it on in this tab. Only what the title, the picker and links need
  * is here, in the first download; its words and panels come with its pack.
  */
 export const REPRODUCTION: SystemDef = {
@@ -29,5 +29,5 @@ export const REPRODUCTION: SystemDef = {
   graphWindowMin: 2880,
   tag: 'assumption',
   teacherSwitch: true,
-  public: false,
+  public: true,
 }

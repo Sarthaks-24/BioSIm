@@ -137,10 +137,10 @@ describe('the book’s facts (NCERT, read for R-1)', () => {
 })
 
 describe('the row, its pack and its lesson (R-1)', () => {
-  it('is the reproduction pack’s, hidden and behind the teacher switch, never drawn on the body, tagged Model estimate', () => {
+  it('is the reproduction pack’s, public behind the teacher switch (R117), never drawn on the body, tagged Model estimate', () => {
     expect(systemOf('reproduction')).toBe(REPRODUCTION)
     expect(PACK_OF.reproduction).toBe('reproduction')
-    expect(REPRODUCTION).toMatchObject({ public: false, teacherSwitch: true, draw: 'panels', tag: 'assumption', inputs: [], slots: [] })
+    expect(REPRODUCTION).toMatchObject({ public: true, teacherSwitch: true, draw: 'panels', tag: 'assumption', inputs: [], slots: [] })
   })
 
   it('its pack brings the Now line, the panels in the graph column’s place and its English; no rows, no drawing', async () => {

@@ -259,9 +259,10 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('reproduction', [], true)).toBe('digestion')
   })
 
-  it('the teacher switch (R-1): off by default; off, its row is in no list and no link; on, a preview offers it last', () => {
+  it('the teacher switch (R-1, R117): off by default; off, its row is in no list and no link; on, every session offers it last', () => {
     expect(teacherSwitch.on).toBe(false)
-    expect(systemOf('reproduction')).toMatchObject({ teacherSwitch: true, public: false })
+    // Public since R117: the per-session switch is its only gate.
+    expect(systemOf('reproduction')).toMatchObject({ teacherSwitch: true, public: true })
     for (const preview of [false, true]) {
       expect(pickerSystems(preview).map((s) => s.id)).not.toContain('reproduction')
       expect(systemForLink('reproduction', [], preview)).toBe('digestion')
@@ -270,33 +271,25 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     setSwitch(true)
     try {
       expect(teacherSwitch.on).toBe(true)
-      // Hidden until the user flips `public` (🛑): only a preview session offers it, as the last row.
+      // On, without ?preview=1 too: the last row, and a link opens it.
+      for (const preview of [false, true]) {
+        expect(pickerSystems(preview).at(-1)!.id).toBe('reproduction')
+        expect(systemForLink('reproduction', [], preview)).toBe('reproduction')
+        expect(stepSystem('skin', preview, 1)).toBe('reproduction')
+        expect(stepSystem('digestion', preview, -1)).toBe('reproduction')
+      }
+      // Off again: gone from every list and link.
+      setSwitch(false)
       expect(pickerSystems(false).map((s) => s.id)).not.toContain('reproduction')
       expect(systemForLink('reproduction', [], false)).toBe('digestion')
-      expect(pickerSystems(true).at(-1)!.id).toBe('reproduction')
-      expect(systemForLink('reproduction', [], true)).toBe('reproduction')
-      expect(stepSystem('skin', true, 1)).toBe('reproduction')
-      expect(stepSystem('digestion', true, -1)).toBe('reproduction')
-      // Once public, a plain session offers it too, still only while the switch is on.
-      const row = systemOf('reproduction')!
-      row.public = true
-      try {
-        expect(pickerSystems(false).at(-1)!.id).toBe('reproduction')
-        expect(systemForLink('reproduction', [], false)).toBe('reproduction')
-        setSwitch(false)
-        expect(pickerSystems(false).map((s) => s.id)).not.toContain('reproduction')
-        expect(systemForLink('reproduction', [], false)).toBe('digestion')
-      } finally {
-        row.public = false
-      }
     } finally {
       setSwitch(false)
     }
   })
 
   it('every built row is public since the v3.0 release gate (H-1, R103): a plain link opens it, and the picker offers it', () => {
-    // But reproduction (R-1, v3.2): hidden until the user flips it, and behind the teacher switch.
-    expect(SYSTEMS.filter((s) => !s.public).map((s) => s.id)).toEqual(['reproduction'])
+    // Reproduction too (R117), though only behind the teacher switch (above).
+    expect(SYSTEMS.filter((s) => !s.public).map((s) => s.id)).toEqual([])
     expect(systemForLink('breathing', [], false)).toBe('breathing')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(true)).toEqual(pickerSystems(false))

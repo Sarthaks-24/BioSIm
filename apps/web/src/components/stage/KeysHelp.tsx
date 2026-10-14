@@ -32,7 +32,7 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
  *   here, since school computers rarely let pupils change the system setting.
  * - Growing up (R-1, ui-ux §10): the teacher switch that adds the Reproduction row, off by default
  *   and for this tab only (systems/registry.ts `teacherSwitch` says why). Listed only once that row
- *   may be offered at all (public, or a `?preview=1` session); switched off while the row is lit,
+ *   may be offered at all (public since R117, or a `?preview=1` session); switched off while lit,
  *   the stage goes back to Digestion.
  * Opened with ? or the dock's settings button; downloaded the first time (pages/Simulator.tsx).
  */

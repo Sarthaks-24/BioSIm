@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { checkAxe, goto, returningVisitor } from './helpers/gate.ts'
 
 // Reproduction (R-1, v3.2): a row behind the teacher switch "Growing up", off by default, for this tab
-// only. Hidden (`public: false`) until the user flips it, so these tests use a `?preview=1` session.
+// only. Public since R117, so the switch is its only gate; most tests also carry `?preview=1`, which changes nothing for it.
 // Off: no row anywhere (picker, Home, Science, a link). On (Settings): the last picker row, with
 // "Teacher switch: on"; lit, two panels in the graph column (hormones over one cycle, relative, Model
 // estimate; the book's height table and its worked example) and nothing drawn on the body; no field
@@ -53,11 +53,26 @@ test('off by default: no row in the picker, on Home or Science, and a link to it
   await expect(page.locator('main')).not.toContainText('Anckaert')
   await expect(page.locator('main')).not.toContainText('menstrual')
 
-  // A plain session (no preview) does not even list the switch while the row is hidden.
+  // A plain session (no preview) lists the switch, off.
   await goto(page, '/sim?v=3&a=roti:1')
-  const { sheet, toggle } = await growingUpSwitch(page)
-  await expect(sheet.getByRole('switch').first()).toBeVisible()
-  await expect(toggle).toHaveCount(0)
+  const { toggle } = await growingUpSwitch(page)
+  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+})
+
+test('switched on without ?preview=1 (R117): the row shows in the picker and a plain link opens it', async ({ page }) => {
+  await goto(page, '/sim?v=3&a=roti:1')
+  await page.locator('[data-stage]').waitFor()
+  const { toggle } = await growingUpSwitch(page)
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-checked', 'true')
+  await page.keyboard.press('Escape')
+  const picker = await pickerRows(page)
+  await expect(picker.locator('[data-system-row]').last()).toHaveAttribute('data-system-row', 'reproduction')
+  await page.keyboard.press('Escape')
+  await goto(page, '/sim?v=3&a=roti:1&layer=reproduction')
+  await expect(page.locator('[data-card="reproduction"]')).toBeVisible()
+  await expect(page.locator('[data-system-title="reproduction"]')).toBeVisible()
+  expect(new URL(page.url()).searchParams.get('preview')).toBeNull()
 })
 
 test('switched on: the last row, two panels beside the body (never on it), no input; Home and Science list it; off again goes back', async ({
