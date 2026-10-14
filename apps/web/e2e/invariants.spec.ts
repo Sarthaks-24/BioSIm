@@ -79,6 +79,11 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   // U-3's: Heart & blood (a preview until the v3.0 gate), its title, rhythm chip and colour key over
   // the body, in a walk with a kept plan at rest ("Where blood goes" one flow at a time).
   'circulation, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=circulation&preview=1' },
+  // U-1's: Muscles in a run with a kept plan at rest, Skin (its thermometer card over the body) in a
+  // walk, and the Bones card (Drawing only, the card in the graphs' place), each in the full framing.
+  'muscles, run, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=run.30.20&layer=muscles&preview=1' },
+  'skin, walk': { url: '/sim?v=3&a=roti:1&t=40&act=walk.30.20&layer=skin&preview=1' },
+  'bones, run': { url: '/sim?v=3&a=roti:1&t=40&act=run.30.20&layer=bones&preview=1' },
 }
 
 /** The window sizes each project checks (the project's own first). */
@@ -188,7 +193,8 @@ for (const l of ['en', 'pseudo'] as const) {
             {
               Play: page.getByRole('button', { name: playName(l), exact: true }),
               body: page.locator('[data-body]'),
-              'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
+              // A Drawing-only row's card stands in the graph's place (R11: lymph, the Bones card).
+              'graph plot': page.locator('figure svg[role="img"], [data-card]').filter({ visible: true }),
             },
             { mode: FIRST_SCREEN[project]! },
           )

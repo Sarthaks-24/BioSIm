@@ -117,12 +117,12 @@ test('the stomach scale is 0 to 600 g for everyday meals, and stretches once for
     await page.goto(`/sim?v=3&a=${meal}`)
     const strip = await graph(page, 'Food in the stomach', 'Stomach')
     await expect(strip.locator('[data-axis="y"] span').first()).toHaveText('600')
-    await expect(strip.getByText('Scale stretched to fit this meal')).toHaveCount(0)
+    await expect(strip.getByText('Scale stretched to fit this plan')).toHaveCount(0)
   }
   await page.goto('/sim?v=3&a=cola:4')
   const strip = await graph(page, 'Food in the stomach', 'Stomach')
   await expect(strip.locator('[data-axis="y"] span').first()).toHaveText('1,400')
-  await expect(strip.getByText('Scale stretched to fit this meal')).toBeVisible()
+  await expect(strip.getByText('Scale stretched to fit this plan')).toBeVisible()
 })
 
 test('energy: coming in vs used at rest on one kcal/h axis, with totals, and no ghost for "used"', async ({ page }) => {
@@ -422,7 +422,7 @@ test('a stretched scale’s note on a 360 × 640 phone is one line, and the plot
     await page.locator('figure [data-line="run"]').first().waitFor()
     await page.evaluate(() => document.fonts.ready)
     const figure = page.locator('figure').filter({ visible: true })
-    const words = 'Scale stretched to fit this meal'
+    const words = 'Scale stretched to fit this plan'
     const note = figure.getByText(lang === 'en' ? words : pseudoText(words), { exact: true })
     await expect(note).toBeVisible()
     const lineHeight = await note.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight))

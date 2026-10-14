@@ -18,6 +18,7 @@ import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
 import { CIRCULATION } from './circulation/row.ts'
 import { LYMPH } from './lymph/def.ts'
+import { BONES, MUSCLES, SKIN } from './muscles/row.ts'
 
 /**
  * The systems registry (W-1, architecture §0, §5.1 and §5.2): every body system the stage can
@@ -222,7 +223,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, LYMPH]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, LYMPH, MUSCLES, BONES, SKIN]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 

@@ -184,6 +184,11 @@
 //   10.662 KB. New enforced checks: the v3 ratchets (ledger `v3`: /sim 187.076, /sim + engine
 //   197.838 KB), the system-chunk imports, and every lazy JS file in a pack-manifest entry (the legs'
 //   chunk was in none) or on the allow-list.
+//   U-1 (2026-10-14, branch v3): the effort pack (muscles, skin, the bones card) with three rows in the
+//   first paint, their names, the mL-an-hour unit and the plumbing that keeps organ labels off a posed
+//   arm (R89; the arm test is in the legs' chunk): /sim 186.876 → 187.153 KB on v3 6201885 (+0.28),
+//   /sim + engine 197.815 KB. The pack takes its rows from the run chunk (a copy split them out of it:
+//   +0.3 KB measured). Effort pack 13.5 KB gz (its entry with texts 16.3 KB).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -224,6 +229,9 @@ const BUDGETS = [
   { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
   // U-2: the body-system picker (ui-ux §9, architecture §4: ≤ 6 KB gz, lazy), with the Overlay it opens in.
   { name: 'picker (lazy)', roots: ['src/components/SystemPicker.tsx'], minus: SIM_ROOTS, max: 6 * KB, mode: 'enforce' },
+  // U-1: the effort pack (muscles, skin, the bones card: rows, words, English, three flat layers), one
+  // lazy module (systems/muscles/pack.ts); a system pack is at most 20 KB gz (ui-ux §9, anatomy plan §8).
+  { name: 'effort pack (lazy)', roots: ['src/systems/muscles/pack.ts'], minus: SIM_ROOTS, max: 20 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')

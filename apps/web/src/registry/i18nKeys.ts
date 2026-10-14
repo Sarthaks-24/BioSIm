@@ -10,11 +10,16 @@ import {
 } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
+import { EFFORT_SIGNALS } from '@lifepeek/engine/run'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
-const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS, ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r)]
+const PACK_ROWS: readonly SignalMeta[] = [
+  ...BREATHING_ROWS,
+  ...Object.values(EFFORT_SIGNALS),
+  ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+]
 /** Their moments (Heart & blood's gut-flow peak): the dock names them (`signals.event.*.name`). */
 const PACK_EVENTS = CIRCULATION_ROWS.filter((r): r is EventMeta<RunEventId> => !('kind' in r))
 

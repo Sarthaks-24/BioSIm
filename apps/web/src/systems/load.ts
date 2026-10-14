@@ -52,6 +52,7 @@ function onePack(load: () => Promise<PackModule>): PackDef {
 /** The part of a system's row that comes with its pack. */
 export type SystemParts = Partial<Pick<SystemDef, 'slots' | 'rhythms' | 'knownLimits' | 'organs'>>
 const lymph = () => import('./lymph/pack.ts')
+const effort = () => import('./muscles/pack.ts')
 
 /**
  * The packs built so far besides `core` (each U-n adds its own here): `loadPack` loads one when one
@@ -66,6 +67,15 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // U-3: Heart & blood's rows (and its one moment), words and moments, its English and its flat
   // heart, one lazy module under systems/circulation/ (cache-tiers.mjs finds it: lazy tier).
   circulation: onePack(() => import('./circulation/pack.ts')),
+  // U-1: muscles, skin and the bones card: their words, English and flat drawings, one lazy module
+  // under systems/muscles/ (cache-tiers.mjs: lazy tier). Their rows come from the run chunk, which
+  // the stage has loaded already and which has them (a copy in the pack would split them out of it).
+  effort: {
+    rows: () => import('@lifepeek/engine/run').then((m) => ({ default: Object.values(m.EFFORT_SIGNALS) })),
+    ui: () => effort().then((m) => ({ default: m.UIS, DEFS: m.DEFS })),
+    text: () => effort().then((m) => ({ default: m.TEXT })),
+    drawing: () => effort().then((m) => ({ default: m.DRAWINGS })),
+  },
   // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
   lymph: {
     rows: async () => ({ default: [] }),

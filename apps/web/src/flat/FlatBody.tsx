@@ -90,8 +90,10 @@ export default function FlatBody({
   const specs = useCalloutSpecs(stage, w)
   // Another system's layer places its own labels.
   const { overlay, place } = useCallouts(organs ? specs : [], () => placeLabels())
+  // In a brisk walk or a run no organ label may cover an arm in front of the torso (U-1, R89).
   const placeLabels = () => {
-    if (w > 0 && h > 0) place(flatProjection(w, h, view), w, h)
+    if (w > 0 && h > 0)
+      place(flatProjection(w, h, view), w, h, limbs && band !== 'rest' ? limbs.armBlocker(band, frame(w, h, view)) : undefined)
   }
 
   // Labels move only when the picture's size or the active organ changes.

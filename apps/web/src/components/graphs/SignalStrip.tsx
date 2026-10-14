@@ -276,7 +276,7 @@ export default function SignalStrip({
        * twice). Value, status and ⓘ; a two-line graph, or a kept meal on the projector: status and
        * ⓘ, then the legend; with a kept meal on a phone, its legend entry gets the next row to
        * itself (the meal bar right above names this meal, with the same line sample). On a phone
-       * "Scale stretched to fit this meal" gets a row of its own too: squeezed beside the status it
+       * "Scale stretched to fit this plan" gets a row of its own too: squeezed beside the status it
        * took three lines, and pushed the plot under the dock (R60).
        */}
       <figcaption

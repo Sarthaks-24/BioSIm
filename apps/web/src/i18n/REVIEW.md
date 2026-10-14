@@ -336,7 +336,7 @@ The graphs on the new screen: their labels, the ⓘ "How we know" panel, and the
 | `graph.limits` | Known limits | ज्ञात सीमाएँ | draft |
 | `graph.sources` | Sources | स्रोत | draft |
 | `graph.foodData` | Food data: | खाद्य आँकड़े: | draft |
-| `graph.stretched` | Scale stretched to fit this meal | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
+| `graph.stretched` | Scale stretched to fit this plan | इस भोजन के लिए पैमाना बढ़ाया गया | draft |
 | `graph.range` | {{low}}–{{high}} | {{low}}–{{high}} | draft |
 | `graph.highest` | Highest: {{value}} | सबसे अधिक: {{value}} | draft |
 | `graph.highestTitle` | The ring: highest point | गोला: सबसे ऊँचा बिंदु | draft |

@@ -30,6 +30,24 @@
         "engineKB": 10.669,
         "simRatchetKB": 187.351,
         "simEngineRatchetKB": 198.12
+      },
+      {
+        "wp": "U-1",
+        "at": "2026-10-14",
+        "on": "v3 6201885 + U-1 (/sim 186.876 → 187.153, +0.277: the effort pack's three rows, their names, the mL-an-hour unit and the label plumbing that keeps organ labels off posed arms, R89; the arm test itself is in the legs' chunk)",
+        "simKB": 187.153,
+        "engineKB": 10.662,
+        "simRatchetKB": 187.353,
+        "simEngineRatchetKB": 198.115
+      },
+      {
+        "wp": "U-1 + U-3",
+        "at": "2026-10-14",
+        "on": "v3 64228a6 (U-3) + wp/u1-effort, merged: both packs' rows in the first paint (the effort rows kept in the clock chunk group, as U-3's), their names and units; /sim 186.876 → 187.407 (+0.531 ≈ U-3 +0.275 and U-1 +0.277), engine 10.670",
+        "simKB": 187.407,
+        "engineKB": 10.67,
+        "simRatchetKB": 187.607,
+        "simEngineRatchetKB": 198.377
       }
     ]
   },

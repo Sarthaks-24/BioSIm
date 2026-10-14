@@ -76,13 +76,25 @@ const STEP = 3
 const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
   a.x < b.x + b.w + GAP && b.x < a.x + a.w + GAP && a.y < b.y + b.h + GAP && b.y < a.y + a.h + GAP
 
+/** A box a label would take (CSS px), for `layoutCallouts`' `blocked`. */
+export type LabelBox = { x: number; y: number; w: number; h: number }
+
 /**
  * Places labels so that no two overlap and all stay inside the picture. Each label starts beside
  * its organ, pushed inside the edges; then, in priority order, it slides up or down (nearest free
  * place first, at most about three label heights) past the labels already placed. A label with no
  * free place is hidden: overlapping text is never shown. Pure, so it is tested without a browser.
+ *
+ * `blocked`: a box no label may take (U-1, R89: one covering a posed arm in front of the torso,
+ * which would otherwise sit under "Liver" or "Stomach"; flat/limbs.ts `armBlocker`, lazy with the
+ * legs); a label then slides further, up to about six label heights, to clear it.
  */
-export function layoutCallouts(items: readonly CalloutInput[], width: number, height: number): CalloutLayout {
+export function layoutCallouts(
+  items: readonly CalloutInput[],
+  width: number,
+  height: number,
+  blocked?: (box: LabelBox) => boolean,
+): CalloutLayout {
   const shown: CalloutBox[] = []
   const hidden: string[] = []
   const order = [...items].sort((a, b) => b.priority - a.priority)
@@ -90,13 +102,13 @@ export function layoutCallouts(items: readonly CalloutInput[], width: number, he
     const w = Math.min(it.w, width - 2 * GAP)
     const x = clamp(it.side === 'right' ? it.lx : it.lx - w, GAP, width - GAP - w)
     const y0 = clamp(it.ly - it.h / 2, GAP, height - GAP - it.h)
-    const reach = it.h * 3 + 24
+    const reach = it.h * (blocked ? 6 : 3) + 24
     let placed: CalloutBox | null = null
     for (let d = 0; d <= reach && !placed; d += STEP) {
       for (const y of d === 0 ? [y0] : [y0 + d, y0 - d]) {
         if (y < GAP || y > height - GAP - it.h) continue
         const box = { key: it.key, x, y, w, h: it.h, leader: null }
-        if (!shown.some((s) => overlaps(s, box))) {
+        if (!shown.some((s) => overlaps(s, box)) && !blocked?.(box)) {
           placed = box
           break
         }

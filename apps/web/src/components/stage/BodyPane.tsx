@@ -180,7 +180,8 @@ export default function BodyPane({
               })}
               {resting && (
                 // The one activity pick (R23: E-3b-ui adds only the stance and the activity chips here).
-                <li>
+                // On a phone it comes first in the row (R85), where the row's sideways scroll never hides it.
+                <li className="max-lg:order-first">
                   <button
                     type="button"
                     data-try-bout=""

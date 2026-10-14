@@ -38,6 +38,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/breathing/ui.tsx',
     // And Heart & blood's (U-3).
     'systems/circulation/ui.tsx',
+    // So do the effort pack's (U-1).
+    'systems/muscles/ui.tsx',
   ],
   stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
@@ -47,7 +49,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   // The rings' notes are passed to the panel and read when it draws (Say), like the limits.
   graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
   // unitInWords is called by the panel only.
-  // The breathing pack's text brings the units section (systems/breathing/text.ts).
+  // The breathing, circulation and effort packs' texts bring the units section (systems/<pack>/text.ts).
   units: [
     'components/graphs/HowWeKnowPanel.tsx',
     'lib/formatSignal.ts',
@@ -55,6 +57,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/breathing/summary.ts',
     // The circulation pack's text brings it too (systems/circulation/text.ts).
     'systems/circulation/summary.ts',
+    // The effort pack's text brings the units section too (systems/muscles/text.ts).
+    'systems/muscles/effort.ts',
   ],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],

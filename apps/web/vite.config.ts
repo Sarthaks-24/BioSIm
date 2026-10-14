@@ -122,11 +122,12 @@ export default defineConfig({
               includeDependenciesRecursively: false,
             },
             // U-2: the meal clock and the systems registry, one chunk of the stage's (as before U-2).
+            // U-1: the effort pack's rows (muscles/row.ts) join it the same way.
             // The breathing pack and the picker read the clock; left to itself the bundler then cut
             // the registry into a chunk of its own (+0.18 KB gz on /sim, measured). Only these modules.
             {
               name: 'clock',
-              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|lymph[\\/]def))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|lymph[\\/]def|muscles[\\/]row))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
               includeDependenciesRecursively: false,
             },
           ],
