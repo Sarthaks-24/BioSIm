@@ -40,7 +40,7 @@ export interface SimOptions {
 
 /**
  * Runs the whole model for one meal, minute by minute for 48 h: the organism's modules in their
- * frozen order (modules/: activity → gut → energy → bloodSugar → effort; core/module.ts), then the key moments
+ * frozen order (modules/: activity → gut → energy → bloodSugar → gas → effort → water; core/module.ts), then the key moments
  * (events.ts) and the particles for the picture (particles.ts). The result (result.ts) is the
  * signal table plus the few things that are not signals; the view helpers (view.ts) read it.
  */

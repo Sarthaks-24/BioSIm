@@ -12,7 +12,8 @@
  */
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
-import { EVENTS, SIGNALS, type ActiveSignalId, type EventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { SIGNALS, type ActiveSignalId, type RunEventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { RUN_EVENTS } from './catalog/rows.ts'
 import type { ActivityBout } from './activity.ts'
 import type { ProfileDef } from './profile.ts'
 import type { EventPoint, Rhythm } from './signal.ts'
@@ -72,7 +73,7 @@ export interface SimContext<P = Params> {
   /** Writes one of this module's `provides` or `internal` IDs, once. `band` only where the catalog has one. */
   put(id: ModuleSignalId, values: Float64Array, band?: Band): void
   /** Writes one of this module's `moments`, once. atMin null = it does not happen within the run. */
-  putMoment(id: EventId, atMin: number | null, range?: { low: number; high: number }): void
+  putMoment(id: RunEventId, atMin: number | null, range?: { low: number; high: number }): void
   /** Writes one of this module's `rhythms` (a real-clock rate, never an array), once. */
   putRhythm(id: ActiveSignalId, rhythm: Omit<Rhythm, 'meta'>): void
 }
@@ -84,8 +85,8 @@ export interface ModelModule<P = Params> {
   readonly needs: readonly ModuleSignalId[]
   readonly provides: readonly RunSignalId[]
   readonly internal?: readonly InternalId[]
-  /** Timeline markers it writes with `putMoment` (activity's two). The five meal moments still come from events.ts after the run. */
-  readonly moments?: readonly EventId[]
+  /** Timeline markers it writes with `putMoment` (activity's two, water's two). The five meal moments still come from events.ts after the run. */
+  readonly moments?: readonly RunEventId[]
   /** Real-clock rates it writes with `putRhythm` (heart, breathing: S-2, S-3). */
   readonly rhythms?: readonly ActiveSignalId[]
   run(ctx: SimContext<P>): void
@@ -103,7 +104,7 @@ export type SignalStore = ReadonlyMap<ModuleSignalId, Written>
 /** What runModules returns: the arrays, and the moments and rhythms the modules put. */
 export interface ModuleOutput {
   signals: SignalStore
-  moments: ReadonlyMap<EventId, EventPoint>
+  moments: ReadonlyMap<RunEventId, EventPoint>
   rhythms: ReadonlyMap<SignalId, Rhythm>
 }
 
@@ -154,7 +155,7 @@ export function moduleGraphErrors<P>(modules: readonly ModelModule<P>[]): string
  */
 export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetup<P>): ModuleOutput {
   const store = new Map<ModuleSignalId, Written>()
-  const moments = new Map<EventId, EventPoint>()
+  const moments = new Map<RunEventId, EventPoint>()
   const rhythms = new Map<SignalId, Rhythm>()
   // Lean rows only: a pack's lazy rows (core/catalog/<pack>.ts) never have a band.
   const metas: Partial<Record<ModuleSignalId, SignalMeta>> = SIGNALS
@@ -181,7 +182,7 @@ export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetu
       },
       putMoment(id, atMin, range) {
         once(m.moments, moments, 'putMoment', id)
-        moments.set(id, { meta: EVENTS[id], atMin, ...(range && atMin !== null ? { low: range.low, high: range.high } : {}) })
+        moments.set(id, { meta: RUN_EVENTS[id], atMin, ...(range && atMin !== null ? { low: range.low, high: range.high } : {}) })
       },
       putRhythm(id, rhythm) {
         once(m.rhythms, rhythms, 'putRhythm', id)

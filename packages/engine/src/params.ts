@@ -217,6 +217,32 @@ export const PARAMS = {
     },
   },
 
+  /**
+   * Water and kidneys (model §2.4, D17; S-4). The meal's water sits on a steady background day: the
+   * usual drinks balance the usual 1.5 L of urine a day (OpenStax A&P 2e §26.2) and the unnoticed
+   * losses, so only the meal's extra water E moves (Model estimate). Extra metabolic water = 0.12 mL
+   * per kcal above rest (IOM 2005 p85: 15, 10.5, 11.1 g per 100 kcal of carbohydrate, protein,
+   * fat). The kidney follows E through an ADH lag S (dS/dt = (E − S)/τ; τ 10 min = AVP half-life
+   * 6.9 min, inside Calvi 2024's 5–20 min) and sends out urine U = U0 + kx·S, between the least
+   * urine, 21 mL/h (about 500 mL/day, §25.1), and 750 mL/h (inside IOM p74's 0.7–1.0 L/h). kx and τ are
+   * calibrated on Maughan 2016 (1 L water: 1337 ± 330 mL urine in 4 h; the model gives ~1150 mL,
+   * capped by the 0.9 L the gut has absorbed by then) with kx·τ = 0.3, about critically damped, so
+   * urine never dips below the background after a drink; Crowe 1987 is the hold-out. The bladder
+   * starts empty, the urge is felt at 150 mL (§25.2) and it empties at 300 mL (hand-picked inside
+   * §25.2's "300 to 400 mL"). Filtration is a constant 125 mL/min (§25.5).
+   */
+  water: {
+    metabolicMlPerKcal: 0.12,
+    backgroundUrineMlPerDay: 1500,
+    minUrineMlPerH: 21,
+    maxUrineMlPerH: 750,
+    adhTauMin: 10,
+    urinePerExtraMlPerMin: 0.03,
+    bladderUrgeMl: 150,
+    bladderEmptyMl: 300,
+    filtrationMlPerMin: 125,
+  },
+
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,

@@ -4,7 +4,7 @@
  * instead of the engine's raw arrays, so every number on screen carries its ID, unit and sources.
  * Built by core/table.ts. The draft is in plans/v2 04-CATALOG-DRAFT §2.
  */
-import type { ActiveSignalId, ChartableMeta, EventId, EventMeta, RunSignalId, SignalId, SignalMeta } from './catalog.ts'
+import type { ActiveSignalId, ChartableMeta, EventMeta, RunEventId, RunSignalId, SignalId, SignalMeta } from './catalog.ts'
 import type { SourceId } from './sources.ts'
 
 /** One sim-clock signal for one run. Index i = minute i·stepMin. */
@@ -29,7 +29,7 @@ export interface Rhythm {
 }
 
 /** One timeline marker. atMin null = does not happen within the run (shown as "Not within 48 h"). */
-export interface EventPoint<Id extends EventId = EventId> {
+export interface EventPoint<Id extends RunEventId = RunEventId> {
   readonly meta: EventMeta<Id>
   readonly atMin: number | null
   readonly low?: number
@@ -40,7 +40,8 @@ export interface EventPoint<Id extends EventId = EventId> {
 export interface SignalTable {
   /** Every signal the run produced: the lean catalog's rows, then the packs' (core/catalog/rows.ts). */
   readonly signals: ReadonlyMap<RunSignalId, Series>
-  readonly moments: ReadonlyMap<EventId, EventPoint>
+  /** Every moment the run put: the lean catalog's events, then the packs' (core/catalog/rows.ts). */
+  readonly moments: ReadonlyMap<RunEventId, EventPoint>
   /** Empty in v2.0. */
   readonly rhythms: ReadonlyMap<SignalId, Rhythm>
   readonly stepMin: number
