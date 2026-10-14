@@ -74,7 +74,9 @@ export function packManifest(manifest) {
         (systems.some((s) => k.startsWith(`src/systems/${s}/`)) || k === `../../packages/engine/src/core/catalog/${pack}.ts`),
     )
     const sections = keys
-      .filter((k) => /^_*lifepeek-(en|hi)-sys\./.test(k) && k.replace(/^_+/, '').slice('lifepeek-en-sys.'.length).startsWith(`${pack}-`))
+      // `lifepeek-en-sys.<pack>` when only the pack's loader imports it (a real build: I-1),
+      // `__lifepeek-en-sys.<pack>-<hash>.js` when it is a chunk shared by several.
+      .filter((k) => new RegExp(`^_*lifepeek-(en|hi)-sys\\.${pack}(-|$)`).test(k))
       .map((k) => manifest[k].file)
     const files = [...new Set([...beyondSim(roots), ...sections])]
     if (files.length) entries[pack] = { tier: pack === 'core' ? 'precache' : 'lazy', files }

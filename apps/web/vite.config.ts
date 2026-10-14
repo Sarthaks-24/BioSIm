@@ -114,7 +114,7 @@ export default defineConfig({
           groups: [
             {
               name: 'i18n',
-              test: /vite[\\/]preload-helper|[\\/]i18next[\\/]dist[\\/]|react-i18next[\\/]dist[\\/]es[\\/]initReactI18next|lifepeek-en[\\/-]core|src[\\/]i18n[\\/](index|language)\.ts/,
+              test: /vite[\\/]preload-helper|[\\/]i18next[\\/]dist[\\/]|react-i18next[\\/]dist[\\/]es[\\/]initReactI18next|lifepeek-en[\\/-]core|src[\\/]i18n[\\/](index|language|text)\.ts/,
               includeDependenciesRecursively: false,
             },
           ],

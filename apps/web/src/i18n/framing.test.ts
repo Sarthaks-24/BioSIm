@@ -12,7 +12,9 @@ import hi from './hi.json'
  * verdict on what they ate, so these words are banned outright, not left to review.
  *
  * Matching is whole-word and case-insensitive, over every string in en.json, hi.json and the
- * food files (content/foods/*.json, both languages).
+ * food files (content/foods/*.json, both languages). A `stem*` entry matches every word that starts
+ * with the stem ("dehydrat*": dehydrated, dehydration). I-1 (content-i18n §6) adds the v3 words,
+ * stems, the activity rule and the scoped words (English; the Hindi list waits for the reviewer, R47).
  */
 
 /** English: the plan's list, with the inflections a translator would reach for. */
@@ -62,7 +64,74 @@ const BANNED_EN = [
   'earning',
   'fat-burning',
   'fat burning',
+  // v3 systems (content-i18n §6, I-1): no weight-loss, detox, hydration or immunity claims, no
+  // diagnosis words, and nothing that reads a number as "your" body's.
+  'burn calories',
+  'fat burning zone',
+  'fat loss',
+  'lose weight',
+  'weight loss',
+  'belly fat',
+  'flush out',
+  'detox*',
+  'cleanse',
+  'cleanses',
+  'cleansing',
+  'toxin',
+  'toxins',
+  'hydrating',
+  'stay hydrated',
+  'you should drink',
+  'immunity booster',
+  'boost immunity',
+  'boosts immunity',
+  'superfood*',
+  'brain food',
+  'sugar for the brain',
+  'glucose spike',
+  'insulin spike',
+  'fat-storing hormone',
+  'insulin resistance',
+  'pre-diabetic',
+  'prediabet*',
+  'reverse diabetes',
+  'abnormal',
+  'dirty',
+  'impure',
+  'unclean',
+  'pee',
+  'normal for you',
+  'your heart rate is',
 ]
+
+/**
+ * Words allowed only in some places (content-i18n §6): "dehydrated" only in the Science page's
+ * text and the known limits ("*.limits.*"), never as a screen label; bare "flush" never in the
+ * kidneys' words ("flush out" is banned everywhere, above).
+ */
+const SCOPED: readonly { phrase: string; allowed: (path: string) => boolean }[] = [
+  { phrase: 'dehydrat*', allowed: (path) => path.startsWith('science.') || /(^|\.)limits\./.test(path) },
+  { phrase: 'flush', allowed: (path) => !path.startsWith('sys.kidneys.') },
+]
+
+/**
+ * The activity rule (content-i18n §6): moving is described in time and effort, never as food energy
+ * to pay back, so no activity text (an `activity.*` key, or a text with an `{{activity}}`) names kcal.
+ */
+const ACTIVITY_KCAL = /kcal|किलो कैलोरी|कैलोरी/i
+const isActivityText = (path: string, text: string) => /(^|\.)activity\./.test(path) || /\{\{\s*activity\w*\s*\}\}/.test(text)
+const activityKcal = (file: string, entries: [string, string][]) =>
+  entries.filter(([path, text]) => isActivityText(path, text) && ACTIVITY_KCAL.test(text)).map(([path]) => `${file} › ${path}`)
+
+/** "file › path: phrase" for every scoped word found outside its place. */
+const findScoped = (file: string, entries: [string, string][]) =>
+  SCOPED.flatMap(({ phrase, allowed }) =>
+    findBanned(
+      file,
+      entries.filter(([path]) => !allowed(path)),
+      [phrase],
+    ),
+  )
 
 /**
  * Hindi: bad, harmful, dangerous (with and without the nukta) and "burn", until the Hindi reviewer
@@ -91,12 +160,15 @@ const BANNED_HI = [
  * signs are marks, so "खराबी" does not hide a "खराब" and "badge" never matches "bad".
  */
 function bannedPattern(phrase: string): RegExp {
-  const body = phrase
+  const stem = phrase.endsWith('*')
+  const body = (stem ? phrase.slice(0, -1) : phrase)
     .normalize('NFC')
     .split(/\s+/)
     .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('\\s+')
-  return new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${body}(?![\\p{L}\\p{M}\\p{N}])`, 'iu')
+  // A stem may go on with any letters; a word or phrase ends where the letters do.
+  const end = stem ? '' : '(?![\\p{L}\\p{M}\\p{N}])'
+  return new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${body}${end}`, 'iu')
 }
 
 /** Every string in a JSON value, with its path ("graph.highest", "name.hi"). */
@@ -157,5 +229,48 @@ describe('framing lint: no banned words on screen', () => {
     ]
     const caught = new Set(findBanned('test', planted, ALL).map((hit) => hit.split(':')[0]))
     expect([...caught]).toEqual(['test › a', 'test › b', 'test › c'])
+  })
+})
+
+describe('framing lint: stems, scoped words and the activity rule (content-i18n §6, I-1)', () => {
+  const sources: [string, [string, string][]][] = [
+    ['en.json', strings(en)],
+    ['hi.json', strings(hi)],
+    ...foodFiles.map((f) => [f, strings(JSON.parse(readFileSync(foodsDir + f, 'utf8')))] as [string, [string, string][]]),
+  ]
+
+  it('a stem matches every word that starts with it, and only at a word start', () => {
+    expect(bannedPattern('dehydrat*').test('Dehydration')).toBe(true)
+    expect(bannedPattern('dehydrat*').test('feeling dehydrated')).toBe(true)
+    expect(bannedPattern('dehydrat*').test('rehydrate')).toBe(false)
+    expect(bannedPattern('detox*').test('a detoxing drink')).toBe(true)
+  })
+
+  it('scoped words appear only where they may', () => {
+    expect(sources.flatMap(([file, entries]) => findScoped(file, entries))).toEqual([])
+  })
+
+  it('no activity text names kcal', () => {
+    expect(sources.flatMap(([file, entries]) => activityKcal(file, entries))).toEqual([])
+  })
+
+  it('would catch a v3 word, a scoped word out of place and an activity text in kcal', () => {
+    const planted: [string, string][] = [
+      ['a', 'Sweating helps you lose weight'],
+      ['b', 'Normal for you is 70'],
+      ['science.water', 'If you are dehydrated, the kidneys keep water'],
+      ['sys.kidneys.now.idle', 'You are dehydrated'],
+      ['sys.kidneys.now.busy', 'The kidneys flush the blood'],
+      ['sys.circulation.now', 'The heart can flush blood fast'],
+      ['activity.sheet.walk', 'A walk uses 120 kcal'],
+      ['sys.effort.now', '{{activity}} for 20 min: about 90 kcal'],
+      ['energy.activityRate', 'Energy used by moving, in kcal/h'],
+    ]
+    expect(findBanned('test', planted, ALL).map((hit) => hit.split(':')[0])).toEqual(['test › a', 'test › b'])
+    expect(findScoped('test', planted).map((hit) => hit.split(':')[0])).toEqual([
+      'test › sys.kidneys.now.idle',
+      'test › sys.kidneys.now.busy',
+    ])
+    expect(activityKcal('test', planted)).toEqual(['test › activity.sheet.walk', 'test › sys.effort.now'])
   })
 })

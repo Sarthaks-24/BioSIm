@@ -24,6 +24,13 @@ const MANIFEST = {
 describe('pack-manifest.json (W-1; R71 load on demand)', () => {
   const out = packManifest(MANIFEST)
 
+  it("finds a pack's English section by the key a real build gives it: a lazy entry with no hash (I-1)", () => {
+    const kidneys = { 'lifepeek-en-sys.kidneys': { file: 'assets/_lifepeek-en-sys.kidneys-AAAAAAAN.js', isDynamicEntry: true } }
+    const built = packManifest({ ...MANIFEST, ...kidneys })
+    expect(built.entries.kidneys).toEqual({ tier: 'lazy', files: ['assets/_lifepeek-en-sys.kidneys-AAAAAAAN.js'] })
+    expect(built.entries.breathing).toEqual(out.entries.breathing)
+  })
+
   it('puts the engine (with the core rows) in the precache tier: a cold offline start of the core simulator', () => {
     expect(out.entries.engine).toEqual({ tier: 'precache', files: ['assets/run-AAAAAAAE.js', 'assets/rows-core-AAAAAAAF.js'] })
     expect(out.precache).toEqual(['/assets/run-AAAAAAAE.js', '/assets/rows-core-AAAAAAAF.js'])

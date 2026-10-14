@@ -137,6 +137,12 @@
 //   a5988f0); the cap 2600 → 1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are
 //   enforced; the lazy total is a report. The lazy-chunk check counts the lazy tier as offline.
 //   "reactsToMeal" (a catalog row's field) joins the engine-not-in-/sim guard.
+//   I-1 (2026-10-14, branch v3): the section loader. Each pack's words are `sys.<packId>`, loaded
+//   with the pack when its system is lit (systems/load.ts; none built yet). Home's words are a page
+//   section that "/" loads with the app (main.tsx), and the texts of signals no graph shows load
+//   with "How we know" (R76): /sim 184.233 → 183.972 KB on v3 a1d09e5 (−0.26), Home 145.260 →
+//   145.393 KB (+0.13; its words are their own file now, counted in Home's roots). A lazy Home route
+//   was tried and dropped: it split the entry's shared code into six files (+1.5 KB on /sim).
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
@@ -148,10 +154,13 @@ import { ENGINE, PACK_SYSTEMS, SIM_ROOTS, packManifest, staticFiles as manifestF
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
 
+/** Home's first download: the app and Home's words, which "/" loads with it (main.tsx, I-1). */
+const HOME_ROOTS = ['index.html', 'lifepeek-en-home']
+
 const BUDGETS = [
   // 120 KB is the goal (report); 147 KB is the ratchet it may never pass again (B26, plan qa-fixes §0).
-  { name: 'Home (/)', roots: ['index.html'], max: 120 * KB, mode: 'report' },
-  { name: 'Home ratchet', roots: ['index.html'], max: 147 * KB, mode: 'enforce' },
+  { name: 'Home (/)', roots: HOME_ROOTS, max: 120 * KB, mode: 'report' },
+  { name: 'Home ratchet', roots: HOME_ROOTS, max: 147 * KB, mode: 'enforce' },
   // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
   // 194 is the LAST raise (R42, W-1): if a v3 step would pass it, the engine worker (W-2) lands first.
   { name: '/sim before 3D', roots: SIM_ROOTS, max: 194 * KB, mode: 'enforce' },
