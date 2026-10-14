@@ -4,8 +4,11 @@
  * without activity gives exactly the run of a resting person.
  *
  * Index i is the step that ends at minute i·stepMin (as energy.inRate): a bout from minute s for d
- * minutes covers s < t ≤ s + d, so its MET counts for exactly d minutes. It also writes the two
- * timeline moments: the first bout's start and the last bout's end.
+ * minutes covers s < t ≤ s + d. The body does not jump to the bout's MET: it follows it with
+ * first-order on/off kinetics (R82, params.kinetics: τ_on 35 s, τ_off 50 s, Rossiter 2002), so a
+ * bout's extra MET-minutes are d·(MET − 1) plus (τ_off − τ_on)·(MET − 1) paid back after it ends
+ * (the fast part of the oxygen debt; no slow EPOC). It also writes the two timeline moments: the
+ * first bout's start and the last bout's end.
  *
  * In v3.0 activity moves only energy (and later breathing, heart, muscles, skin, water). It has no
  * arrow into the gut or blood glucose (model D6, C3): those modules never read x.activity.met.
@@ -58,11 +61,30 @@ export const activityModule: ModelModule = {
   run(ctx) {
     const { n, stepMin: step } = ctx
     const { activity } = ctx.input
-    const met = new Float64Array(n).fill(1)
+    const target = new Float64Array(n).fill(1)
     for (const b of activity) {
       const value = ctx.params.activity.met[b.kind]
       const end = b.startMin + b.durMin
-      for (let i = Math.max(0, Math.floor(b.startMin / step) + 1); i < n && i * step <= end; i++) met[i] = value
+      for (let i = Math.max(0, Math.floor(b.startMin / step) + 1); i < n && i * step <= end; i++) target[i] = value
+    }
+    // On/off kinetics (R82): the MET above 1 follows the bouts' MET as a first-order lag, τ_on going
+    // up and τ_off going down. Each step holds the exact mean of the lag over that step, so every
+    // module that turns MET into energy, oxygen, heat or sweat integrates the same curve. Within
+    // 1e-12 MET of the target the lag is snapped to it, so a rest after a bout is exactly MET 1.
+    const { metTauOnS, metTauOffS } = ctx.params.kinetics
+    const met = new Float64Array(n)
+    let x = 0
+    for (let i = 0; i < n; i++) {
+      const goal = target[i]! - 1
+      let mean = goal
+      if (x !== goal) {
+        const tau = (goal > x ? metTauOnS : metTauOffS) / 60
+        const keep = Math.exp(-step / tau)
+        mean = goal + ((x - goal) * tau * (1 - keep)) / step
+        x = goal + (x - goal) * keep
+        if (Math.abs(x - goal) < 1e-12) x = goal
+      }
+      met[i] = 1 + mean
     }
     ctx.put(ACTIVITY_MET, met)
 

@@ -449,6 +449,53 @@ export const SOURCES = {
       'Eriksen M, Waaler BA. Priority of blood flow to splanchnic organs in humans during pre- and post-meal exercise. Acta Physiol Scand 1994;150:363–372.',
   },
   /**
+   * Checked 2026-10-14 (V-FIXS, abstract, PMID 12068057): for moderate exercise "the kinetics were
+   * well described by a simple mono-exponential function … with time constants (tau) averaging:
+   * tauV(O2),on 35 +/- 14 s (+/- S.D.) … tauV(O2),off 50 +/- 13 s".
+   */
+  rossiter2002: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'on/off kinetics of the MET every module reads: τ_on 35 s, τ_off 50 s (R82)',
+    url: 'https://doi.org/10.1113/jphysiol.2001.012910',
+    citation:
+      'Rossiter HB, Ward SA, Kowalchuk JM, Howe FA, Griffiths JR, Whipp BJ. Dynamic asymmetry of phosphocreatine concentration and O2 uptake between the on- and off-transients of moderate- and high-intensity exercise in humans. J Physiol 2002;541:991–1002.',
+  },
+  /**
+   * Checked 2026-10-14 (V-FIXS, abstract, PMID 23798293): the review of VO2 kinetics; "in healthy
+   * individuals walking, running, or cycling upright, VO2 kinetics control resides within the
+   * exercising muscle(s)" (context for one MET lag that every module reads).
+   */
+  poole2012: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'context: oxygen-uptake kinetics are set in the working muscle (R82)',
+    url: 'https://doi.org/10.1002/cphy.c100072',
+    citation: 'Poole DC, Jones AM. Oxygen uptake kinetics. Compr Physiol 2012;2:933–996.',
+  },
+  /**
+   * Checked 2026-10-14 (V-FIXS, abstract, PMID 2916880; 36 patients with coronary artery disease):
+   * "Stroke volume increased considerably (23%) and heart rate was slightly higher (8%) half an hour
+   * after the meal". Healthy subjects (Kelbaek 1987, PMID 3693220): "At rest cardiac output increased
+   * 61% mostly because of a stroke volume increase".
+   */
+  kelbaek1989: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'a meal raises stroke volume more than heart rate: +23 % and +8 % (HR 27 % of the rise in logs, R80)',
+    url: 'https://doi.org/10.1001/archinte.149.2.363',
+    citation:
+      'Kelbaek H, Gjørup T, Christensen NJ, Munck O, Godtfredsen J. Central hemodynamic changes after ingestion of a meal in patients with coronary artery disease. Arch Intern Med 1989;149:363–365.',
+  },
+  kelbaek1987: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'healthy subjects: the meal rise in CO is mostly stroke volume (R80 cross-check)',
+    url: 'https://doi.org/10.1152/jappl.1987.63.5.1862',
+    citation:
+      'Kelbaek H, Munck O, Christensen NJ, Godtfredsen J. Autonomic nervous control of postprandial hemodynamic changes at rest and upright exercise. J Appl Physiol 1987;63:1862–1865.',
+  },
+  /**
    * Checked 2026-10-14 (V-3, abstract, PMID 1877363): CO peaks "30 to 60 min after end of the
    * meal"; "Two hours after a small meal cardiac output was nearly or fully back to pre-meal values,
    * while cardiac output was still markedly elevated 2 hours after a large meal" (R52 wording).
@@ -718,11 +765,14 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'circulation.gutRestShare': { sources: ['openstax-ap2e-20'], basis: 'measured' },
   'circulation.muscleRestShare': { sources: ['openstax-ap2e-20'], basis: 'measured' },
   'circulation.muscleShareOfRise': { sources: ['openstax-ap2e-20'], basis: 'measured' },
+  'circulation.gutGiveUpAtMax': { sources: ['openstax-ap2e-20'], basis: 'measured' },
   'circulation.gutWeight.carbs': { sources: ['sieber1992', 'sidery1994'], basis: 'calibrated' },
   'circulation.gutWeight.protein': { sources: ['sieber1992'], basis: 'measured' },
   'circulation.gutWeight.fat': { sources: ['sieber1992'], basis: 'measured' },
   'circulation.gutRiseMaxLPerMin': { sources: ['sidery1994'], basis: 'assumption' },
-  'circulation.gutHalfKcalPerMin': { sources: ['eriksen1994'], basis: 'calibrated' },
+  'circulation.gutHalfKcal': { sources: ['eriksen1994'], basis: 'calibrated' },
+  'circulation.gutRiseTauMin': { sources: ['waaler1991'], basis: 'calibrated' },
+  'circulation.hrShareOfMealRise': { sources: ['kelbaek1989', 'kelbaek1987', 'waaler1991'], basis: 'measured' },
   'circulation.gutPeakMinRiseMlPerMin': { sources: [], basis: 'display' },
   // Water (S-4, V-4). The steady background day (D17): urine 1.5 L a day (OpenStax §26.2), never
   // below 500 mL a day (§25.1); the kidney's ceiling 0.7–1.0 L/h (IOM p74); metabolic water by fuel
@@ -735,6 +785,13 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'water.maxUrineMlPerH': { sources: ['iom2005'], basis: 'measured' },
   'water.adhTauMin': { sources: ['calvi2024', 'maughan2016'], basis: 'calibrated' },
   'water.urinePerExtraMlPerMin': { sources: ['maughan2016'], basis: 'calibrated' },
+  // R81: sweat drunk back over ~90 min (an assumption of the "always well watered" day, D17); the
+  // deficit side's gain is a fifth of a drink's, so a 20-min walk keeps urine above its least.
+  'water.urinePerDeficitMlPerMin': { sources: [], basis: 'calibrated' },
+  'water.sweatDrinkBackTauMin': { sources: [], basis: 'assumption' },
+  // R82: oxygen-uptake phase II time constants in moderate exercise.
+  'kinetics.metTauOnS': { sources: ['rossiter2002', 'poole2012'], basis: 'measured' },
+  'kinetics.metTauOffS': { sources: ['rossiter2002', 'poole2012'], basis: 'measured' },
   'water.bladderUrgeMl': { sources: ['openstax-ap2e-25'], basis: 'measured' },
   'water.bladderEmptyMl': { sources: ['openstax-ap2e-25'], basis: 'assumption' },
   'water.filtrationMlPerMin': { sources: ['openstax-ap2e-25'], basis: 'measured' },

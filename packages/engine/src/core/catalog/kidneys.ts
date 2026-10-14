@@ -15,12 +15,12 @@ export const KIDNEY_SIGNAL_IDS = [
   'kidney.urineRate',
   'kidney.urineTotal',
   'kidney.bladderMl',
-  'water.mealExtraMl',
+  'water.bodyExtraMl',
   'kidney.filtrationRate',
 ] as const
 export type KidneySignalId = (typeof KIDNEY_SIGNAL_IDS)[number]
 
-export const KIDNEY_EVENT_IDS = ['event.bladderFirstUrge', 'event.mostMealWaterPassed'] as const
+export const KIDNEY_EVENT_IDS = ['event.bladderFirstUrge', 'event.halfMealWaterPassed'] as const
 export type KidneyEventId = (typeof KIDNEY_EVENT_IDS)[number]
 
 const k = (id: string) => `signals.${id}`
@@ -75,21 +75,21 @@ export const KIDNEY_SIGNALS: { readonly [Id in KidneySignalId]: SignalMeta<Id> }
     // "Volumes in adults can range from nearly zero to 500–600 mL" (OpenStax §25.2).
     validRange: { low: 0, high: 600, basis: 'cited' },
   },
-  // E: the meal's water still in the body (water + metabolic water in, minus extra urine and sweat).
-  'water.mealExtraMl': {
-    id: 'water.mealExtraMl',
+  // E: body water above a normal day (drinks, food and metabolic water in; extra urine and sweat not yet drunk back out).
+  'water.bodyExtraMl': {
+    id: 'water.bodyExtraMl',
     unit: 'mL',
     status: 'assumption',
     clock: 'sim',
     kind: 'level',
     sourceIds: ['openstax-ap2e-23', 'iom2005', 'maughan2016'],
-    i18nKey: k('water.mealExtraMl'),
+    i18nKey: k('water.bodyExtraMl'),
     reactsToMeal: true,
     shipsIn: 'v3.0',
     round: 5,
     limitKey: 'limits.waterSteadyDay',
-    // Below 0 when sweat took more than the meal gave (no thirst, model D5 C8). The codec's longest
-    // plans (8 bouts of 2 h) sweat about 16 L: a design guard.
+    // Below 0 for a while after sweating (the sweat is drunk back over about 90 min, R81). The
+    // codec's longest plans (8 bouts of 2 h) sweat about 16 L: a design guard.
     validRange: { low: -20000, high: 2000, basis: 'guard' },
   },
   // Glomerular filtration, a constant (model D15): "about 125 mL/min … in males (range of 90 to 140 mL/min)" (OpenStax §25.5).
@@ -122,16 +122,16 @@ export const KIDNEY_EVENTS: { readonly [Id in KidneyEventId]: EventMeta<Id> } = 
     i18nKey: k('event.bladderFirstUrge'),
     shipsIn: 'v3.0',
   },
-  // Half of the meal's absorbed water has left as extra urine (never when there is none to pass).
-  'event.mostMealWaterPassed': {
-    id: 'event.mostMealWaterPassed',
+  // Half of the meal's absorbed water has left as extra urine (never when there is none to pass; R84).
+  'event.halfMealWaterPassed': {
+    id: 'event.halfMealWaterPassed',
     unit: 'min',
     status: 'assumption',
     clock: 'sim',
     foundOn: 'kidney.urineTotal',
     hasRange: false,
     sourceIds: ['maughan2016', 'crowe1987'],
-    i18nKey: k('event.mostMealWaterPassed'),
+    i18nKey: k('event.halfMealWaterPassed'),
     shipsIn: 'v3.0',
   },
 }

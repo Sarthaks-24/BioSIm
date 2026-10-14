@@ -121,7 +121,7 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
       expect(rate).toBeCloseTo((((2.8 * 3.5 * kg) / 200) * 60) / 0.58, 2) // 329.5 mL/h
       expect(rate).toBeGreaterThanOrEqual(200)
       expect(rate).toBeLessThanOrEqual(400)
-      expect(values(sim, 'skin.sweatTotal')[N - 1]!).toBeCloseTo(rate, 1) // one hour of it
+      expect(values(sim, 'skin.sweatTotal')[N - 1]!).toBeCloseTo((rate * (60 + (50 - 35) / 60)) / 60, 1) // one hour of it + the fast oxygen debt (R82)
     },
   )
 
@@ -138,23 +138,28 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
     },
   )
 
-  pinned(['skin.sweatRate', 'skin.sweatTotal'], 'sweat is 0 at rest and outside bouts; the total is the running sum of the rate', () => {
-    const sim = run('cheeseburger:1,fries:1,cola:1', [walk60, run60])
-    const rate = values(sim, 'skin.sweatRate')
-    const total = values(sim, 'skin.sweatTotal')
-    expect(rate[60]).toBe(0)
-    expect(rate[61]!).toBeGreaterThan(0)
-    expect(rate[121]).toBe(0)
-    let sum = 0
-    let worst = 0
-    for (let i = 0; i < N; i++) {
-      sum += rate[i]! / 60
-      worst = Math.max(worst, Math.abs(total[i]! - sum))
-    }
-    expect(worst).toBeLessThan(0.01)
-    // Over 48 h: all the extra heat of moving left as sweat.
-    expect(total[N - 1]!).toBeCloseTo(values(sim, 'energy.activityTotal')[N - 1]! / 0.58, 1)
-  })
+  pinned(
+    ['skin.sweatRate', 'skin.sweatTotal'],
+    'sweat is 0 at rest and outside bouts (once the on/off kinetics have settled, R82); the total is the running sum of the rate',
+    () => {
+      const sim = run('cheeseburger:1,fries:1,cola:1', [walk60, run60])
+      const rate = values(sim, 'skin.sweatRate')
+      const total = values(sim, 'skin.sweatTotal')
+      expect(rate[60]).toBe(0)
+      expect(rate[61]!).toBeGreaterThan(0)
+      expect(rate[121]!).toBeGreaterThan(0)
+      expect(rate[150]).toBe(0)
+      let sum = 0
+      let worst = 0
+      for (let i = 0; i < N; i++) {
+        sum += rate[i]! / 60
+        worst = Math.max(worst, Math.abs(total[i]! - sum))
+      }
+      expect(worst).toBeLessThan(0.01)
+      // Over 48 h: all the extra heat of moving left as sweat.
+      expect(total[N - 1]!).toBeCloseTo(values(sim, 'energy.activityTotal')[N - 1]! / 0.58, 1)
+    },
+  )
 
   pinned(
     ['skin.sweatRate', 'muscle.energyRate'],

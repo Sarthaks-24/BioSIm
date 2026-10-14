@@ -31,8 +31,11 @@ export interface ActivityBout {
   durMin: number
 }
 
-/** The codec's limits (architecture §0): ≤ 8 bouts, start 0–2880, 5–120 min each, no overlap. */
-export const ACTIVITY_LIMITS = { maxBouts: 8, startMin: 0, startMax: 2880, durMin: 5, durMax: 120 } as const
+/**
+ * The codec's limits (architecture §0, R84): ≤ 8 bouts, 5–120 min each, from minute 0 and over by
+ * the end of the 48 h run (end ≤ 2880, so the latest start is 2875), no overlap.
+ */
+export const ACTIVITY_LIMITS = { maxBouts: 8, endMax: 2880, durMin: 5, durMax: 120 } as const
 
 /** Whether one bout is inside the codec's limits on its own (whole minutes). */
 export function boutInLimits(b: ActivityBout): boolean {
@@ -41,10 +44,10 @@ export function boutInLimits(b: ActivityBout): boolean {
     isActivityKind(b.kind) &&
     Number.isInteger(b.startMin) &&
     Number.isInteger(b.durMin) &&
-    b.startMin >= L.startMin &&
-    b.startMin <= L.startMax &&
+    b.startMin >= 0 &&
     b.durMin >= L.durMin &&
-    b.durMin <= L.durMax
+    b.durMin <= L.durMax &&
+    b.startMin + b.durMin <= L.endMax
   )
 }
 
@@ -71,7 +74,7 @@ const MAX_ASKED = 40
  * Reads a link's `act` or `bact` ("walk.30.20,run.240.10"; architecture §2). Every bout that is
  * dropped goes into `changes` with the link's own text, so the stage can name it (R21, bug B21):
  * a part that can't be read, a kind this version does not know or does not show yet (the hidden
- * four), a bout outside the limits, one that overlaps an earlier bout, and any past the eighth.
+ * four), a bout outside the limits (one that ends after minute 2880 too, R84), one that overlaps an earlier bout, and any past the eighth.
  * The plan comes back in start order. Only public kinds are read: a hidden kind's MET is not yet
  * verified, so it would fail the release gate.
  */

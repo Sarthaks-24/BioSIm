@@ -318,12 +318,13 @@ describe('insertion and rest invariance (model D13 iii, iv)', () => {
     }
   })
 
-  it('a walk and a run change breathing only during the bout (nothing carries over: no EPOC, model limits)', () => {
+  it('a walk changes breathing from its start and only for a few minutes after it (on/off kinetics, R82; no slow EPOC, model limits)', () => {
     const rest = run('', [])
     const moving = run('', [walk])
     for (const id of BREATHING_SIGNAL_IDS) {
       expect(values(moving, id)[30], id).toBe(values(rest, id)[30])
-      expect(values(moving, id)[51], id).toBe(values(rest, id)[51])
+      expect(values(moving, id)[51], id).not.toBe(values(rest, id)[51])
+      expect(firstDiff(values(moving, id).subarray(90), values(rest, id).subarray(90)), id).toBe(-1)
     }
   })
 })

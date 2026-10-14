@@ -276,10 +276,10 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Urine in the bladder (mL): starts empty, fills with kidney.urineRate and empties at 300 mL (Model estimate).',
     retired: ['bladder.volumeMl'],
   },
-  'water.mealExtraMl': {
+  'water.bodyExtraMl': {
     definition:
-      'Water from this meal still in the body (mL): water absorbed plus extra metabolic water, minus extra urine and sweat. Below 0 when sweat took more than the meal gave.',
-    retired: ['water.balanceMl'],
+      'Body water above a normal day (mL): water absorbed from drinks and food plus extra metabolic water, minus extra urine and the sweat not yet drunk back. Below 0 for a while after sweating.',
+    retired: ['water.balanceMl', 'water.mealExtraMl'],
   },
   'kidney.filtrationRate': {
     definition:
@@ -334,10 +334,10 @@ export const EVENT_DOCS: { readonly [Id in RunEventId]: CatalogDocs } = {
       'First minute the bladder holds 150 mL, when the urge to pass urine is first felt (it can wait). Comes on every run, meal or not.',
     retired: [],
   },
-  'event.mostMealWaterPassed': {
+  'event.halfMealWaterPassed': {
     definition:
-      "First minute when half of the meal's absorbed water has left as extra urine. Absent when the meal has under 1 mL of water, or sweat keeps it from happening within 48 h.",
-    retired: ['event.firstVoid'],
+      "First minute when half of the meal's absorbed water has left as extra urine. Absent when the meal has under 1 mL of water, or it does not happen within 48 h.",
+    retired: ['event.firstVoid', 'event.mostMealWaterPassed'],
   },
 }
 
