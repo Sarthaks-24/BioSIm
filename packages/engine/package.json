@@ -15,7 +15,7 @@
     "./catalog/kidneys": "./src/core/catalog/kidneys.ts"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --exclude test/perf.test.ts && vitest run test/perf.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "validate": "tsx scripts/validate-foods.ts",

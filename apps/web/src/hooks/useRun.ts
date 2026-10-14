@@ -23,7 +23,14 @@ export const runKey = (items: readonly MealItem[], profile: ProfileId, activity:
 /** What the stage needs from the engine entry (`@lifepeek/engine/run`). */
 export type Engine = Pick<typeof import('@lifepeek/engine/run'), 'simulate'>
 
-/** Runs the model for one meal and activity plan (a 48 h run takes a few milliseconds, once the engine is here). */
+/** Whether the page's first run is done (the `lifepeek:first-run` mark, below). */
+let firstRun = false
+
+/**
+ * Runs the model for one meal and activity plan (a 48 h run takes a few milliseconds, once the engine
+ * is here). The page's first run leaves a performance mark: the first-run gate (e2e/perf.spec.ts,
+ * R61) measures from the engine file's request to it (fetch + parse + run).
+ */
 export function computeRun(
   engine: Engine,
   items: MealItem[],
@@ -31,7 +38,12 @@ export function computeRun(
   which: 'current' | 'kept',
   activity: readonly ActivityBout[] = [],
 ): RunResult {
-  return engine.simulate({ items, profile, activity }, { lookup: lookupFood, particles: which === 'current' ? CURRENT_PARTICLES : 0 })
+  const run = engine.simulate({ items, profile, activity }, { lookup: lookupFood, particles: which === 'current' ? CURRENT_PARTICLES : 0 })
+  if (!firstRun) {
+    firstRun = true
+    performance.mark?.('lifepeek:first-run')
+  }
+  return run
 }
 
 /**

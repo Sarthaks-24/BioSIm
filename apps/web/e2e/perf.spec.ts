@@ -67,17 +67,17 @@ test('CPU per frame while playing (report)', async ({ page }) => {
   )
 })
 
-// E-2 (architecture §3.1): the engine is a lazy chunk, fetched when /sim mounts. From the request
-// for it to the stage drawn with the first run, at 4× CPU slowdown: p50 of 5 cold loads ≤ 400 ms.
-// Report for a week, then enforce. Measured after the body has settled (bodySettled), from the
-// page's own clock: the engine file's request (resource timing) to the first `[data-stage]`.
-test('first run after the engine loads, 4× CPU (report)', async ({ browser }) => {
+// E-2 (architecture §3.1): the engine is a lazy chunk, fetched when /sim mounts. The first run, as
+// R61 defines it: the engine file's request (resource timing) to the first RunResult (the app's
+// `lifepeek:first-run` mark, hooks/useRun.ts), so fetch + parse + run, at 4× CPU slowdown: p50 of 5
+// cold loads ≤ 400 ms. Enforced since H-1. The stage's first render is reported beside it.
+test('first run after the engine loads, 4× CPU', async ({ browser }) => {
   test.setTimeout(180_000)
   const LOADS = 5
   const firstRun: number[] = []
   const toStage: number[] = []
   const download: number[] = []
-  await gateSteps('first run', 'report', async () => {
+  await gateSteps('first run', 'enforce', async () => {
     for (let i = 0; i < LOADS; i++) {
       // A new context each time: nothing cached, no service worker yet (a first visit).
       const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' })
@@ -102,10 +102,11 @@ test('first run after the engine loads, 4× CPU (report)', async ({ browser }) =
         return {
           engineAt: engine?.startTime ?? NaN,
           engineIn: engine?.responseEnd ?? NaN,
+          runAt: performance.getEntriesByName('lifepeek:first-run')[0]?.startTime ?? NaN,
           stageAt: (window as { __stageAt?: number }).__stageAt ?? NaN,
         }
       })
-      firstRun.push(t.stageAt - t.engineAt)
+      firstRun.push(t.runAt - t.engineAt)
       toStage.push(t.stageAt)
       download.push(t.engineIn - t.engineAt)
       await context.close()
@@ -114,7 +115,7 @@ test('first run after the engine loads, 4× CPU (report)', async ({ browser }) =
   const p50 = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!
   const ms = (xs: number[]) => xs.map((x) => Math.round(x)).join(', ')
   const label =
-    `first run p50 ${Math.round(p50(firstRun))} ms from the engine request (${ms(firstRun)}; of which the file p50 ` +
+    `first run p50 ${Math.round(p50(firstRun))} ms from the engine request to the run (${ms(firstRun)}; of which the file p50 ` +
     `${Math.round(p50(download))} ms); page start → stage p50 ${Math.round(p50(toStage))} ms (${ms(toStage)}); 4× CPU`
-  verdict(label, 'report', firstRun.length === LOADS && p50(firstRun) <= 400 ? [] : ['over 400 ms (or not measured)'])
+  verdict(label, 'enforce', firstRun.length === LOADS && p50(firstRun) <= 400 ? [] : ['over 400 ms (or not measured)'])
 })
