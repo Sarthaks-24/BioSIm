@@ -22,6 +22,8 @@ export const CIRCULATION: SystemDef = {
   slots: [],
   knownLimits: [],
   draw: 'layer',
+  // Its 3D heart and both loops (A-5, v3.1): a lazy chunk, loaded the first time Heart & blood is lit on a device with WebGL.
+  layer3d: () => import('../../three/layers/circulation.ts'),
   pack: 'circulation',
   inputs: ['meal', 'activity'],
   rhythms: [],
