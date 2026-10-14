@@ -605,6 +605,8 @@ const LUNGS_3D: Layer3d = {
       breath: reduced ? 'still' : 'moving',
       breathHz: breath(sim, t).hz.toFixed(2),
       lungScale: scaleAt(sim, t, phase).toFixed(3),
+      // Where in the breath (0–1): a new run goes on from here, it does not start again (R120 #20).
+      breathPhase: phase.toFixed(3),
     }),
   },
   labels: {

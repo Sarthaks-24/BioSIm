@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
+import { bodySettled, goto, returningVisitor, tapServings } from './helpers/gate.ts'
 import { anchorsOf, labelsOffWhileTurning } from './helpers/labels3d.ts'
 import LUNGS_3D from '../src/three/layers/breathing.ts'
 
@@ -253,4 +253,36 @@ test('the 3D lungs’ labels stay on their organs while the view is turned (R106
   await open(page, WALK)
   await expect(page.locator('[data-body="3d"][data-layer="breathing"][data-ready]')).toBeVisible({ timeout: 30_000 })
   expect(await labelsOffWhileTurning(page, anchorsOf(LUNGS_3D))).toEqual([])
+})
+
+// R120 #20: the 3D breath's phase went back to its still point with every new run (a meal tapped
+// mid-breath jumped the lungs). It starts again only when the system or the motion setting changes.
+test('the 3D breath goes on through new runs: no jump back to the still phase', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'one WebGL project with motion is enough')
+  await open(page, REST)
+  const lungs = page.locator('[data-body="3d"][data-layer="breathing"]')
+  await expect(lungs).toHaveAttribute('data-breath', 'moving', { timeout: 30_000 })
+  // The phase read out every 40 ms for 6 s, while four new runs come (servings 2, 1, 2, 1).
+  const sampling = page.evaluate(
+    () =>
+      new Promise<number[]>((done) => {
+        const el = document.querySelector<HTMLElement>('[data-body="3d"][data-layer="breathing"]')!
+        const phases: number[] = []
+        const t0 = performance.now()
+        const timer = setInterval(() => {
+          phases.push(Number(el.dataset.breathPhase))
+          if (performance.now() - t0 < 6000) return
+          clearInterval(timer)
+          done(phases)
+        }, 40)
+      }),
+  )
+  await page.waitForTimeout(500)
+  await tapServings(page, 'roti', [2, 1, 2, 1], 1200)
+  const phases = await sampling
+  // Each step forward a little (a resting breath is about 4 s, the read-out 8 times a second), once
+  // round the circle at most; a jump back to the still phase would be a big step.
+  const steps = phases.slice(1).map((p, i) => (p - phases[i]! + 1) % 1)
+  expect(Math.max(...steps), `phase steps ${steps.map((s) => s.toFixed(2)).join(' ')}`).toBeLessThan(0.15)
+  expect(steps.filter((s) => s > 0).length, 'the breath moved').toBeGreaterThan(10)
 })

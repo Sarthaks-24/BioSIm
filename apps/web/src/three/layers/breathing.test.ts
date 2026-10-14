@@ -110,6 +110,7 @@ describe('3D lungs (A-3)', () => {
       breath: 'still',
       breathHz: '0.25',
       lungScale: lungScale(500, fillAt(STILL_BREATH)).toFixed(3),
+      breathPhase: STILL_BREATH.toFixed(3),
     })
   })
 

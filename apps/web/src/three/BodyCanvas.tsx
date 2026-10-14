@@ -500,12 +500,15 @@ function LitLayer({
   const redraw = useThree((s) => s.invalidate)
   // A rhythm (a breath): its phase moves on the real clock at the run's rate at the meal-clock minute
   // on screen (the layer's ticker: <= 30 fps, tab visible), and each tick redraws. Motion reduced:
-  // the still phase, no ticker.
+  // the still phase, no ticker. The phase starts again only when the system or the motion setting
+  // changes, not with each new run (each run set the breath back to its still phase, R120 #20).
   useEffect(() => {
-    const r = layer.rhythm
-    rhythm.phase = r?.still ?? 0
+    rhythm.phase = layer.rhythm?.still ?? 0
     rhythm.hz = 0
     redraw()
+  }, [layer, reduced, rhythm, redraw])
+  useEffect(() => {
+    const r = layer.rhythm
     if (!r || reduced) return
     return r.onTick((dt) => {
       rhythm.hz = r.hz(sim, clock.now())
