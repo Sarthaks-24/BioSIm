@@ -3,9 +3,8 @@ import { Link, useLocation } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
 import { TASKS, presetHref, type Lesson } from '../lib/presets.ts'
-import { shownChapters, type TeachLesson } from '../lib/lessons.ts'
+import { flagshipPacks, shownChapters, type TeachLesson } from '../lib/lessons.ts'
 import { FLAGSHIP, LESSON_STATE, flagshipHref, flagshipShown, isPreview } from '../lib/flagship.ts'
-import { systemOf } from '../systems/registry.ts'
 import { QR_PATH } from '../lib/qrPath.ts'
 import { SITE_URL } from '../lib/site.ts'
 import { setProjector } from '../hooks/useProjector.ts'
@@ -18,7 +17,7 @@ import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'
 import type { SheetKey } from '../lib/worksheets.ts'
-import { LESSON_PACKS, canSave, isSaved, save } from '../lib/offlineSave.ts'
+import { canSave, isSaved, save } from '../lib/offlineSave.ts'
 
 // A lesson's printable worksheet (X-3): its code, words, print CSS and QR codes load when one is opened.
 const Worksheet = lazy(() => import('../components/Worksheet.tsx'))
@@ -98,17 +97,6 @@ function useOffline(lessons: readonly { key: string; packs: readonly string[] }[
   }
   return { state, run }
 }
-
-/** The packs the guided lesson needs offline: the stage's parts, 3D, and each system it pauses on (skin's once public). */
-const flagshipPacks = (preview: boolean) => [
-  ...LESSON_PACKS,
-  'breathing',
-  'circulation',
-  'kidneys',
-  ...(preview || systemOf('skin')?.public ? ['effort'] : []),
-  // v3.1: the insulin pause (R38).
-  ...(preview || systemOf('hormones')?.public ? ['control'] : []),
-]
 
 const SAVE_BUTTON = 'min-h-11 shrink-0 rounded-full border border-border px-4 font-semibold hover:bg-surface-sunk lg:min-h-9'
 

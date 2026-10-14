@@ -3,7 +3,9 @@ import { decodeShareState } from '@lifepeek/engine'
 import * as run from '@lifepeek/engine/run'
 import en from '../i18n/en.json'
 import { systemOf } from '../systems/registry.ts'
-import { CHAPTERS, shownChapters } from './lessons.ts'
+import { CHAPTERS, flagshipPacks, shownChapters } from './lessons.ts'
+import { HEART_PAUSE, PAUSES, pausesFor } from './flagshipPauses.ts'
+import { LESSON_PACKS } from './offlineSave.ts'
 import { LESSONS } from './presets.ts'
 import { SYSTEM_SOURCES } from './systemSources.ts'
 import { REFERENCES } from './references.ts'
@@ -43,6 +45,27 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
         // Saving it for class saves its system's pack.
         expect(l.packs, l.key).toContain(systemOf(l.system)!.pack)
       }
+  })
+})
+
+describe('"Save for class offline" keeps what each lesson opens (T12d, R71)', () => {
+  it('the guided lesson: the pack of every pause it can show, lymph’s blood fat (pause 5) included, with and without skin’s', () => {
+    for (const preview of [false, true]) {
+      const saved = flagshipPacks(preview)
+      expect(saved).toEqual(expect.arrayContaining(LESSON_PACKS))
+      for (const skin of [false, true])
+        for (const p of pausesFor(skin))
+          if (skin === (preview || !!systemOf('skin')!.public)) expect(saved, p.key).toContain(systemOf(p.system)!.pack)
+    }
+    expect(PAUSES.at(-1)).toMatchObject({ key: 'fat', system: 'lymph' })
+    expect(flagshipPacks(false)).toContain('lymph')
+    // Nothing it does not pause on (the insulin sentence is the lesson bar's own text).
+    expect(new Set(flagshipPacks(true))).toEqual(new Set([...LESSON_PACKS, ...PAUSES.map((p) => systemOf(p.system)!.pack)]))
+    expect(systemOf(HEART_PAUSE.system)!.pack).toBe('circulation')
+  })
+
+  it('each system lesson: its own system’s pack (the registry’s)', () => {
+    for (const c of CHAPTERS) for (const l of c.lessons) if (!l.preset) expect(l.packs, l.key).toContain(systemOf(l.system)!.pack)
   })
 })
 

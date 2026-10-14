@@ -185,6 +185,47 @@ test('a saved lesson stays saved after browsing 200 other lazy files: lp-saved i
   }
 })
 
+// The guided lesson's save list is built from its pauses (lib/lessons.ts flagshipPacks): its last
+// pause, Lymph's blood fat, works offline once the lesson alone was saved (audit fix R120 #2).
+test('"Save for class offline" on the guided lesson: offline, every pause lights its system, the blood-fat pause (5) included', async ({
+  page,
+  context,
+}) => {
+  onlyIn('desktop')
+  test.setTimeout(90_000)
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/teach')
+  await installed(page)
+  // A later visit (the service worker now answers this page's requests), as in class the next day.
+  await page.reload()
+  const flagship = page.locator('[data-flagship]')
+  await expect(flagship.getByText('Not saved for offline')).toBeVisible()
+  await flagship.getByRole('button', { name: /^Save for class offline/ }).click()
+  await expect(flagship.getByText('Ready for class offline ✓')).toBeVisible({ timeout: 30_000 })
+  await context.setOffline(true)
+  try {
+    await flagship.getByRole('link', { name: 'Start the guided lesson' }).click()
+    const bar = page.locator('[data-lesson-bar]')
+    await expect(bar).toHaveAttribute('data-lesson-step', '1')
+    for (const [step, system] of [
+      [2, 'breathing'],
+      [3, 'skin'],
+      [4, 'kidneys'],
+      [5, 'lymph'],
+    ] as const) {
+      await bar.locator('[data-lesson-next]').click()
+      await expect(bar).toHaveAttribute('data-lesson-step', String(step))
+      await expect(page.locator(`[data-system-title="${system}"]`)).toBeAttached()
+    }
+    await expect(bar).toHaveAttribute('data-lesson-pause', 'fat')
+    await expect(page.locator('[data-layer="lymph"]')).toBeAttached({ timeout: 15_000 })
+    await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+    await expect(page.getByText(/Couldn.t load the/)).toHaveCount(0)
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
 // R120 #16: saving while a new version waits saved the old version's files, which the new one (it
 // takes over the next time the app opens) does not use. Now the save takes the deployed version's
 // list, then lets that version take over and reloads, and the reloaded page says the lesson is ready.

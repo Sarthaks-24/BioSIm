@@ -1,5 +1,5 @@
 import { encodeShareState } from '@lifepeek/engine'
-import { pickerSystems, type SlotId, type SystemId, type SystemLesson } from '../systems/registry.ts'
+import { pickerSystems, systemOf, type SlotId, type SystemId, type SystemLesson } from '../systems/registry.ts'
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
@@ -8,6 +8,7 @@ import { HORMONES_LESSON } from '../systems/hormones/lesson.ts'
 import { NERVES_LESSON } from '../systems/nerves/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { LESSONS, presetHref, type Lesson } from './presets.ts'
+import { pausesFor } from './flagshipPauses.ts'
 import { LESSON_PACKS } from './offlineSave.ts'
 
 /**
@@ -56,15 +57,18 @@ const fromPreset = (l: Lesson): TeachLesson => ({
   preset: l,
 })
 
-/** A system's lesson stub (systems/<id>/lesson.ts) as a Teach row: its own link, with its pack to save. */
-const fromSystem = (l: SystemLesson, classes: readonly number[], pack: string): TeachLesson => ({
+/** The pack a system's row loads (its registry row's): what "Save for class offline" must keep for it. */
+const packOf = (id: SystemId) => systemOf(id)!.pack
+
+/** A system's lesson stub (systems/<id>/lesson.ts) as a Teach row: its own link, with its system's pack (the registry's) to save. */
+const fromSystem = (l: SystemLesson, classes: readonly number[]): TeachLesson => ({
   key: l.key,
   system: l.layer as SystemId,
   slot: l.slot,
   t: l.t,
   classes,
   release: l.release,
-  packs: [...LESSON_PACKS, pack],
+  packs: [...new Set([...LESSON_PACKS, packOf(l.layer as SystemId)])],
   href: (preview) =>
     withPreview(
       `/sim?${encodeShareState({ a: l.meal, b: l.kept, t: l.t, layer: l.layer, act: l.activity, bact: l.keptActivity })}`,
@@ -74,24 +78,24 @@ const fromSystem = (l: SystemLesson, classes: readonly number[], pack: string): 
 
 export const CHAPTERS: readonly Chapter[] = [
   { key: 'nutrition', c10: true, lessons: LESSONS.map(fromPreset) },
-  { key: 'respiration', c10: true, lessons: [fromSystem(BREATHING_LESSON, [6, 7, 10], 'breathing')] },
+  { key: 'respiration', c10: true, lessons: [fromSystem(BREATHING_LESSON, [6, 7, 10])] },
   {
     key: 'transport',
     c10: true,
     // U-5 (v3.1): lymph's lesson, after the heart's (NCERT Class 10's order: blood, then lymph).
-    lessons: [fromSystem(CIRCULATION_LESSON, [7, 10], 'circulation'), fromSystem(LYMPH_LESSON, [10], 'lymph')],
+    lessons: [fromSystem(CIRCULATION_LESSON, [7, 10]), fromSystem(LYMPH_LESSON, [10])],
   },
-  { key: 'excretion', c10: true, lessons: [fromSystem(KIDNEYS_LESSON, [10], 'kidneys')] },
+  { key: 'excretion', c10: true, lessons: [fromSystem(KIDNEYS_LESSON, [10])] },
   {
     key: 'control',
     c10: false,
     // v3.1 (R109, R112): NCERT Class 10 Ch 6's order, nerves (6.1, the reflex) then hormones (6.3). One pack, `control`.
-    lessons: [fromSystem(NERVES_LESSON, [10], 'control'), fromSystem(HORMONES_LESSON, [10], 'control')],
+    lessons: [fromSystem(NERVES_LESSON, [10]), fromSystem(HORMONES_LESSON, [10])],
   },
   {
     key: 'movement',
     c10: false,
-    lessons: [fromSystem(MUSCLES_LESSON, [6, 9, 10], 'effort'), fromSystem(SKIN_LESSON, [6, 9, 10], 'effort')],
+    lessons: [fromSystem(MUSCLES_LESSON, [6, 9, 10]), fromSystem(SKIN_LESSON, [6, 9, 10])],
   },
 ]
 
@@ -100,3 +104,14 @@ export function shownChapters(preview: boolean): Chapter[] {
   const shown = new Set<SystemId>(pickerSystems(preview).map((s) => s.id))
   return CHAPTERS.map((c) => ({ ...c, lessons: c.lessons.filter((l) => shown.has(l.system)) })).filter((c) => c.lessons.length)
 }
+
+/**
+ * The packs the guided lesson needs offline: the stage's parts, 3D, and the pack of each system it
+ * pauses on in this session (lib/flagshipPauses.ts `pausesFor`: skin's pause once skin may be lit,
+ * else the heart's; since v3.1 lymph's blood fat is the last pause). Built from the pauses, so a pause
+ * added or moved is saved with it. The insulin sentence at the blood-fat pause is the lesson bar's own
+ * text (its `flagship` section), so it needs no pack of its own.
+ */
+export const flagshipPacks = (preview: boolean): string[] => [
+  ...new Set([...LESSON_PACKS, ...pausesFor(preview || !!systemOf('skin')?.public).map((p) => packOf(p.system))]),
+]
