@@ -12,7 +12,8 @@ const bodyCanvas = lazyWithRetry<ComponentProps<typeof BodyCanvasType>>(() => im
  * 3D when the device can, the flat diagram otherwise — while the 3D code loads, if WebGL is
  * missing, if it crashes, if the GPU drops the context, or if its file doesn't arrive (offline
  * before it was ever loaded: it needs the internet once). The stage's notes say why
- * (stage/Notes.tsx), in a line of their own, not over the body; a slow or failed load too (R71).
+ * (stage/Notes.tsx), in a line of their own; a slow or failed load too (R71). On a phone that line
+ * lies over the top of the body pane, so a note that comes late moves nothing (R87).
  *
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
  */

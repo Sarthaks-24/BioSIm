@@ -136,7 +136,7 @@ export default function Simulator() {
         </div>
         {/* The notes and the body: one column of a short, wide window (styles.css, FP-2); elsewhere two rows of the grid. */}
         <div className="contents">
-          <div className="lg:col-span-2">
+          <div className="relative z-20 lg:col-span-2">
             <Notes run={run} kept={kept} />
           </div>
           <BodyPane run={run} kept={kept} summary={!short} summaryTo={projector ? words : null} />

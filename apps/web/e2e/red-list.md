@@ -86,12 +86,13 @@ eee16c9 they reported, among others: body 0 px on every phone and landscape size
 empty state (U2), the tablet page scrolling, overlapping timeline controls, a popover without a
 Close button, `lang=en` added to links and every `dvh` without a `vh` fallback.
 
-Since T11 every Chromium project is enforced (`INVARIANTS`). Still report-only, each on purpose:
+Since T11 every Chromium project is enforced (`INVARIANTS`). FIX-L (R87) enforces the `dvh`
+fallback check (the build adds a `vh` line before every `dvh`: `scripts/vh-fallback.mjs`) and adds
+"a late note does not move Play, the body or the graph" (the 3D file held past 6 s at 360×640 and
+390×844, layout shift ≈ 0). Still report-only, each on purpose:
 
 - Play and graph 1's plot in the first screen of `phone-560` (360×560) and `phone-xs` (320×568):
   they sit up to ≈ 130 px below it, under a body that is enforced (`FIRST_SCREEN`; qa-fixes §3.1).
-- The `dvh` fallback check: Tailwind's `*-dvh` utilities have no `vh` line before them (every
-  browser since 2022 reads `dvh`; listed for the device lab).
 - The `lang=hi` link round trip (R47).
 - `webkit-*` and `firefox-*`: nightly, a clean week first (qa-fixes §3.1). At T11 they ran clean
   locally (Windows WebKit and Firefox: 160 passed, 2 Firefox tests passed on their retry).

@@ -122,6 +122,16 @@
       "plannedNetKB": 0.1,
       "measuredNetKB": -0.68,
       "measuredAt": "2026-10-14"
+    },
+    {
+      "fp": "FIX-L",
+      "step": "FIX-L",
+      "what": "late notes over the body pane on phones, vh fallbacks (R87)",
+      "grossKB": 0.09,
+      "clawbackKB": 0,
+      "plannedNetKB": 0.05,
+      "measuredNetKB": 0.09,
+      "measuredAt": "2026-10-14"
     }
   ]
 }

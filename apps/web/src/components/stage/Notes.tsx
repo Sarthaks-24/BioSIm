@@ -48,13 +48,19 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
 
   if (!firstRun && !link && !flat) return null
   return (
-    <div className="border-b border-border bg-surface-raised px-3 py-1.5 lg:px-4">
-      <ul className="flex flex-col gap-1">
-        {firstRun && (
-          // On a phone the card is small (legal/medical-note.md: "a small dismissible card"): its
-          // title and "More about this" beside "Got it", caption-sized. The full text stays for
-          // screen readers and is one tap away; the graph's note and the footer say "not medical
-          // advice" too. In Hindi the whole card took 200 px and left the body almost no room (WP-18).
+    // The notes that come late (the body's after 6 s or a failed load, the link's with their own
+    // file) must not move the stage (R87): on a phone they lie over the top of the body pane (from
+    // Simulator's box, `relative`), under the first-visit card if it shows, so Play, the body and
+    // the graph stay where they were. From 1024 px up there is room: they are a row.
+    <>
+      {firstRun && (
+        <ul className={BOX}>
+          {/*
+            On a phone the card is small (legal/medical-note.md: "a small dismissible card"): its
+            title and "More about this" beside "Got it", caption-sized. The full text stays for
+            screen readers and is one tap away; the graph's note and the footer say "not medical
+            advice" too. In Hindi the whole card took 200 px and left the body almost no room (WP-18).
+           */}
           <li data-first-run="" className="flex items-start gap-x-3 gap-y-1 lg:flex-wrap lg:items-center">
             <p className="flex min-w-0 flex-1 items-start gap-2 text-caption lg:basis-80 lg:text-control">
               <span className="mt-px text-ink-muted">
@@ -81,39 +87,46 @@ export default function Notes({ run, kept }: { run: Simulation; kept: Simulation
               {t('disclaimer.firstRun.ok')}
             </button>
           </li>
-        )}
-        {flat && (
-          <li className="flex items-center gap-2 text-caption text-ink-muted">
-            <p className="min-w-0 flex-1">{t(BODY_NOTE[flat])}</p>
-            {flat === 'failed' && (
+        </ul>
+      )}
+      {(flat || link) && (
+        <ul className={`${BOX} inset-x-0 top-full max-lg:absolute`}>
+          {flat && (
+            <li className="flex items-center gap-2 text-caption text-ink-muted">
+              <p className="min-w-0 flex-1">{t(BODY_NOTE[flat])}</p>
+              {flat === 'failed' && (
+                <button
+                  type="button"
+                  onClick={retry3d}
+                  className="min-h-11 shrink-0 rounded-control bg-surface-sunk px-3 font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
+                >
+                  {t('graph.retry')}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={retry3d}
-                className="min-h-11 shrink-0 rounded-control bg-surface-sunk px-3 font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
+                onClick={() => setBodySeen(flat)}
+                aria-label={t('stage.close')}
+                title={t('stage.close')}
+                className="grid size-11 shrink-0 place-items-center rounded-control hover:bg-surface-sunk hover:text-ink lg:size-9"
               >
-                {t('graph.retry')}
+                <CloseIcon />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setBodySeen(flat)}
-              aria-label={t('stage.close')}
-              title={t('stage.close')}
-              className="grid size-11 shrink-0 place-items-center rounded-control hover:bg-surface-sunk hover:text-ink lg:size-9"
-            >
-              <CloseIcon />
-            </button>
-          </li>
-        )}
-        {link && (
-          // If its file does not arrive, the notes are left out: the stage works without them.
-          <LoadBoundary fallback={null} onFail={linkNotes.reset}>
-            <Suspense fallback={null}>
-              <linkNotes.Component store={useRunStore} food={(id) => localized(lookupFood(id)?.name, i18n.language) || id} over={over} />
-            </Suspense>
-          </LoadBoundary>
-        )}
-      </ul>
-    </div>
+            </li>
+          )}
+          {link && (
+            // If its file does not arrive, the notes are left out: the stage works without them.
+            <LoadBoundary fallback={null} onFail={linkNotes.reset}>
+              <Suspense fallback={null}>
+                <linkNotes.Component store={useRunStore} food={(id) => localized(lookupFood(id)?.name, i18n.language) || id} over={over} />
+              </Suspense>
+            </LoadBoundary>
+          )}
+        </ul>
+      )}
+    </>
   )
 }
+
+/** A box of notes: a band under the meal bar. */
+const BOX = 'flex flex-col gap-1 border-b border-border bg-surface-raised px-3 py-1.5 lg:px-4'
