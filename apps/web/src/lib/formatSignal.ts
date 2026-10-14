@@ -51,6 +51,7 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   'beats/min': 'beatsPerMin',
   'L/min': 'LPerMin',
   // The effort pack's (U-1, R75): its texts load with that pack (systems/muscles/text.ts).
+  // The kidneys pack's (U-4): its text loads with the pack too.
   'mL/h': 'mLPerH',
 }
 

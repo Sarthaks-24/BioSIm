@@ -76,6 +76,9 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
     text: () => effort().then((m) => ({ default: m.TEXT })),
     drawing: () => effort().then((m) => ({ default: m.DRAWINGS })),
   },
+  // U-4: its rows and moments, words, English (with the signal and unit texts) and flat kidneys and
+  // bladder, one lazy module under systems/kidneys/ (cache-tiers.mjs: lazy tier).
+  kidneys: onePack(() => import('./kidneys/pack.ts')),
   // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
   lymph: {
     rows: async () => ({ default: [] }),

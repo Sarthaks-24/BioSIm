@@ -2,7 +2,7 @@ import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type Re
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActivityBout, type ChartableSeries, type Series } from '@lifepeek/engine'
 import { useClock } from '../../state/clock.ts'
-import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS } from '../../lib/time.ts'
+import { HORIZON_MIN, KNEE_MIN, TIMELINE_TICKS, formatDuration, windowEnd } from '../../lib/time.ts'
 import { bandPath, domainFor, linePath, minAt, samplesOf, xAt, yAt, yTicks, type Domain } from '../../lib/axis.ts'
 import { formatNumber, formatSignal, unitLabel } from '../../lib/formatSignal.ts'
 import { StatusTag } from '../kit/index.ts'
@@ -367,7 +367,10 @@ export default function SignalStrip({
             // stretch to the box instead of being drawn past it, over the next graph.
             <svg
               role="img"
-              aria-label={t('graph.label', { name })}
+              // A system's shorter window (Kidneys & water: 12 h) is named; else the 48 h bar.
+              aria-label={
+                windowEnd() < HORIZON_MIN ? t('graph.labelTo', { name, to: formatDuration(windowEnd(), t) }) : t('graph.label', { name })
+              }
               viewBox={`0 0 ${width} ${height}`}
               preserveAspectRatio="none"
               className="absolute inset-0 h-full w-full overflow-visible"
@@ -401,7 +404,7 @@ export default function SignalStrip({
                     y2={Math.round(yAt(v, domain, height)) + 0.5}
                   />
                 ))}
-                {TIMELINE_TICKS.filter((m) => m > 0 && m < HORIZON_MIN && m !== KNEE_MIN).map((m) => (
+                {TIMELINE_TICKS.filter((m) => m > 0 && m < windowEnd() && m !== KNEE_MIN).map((m) => (
                   <line key={m} x1={Math.round(xAt(m, width)) + 0.5} x2={Math.round(xAt(m, width)) + 0.5} y1="0" y2={height} />
                 ))}
               </g>

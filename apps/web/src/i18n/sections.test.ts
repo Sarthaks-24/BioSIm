@@ -40,6 +40,9 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/circulation/ui.tsx',
     // So do the effort pack's (U-1).
     'systems/muscles/ui.tsx',
+    // Kidneys' graphs and their background line, the same (U-4).
+    'systems/kidneys/ui.tsx',
+    'systems/kidneys/water.ts',
   ],
   stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
@@ -49,7 +52,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   // The rings' notes are passed to the panel and read when it draws (Say), like the limits.
   graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
   // unitInWords is called by the panel only.
-  // The breathing, circulation and effort packs' texts bring the units section (systems/<pack>/text.ts).
+  // The breathing, circulation, effort and kidneys packs' texts bring the units section (systems/<pack>/text.ts).
   units: [
     'components/graphs/HowWeKnowPanel.tsx',
     'lib/formatSignal.ts',
@@ -59,6 +62,7 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/circulation/summary.ts',
     // The effort pack's text brings the units section too (systems/muscles/text.ts).
     'systems/muscles/effort.ts',
+    'systems/kidneys/summary.ts',
   ],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],

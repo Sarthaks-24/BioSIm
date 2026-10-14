@@ -11,6 +11,7 @@ import {
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
 import { EFFORT_SIGNALS } from '@lifepeek/engine/run'
+import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
@@ -19,9 +20,10 @@ const PACK_ROWS: readonly SignalMeta[] = [
   ...BREATHING_ROWS,
   ...Object.values(EFFORT_SIGNALS),
   ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+  ...KIDNEY_ROWS.filter((r): r is SignalMeta => 'kind' in r),
 ]
-/** Their moments (Heart & blood's gut-flow peak): the dock names them (`signals.event.*.name`). */
-const PACK_EVENTS = CIRCULATION_ROWS.filter((r): r is EventMeta<RunEventId> => !('kind' in r))
+/** Their moments (Heart & blood's gut-flow peak, the kidneys' first urge and half the meal's water): the dock names them (`signals.event.*.name`). */
+const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS].filter((r): r is EventMeta<RunEventId> => !('kind' in r))
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which

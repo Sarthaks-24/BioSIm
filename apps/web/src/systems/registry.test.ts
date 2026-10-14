@@ -66,38 +66,38 @@ describe('systems registry (architecture §5.2)', () => {
   })
 
   it('names the missing piece', () => {
-    const kidneys: SystemDef = {
+    const hormones: SystemDef = {
       ...DIGESTION,
-      id: 'kidneys',
-      i18nKey: 'systems.kidneys',
-      lifeProcess: 'excretion',
-      pack: 'kidneys',
+      id: 'hormones',
+      i18nKey: 'systems.hormones',
+      lifeProcess: 'control',
+      pack: 'control',
       public: false,
       slots: [
         { id: 'gut', signals: ['gut.stomach.contentG'], unit: 'g' },
-        // S-4's engine signal, but no pack has registered its row yet (the kidneys pack is U-4's).
+        // S-4's engine signal: the kidneys pack registers its row, not the control pack.
         { id: 'blood', signals: ['kidney.filtrationRate' as never], unit: 'kcal/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
         { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
         // A pack's graph names its tab from the pack's own words.
-        { id: 'urine', tab: 'sys.kidneys.strips.urine', signals: ['gut.stomach.contentG'], unit: 'g' },
+        { id: 'insulin', tab: 'sys.control.strips.insulin', signals: ['gut.stomach.contentG'], unit: 'g' },
       ],
-      organs: ['kidney' as never],
+      organs: ['pituitary' as never],
     }
-    expect(systemProblems(kidneys, ctx)).toEqual([
-      'kidneys: pack kidneys has no PackDef (systems/packs.ts)',
-      'kidneys: its name has no English text systems.kidneys.name',
-      "kidneys: organ kidney is not one of the organism's organs",
-      'kidneys: 5 graph slots: at most 3 (keys 1–3)',
-      'kidneys: two slots share an id',
-      'kidneys: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
-      'kidneys: slot 2 (blood) unit kcal/min has no text (registry/units.ts)',
-      'kidneys: slot 2 (blood) signal kidney.filtrationRate has no row registered by its pack',
-      "kidneys: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
-      'kidneys: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
-      'kidneys: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
-      "kidneys: slot 5 (urine)'s tab has no English text sys.kidneys.strips.urine",
+    expect(systemProblems(hormones, ctx)).toEqual([
+      'hormones: pack control has no PackDef (systems/packs.ts)',
+      'hormones: its name has no English text systems.hormones.name',
+      "hormones: organ pituitary is not one of the organism's organs",
+      'hormones: 5 graph slots: at most 3 (keys 1–3)',
+      'hormones: two slots share an id',
+      'hormones: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
+      'hormones: slot 2 (blood) unit kcal/min has no text (registry/units.ts)',
+      'hormones: slot 2 (blood) signal kidney.filtrationRate has no row registered by its pack',
+      "hormones: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
+      'hormones: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
+      'hormones: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
+      "hormones: slot 5 (insulin)'s tab has no English text sys.control.strips.insulin",
     ])
   })
 
@@ -229,7 +229,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('nonsense', [], false)).toBe('digestion')
     expect(systemForLink(undefined, [], false)).toBe('digestion')
     // A SystemId with no row yet opens Digestion even with ?preview=1.
-    expect(systemForLink('kidneys', [], true)).toBe('digestion')
+    expect(systemForLink('hormones', [], true)).toBe('digestion')
   })
 
   it('breathing is hidden until the v3.0 release gate (H-1): only ?preview=1 opens it, and only then does the picker offer it', () => {
@@ -237,13 +237,30 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('breathing', [], false)).toBe('digestion')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
-    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'circulation', 'lymph', 'muscles', 'bones', 'skin'])
+    expect(pickerSystems(true).map((s) => s.id)).toEqual([
+      'digestion',
+      'breathing',
+      'circulation',
+      'kidneys',
+      'lymph',
+      'muscles',
+      'bones',
+      'skin',
+    ])
+  })
+
+  it('kidneys & water is hidden until the v3.0 release gate (H-1) too, and its graphs show 0–12 h', () => {
+    expect(systemOf('kidneys')?.public).toBe(false)
+    expect(systemForLink('kidneys', [], false)).toBe('digestion')
+    expect(systemForLink('kidneys', [], true)).toBe('kidneys')
+    expect(systemOf('kidneys')?.graphWindowMin).toBe(720)
   })
 
   it('‹ › and [ ] step round the picker’s rows', () => {
     expect(stepSystem('digestion', true, 1)).toBe('breathing')
     expect(stepSystem('breathing', true, 1)).toBe('circulation')
-    expect(stepSystem('circulation', true, 1)).toBe('lymph')
+    expect(stepSystem('circulation', true, 1)).toBe('kidneys')
+    expect(stepSystem('kidneys', true, 1)).toBe('lymph')
     expect(stepSystem('lymph', true, 1)).toBe('muscles')
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     expect(stepSystem('digestion', true, -1)).toBe('skin')

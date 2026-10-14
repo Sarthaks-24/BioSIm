@@ -48,6 +48,24 @@
         "engineKB": 10.67,
         "simRatchetKB": 187.607,
         "simEngineRatchetKB": 198.377
+      },
+      {
+        "wp": "U-4",
+        "at": "2026-10-14",
+        "on": "v3 64228a6 + U-4: the 0–12 h graph window (lib/time.ts bar end, the clock stops there, graphs and dock drawn to it, the dock’s \"0–12 h shown · 48 h ›\" button), Kidneys & water’s row in the clock group, the background-line hook (GraphColumn), its name and the dock words in the core text: /sim +0.398, engine +0.015 (its rows stay in the engine chunk)",
+        "simKB": 187.549,
+        "engineKB": 10.684,
+        "simRatchetKB": 187.749,
+        "simEngineRatchetKB": 198.533
+      },
+      {
+        "wp": "U-1 + U-3 + U-4",
+        "at": "2026-10-14",
+        "on": "v3 507719e (U-1, U-3, X-2) + wp/u4-kidneys, merged: all three systems' rows in the clock chunk group, the 0–12 h window and the 12 h graph label (graph.labelTo); /sim 187.407 → 187.862 (+0.455 ≈ U-4 +0.398 and the label +0.06), engine 10.684",
+        "simKB": 187.862,
+        "engineKB": 10.684,
+        "simRatchetKB": 188.062,
+        "simEngineRatchetKB": 198.846
       }
     ]
   },

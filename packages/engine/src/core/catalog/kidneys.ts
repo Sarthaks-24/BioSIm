@@ -9,7 +9,7 @@
  * (D17) and a calibrated ADH lag, and the water of moving on energy.activityRate, itself one.
  * The pack's two moments are lazy too (KIDNEY_EVENTS): the Digestion dock never lists them.
  */
-import type { EventMeta, SignalMeta } from '../catalog.ts'
+import type { EventMeta, RunEventId, SignalMeta } from '../catalog.ts'
 
 export const KIDNEY_SIGNAL_IDS = [
   'kidney.urineRate',
@@ -135,3 +135,7 @@ export const KIDNEY_EVENTS: { readonly [Id in KidneyEventId]: EventMeta<Id> } = 
     shipsIn: 'v3.0',
   },
 }
+
+/** The pack's rows and moments, as `registerSignals` takes them (the web's `rows` loader of the `kidneys` pack, U-4). */
+const rows: readonly (SignalMeta | EventMeta<RunEventId>)[] = [...Object.values(KIDNEY_SIGNALS), ...Object.values(KIDNEY_EVENTS)]
+export default rows

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import { DEFAULT_PACE, HORIZON_MIN, posToTime, timeToPos, type Pace } from '../lib/time.ts'
+import { DEFAULT_PACE, HORIZON_MIN, posToTime, setWindowEnd, timeToPos, windowEnd, type Pace } from '../lib/time.ts'
 
 /**
  * The meal clock (v2, roadmap A4a): simulated minutes since the first bite, for the whole page.
@@ -13,13 +13,15 @@ import { DEFAULT_PACE, HORIZON_MIN, posToTime, timeToPos, type Pace } from '../l
  * page opened with reduced motion stays still.
  */
 export interface ClockState {
-  /** Sim minutes, 0 … HORIZON_MIN. */
+  /** Sim minutes, 0 … the bar's end (lib/time.ts windowEnd: 48 h, or the lit system's window). */
   simMin: number
   playing: boolean
   /** Seconds to play the whole bar. */
   pace: Pace
   /** Key-moment times (sorted, unique) for stepToMoment; set by the page from the run's moments. */
   moments: readonly number[]
+  /** The bar's end (lib/time.ts windowEnd): the lit system's `graphWindowMin`, or 48 h once the dock's "48 h ›" widens it. */
+  windowMin: number
 
   /** Moves the clock (clamped). Does not pause: scrubbing code pauses first if it wants to. */
   setSimMin: (min: number) => void
@@ -35,9 +37,11 @@ export interface ClockState {
   setMoments: (atMin: readonly (number | null | undefined)[]) => void
   /** One playback step of `dtSec` real seconds along the bar (called by the playback loop). */
   advance: (dtSec: number) => void
+  /** Sets the bar's end (ui-ux §4); the clock stays inside it. */
+  setWindow: (windowMin: number) => void
 }
 
-export const clampSimMin = (min: number) => (Number.isFinite(min) ? Math.min(Math.max(min, 0), HORIZON_MIN) : 0)
+export const clampSimMin = (min: number) => (Number.isFinite(min) ? Math.min(Math.max(min, 0), windowEnd()) : 0)
 
 /** Moments closer than this to "now" count as "here", so stepping never lands on the same one twice. */
 const SAME_MOMENT_MIN = 0.5
@@ -56,12 +60,13 @@ export const useClock = create<ClockState>()(
     playing: false,
     pace: DEFAULT_PACE,
     moments: [],
+    windowMin: HORIZON_MIN,
 
     setSimMin: (min) => set({ simMin: clampSimMin(min) }),
     play: () => {
       if (get().playing) return
       // Pressing Play at the end starts over.
-      set({ playing: true, simMin: get().simMin >= HORIZON_MIN ? 0 : get().simMin })
+      set({ playing: true, simMin: get().simMin >= windowEnd() ? 0 : get().simMin })
     },
     pause: () => set({ playing: false }),
     toggle: () => (get().playing ? get().pause() : get().play()),
@@ -85,8 +90,12 @@ export const useClock = create<ClockState>()(
       // so the busy first 6 hours get 60 % of the playing time.
       const dt = dtSec > MAX_GAP_SEC || !(dtSec > 0) ? 0 : dtSec
       const next = posToTime(timeToPos(simMin) + dt / pace)
-      if (next >= HORIZON_MIN) set({ simMin: HORIZON_MIN, playing: false })
+      if (next >= windowEnd()) set({ simMin: windowEnd(), playing: false })
       else set({ simMin: next })
+    },
+    setWindow: (windowMin) => {
+      setWindowEnd(windowMin)
+      set({ windowMin, simMin: clampSimMin(get().simMin) })
     },
   })),
 )

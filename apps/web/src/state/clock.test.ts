@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MAX_GAP_SEC, startMealClock, useClock, type FrameSource } from './clock.ts'
-import { DEFAULT_PACE, HORIZON_MIN, KNEE_MIN, timeToPos } from '../lib/time.ts'
+import { DEFAULT_PACE, HORIZON_MIN, KNEE_MIN, posToTime, timeToPos, windowEnd } from '../lib/time.ts'
 
 const initial = useClock.getState()
 /** The page's `document` (only what the clock reads): shown, until a test hides it. */
@@ -176,6 +176,44 @@ describe('meal clock: play and pause', () => {
     clock().play()
     for (let i = 0; i < 10; i++) clock().advance(0.1)
     expect(clock()).toMatchObject({ simMin: HORIZON_MIN, playing: false })
+  })
+})
+
+describe('meal clock: a system’s shorter graph window (ui-ux §4, Kidneys & water 0–12 h)', () => {
+  afterEach(() => clock().setWindow(HORIZON_MIN))
+
+  it('the bar ends at the window: the first 6 h keep 60 %, the tail is 6–12 h; the clock stays inside it', () => {
+    clock().setSimMin(1000)
+    clock().setWindow(720)
+    expect(windowEnd()).toBe(720)
+    expect(clock().windowMin).toBe(720)
+    expect(clock().simMin).toBe(720)
+    expect(timeToPos(KNEE_MIN)).toBeCloseTo(0.6, 10)
+    expect(timeToPos(720)).toBe(1)
+    expect(timeToPos(2000)).toBe(1)
+    expect(posToTime(0.8)).toBeCloseTo(540, 10)
+    clock().setSimMin(HORIZON_MIN)
+    expect(clock().simMin).toBe(720)
+  })
+
+  it('playing stops at the window’s end, and Play there starts over', () => {
+    clock().setWindow(720)
+    clock().setSimMin(715)
+    clock().play()
+    for (let i = 0; i < 10; i++) clock().advance(0.1)
+    expect(clock()).toMatchObject({ simMin: 720, playing: false })
+    clock().play()
+    expect(clock().simMin).toBe(0)
+  })
+
+  it('“48 h ›” widens it to the whole bar, and back to the window', () => {
+    clock().setWindow(720)
+    clock().setWindow(HORIZON_MIN)
+    expect(windowEnd()).toBe(HORIZON_MIN)
+    clock().setSimMin(2000)
+    expect(clock().simMin).toBe(2000)
+    clock().setWindow(720)
+    expect(clock().simMin).toBe(720)
   })
 })
 

@@ -122,7 +122,8 @@ const BANNED_EN = [
  */
 const SCOPED: readonly { phrase: string; allowed: (path: string) => boolean }[] = [
   { phrase: 'dehydrat*', allowed: (path) => path.startsWith('science.') || /(^|\.)limits\./.test(path) },
-  { phrase: 'flush', allowed: (path) => !path.startsWith('sys.kidneys.') },
+  // U-4: the kidneys' graph and moment texts too (their keys are fixed by the engine's catalog).
+  { phrase: 'flush', allowed: (path) => !/^(sys\.kidneys|signals\.kidney|signals\.water)\./.test(path) },
 ]
 
 /**

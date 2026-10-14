@@ -84,6 +84,8 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   'muscles, run, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=run.30.20&layer=muscles&preview=1' },
   'skin, walk': { url: '/sim?v=3&a=roti:1&t=40&act=walk.30.20&layer=skin&preview=1' },
   'bones, run': { url: '/sim?v=3&a=roti:1&t=40&act=run.30.20&layer=bones&preview=1' },
+  // U-4's: Kidneys & water (a preview until the v3.0 gate), its bladder gauge and the 0–12 h dock, two glasses kept against one with a walk.
+  'kidneys, water, kept': { url: '/sim?v=3&a=water:2&b=water:1&t=90&act=walk.30.20&layer=kidneys&preview=1' },
 }
 
 /** The window sizes each project checks (the project's own first). */

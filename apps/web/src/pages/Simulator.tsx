@@ -115,6 +115,11 @@ export default function Simulator() {
   // The lit system's moments and each bout's start and end (E-3b-ui), for a run with a meal or bouts.
   const moments = useMemo(() => (r: RunResult) => (hasPlan(r) ? [...ui.moments(r), ...boutMoments(r)] : []), [ui.moments])
   useMomentsOnClock(moments, run, kept)
+  // The lit system's graph window (ui-ux §4: Kidneys & water 0–12 h): the graphs and the dock are
+  // drawn again for a new one, so they keep one x scale.
+  const layer = useRunStore((s) => s.layer)
+  useEffect(() => useClock.getState().setWindow(systemOf(layer)?.graphWindowMin ?? HORIZON_MIN), [layer])
+  const end = useClock((s) => s.windowMin)
 
   // The key map (lib/keys.ts): keyboard and presentation clicker. Keys a focused control uses
   // itself (typing, Space on a button, arrows on the slider) are left to it.
@@ -170,13 +175,13 @@ export default function Simulator() {
          * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
          * first screen, never less than its own minimum: under that the page scrolls (FP-1).
          */}
-        <div className="flex min-h-0 [&>section]:flex-1">{run && <GraphColumn run={run} kept={kept} />}</div>
+        <div className="flex min-h-0 [&>section]:flex-1">{run && <GraphColumn key={end} run={run} kept={kept} />}</div>
         {projector && <div ref={setWords} className="border-l border-border bg-surface-raised" />}
         {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
         <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
           {run && (
             <Dock label={t('stage.clock')} play={<Play />} clock={<ClockText />} tools={<Settings />}>
-              <Timeline run={run} kept={kept} />
+              <Timeline key={end} run={run} kept={kept} />
             </Dock>
           )}
         </div>

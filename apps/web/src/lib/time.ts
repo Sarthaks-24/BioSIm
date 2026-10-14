@@ -12,16 +12,25 @@ export const HORIZON_MIN = PARAMS.horizonMin
 export const KNEE_MIN = 6 * 60
 const KNEE_POS = 0.6
 
+/**
+ * The bar's end (ui-ux §4): 48 h, or the lit system's shorter `graphWindowMin` (Kidneys & water
+ * 0–12 h), which shortens the squeezed tail of the graphs and the dock alike (one x scale) and is
+ * where playing stops. Set only by the clock (state/clock.ts `setWindow`).
+ */
+let end = HORIZON_MIN
+export const windowEnd = () => end
+export const setWindowEnd = (min: number) => void (end = min)
+
 export function timeToPos(min: number): number {
-  const t = Math.min(Math.max(min, 0), HORIZON_MIN)
+  const t = Math.min(Math.max(min, 0), end)
   if (t <= KNEE_MIN) return (t / KNEE_MIN) * KNEE_POS
-  return KNEE_POS + ((t - KNEE_MIN) / (HORIZON_MIN - KNEE_MIN)) * (1 - KNEE_POS)
+  return KNEE_POS + ((t - KNEE_MIN) / (end - KNEE_MIN)) * (1 - KNEE_POS)
 }
 
 export function posToTime(pos: number): number {
   const p = Math.min(Math.max(pos, 0), 1)
   if (p <= KNEE_POS) return (p / KNEE_POS) * KNEE_MIN
-  return KNEE_MIN + ((p - KNEE_POS) / (1 - KNEE_POS)) * (HORIZON_MIN - KNEE_MIN)
+  return KNEE_MIN + ((p - KNEE_POS) / (1 - KNEE_POS)) * (end - KNEE_MIN)
 }
 
 export const KNEE_FRACTION = KNEE_POS

@@ -103,7 +103,7 @@ test('the title opens the picker; keys [ ] L; Esc closes it and the title keeps 
   await page.keyboard.press('l')
   await expect(picker).toBeVisible()
   // Switched away in a preview, the hidden rows stay in the picker (R93 #4).
-  await expect(picker.locator('[data-system-row]')).toHaveCount(7)
+  await expect(picker.locator('[data-system-row]')).toHaveCount(8)
   await expect(picker.locator('[data-system-row="breathing"]')).toBeVisible()
   await page.keyboard.press('ArrowDown')
   await page.keyboard.press('Escape')

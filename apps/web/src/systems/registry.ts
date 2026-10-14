@@ -9,6 +9,7 @@ import type {
   MealItem,
   RunEventId,
   RunResult,
+  Series,
   SignalMeta,
   Unit,
 } from '@lifepeek/engine'
@@ -17,6 +18,7 @@ import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from 
 import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
 import { CIRCULATION } from './circulation/row.ts'
+import { KIDNEYS } from './kidneys/row.ts'
 import { LYMPH } from './lymph/def.ts'
 import { BONES, MUSCLES, SKIN } from './muscles/row.ts'
 
@@ -157,6 +159,11 @@ export interface SystemUi {
   lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
   card?: ComponentType
+  /**
+   * A one-signal graph's second line that is not a signal of the run, the same for every meal (U-4:
+   * urine on a day without this meal, ui-ux §7). The same object for the same run, so the graph is drawn once.
+   */
+  background?: (slot: GraphSlotDef, run: RunResult) => Series | null
 }
 
 /** A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with its release (R18). */
@@ -226,7 +233,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, LYMPH, MUSCLES, BONES, SKIN]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, KIDNEYS, LYMPH, MUSCLES, BONES, SKIN]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 
