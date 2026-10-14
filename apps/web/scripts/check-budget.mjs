@@ -221,6 +221,7 @@ import {
   tierProblems,
   tiersOf,
 } from './cache-tiers.mjs'
+import { PARAMS_FILE, readSeal } from './model-seal.mjs'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
@@ -331,9 +332,13 @@ for (const r of rows) {
 // Track A ledger (T0; plan qa-fixes §0): one row per FP, planned gross, claw-back and net, and the
 // net its T-step measured. Enforced since T10: /sim must stay ≤ netLimitKB over eee16c9's /sim
 // (R66: +1.0 KB; it was +0.5 with 0.05 of slack), measured to the byte, no slack.
+// R115: that line is main's. It is enforced only on a main build; a v3 build (model version 3 or
+// later in params.ts, or a ledger with its `v3` table: both travel with the files, not the branch
+// name) shows it as a report, and the v3 ratchets below with the 194 KB cap govern /sim.
 let trackAOver = false
 {
   const ledger = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'budget-ledger.json'), 'utf8'))
+  const v3Build = readSeal(fs.readFileSync(PARAMS_FILE, 'utf8')).version >= 3 || Boolean(ledger.v3)
   const sim = rows.find((r) => r.name.startsWith('/sim'))
   const sign = (n) => (n == null ? '–' : `${n > 0 ? '+' : ''}${n.toFixed(1)}`)
   console.log(`\nTrack A ledger (/sim KB gz, base ${ledger.base.simKB} at ${ledger.base.commit}, net limit +${ledger.netLimitKB})`)
@@ -346,9 +351,11 @@ let trackAOver = false
   const planned = ledger.rows.reduce((s, r) => s + r.plannedNetKB, 0)
   const measured = ledger.rows.filter((r) => r.measuredNetKB != null).reduce((s, r) => s + r.measuredNetKB, 0)
   const now = sim.bytes / KB - ledger.base.simKB
-  trackAOver = now > ledger.netLimitKB
+  const over = now > ledger.netLimitKB
+  trackAOver = over && !v3Build
+  const verdict = !over ? 'ok' : trackAOver ? 'OVER (fails)' : 'over (report only on a v3 build, R115: the v3 ratchets govern)'
   console.log(
-    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${(sim.bytes / KB).toFixed(3)} KB = ${now > 0 ? '+' : ''}${now.toFixed(3)} KB over the base: ${trackAOver ? 'OVER (fails)' : 'ok'}`,
+    `Planned net ${sign(planned)} KB; measured rows ${sign(measured)} KB; /sim now ${(sim.bytes / KB).toFixed(3)} KB = ${now > 0 ? '+' : ''}${now.toFixed(3)} KB over the base (${v3Build ? 'v3 build: report' : 'main build: enforce'}): ${verdict}`,
   )
   // R61: on v3 the rows above compare against main's T-steps only (v3 also has E-2's lazy engine);
   // this line says where this build stands against main itself. Update `main` when main merges in.
