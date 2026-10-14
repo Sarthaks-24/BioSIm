@@ -332,10 +332,19 @@ html[data-contrast='high']:lang(hi) {
         min-height: 0;
       }
     }
+    /* As .sr-only: a 1 px box. Clipped but full-sized it lay over the body's top, and a long summary
+       (Heart & blood with a run, in the pseudo-locale) reached 20 % of it at 640×360 (R107). */
     & + p {
       position: absolute;
       top: 0;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
       clip-path: inset(50%);
+      white-space: nowrap;
+      border-width: 0;
     }
   }
   header > div {

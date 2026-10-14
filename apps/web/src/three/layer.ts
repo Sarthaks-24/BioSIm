@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import type { BufferGeometry } from 'three'
 import type { RunResult } from '@lifepeek/engine'
 import type { Framing } from '../anatomy/human/base.ts'
-import type { Callout } from '../anatomy/callouts.ts'
+import type { Callout, LabelBox } from '../anatomy/callouts.ts'
 import type { CalloutSpec, Project } from '../anatomy/CalloutOverlay.tsx'
 import type { Kit3d } from './kit.ts'
 
@@ -95,6 +95,12 @@ export interface OverlayProps {
   rhythm: { phase: number; hz: number }
   /** Hands the 3D body a function it calls each frame it draws, with that frame's projection; returns the unregister. */
   register(place: (project: Project, width: number, height: number) => void): () => void
+  /**
+   * A box of the overlay's own (CSS px, in the body's box) that no organ label may take, or null for
+   * none (R107: the heart's colour key, which a label lay over in a long language). The 3D body lays
+   * the labels out again around it; the overlay calls it again when the box moves or resizes.
+   */
+  keepOut(box: LabelBox | null): void
 }
 
 /** A `dashes` layer's own dashes (Layer3d.dashes). The default is the blood's: pale (0.9 grey), `cover` 0.16. */

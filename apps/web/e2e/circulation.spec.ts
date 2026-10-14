@@ -245,9 +245,29 @@ test('the 3D heart on a 2 GB phone: the light mesh, at most 60k triangles and 20
   expect(gl.triangles).toBeLessThanOrEqual(60_000)
 })
 
-test('the 3D heart’s labels stay on their organs while the view is turned (R106)', async ({ page }, info) => {
+test('the 3D heart’s labels stay on their organs while the view is turned (R106), and none lies on the colour key (R107)', async ({
+  page,
+}, info) => {
   test.skip(!['desktop', 'projector', 'phone'].includes(info.project.name), 'WebGL projects with motion')
-  await open(page, REST)
-  await expect(page.locator('[data-body="3d"][data-layer="circulation"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  /** Labels whose box meets the colour key's. */
+  const onKey = () =>
+    page.evaluate(() => {
+      const body = document.querySelector('[data-body="3d"][data-ready]')!
+      const k = body.querySelector('[data-blood-key]')!.getBoundingClientRect()
+      return [...body.querySelectorAll<HTMLElement>('[data-callout]')]
+        .filter((el) => el.style.visibility === 'visible')
+        .filter((el) => {
+          const r = el.getBoundingClientRect()
+          return r.left < k.right && r.right > k.left && r.top < k.bottom && r.bottom > k.top
+        })
+        .map((el) => el.dataset.callout)
+    })
+  // A run in the pseudo-locale (R107: its long labels lay on the key at 1280×800), then a walk.
+  for (const url of ['/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20&layer=circulation&lang=pseudo', REST]) {
+    await open(page, url)
+    await expect(page.locator('[data-body="3d"][data-layer="circulation"][data-ready]')).toBeVisible({ timeout: 30_000 })
+    expect(await onKey(), `labels on the colour key, ${url}`).toEqual([])
+  }
   expect(await labelsOffWhileTurning(page, anchorsOf(HEART_3D))).toEqual([])
+  expect(await onKey(), 'labels on the colour key after turning').toEqual([])
 })
