@@ -146,9 +146,10 @@ export default defineConfig({
             // U-4: the kidneys row too (alone it was a 0.2 KB chunk of its own on /sim, measured).
             // U-7: the nerves row too (the same 0.2 KB chunk of its own, measured).
             // U-6: the hormones row the same (its own 0.2 KB chunk on /sim otherwise, measured).
+            // R-1: the reproduction row too (its own 0.21 KB chunk on /sim otherwise, measured).
             {
               name: 'clock',
-              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|kidneys[\\/]row|lymph[\\/]def|muscles[\\/]row|nerves[\\/]row|hormones[\\/]row))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|circulation[\\/]row|kidneys[\\/]row|lymph[\\/]def|muscles[\\/]row|nerves[\\/]row|hormones[\\/]row|reproduction[\\/]row))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
               includeDependenciesRecursively: false,
             },
           ],

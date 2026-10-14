@@ -86,6 +86,9 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // (insulin and blood sugar, the brain card, the flat pancreas), one lazy module: systems/nerves/pack.ts
   // gathers both rows' parts, each kept in its own folder (cache-tiers.mjs: lazy tier).
   control: onePack(() => import('./nerves/pack.ts')),
+  // R-1 (v3.2): Reproduction's Now line, its two panels with their static data and its English, one
+  // lazy module under systems/reproduction/ (cache-tiers.mjs: lazy tier). No rows, no drawing.
+  reproduction: onePack(() => import('./reproduction/pack.ts')),
 }
 
 const loading = new Map<PackId, Promise<void>>()

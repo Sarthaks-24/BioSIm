@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { MODEL_VERSION } from '@lifepeek/engine'
@@ -21,7 +21,20 @@ export default function Science() {
   const { hash, search } = useLocation()
   // One section per body system there is (public, or every built one in a `?preview=1` session; X-1).
   const systems = pickerSystems(new URLSearchParams(search).get('preview') === '1').map((s) => s.id)
-  const citation = (id: string) => REFERENCES.find((r) => r.id === id)?.citation ?? id
+  // Reproduction's sources (R-1) come with its data, only while its teacher switch shows the row:
+  // the page names none of them otherwise (and its first download carries none).
+  const repro = systems.includes('reproduction')
+  const [extra, setExtra] = useState<typeof REFERENCES>([])
+  useEffect(() => {
+    if (repro)
+      // Its pack, not its data module alone: a module of its own would be one more file name in /sim.
+      void import('../systems/reproduction/pack.ts')
+        .then((m) => setExtra(Object.entries(m.REPRO_SOURCES).map(([id, s]) => ({ id, ...s }))))
+        .catch(() => {})
+  }, [repro])
+  const references =
+    repro && extra.length ? [...REFERENCES, ...extra].sort((a, b) => a.citation.localeCompare(b.citation, 'en')) : REFERENCES
+  const citation = (id: string) => references.find((r) => r.id === id)?.citation ?? id
   const target = decodeURIComponent(hash.slice(1))
 
   // The graphs' "How we know" links point at one reference or food (#freckmann2007, #food:cola).
@@ -138,7 +151,7 @@ export default function Science() {
 
       <h2 className="mt-10 mb-4 text-h2 font-extrabold">{t('science.references')}</h2>
       <ol className="list-decimal space-y-1 pl-6 text-sm">
-        {REFERENCES.map((r) => (
+        {references.map((r) => (
           <li key={r.id} id={r.id} className={`rounded-control px-1 py-0.5 ${marked(r.id)}`}>
             {r.citation}
             {r.url && (

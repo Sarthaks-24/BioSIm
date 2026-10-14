@@ -24,6 +24,7 @@ import {
   stepSystem,
   systemForLink,
   systemOf,
+  teacherSwitch,
   type PackId,
   type SystemDef,
 } from './registry.ts'
@@ -138,7 +139,7 @@ describe('systems registry (architecture §5.2)', () => {
 
   it("draws every layer flat (no WebGL needed): its pack's drawing module has it", async () => {
     for (const s of SYSTEMS) {
-      if (s.draw === 'body') continue
+      if (s.draw !== 'layer') continue
       const drawing = PACKS[s.pack]?.drawing
       expect(drawing, `${s.id}: pack ${s.pack} has no drawing (PackDef.drawing)`).toBeTypeOf('function')
       expect((await drawing!()).default[s.id], s.id).toBeTypeOf('function')
@@ -147,12 +148,24 @@ describe('systems registry (architecture §5.2)', () => {
 })
 
 describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
-  it.each(SYSTEMS.map((s) => [s.id, s] as const))('%s has a flat drawing, a VIEW, checked outlines and callouts', async (_id, s) => {
+  // A panels row (reproduction) draws nothing on the body: no tones, no labels (tested below).
+  const drawn = SYSTEMS.filter((s) => s.draw !== 'panels')
+  it.each(drawn.map((s) => [s.id, s] as const))('%s has a flat drawing, a VIEW, checked outlines and callouts', async (_id, s) => {
     // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download),
     // and a layer that places its own labels keeps them in anatomy/human/<id>.ts `LABELS` (lymph's).
     const { TONES } = (await import(`../anatomy/tones/${s.id}.ts`)) as { TONES: ToneSet }
     const { LABELS } = (await import(`../anatomy/human/${s.id}.ts`)) as { LABELS?: Record<string, Callout> }
     expect(LABELS ? flatProblems(s, TONES, Object.keys(LABELS), LABELS) : flatProblems(s, TONES)).toEqual([])
+  })
+
+  it('reproduction is never drawn on the body (anatomy plan D6): no drawing, no tones, no labels, no 3D layer', async () => {
+    expect(SYSTEMS.filter((s) => s.draw === 'panels').map((s) => s.id)).toEqual(['reproduction'])
+    const row = systemOf('reproduction')!
+    expect(row).toMatchObject({ draw: 'panels', organs: [], slots: [], inputs: [], camera: { framing: 'full' } })
+    expect(row.layer3d).toBeUndefined()
+    expect((await PACKS.reproduction!.drawing!()).default).toEqual({})
+    expect((await PACKS.reproduction!.rows()).default).toEqual([])
+    await expect(import(`../anatomy/tones/${'reproduction'}.ts`)).rejects.toThrow()
   })
 
   it('names what is wrong with a row', () => {
@@ -230,6 +243,11 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
   })
 })
 
+/** The settings sheet's setter, without its storage (components/stage/KeysHelp.tsx `setGrowingUp`). */
+const setSwitch = (on: boolean) => {
+  teacherSwitch.on = on
+}
+
 describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   const walk: ActivityBout[] = [{ kind: 'walk', startMin: 30, durMin: 20 }]
 
@@ -237,12 +255,48 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('digestion', [], false)).toBe('digestion')
     expect(systemForLink('nonsense', [], false)).toBe('digestion')
     expect(systemForLink(undefined, [], false)).toBe('digestion')
-    // A SystemId with no row yet opens Digestion even with ?preview=1.
+    // A row behind the teacher switch, while it is off, opens Digestion even with ?preview=1.
     expect(systemForLink('reproduction', [], true)).toBe('digestion')
   })
 
+  it('the teacher switch (R-1): off by default; off, its row is in no list and no link; on, a preview offers it last', () => {
+    expect(teacherSwitch.on).toBe(false)
+    expect(systemOf('reproduction')).toMatchObject({ teacherSwitch: true, public: false })
+    for (const preview of [false, true]) {
+      expect(pickerSystems(preview).map((s) => s.id)).not.toContain('reproduction')
+      expect(systemForLink('reproduction', [], preview)).toBe('digestion')
+    }
+    expect(stepSystem('skin', true, 1)).toBe('digestion')
+    setSwitch(true)
+    try {
+      expect(teacherSwitch.on).toBe(true)
+      // Hidden until the user flips `public` (🛑): only a preview session offers it, as the last row.
+      expect(pickerSystems(false).map((s) => s.id)).not.toContain('reproduction')
+      expect(systemForLink('reproduction', [], false)).toBe('digestion')
+      expect(pickerSystems(true).at(-1)!.id).toBe('reproduction')
+      expect(systemForLink('reproduction', [], true)).toBe('reproduction')
+      expect(stepSystem('skin', true, 1)).toBe('reproduction')
+      expect(stepSystem('digestion', true, -1)).toBe('reproduction')
+      // Once public, a plain session offers it too, still only while the switch is on.
+      const row = systemOf('reproduction')!
+      row.public = true
+      try {
+        expect(pickerSystems(false).at(-1)!.id).toBe('reproduction')
+        expect(systemForLink('reproduction', [], false)).toBe('reproduction')
+        setSwitch(false)
+        expect(pickerSystems(false).map((s) => s.id)).not.toContain('reproduction')
+        expect(systemForLink('reproduction', [], false)).toBe('digestion')
+      } finally {
+        row.public = false
+      }
+    } finally {
+      setSwitch(false)
+    }
+  })
+
   it('every built row is public since the v3.0 release gate (H-1, R103): a plain link opens it, and the picker offers it', () => {
-    expect(SYSTEMS.filter((s) => !s.public).map((s) => s.id)).toEqual([])
+    // But reproduction (R-1, v3.2): hidden until the user flips it, and behind the teacher switch.
+    expect(SYSTEMS.filter((s) => !s.public).map((s) => s.id)).toEqual(['reproduction'])
     expect(systemForLink('breathing', [], false)).toBe('breathing')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(true)).toEqual(pickerSystems(false))

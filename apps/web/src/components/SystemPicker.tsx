@@ -102,7 +102,19 @@ export default function SystemPicker({
             if (!shown.length) return null
             return (
               <section key={group} aria-label={t(`lifeProcess.${group}`)} className="grid gap-1">
-                <h3 className="text-caption font-semibold text-ink-muted">{t(`lifeProcess.${group}`)}</h3>
+                <h3 className="text-caption font-semibold text-ink-muted">
+                  {t(`lifeProcess.${group}`)}
+                  {/* The teacher switch's row shows only while it is on, and says so (R-1, ui-ux §10). */}
+                  {group === 'reproduction' && (
+                    <span
+                      data-switch-on=""
+                      className="rounded-control border border-border px-1 font-normal"
+                      style={{ marginLeft: '0.5rem' }}
+                    >
+                      {t('picker.switchOn')}
+                    </span>
+                  )}
+                </h3>
                 <ul className="grid gap-1">
                   {shown.map((id) => {
                     const v = value(id)
