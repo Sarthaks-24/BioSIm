@@ -51,6 +51,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'flagship.spec.ts',
       'worksheet.spec.ts',
       'why.spec.ts',
+      'legs3d.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -74,6 +75,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'kidneys.spec.ts',
       'hormones.spec.ts',
       'flagship.spec.ts',
+      'legs3d.spec.ts',
     ],
     use: {
       viewport: { width: 1280, height: 800 },
@@ -105,6 +107,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'hormones.spec.ts',
       'flagship.spec.ts',
       'why.spec.ts',
+      'legs3d.spec.ts',
     ],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },
@@ -126,7 +129,7 @@ const projects: PlaywrightTestConfig['projects'] = [
   {
     name: 'nowebgl',
     // circulation.spec.ts, kidneys.spec.ts: Heart & blood, Kidneys & water drawn flat (with WebGL they are drawn in 3D since A-5, A-6).
-    testMatch: ['stage.spec.ts', 'overlays.spec.ts', 'effort.spec.ts', 'circulation.spec.ts', 'kidneys.spec.ts'],
+    testMatch: ['stage.spec.ts', 'overlays.spec.ts', 'effort.spec.ts', 'circulation.spec.ts', 'kidneys.spec.ts', 'legs3d.spec.ts'],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
   ...trackA(),
