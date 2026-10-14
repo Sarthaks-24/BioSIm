@@ -20,7 +20,7 @@ import {
 import { Vec3, type Spline3 } from '../anatomy/spline.ts'
 import { bodyStateAt, type BodyState } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Project } from '../anatomy/CalloutOverlay.tsx'
-import { FADE_TONE, PARTICLE_EDGE, SKIN } from '../anatomy/tones/base.ts'
+import { FADE_TONE, PARTICLE_EDGE, SKIN_FILL, SKIN_LINE } from '../anatomy/tones/base.ts'
 import { ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones/digestion.ts'
 import { DIGESTION } from '../systems/digestion/def.ts'
 import type { SystemDef } from '../systems/registry.ts'
@@ -81,12 +81,13 @@ export default function FlatBody({
   const organs = system.draw === 'body'
   // Lit only once its pack has loaded (state/run.ts setLayer), so its drawing is here.
   const Layer = organs ? undefined : packDrawing(system.id)
-  const limbs = useLoaded(limbsFor(framing, band) ? loadLimbs() : null)
+  const limbs = useLimbs(limbsFor(framing, band))
   const [stage, setStage] = useState<StageId>(() => activeStage(sim, clock.now()))
   const [size, setSize] = useState({ w: 0, h: 0 })
   const { w, h } = size
   const specs = useCalloutSpecs(stage, w)
-  const { overlay, place } = useCallouts(organs ? specs : NO_LABELS, () => placeLabels())
+  // Another system's layer places its own labels.
+  const { overlay, place } = useCallouts(organs ? specs : [], () => placeLabels())
   const placeLabels = () => {
     if (w > 0 && h > 0) place(flatProjection(w, h, view), w, h)
   }
@@ -142,7 +143,6 @@ export default function FlatBody({
       data-ready={final && w > 0 && h > 0 ? '' : undefined}
       data-particles={reduced ? 'still' : 'tumbling'}
       data-framing={framing}
-      data-band={band}
       className="relative h-full w-full"
     >
       <canvas ref={still} aria-hidden="true" className="absolute" />
@@ -153,27 +153,16 @@ export default function FlatBody({
   )
 }
 
-/** No organ labels: another system's layer places its own. */
-const NO_LABELS: never[] = []
-
 /**
- * A promise's value once it has settled, else null (a lazy chunk: the picture draws without it
- * until it is here). A failed load stays null: the body is still drawn, at rest.
+ * The legs and poses (a lazy chunk) when the picture needs them, once loaded; until then, or if the
+ * load fails, null: the body is still drawn, at rest.
  */
-function useLoaded<T>(promise: Promise<T> | null): T | null {
-  const [done, setDone] = useState<{ promise: Promise<T>; value: T } | null>(null)
+function useLimbs(need: boolean) {
+  const [limbs, setLimbs] = useState<Awaited<ReturnType<typeof loadLimbs>> | null>(null)
   useEffect(() => {
-    if (!promise) return
-    let live = true
-    promise.then(
-      (value) => live && setDone({ promise, value }),
-      () => {},
-    )
-    return () => {
-      live = false
-    }
-  }, [promise])
-  return promise && done?.promise === promise ? done.value : null
+    if (need) loadLimbs().then(setLimbs, () => {})
+  }, [need])
+  return need ? limbs : null
 }
 
 /** Scene units → CSS pixels, front-on, fitting `view` into the picture (Digestion's VIEW by default). */
@@ -323,8 +312,8 @@ export function paintStill(ctx: CanvasRenderingContext2D, w: number, h: number, 
   // Skin: a faint fill and a crisp, cool outline (the 3D shell's rim).
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
-  ctx.fillStyle = SKIN.fill
-  ctx.strokeStyle = SKIN.line
+  ctx.fillStyle = SKIN_FILL
+  ctx.strokeStyle = SKIN_LINE
   ctx.lineWidth = 1.5
   if (figure) figure(ctx, X, Y, scale)
   else {

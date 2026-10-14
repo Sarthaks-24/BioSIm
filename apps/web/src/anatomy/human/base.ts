@@ -78,12 +78,8 @@ export function smooth(a: number, b: number, x: number): number {
  * - upper: brain, hormones
  * - full: muscles, bones, skin, lymph; the whole standing body, feet at −5.8
  */
-export const FRAMINGS: { readonly [F in Framing]: View } = {
-  torso: { minX: -1.45, maxX: 1.45, minY: -1.9, maxY: 3.45 },
-  chest: { minX: -1.45, maxX: 1.45, minY: -0.6, maxY: 3.5 },
-  upper: { minX: -1.45, maxX: 1.45, minY: -1.0, maxY: 3.5 },
-  full: { minX: -1.45, maxX: 1.45, minY: -6.0, maxY: 3.5 },
-}
+const box = (minY: number, maxY = 3.5): View => ({ minX: -1.45, maxX: 1.45, minY, maxY })
+export const FRAMINGS: { readonly [F in Framing]: View } = { torso: box(-1.9, 3.45), chest: box(-0.6), upper: box(-1.0), full: box(-6.0) }
 export type Framing = 'torso' | 'chest' | 'upper' | 'full'
 
 /** A box of the scene, in scene units. */

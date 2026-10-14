@@ -6,7 +6,7 @@ import hi from '../i18n/hi.json'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { UNIT_KEYS } from '../registry/units.ts'
 import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
-import { flatProblems, systemProblems, type CheckContext } from './check.ts'
+import { FLAT_CALLOUTS, flatProblems, systemProblems, type CheckContext } from './check.ts'
 import type { ToneSet } from '../anatomy/tones/base.ts'
 import { TONES as LYMPH_TONES } from '../anatomy/tones/lymph.ts'
 import { PACKS } from './packs.ts'
@@ -149,8 +149,8 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
         ['lungs', 'windpipe'],
       ] as const,
     }
-    const bad: SystemDef = { ...DIGESTION, id: 'breathing', camera: { framing: 'side' as never }, callouts: ['mouth', 'kidney' as never] }
-    expect(flatProblems(bad, tones)).toEqual([
+    const bad: SystemDef = { ...DIGESTION, id: 'breathing', camera: { framing: 'side' as never } }
+    expect(flatProblems(bad, tones, ['mouth', 'kidney'])).toEqual([
       'breathing: framing side has no VIEW (anatomy/human/base.ts FRAMINGS)',
       "breathing: is drawn by the body, but only Digestion is: it needs its own flat layer (draw: 'layer', its pack's drawing)",
       'breathing: 6 tones: at most 5 (anatomy plan §5)',
@@ -169,7 +169,8 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
       camera: { framing: 'full' },
       draw: 'layer',
     }
-    expect(flatProblems(lymph, LYMPH_TONES)).toEqual([])
+    expect(flatProblems(lymph, LYMPH_TONES, FLAT_CALLOUTS.digestion)).toEqual([])
+    expect(flatProblems(lymph, LYMPH_TONES)).toEqual(['lymph: has no labels (systems/check.ts FLAT_CALLOUTS)'])
   })
 })
 

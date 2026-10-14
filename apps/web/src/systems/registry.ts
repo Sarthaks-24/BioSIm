@@ -2,7 +2,6 @@ import type { ComponentType, RefObject } from 'react'
 import type { TFunction } from 'i18next'
 import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
-import type { CalloutId } from '../anatomy/callouts.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 
@@ -137,8 +136,6 @@ export interface SystemDef {
   draw: 'body' | 'layer'
   /** Its 3D layer (v3.1+, optional per system: R43). Without one the system is drawn flat on every device. */
   layer3d?: Loader<LayerComponent>
-  /** The labels its picture can show (anatomy/callouts.ts): each must sit inside its framing. */
-  callouts: readonly CalloutId[]
   /** Its pack (architecture §0): the lazy chunks and the text section `sys.<pack>`. */
   pack: PackId
   inputs: readonly InputKind[]

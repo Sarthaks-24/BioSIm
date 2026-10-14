@@ -38,7 +38,6 @@ export const DIGESTION: SystemDef = {
   knownLimits: ['limits.glucoseBand', 'limits.backToBase'],
   camera: { framing: 'torso' },
   draw: 'body',
-  callouts: ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine', 'liver', 'pancreas'],
   pack: 'core',
   inputs: ['meal', 'activity'],
   rhythms: [],
