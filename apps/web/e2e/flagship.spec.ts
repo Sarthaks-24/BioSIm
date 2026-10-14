@@ -70,6 +70,11 @@ test('Home: the lesson is the first call to action, then a static list of the sy
   const systems = page.locator('[data-systems] [data-system]')
   await expect(systems).toHaveCount(10)
   await expect(systems.first()).toContainText('Digestion')
+  // v3.1's rows say what they show: lymph's graphs, the nerve demo, insulin.
+  await expect(systems.and(page.locator('[data-system="lymph"]'))).toContainText('blood fat')
+  await expect(systems.and(page.locator('[data-system="nerves"]'))).toContainText('Brain & nerves')
+  await expect(systems.and(page.locator('[data-system="nerves"]'))).toContainText('the reflex against the route through the brain')
+  await expect(systems.and(page.locator('[data-system="hormones"]'))).toContainText('Insulin after the meal')
   await shot(page, 'home')
   if (test.info().project.name === 'desktop') await checkAxe(page)
   // It opens the stage with the bar at its first pause; the address is a plain link (no lesson parameter).

@@ -261,6 +261,16 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     ])
   })
 
+  it('Home’s systems list says what each row shows (v3.1: lymph’s graphs, the nerve demo, insulin)', () => {
+    const items = en.home.systems.items as Record<string, string>
+    for (const s of pickerSystems(false)) expect(items[s.id], s.id).toBeTruthy()
+    // Lymph has graphs since U-5: no longer "a drawing" (R3).
+    expect(items.lymph).not.toMatch(/drawing/i)
+    expect(items.lymph).toMatch(/blood fat/)
+    expect(items.nerves).toMatch(/reflex/)
+    expect(items.hormones).toMatch(/Insulin/)
+  })
+
   it('kidneys & water opens from a plain link, and its graphs show 0–12 h', () => {
     expect(systemForLink('kidneys', [], false)).toBe('kidneys')
     expect(systemForLink('kidneys', [], true)).toBe('kidneys')
