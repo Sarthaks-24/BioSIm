@@ -18,7 +18,7 @@ import {
 import { bodyStateAt } from '../../anatomy/bodyState.ts'
 import { ILEUM_TONE, JEJUNUM_TONE, LIT_ORGANS, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../../anatomy/tones/digestion.ts'
 import { layerGeometry, lerp, organTube, rounded, sculpt, smoothstep, type Part } from '../geometry.ts'
-import type { Layer3d, LayerState } from '../layer.ts'
+import type { Layer3d, LayerState, Tier } from '../layer.ts'
 
 /**
  * Digestion's lit layer: liver, gallbladder, pancreas, oesophagus, stomach (which stretches as it
@@ -26,11 +26,18 @@ import type { Layer3d, LayerState } from '../layer.ts'
  * chunk, because it is the first 3D view (anatomy plan §8: base + digestion ≤ 270 KB gz).
  */
 
-function buildLiver(): BufferGeometry {
+/**
+ * Round-the-tube (and round-the-organ) detail by tier (anatomy plan §9, R99): a 2 GB phone builds
+ * half the sides, never under 6 (a thinner tube reads as a prism in the ink outline). Along each
+ * tube nothing changes, so the gut keeps its curves. The high tier is the mesh as it was.
+ */
+const radialFor = (tier: Tier) => (n: number) => (tier === 'low' ? Math.max(6, Math.round(n / 2)) : n)
+
+function buildLiver(r: (n: number) => number): BufferGeometry {
   // Wedge: a thick, domed right lobe (viewer's left) tapering to a thin left lobe that lies over
   // the stomach. The top follows the diaphragm; underneath, the front edge is sharp (the liver's
   // inferior border) and the back is full.
-  return sculpt(new SphereGeometry(1, 56, 40), (v) => {
+  return sculpt(new SphereGeometry(1, r(56), r(40)), (v) => {
     const s = (v.x + 1) / 2 // 0 = right lobe edge, 1 = left lobe tip
     // Direction around the long axis, and how far out from it (0–1) this vertex is.
     const ring = Math.sqrt(Math.max(1e-6, 1 - v.x * v.x))
@@ -52,9 +59,9 @@ function buildLiver(): BufferGeometry {
   })
 }
 
-function buildGallbladder(): BufferGeometry {
+function buildGallbladder(r: (n: number) => number): BufferGeometry {
   // Pear tucked under the right lobe, tilted so its round fundus peeks below the liver's edge.
-  return sculpt(new SphereGeometry(1, 24, 16), (v) => {
+  return sculpt(new SphereGeometry(1, r(24), r(16)), (v) => {
     const pear = v.y < 0 ? 1 : 0.62 - 0.22 * v.y
     const x = v.x * 0.05 * pear
     const y = v.y * 0.1
@@ -83,25 +90,26 @@ const JEJUNUM = new Color(JEJUNUM_TONE)
 const ILEUM = new Color(ILEUM_TONE)
 const PYLORUS = new Color(PYLORUS_TONE)
 
-function buildPylorus(): BufferGeometry {
-  const geo = new TorusGeometry(0.046, 0.014, 10, 24)
+function buildPylorus(r: (n: number) => number): BufferGeometry {
+  const geo = new TorusGeometry(0.046, 0.014, r(10), r(24))
   const tan = STOMACH.getTangentAt(1, new Vector3())
   const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), tan)
   geo.applyMatrix4(new Matrix4().compose(STOMACH.getPointAt(1, new Vector3()), q, new Vector3(1, 1, 1)))
   return geo
 }
 
-function buildDigestion(): BufferGeometry {
+function buildDigestion(tier: Tier): BufferGeometry {
+  const r = radialFor(tier)
   const haustraPouches = 34
   const samples = gutSamples()
   const parts: Part<LitOrgan>[] = [
-    { organ: 'liver', geo: buildLiver() },
-    { organ: 'gallbladder', geo: buildGallbladder() },
+    { organ: 'liver', geo: buildLiver(r) },
+    { organ: 'gallbladder', geo: buildGallbladder(r) },
     {
       organ: 'pancreas',
       geo: organTube(PANCREAS, {
         segments: 48,
-        radial: 14,
+        radial: r(14),
         radius: (u) => lerp(0.078, 0.034, u) * rounded(0.12)(u),
         flatten: 0.55,
         caps: true,
@@ -109,12 +117,12 @@ function buildDigestion(): BufferGeometry {
       // Lobulated look: a faint lighter/darker ripple along its length.
       tint: (u, base, out) => out.copy(base).multiplyScalar(0.94 + 0.06 * Math.sin(u * 60)),
     },
-    { organ: 'esophagus', geo: organTube(PHARYNX, { segments: 12, radius: (u) => lerp(0.05, 0.043, u), radial: 14, caps: 'start' }) },
+    { organ: 'esophagus', geo: organTube(PHARYNX, { segments: 12, radius: (u) => lerp(0.05, 0.043, u), radial: r(14), caps: 'start' }) },
     {
       organ: 'esophagus',
       geo: organTube(ESOPHAGUS, {
         segments: 60,
-        radial: 14,
+        radial: r(14),
         // Slight narrowings where the aorta and diaphragm press on it.
         radius: (u) => 0.042 * (1 - 0.18 * Math.exp(-(((u - 0.35) / 0.05) ** 2)) - 0.15 * Math.exp(-(((u - 0.82) / 0.05) ** 2))),
         flatten: 0.8,
@@ -125,7 +133,7 @@ function buildDigestion(): BufferGeometry {
       // Built empty; the shader stretches it along the normals as it fills (ends pinned).
       geo: organTube(STOMACH, {
         segments: 96,
-        radial: 28,
+        radial: r(28),
         radius: (u) => stomachRadius(u) * STOMACH_EMPTY,
         flatten: 0.72,
         caps: true,
@@ -136,12 +144,12 @@ function buildDigestion(): BufferGeometry {
       // Darker towards the pylorus's muscular antrum.
       tint: (u, base, out) => out.copy(base).lerp(PYLORUS, smoothstep(0.75, 1, u) * 0.5),
     },
-    { organ: 'stomach', geo: buildPylorus(), tint: (_u, _base, out) => out.copy(PYLORUS) },
+    { organ: 'stomach', geo: buildPylorus(r), tint: (_u, _base, out) => out.copy(PYLORUS) },
     {
       organ: 'smallIntestine',
       geo: organTube(SMALL_INTESTINE, {
         segments: 560,
-        radial: 10,
+        radial: r(10),
         radius: (u) => (u < 0.08 ? 0.056 : 0.052) * rounded(0.004)(u),
         caps: true,
       }),
@@ -157,7 +165,7 @@ function buildDigestion(): BufferGeometry {
       organ: 'largeIntestine',
       geo: organTube(LARGE_INTESTINE, {
         segments: 320,
-        radial: 16,
+        radial: r(16),
         radius: (u) => {
           if (u < 0.05) return lerp(0.11, 0.09, u / 0.05) * rounded(0.012)(u) // caecum
           if (u > 0.9) return lerp(0.075, 0.05, (u - 0.9) / 0.1) * rounded(0.01)(u) // rectum → anal canal
@@ -174,7 +182,10 @@ function buildDigestion(): BufferGeometry {
       }),
       occlude: true,
     },
-    { organ: 'largeIntestine', geo: organTube(APPENDIX, { segments: 20, radial: 10, radius: (u) => 0.018 * rounded(0.2)(u), caps: true }) },
+    {
+      organ: 'largeIntestine',
+      geo: organTube(APPENDIX, { segments: 20, radial: r(10), radius: (u) => 0.018 * rounded(0.2)(u), caps: true }),
+    },
   ]
   return layerGeometry(parts, LIT_ORGANS, ORGAN_TONE, samples)
 }
@@ -206,7 +217,7 @@ function write(out: LayerState, sim: RunResult, t: number) {
 export const DIGESTION_3D: Layer3d = {
   id: 'digestion',
   organs: LIT_ORGANS,
-  // One tier for now: the 2 GB phone's lighter mesh (plan §9, radial × 0.5) comes with its own shots.
-  build: (): BufferGeometry => buildDigestion(),
+  // A 2 GB phone's mesh has half the sides round each tube and organ (plan §9, R99: radialFor).
+  build: (tier: Tier): BufferGeometry => buildDigestion(tier),
   write,
 }

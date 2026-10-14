@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
+import { anchorsOf, labelsOffWhileTurning } from './helpers/labels3d.ts'
+import LUNGS_3D from '../src/three/layers/breathing.ts'
 
 // Breathing (U-2): public since the v3.0 release gate (H-1, R103), so a plain link opens it (and a
 // `?preview=1` one still does). Its pack loads when it is lit: the flat lungs, breathing at the model's rate on the real
@@ -246,4 +248,11 @@ test('the 3D lungs on a 2 GB phone: the light mesh, at most 60k triangles and 20
   expect(held).toContain('low:breathing')
   expect(gl.calls).toBeLessThanOrEqual(20)
   expect(gl.triangles).toBeLessThanOrEqual(60_000)
+})
+
+test('the 3D lungs’ labels stay on their organs while the view is turned (R106)', async ({ page }, info) => {
+  test.skip(!['desktop', 'projector', 'phone'].includes(info.project.name), 'WebGL projects with motion')
+  await open(page, WALK)
+  await expect(page.locator('[data-body="3d"][data-layer="breathing"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  expect(await labelsOffWhileTurning(page, anchorsOf(LUNGS_3D))).toEqual([])
 })

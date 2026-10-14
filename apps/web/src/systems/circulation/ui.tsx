@@ -127,21 +127,25 @@ function NowLine({ run, kept, className = '' }: NowProps) {
     new Intl.NumberFormat(i18n.language, { numberingSystem: 'latn', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v)
   return (
     <div data-now="circulation" className={`grid text-control text-ink lg:text-[1.0625rem] ${className}`}>
-      <p>
-        <span className="sr-only">{t('now.label')}: </span>
-        <span className={`${PILL} mr-2`}>{t('sys.circulation.now.organ')}</span>
-        <span className="font-semibold">{t('sys.circulation.now.rate', { n })}</span>
-        <span className="text-ink-muted"> · {t(`sys.circulation.doing.${band}`)}</span>
-      </p>
-      {kept && keptN != null && (
-        // The kept plan at the same minute (the graph's legend names it).
-        <p data-now-kept="" className="mt-0.5 flex items-baseline gap-2 text-caption text-ink-muted lg:text-control">
-          <span className="relative -top-[0.2em] shrink-0">
-            <KeptSwatch />
-          </span>
-          {t('sys.circulation.now.kept', { n: keptN })}
+      {/* From 1024 px up the kept plan's rate sits beside this one when it fits: a row less under the
+          body, which a projector's 1280×800 needs in a long language (R107: body ≥ 40 % of the stage). */}
+      <div className="lg:flex lg:flex-wrap lg:items-baseline lg:gap-x-5">
+        <p>
+          <span className="sr-only">{t('now.label')}: </span>
+          <span className={`${PILL} mr-2`}>{t('sys.circulation.now.organ')}</span>
+          <span className="font-semibold">{t('sys.circulation.now.rate', { n })}</span>
+          <span className="text-ink-muted"> · {t(`sys.circulation.doing.${band}`)}</span>
         </p>
-      )}
+        {kept && keptN != null && (
+          // The kept plan at the same minute (the graph's legend names it).
+          <p data-now-kept="" className="mt-0.5 flex items-baseline gap-2 text-caption text-ink-muted lg:mt-0 lg:text-control">
+            <span className="relative -top-[0.2em] shrink-0">
+              <KeptSwatch />
+            </span>
+            {t('sys.circulation.now.kept', { n: keptN })}
+          </p>
+        )}
+      </div>
       {shares && total > 0 && (
         // Under 1024 px wide or 680 px tall the body keeps the room: "Where blood goes" says the same.
         <div data-now-shares={shares.join(' ')} className="mt-1 flex flex-col gap-0.5 max-lg:hidden [@media(height<42.5rem)]:hidden">

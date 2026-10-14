@@ -18,7 +18,7 @@ import type { Loader } from '../registry/types.ts'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { particlePosition, tumble } from '../anatomy/human/digestion.ts'
 import { useCalloutSpecs, useCallouts, type CalloutSpec, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
-import type { Callout } from '../anatomy/callouts.ts'
+import type { Callout, LabelBox } from '../anatomy/callouts.ts'
 import type { Framing } from '../anatomy/human/base.ts'
 import { useMotion } from '../state/motion.ts'
 import { useProjector } from '../hooks/useProjector.ts'
@@ -94,6 +94,12 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
     },
     [overlays],
   )
+  // The lit layer's overlay's box no label may take (OverlayProps.keepOut); null: none.
+  const keptOut = useRef<LabelBox | null>(null)
+  const keepOut = useCallback((box: LabelBox | null) => {
+    keptOut.current = box
+    invalidate.current()
+  }, [])
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const settled = useSettled(wrapper)
   const [drawn, setDrawn] = useState(false)
@@ -166,14 +172,16 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
             maxPolarAngle={Math.PI * 0.8}
           />
           <CameraRig framing={layer?.framing ?? 'torso'} reduced={reduced} controls={controls} />
-          <LabelProjector place={place} overlays={overlays} />
+          <LabelProjector place={place} overlays={overlays} keptOut={keptOut} />
           <Invalidator sim={sim} clock={clock} reduced={reduced} />
           {layer && <FirstFrame onDrawn={() => setDrawn(true)} />}
         </Canvas>
       )}
       {/* Measured from the start (hidden, not removed), placed by the 3D body's frames. */}
       <div style={drawn ? undefined : { opacity: 0 }}>
-        {layer?.overlay && <LayerOverlay key={layer.id} layer={layer} reduced={reduced} t={t} rhythm={rhythm} register={register} />}
+        {layer?.overlay && (
+          <LayerOverlay key={layer.id} layer={layer} reduced={reduced} t={t} rhythm={rhythm} register={register} keepOut={keepOut} />
+        )}
         {overlay}
       </div>
       {!drawn && placeholder && <div className="absolute inset-0">{placeholder}</div>}
@@ -515,15 +523,30 @@ function Swarm({
  * Moves the organ labels to where their organs are on screen, every frame the scene draws. The
  * camera and size are this frame's (the frame's state), not those of the last React render: when
  * the box changes, the frame that draws the new size places the labels for it too (B17).
+ *
+ * The camera's matrices are brought up to date first (R106). A drag's orbit (the controls' update)
+ * and a framing's ease (CameraRig) move and turn the camera in this frame, but its view matrix is
+ * only remade when the scene is drawn, after this: the labels were placed for the frame before, so
+ * all through a turn every dot trailed its organ (40–60 px in the e2e check's drag) and stopped off it.
  */
-function LabelProjector({ place, overlays }: { place: Callouts['place']; overlays: ReadonlySet<Place> }) {
+function LabelProjector({
+  place,
+  overlays,
+  keptOut,
+}: {
+  place: Callouts['place']
+  overlays: ReadonlySet<Place>
+  keptOut: RefObject<LabelBox | null>
+}) {
   const p = useMemo(() => new Vector3(), [])
   useFrame(({ camera, size }) => {
+    camera.updateMatrixWorld()
     const project: Project = (v) => {
       p.copy(v).project(camera)
       return p.z > 1 ? null : [((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height]
     }
-    place(project, size.width, size.height)
+    const k = keptOut.current
+    place(project, size.width, size.height, k ? (b) => b.x < k.x + k.w && b.x + b.w > k.x && b.y < k.y + k.h && b.y + b.h > k.y : undefined)
     for (const fn of overlays) fn(project, size.width, size.height)
   })
   return null
@@ -538,11 +561,14 @@ type Place = Parameters<OverlayProps['register']>[0]
 /** The lit layer's own drawing over the canvas (Layer3d.overlay: plain DOM, made and cleaned up here). */
 function LayerOverlay({ layer, ...props }: OverlayProps & { layer: Layer3d }) {
   const host = useRef<HTMLDivElement>(null)
-  const { reduced, t, rhythm, register } = props
-  useEffect(
-    () => (host.current ? layer.overlay?.(host.current, { reduced, t, rhythm, register }) : undefined),
-    [layer, reduced, t, rhythm, register],
-  )
+  const { reduced, t, rhythm, register, keepOut } = props
+  useEffect(() => {
+    const stop = host.current ? layer.overlay?.(host.current, { reduced, t, rhythm, register, keepOut }) : undefined
+    return () => {
+      stop?.()
+      keepOut(null)
+    }
+  }, [layer, reduced, t, rhythm, register, keepOut])
   // Not hidden from screen readers: a layer's words (the heart's colour key) are read as the flat
   // drawing's; its pictures (the air dashes, the still arrows) hide themselves.
   return <div ref={host} className="pointer-events-none absolute inset-0" />

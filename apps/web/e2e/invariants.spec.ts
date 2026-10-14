@@ -71,10 +71,11 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   empty: { url: '/sim?v=3&a=' },
   '6 foods': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1' },
   // E-3b-ui: bouts add no stage row (their chips share the plan strip, their marks the graphs and the dock).
-  // On Digestion, as written: since H-1 a link with bouts and no layer opens Heart & blood (R39).
-  'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20&layer=digestion' },
+  // On Heart & blood, where a link with bouts opens since H-1 (R39), with a run: its chip, key and
+  // labels fit 640×360 and 1280×800 in the pseudo-locale too (R107; H-1 had pinned these to Digestion).
+  'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20&layer=circulation' },
   '6 foods + 3 bouts': {
-    url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10&layer=digestion',
+    url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10&layer=circulation',
   },
   // U-2's gate per system (ui-ux §12): Breathing (public since the v3.0 gate), its title and rhythm
   // chip over the body, in a walk with a kept plan at rest.
