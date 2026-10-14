@@ -46,7 +46,7 @@ export function lastKindAt(bouts: readonly ActivityBout[], min: number): Activit
  * A step of a value with hysteresis (anatomy plan §4, scrub-safe): the step goes up only once the
  * value is past the boundary by MARGIN of it, and down only once it is that far below, so a value
  * near a boundary never flickers between two steps. A margin of the boundary, not half a step (the
- * plan's words): the steps are uneven (40, 240, 420 kcal/h), and half of the 200 kcal/h step would
+ * plan's words): the steps are uneven (40, 240, 380 kcal/h), and half of the 200 kcal/h step would
  * put a brisk walk (≈ 273) on either side by its history; 8 % keeps each kind on its own step.
  */
 const MARGIN = 0.08
@@ -62,8 +62,11 @@ export function stepOf(value: number, bounds: readonly number[], prev: number): 
  * The muscles' hatch steps (anatomy plan §2.4): energy used by muscles, kcal/h, past which the
  * working groups get a sparse hatch and one lightness step (1), a denser hatch (2), a cross-hatch (3).
  * Resting muscle is ≈ 13.5 kcal/h; a walk ≈ 205, a brisk walk ≈ 273, a run ≈ 580 (S-1): one step each.
+ * The last boundary is 380, not 420: football (≈ 423) sat on 420 inside its margin, so its step
+ * hung on where the value came from (R120 #18). At 380 football (vigorous, the run's pose) is
+ * always the cross-hatch and badminton (≈ 321) and cricket (≈ 273) always the denser hatch.
  */
-export const HATCH_BOUNDS: readonly number[] = [40, 240, 420]
+export const HATCH_BOUNDS: readonly number[] = [40, 240, 380]
 export const hatchStep = (kcalPerH: number, prev = 0) => stepOf(kcalPerH, HATCH_BOUNDS, prev)
 
 /** Sweat per drop drawn, mL an hour: a walk's ≈ 330 shows 4 drops, a run's ≈ 980 all 12 (anatomy plan §2.5). */

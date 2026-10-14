@@ -235,6 +235,14 @@ describe('the pictures follow the pose (R32, U-1a)', () => {
     for (const step of steps.slice(1)) expect(step).toBeGreaterThanOrEqual(2)
   })
 
+  it('each kind keeps its step whichever step it comes from: football the cross-hatch, the other games the denser hatch (R120 #18)', () => {
+    const want = { walk: 1, sitClass: 1, walkBrisk: 2, cricket: 2, badminton: 2, football: 3, run: 3 } as const
+    for (const [k, step] of Object.entries(want)) {
+      const v = at(run([bout(k as ActivityBout['kind'])]), 'muscle.energyRate', 45)
+      for (const prev of [0, 1, 2, 3]) expect(hatchStep(v, prev), `${k} (${Math.round(v)} kcal/h) from step ${prev}`).toBe(step)
+    }
+  })
+
   it('12 drop places, inside the picture; the arms’ drops move with the pose', () => {
     const [rest, runPose] = [dropPlaces(posedFor('rest')), dropPlaces(posedFor('run'))]
     expect(rest).toHaveLength(12)
