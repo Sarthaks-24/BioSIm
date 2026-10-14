@@ -1,4 +1,4 @@
-import { registerSignals, type SystemId, type SystemUi, type CatalogRow, type PackId } from './registry.ts'
+import { registerSignals, systemOf, type SystemDef, type SystemId, type SystemUi, type CatalogRow, type PackId } from './registry.ts'
 import type { LayerComponent, Loader } from '../registry/types.ts'
 import { loadSection } from '../i18n/text.ts'
 
@@ -6,8 +6,12 @@ import { loadSection } from '../i18n/text.ts'
 export interface PackDef {
   /** Its catalog rows (`@lifepeek/engine/catalog/<packId>`), handed to `registerSignals`. */
   rows: Loader<readonly CatalogRow[]>
-  /** Its systems' words and moments; none for `core`, whose digestion UI is static (systems/ui.ts). */
-  ui?: Loader<{ readonly [S in SystemId]?: SystemUi }>
+  /**
+   * Its systems' words and moments; none for `core`, whose digestion UI is static (systems/ui.ts).
+   * The same module's `DEFS` are the rest of each system's row (its graphs, rhythms and limits),
+   * which name the pack's signal IDs and so stay out of the first download (systems/registry.ts SYSTEMS).
+   */
+  ui?: () => Promise<{ default: { readonly [S in SystemId]?: SystemUi }; DEFS?: { readonly [S in SystemId]?: SystemParts } }>
   /**
    * Its English text, `() => import('virtual:lifepeek-en/sys.<packId>')`: the keys under
    * `sys.<packId>` in en.json (I-1, scripts/i18n-sections.mjs). None for `core`: its text is the
@@ -22,6 +26,27 @@ export interface PackDef {
   drawing?: Loader<{ readonly [S in SystemId]?: LayerComponent }>
 }
 
+/** A pack's parts as one lazy module (systems/<packId>/pack.ts): one file to fetch, one entry in the first download. */
+interface PackModule {
+  ROWS: readonly CatalogRow[]
+  UIS: { readonly [S in SystemId]?: SystemUi }
+  DEFS: { readonly [S in SystemId]?: SystemParts }
+  TEXT: Record<string, unknown>
+  DRAWINGS: { readonly [S in SystemId]?: LayerComponent }
+}
+
+/** A PackDef whose loaders each take their part of one module. */
+function onePack(load: () => Promise<PackModule>): PackDef {
+  return {
+    rows: () => load().then((m) => ({ default: m.ROWS })),
+    ui: () => load().then((m) => ({ default: m.UIS, DEFS: m.DEFS })),
+    text: () => load().then((m) => ({ default: m.TEXT })),
+    drawing: () => load().then((m) => ({ default: m.DRAWINGS })),
+  }
+}
+
+/** The part of a system's row that comes with its pack. */
+export type SystemParts = Partial<Pick<SystemDef, 'slots' | 'rhythms' | 'knownLimits' | 'organs'>>
 const lymph = () => import('./lymph/pack.ts')
 
 /**
@@ -31,6 +56,9 @@ const lymph = () => import('./lymph/pack.ts')
  * of them in screen code would split the run chunk in two.
  */
 export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
+  // U-2: its rows, words and moments, its English (with the signal and unit texts its graphs name)
+  // and its flat lungs, one lazy module under systems/breathing/ (cache-tiers.mjs: lazy tier).
+  breathing: onePack(() => import('./breathing/pack.ts')),
   // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
   lymph: {
     rows: async () => ({ default: [] }),
@@ -61,7 +89,10 @@ export function loadPack(pack: PackId): Promise<void> | null {
       ? Promise.all([def.rows(), def.ui?.(), def.text && loadSection(`sys.${pack}`, def.text), def.drawing?.()]).then(
           ([rows, ui, , drawing]) => {
             registerSignals(pack, rows.default)
-            if (ui) Object.assign(UIS, ui.default)
+            if (ui) {
+              Object.assign(UIS, ui.default)
+              for (const [id, parts] of Object.entries(ui.DEFS ?? {})) Object.assign(systemOf(id)!, parts)
+            }
             if (drawing) Object.assign(DRAWINGS, drawing.default)
             ready.add(pack)
           },

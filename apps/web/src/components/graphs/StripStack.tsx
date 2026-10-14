@@ -5,7 +5,7 @@ import type { Domain } from '../../lib/axis.ts'
 import { formatNumber } from '../../lib/formatSignal.ts'
 import { stripDescription } from '../../lib/stripSummary.ts'
 import { useSheet } from '../../state/sheet.ts'
-import type { GraphSlotDef, SystemUi } from '../../systems/registry.ts'
+import { tabKey, type GraphSlotDef, type SystemUi } from '../../systems/registry.ts'
 import { StatusTag, TableIcon } from '../kit/index.ts'
 import MedicalNote from '../MedicalNote.tsx'
 import HowWeKnow, { Say, Section } from './HowWeKnow.tsx'
@@ -50,6 +50,8 @@ interface RunStripProps {
   second?: Series | null
   /** The graphs show one at a time, under tabs that name them. */
   tabbed?: boolean
+  /** The lit system's lines under the graph (what moves it, a book value: SystemUi.note). */
+  note?: ReactNode
   className?: string
 }
 
@@ -80,6 +82,7 @@ export function RunStrip({
   range,
   second,
   tabbed,
+  note,
   className,
 }: RunStripProps) {
   const { t, i18n } = useTranslation()
@@ -97,7 +100,7 @@ export function RunStrip({
     const runTotal = totalOf(id)
     return runTotal ? { run: runTotal, second: second ? totalOf(second.meta.id as ActiveSignalId) : null } : null
   }, [run, id, second])
-  const title = second ? t('stage.strips.energy') : undefined
+  const title = second ? t(tabKey(slot)) : undefined
   // Beside a kept meal the ring's label names its meal ("Cola: half the energy has left the
   // stomach"): the ring is on this meal's line only, and the kept line's dot can sit right by it
   // (council round 2, C3).
@@ -112,7 +115,15 @@ export function RunStrip({
       }
     )
   }, [id, run, kept, runName, series, slot, t, lang])
-  const secondLine = useMemo(() => second && { series: second, label: t('status.sameEveryMeal') }, [second, t])
+  // Energy's second line is used at rest, the same for every meal; another's (carbon dioxide) is named.
+  const secondLine = useMemo(
+    () =>
+      second && {
+        series: second,
+        label: t(TOTAL_OF[second.meta.id as ActiveSignalId] ? 'status.sameEveryMeal' : `${second.meta.i18nKey}.short`),
+      },
+    [second, t],
+  )
   const clock = useMemo(() => ({ stepMin: run.stepMin, horizonMin: run.horizonMin }), [run.stepMin, run.horizonMin])
 
   // Read after the graph's name (aria-describedby) and above its table: this meal, then the kept one (G8).
@@ -181,7 +192,8 @@ export function RunStrip({
         </span>
       }
       // Always visible next to the blood-sugar graph, not only in a panel (legal/medical-note.md).
-      footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-muted" /> : undefined}
+      footer={glucose ? <MedicalNote text="graph" className="text-caption text-ink-muted" /> : note}
+      reference={slot.reference}
     />
   )
 }

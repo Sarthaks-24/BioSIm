@@ -1,6 +1,10 @@
-import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalStatus } from '@lifepeek/engine'
+import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
+import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import { ORGANISMS } from './index.ts'
-import type { SystemDef } from '../systems/registry.ts'
+import { tabKey, type SystemDef } from '../systems/registry.ts'
+
+/** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
+const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS]
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -19,8 +23,7 @@ export const SIGNAL_STATUSES = Object.keys(STATUS_WORDS) as SignalStatus[]
 export function catalogKeys(): KeyUse {
   const required = new Set<string>()
   const optional = new Set<string>()
-  for (const id of ACTIVE_SIGNAL_IDS) {
-    const row = SIGNALS[id]
+  for (const row of [...ACTIVE_SIGNAL_IDS.map((id) => SIGNALS[id] as SignalMeta), ...PACK_ROWS]) {
     for (const sub of ['name', 'short', 'desc']) required.add(`${row.i18nKey}.${sub}`)
     for (const sub of ['summary', 'summaryNone']) optional.add(`${row.i18nKey}.${sub}`)
     if (row.band) required.add(`${row.band.i18nKey}.name`)
@@ -53,7 +56,7 @@ export function registryKeys(system: (s: SystemDef) => boolean = () => true): Ke
       for (const k of s.knownLimits) required.add(k)
       // Each graph's tab name, its limits and its ring labels (systems/registry.ts GraphSlotDef).
       for (const slot of s.slots) {
-        required.add(`stage.strips.${slot.id}`)
+        required.add(tabKey(slot))
         for (const k of [...(slot.limits ?? []), ...Object.values(slot.marks ?? {})]) required.add(k)
       }
     }

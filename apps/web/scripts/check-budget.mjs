@@ -167,6 +167,12 @@
 //   FIX-L (R87): the late notes lie over the body pane on a phone (Notes.tsx, +0.045) and the build puts
 //   a vh fallback before every dvh (scripts/vh-fallback.mjs, +0.040; body's own min-height dropped,
 //   Layout has it): /sim 187.286 → 187.372 KB on main 87f73a4 (+0.09).
+//   U-2 (2026-10-14, branch v3): the system title (first paint: name, ‹ ›, the R71 loading words) and
+//   its lazy picker (4.3 KB with the Overlay), breathing's row (its graphs, rhythm and texts come with
+//   its pack, 8.5 KB), keys [ ] L, the switching state, the chip and graph-note hooks: /sim 185.283 →
+//   186.515 KB on v3 94aa67e (+1.23; the title alone +0.55). The pack and the picker share no module
+//   with the stage (props, written-out helpers; a vite group keeps the clock and the registry one
+//   chunk): a shared module is otherwise split out of the route chunk (+1.9 KB measured).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -205,6 +211,8 @@ const BUDGETS = [
   // A-11a: the germ-defence card (anatomy plan §8: ≤ 5 KB gz), checked with all of the lymph pack's
   // code (its Now line and the map too: one chunk, systems/lymph/pack.ts), so the card is under it.
   { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
+  // U-2: the body-system picker (ui-ux §9, architecture §4: ≤ 6 KB gz, lazy), with the Overlay it opens in.
+  { name: 'picker (lazy)', roots: ['src/components/SystemPicker.tsx'], minus: SIM_ROOTS, max: 6 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')

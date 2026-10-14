@@ -32,6 +32,10 @@ export interface LayerProps {
   /** The picture's size in CSS px. */
   width: number
   height: number
+  /** Motion is reduced (state/motion.ts): one still frame, no ticker. */
+  reduced: boolean
+  /** Projector mode: the heavier outlines (flat/look.ts FLAT_LOOK.projector). */
+  projector: boolean
   /** What the layer borrows from the stage (flat/layerKit.ts): handed over, never imported. */
   kit: LayerKit
 }

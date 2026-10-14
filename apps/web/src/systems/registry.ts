@@ -1,9 +1,10 @@
 import type { ComponentType, RefObject } from 'react'
 import type { TFunction } from 'i18next'
-import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
+import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, MealItem, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
+import { BREATHING } from './breathing/row.ts'
 import { LYMPH } from './lymph/def.ts'
 
 /**
@@ -75,7 +76,19 @@ export interface GraphSlotDef {
   limits?: readonly string[]
   /** The ring's label on the main line → the label naming the meal, used when a kept meal is drawn too. */
   marks?: Readonly<Record<string, string>>
+  /**
+   * Its tab's text key, when it is not `stage.strips.<id>` (core): a pack's graph names come with the
+   * pack (`sys.<packId>.…`), never in the first download (tabKey).
+   */
+  tab?: string
+  /** Its y range, when its main signal's catalog row has none (the pack's oxygen and carbon dioxide). */
+  range?: readonly [number, number]
+  /** A range drawn as a pale band across the graph, its key under it (breathing: most children's breaths, R57). */
+  reference?: { low: number; high: number }
 }
+
+/** The text key of a slot's tab (and its table's title): `stage.strips.<id>`, or the pack's own. */
+export const tabKey = (slot: GraphSlotDef): string => slot.tab ?? `stage.strips.${slot.id}`
 
 /** What a system's Now line gets from the stage (components/stage/BodyPane.tsx). */
 export interface NowProps {
@@ -109,8 +122,31 @@ export interface SystemUi {
   stripSummary: (id: ActiveSignalId, run: RunResult, t: TFunction, lang: string) => string | null
   /** The run's key moments, in catalog order: the dock's markers and Page Up / Down. */
   moments: (run: RunResult) => Moment[]
+  /** A rhythm system's chip over the body ("≋ 15 a minute · typical adult, resting · shown at its true speed"; ui-ux §4). */
+  chip?: ComponentType<{ run: RunResult }>
+  /** Lines under one of its graphs: what moves it, the book's value, a reference band's key (ui-ux §6, R10, R29, R57). */
+  note?: ComponentType<{ slot: GraphSlotDef }>
+  /** Its lessons (each with its release, R18), for Teach once the row is public (X-1). */
+  lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
   card?: ComponentType
+}
+
+/** A system's ready lesson (ui-ux §8.1, content-i18n §6): a plan, a kept plan, a graph and a time, with its release (R18). */
+export interface SystemLesson {
+  key: string
+  release: 'v3.0' | 'v3.1'
+  layer: SystemId
+  slot: SlotId
+  meal: MealItem[]
+  activity: ActivityBout[]
+  kept: MealItem[]
+  keptActivity: ActivityBout[]
+  /** Minutes on the meal clock the lesson opens at (paused). */
+  t: number
+  /** Its title and question (`sys.<pack>.lesson.*`). */
+  title: string
+  question: string
 }
 
 /** What a system's inputs are: the meal, the activity bouts. */
@@ -157,8 +193,13 @@ export interface SystemDef {
   teacherSwitch?: boolean
 }
 
-/** The human's systems, in picker order. Only built systems are here: the others are SystemIds with no row yet. */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, LYMPH]
+/**
+ * The human's systems, in picker order. Only built systems are here: the others are SystemIds with no
+ * row yet. A pack's system is a row here from the first paint (its name, framing and release flag:
+ * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
+ * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
+ */
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, LYMPH]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 
@@ -210,5 +251,15 @@ export const signalRow = (id: CatalogId): CatalogRow | undefined => ROWS.get(id)
 /** The IDs a pack registered (registry.test: a slot's signal must come from its own pack or `core`). */
 export const rowsOf = (pack: PackId): ReadonlySet<CatalogId> => REGISTERED.get(pack) ?? new Set()
 
-/** The rows the layer switch offers: the public ones, and the lit one if a preview link opened a hidden row. */
-export const pickerSystems = (lit: SystemId): SystemDef[] => SYSTEMS.filter((s) => s.public || s.id === lit)
+/**
+ * The rows the picker offers: the public ones, and in a preview session (`?preview=1`) the built
+ * hidden ones too, so a preview can switch between them (architecture §5.2; never linked by the app).
+ */
+export const pickerSystems = (preview: boolean): SystemDef[] => SYSTEMS.filter((s) => s.public || preview)
+
+/** The picker's row before (−1) or after (+1) the lit one, round the list (`‹ ›`, keys [ and ]; ui-ux §3.2). */
+export function stepSystem(lit: SystemId, preview: boolean, dir: 1 | -1): SystemId {
+  const rows = pickerSystems(preview)
+  const i = rows.findIndex((s) => s.id === lit)
+  return rows[(i + dir + rows.length) % rows.length]!.id
+}

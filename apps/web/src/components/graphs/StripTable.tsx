@@ -60,7 +60,7 @@ export default function StripTable({
     return Array.isArray(v) ? formatBand(v[0], v[1], c.series.meta, t, lang) : formatSignal(v, c.series.meta, t, lang)
   }
   const graphName = (signals: readonly ActiveSignalId[]) =>
-    signals.length > 1 ? t('stage.strips.energy') : t(`${run.signals.get(signals[0]!)?.meta.i18nKey}.name`)
+    signals.length > 1 && current ? t(current.tab ?? `stage.strips.${current.id}`) : t(`${run.signals.get(signals[0]!)?.meta.i18nKey}.name`)
   const moments = momentRows(ui.moments, run, kept)
   // "Half the energy has left…" for a meal with energy, "Half has left…" for water: when the two
   // meals would be named differently, the row takes the moment's plain catalog name.
@@ -84,7 +84,10 @@ export default function StripTable({
       {slots.length > 1 && (
         <Segmented
           label={t('stage.graphs')}
-          options={slots.map((s) => ({ id: s.id, label: t(`stage.strips.${s.id}`) }))}
+          options={slots.map((s) => ({
+            id: s.id, // systems/registry.ts tabKey, written out: the sheets import no code of the registry (else it leaves /sim's route chunk).
+            label: t(s.tab ?? `stage.strips.${s.id}`),
+          }))}
           value={current?.id ?? ''}
           onChange={(id) => {
             setPicked(id)

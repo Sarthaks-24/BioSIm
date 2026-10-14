@@ -23,6 +23,7 @@ import SummaryLine from '../components/stage/SummaryLine.tsx'
 import Timeline from '../components/stage/Timeline.tsx'
 import { planNames } from '../components/stage/boutText.ts'
 import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
+import { openPicker, stepLayer } from '../components/SystemTitle.tsx'
 import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
 
 /**
@@ -81,6 +82,9 @@ const ACTIONS: Record<KeyAction, () => void> = {
   slotS: byLetter('s'),
   slotB: byLetter('b'),
   slotE: byLetter('e'),
+  prevSystem: () => stepLayer(-1),
+  nextSystem: () => stepLayer(1),
+  picker: openPicker,
 }
 
 /**

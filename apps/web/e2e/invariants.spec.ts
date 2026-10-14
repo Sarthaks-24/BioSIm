@@ -73,6 +73,9 @@ const STATES: Record<string, { url: string; firstVisit?: boolean }> = {
   // E-3b-ui: bouts add no stage row (their chips share the plan strip, their marks the graphs and the dock).
   'activity, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20,run.120.10&bact=walk.120.20' },
   '6 foods + 3 bouts': { url: '/sim?v=3&a=roti:1,dal:1,milk:1,apple:1,banana:1,idli:1&act=walkBrisk.330.60,walk.30.20,run.120.10' },
+  // U-2's gate per system (ui-ux §12): Breathing (a preview until the v3.0 gate), its title and rhythm
+  // chip over the body, in a walk with a kept plan at rest.
+  'breathing, walk, kept': { url: '/sim?v=3&a=roti:1&b=roti:1&t=40&act=walk.30.20&layer=breathing&preview=1' },
 }
 
 /** The window sizes each project checks (the project's own first). */

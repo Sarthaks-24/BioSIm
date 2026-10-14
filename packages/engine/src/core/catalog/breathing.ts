@@ -101,3 +101,7 @@ export const BREATHING_SIGNALS: { readonly [Id in BreathingSignalId]: SignalMeta
     validRange: { low: 300, high: 2500, basis: 'guard' },
   },
 }
+
+/** The pack's rows, as `registerSignals` takes them (the web's `rows` loader of the `breathing` pack, U-2). */
+const rows: readonly SignalMeta[] = Object.values(BREATHING_SIGNALS)
+export default rows

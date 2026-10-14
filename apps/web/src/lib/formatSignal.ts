@@ -38,6 +38,10 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   kcal: 'kcal',
   'kcal/h': 'kcalPerH',
   'g/min': 'gPerMin',
+  // The breathing pack's units (U-2): their texts load with the pack (systems/breathing/text.ts).
+  'breaths/min': 'breathsPerMin',
+  mL: 'mL',
+  'mL/min': 'mLPerMin',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */

@@ -52,6 +52,11 @@ export interface RunState {
   layer: SystemId
   /** The opened link had `?preview=1`: a hidden system may be lit (architecture §5.2). Kept in the written link. */
   preview: boolean
+  /**
+   * A system asked for whose pack is still loading, or failed to load (R71): the lit one stays drawn
+   * meanwhile, and the title says "Getting the lungs ready…", or that it could not, with Try again.
+   */
+  switching: { to: SystemId; failed: boolean } | null
   /** Model version the open link was made with (to warn about old links); null = not opened from a link. */
   linkModelVersion: number | null
   /** The `o` of a link made by a newer LifePeek for an organism this version lacks; the run opened as human. */
@@ -108,6 +113,7 @@ export const INITIAL_RUN = {
   profile: DEFAULT_RUN_PROFILE,
   layer: DEFAULT_LAYER,
   preview: false,
+  switching: null as RunState['switching'],
   linkModelVersion: null as number | null,
   unknownOrganism: null as string | null,
   droppedFoods: 0,
@@ -153,17 +159,18 @@ export const useRunStore = create<RunState>((set, get) => ({
   unkeep: () => set({ kept: null }),
   // A new system starts on its first graph (architecture §5.2). Its pack (rows, UI, words: I-1)
   // loads first, and the lit system stays drawn meanwhile (R71: never clear the screen; a failed
-  // load keeps it too, and U-2's picker says so and offers Try again).
+  // load keeps it too, and the title says so and offers Try again: components/SystemTitle.tsx).
   setLayer: (layer) => {
     wanted = layer
     const light = () => {
       if (wanted !== layer) return
       if (layer !== get().layer) useStripTab.setState({ tab: null })
-      set({ layer })
+      set({ layer, switching: null })
     }
     const loading = packFor(layer)
-    if (loading) loading.then(light, () => {})
-    else light()
+    if (!loading) return light()
+    set({ switching: { to: layer, failed: false } })
+    loading.then(light, () => wanted === layer && set({ switching: { to: layer, failed: true } }))
   },
 
   loadLink: (search) => {
@@ -222,17 +229,19 @@ export const useRunStore = create<RunState>((set, get) => ({
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
 export function linkQuery(
-  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'> & { preview?: boolean },
+  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'> & { preview?: boolean; switching?: RunState['switching'] },
   simMin: number,
   lang?: string,
 ): string {
+  const wanted = run.switching?.to ?? run.layer
   const query = encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
-    // With bouts, always: the system such a link opens by default will change (R39, R93 #5).
-    ...(run.layer !== DEFAULT_SYSTEM || run.activity.length || run.kept?.activity.length ? { layer: run.layer } : {}),
+    // The system asked for, while its pack loads or after it failed to (a reload asks for it again);
+    // with bouts always, as the system such a link opens by default will change (R39, R93 #5).
+    ...(wanted !== DEFAULT_SYSTEM || run.activity.length || run.kept?.activity.length ? { layer: wanted } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
     act: run.activity,
     bact: run.kept?.activity ?? [],

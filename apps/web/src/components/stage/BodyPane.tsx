@@ -8,9 +8,9 @@ import { lookupFood } from '../../data/foods.ts'
 import { localized } from '../../i18n/index.ts'
 import { BodyClockContext, MEAL_BODY_CLOCK } from '../../hooks/useBodyClock.ts'
 import { useRunStore } from '../../state/run.ts'
-import { pickerSystems } from '../../systems/registry.ts'
+import { systemOf } from '../../systems/registry.ts'
 import { useSystemUi } from '../../systems/ui.ts'
-import LayerBar from './LayerBar.tsx'
+import SystemTitle from '../SystemTitle.tsx'
 import ParticleKey from './ParticleKey.tsx'
 import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
@@ -67,10 +67,10 @@ export default function BodyPane({
   // The body's stance at the clock time (R4, R16, R32: rest, or one still pose per kind).
   // The body's still pose for the band (A-0 flat, flat/limbs.ts); also on the box for the tests.
   const band = useActivityBand()
-  const layer = useRunStore((s) => s.layer)
-  const oneLayer = pickerSystems(layer).length === 1
-  // The lit system's Now line (W-1): digestion's says where the meal is.
-  const { now: NowLine } = useSystemUi()
+  // The food pieces are Digestion's picture's; another system's has none, so no key to them.
+  const pieces = useRunStore((s) => systemOf(s.layer)?.draw === 'body')
+  // The lit system's Now line (W-1): digestion's says where the meal is; a rhythm system's chip (U-2).
+  const { now: NowLine, chip: Chip } = useSystemUi()
   const [more, setMore] = useState(false)
   // Clearing the meal closes "More": it must not open again (and take the focus) with the next food.
   const [hadMeal, setHadMeal] = useState(hasMeal)
@@ -96,13 +96,17 @@ export default function BodyPane({
       <h2 id="body-pane-title" className="sr-only">
         {t('stage.body')}
       </h2>
-      {/* The layer switch sits in the body's top corner, over empty paper, so it costs the body no height. */}
-      {/* Full width so a long list scrolls instead of being cut; only the control itself takes clicks. */}
-      <div className={`pointer-events-none absolute inset-x-3 top-2 z-10 lg:inset-x-4 lg:top-3 ${oneLayer ? 'max-lg:hidden' : ''}`}>
-        <LayerBar className="pointer-events-auto w-fit" />
-      </div>
       {/* The body fills whatever height the stage leaves it (absolute, so the canvas can't push the row taller). */}
       <div ref={bodyBox} data-activity-band={band} className="relative min-h-40 flex-1 lg:min-h-0">
+        {/*
+         * The system's title (and a rhythm system's chip) in the body's top corner, over the empty
+         * paper beside the head, so they cost the body no height (U-2; ui-ux §3.2, §9). Only the
+         * controls themselves take clicks.
+         */}
+        <div className="pointer-events-none absolute inset-x-3 top-2 z-10 flex flex-col items-start gap-1 lg:inset-x-4 lg:top-3">
+          <SystemTitle run={run} />
+          {Chip && <Chip run={run} />}
+        </div>
         {/* With "More" open from 1024 px up, the body and its key move left of it (MORE_ROOM). */}
         <div className={`absolute inset-0 ${open ? MORE_ROOM : ''}`}>
           {/* With no food yet the body still shows, resting (R23): the picks are a card under it. */}
@@ -120,7 +124,7 @@ export default function BodyPane({
            */}
           {hasMeal && (
             <div className="pointer-events-none absolute inset-x-4 bottom-1.5 grid items-end justify-items-start max-lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
-              <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />
+              {pieces && !summaryTo && <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />}
               {!open && (
                 <PlayPrompt
                   meal={meal}
@@ -199,10 +203,12 @@ export default function BodyPane({
         <div
           className={`grid px-3 pb-0.5 lg:hidden [&>*]:col-start-1 [&>*]:row-start-1 ${atStart && !open ? '' : '[@media(height<42.5rem)]:hidden'}`}
         >
-          <ParticleKey
-            run={run}
-            className={`overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:none] ${atStart && !open ? 'invisible' : ''}`}
-          />
+          {pieces && (
+            <ParticleKey
+              run={run}
+              className={`overflow-x-auto overscroll-x-contain whitespace-nowrap [scrollbar-width:none] ${atStart && !open ? 'invisible' : ''}`}
+            />
+          )}
           {!open && <PlayPrompt meal={meal} className="text-caption leading-6" />}
         </div>
       )}
@@ -224,6 +230,8 @@ export default function BodyPane({
           {summary &&
             summaryTo &&
             createPortal(<SummaryLine run={run} kept={kept} className="border-t border-border px-4 py-2" />, summaryTo)}
+          {/* There too the food pieces' key, off the small projector's body (R85: it covered 12 % of it). */}
+          {pieces && summaryTo && createPortal(<ParticleKey run={run} className="flex-wrap px-4 pb-2" />, summaryTo)}
           {summary && !summaryTo && (
             <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
           )}

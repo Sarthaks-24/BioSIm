@@ -17,19 +17,22 @@ import { useMotion } from '../state/motion.ts'
 
 /** The fastest rhythm drawn, in cycles per second (150 a minute). */
 export const MAX_DRAWN_HZ = 2.5
+/** The fastest breath drawn (48 a minute; ui-ux §4, architecture §1.7): a run's 33 a minute is 0.55 Hz. */
+export const MAX_BREATH_HZ = 0.8
 
 /** The phase a still (reduced motion) rhythm is drawn at: mid-way, as the plan's still frames are. */
 export const STILL_PHASE = 0.5
 
 /**
  * How fast a rhythm of `perMin` (beats or breaths a minute, from the run) is drawn: its rate in
- * Hz, capped at MAX_DRAWN_HZ, and whether it was slowed (the chip then says "animation slowed").
+ * Hz, capped at `max` (MAX_DRAWN_HZ; breaths MAX_BREATH_HZ), and whether it was slowed (the chip
+ * then says "animation slowed").
  */
-export function drawnRate(perMin: number): { hz: number; slowed: boolean } {
+export function drawnRate(perMin: number, max = MAX_DRAWN_HZ): { hz: number; slowed: boolean } {
   // No number (a missing signal, NaN, ∞) draws nothing moving rather than a wild rate.
   if (!Number.isFinite(perMin)) return { hz: 0, slowed: false }
   const hz = Math.max(0, perMin) / 60
-  return hz > MAX_DRAWN_HZ ? { hz: MAX_DRAWN_HZ, slowed: true } : { hz, slowed: false }
+  return hz > max ? { hz: max, slowed: true } : { hz, slowed: false }
 }
 
 /**
@@ -49,12 +52,13 @@ interface Styled {
  * moves the cycle on by the real time since the last tick at the drawn (capped) rate and writes one
  * transform, only when the scale changed by a drawn amount; with motion reduced (`reduced`, the
  * app's setting by default) it writes the mid-phase still instead. `still()` puts it at mid-phase.
+ * `max`: a lower cap (breaths: MAX_BREATH_HZ); never above MAX_DRAWN_HZ.
  */
 export function rhythmLayer(
   el: Styled,
   origin: readonly [number, number],
   amplitude: number,
-  reduced: () => boolean = () => useMotion.getState().reduced,
+  { max = MAX_DRAWN_HZ, reduced = () => useMotion.getState().reduced }: { max?: number; reduced?: () => boolean } = {},
 ) {
   el.style.willChange = 'transform'
   el.style.transformOrigin = `${origin[0]}px ${origin[1]}px`
@@ -70,10 +74,10 @@ export function rhythmLayer(
   return {
     /**
      * Draws the rhythm of `perMin` (beats or breaths a minute) at real time `nowMs`, at most
-     * MAX_DRAWN_HZ; returns whether it was slowed (the chip then says "animation slowed").
+     * `max`; returns whether it was slowed (the chip then says "animation slowed").
      */
     tick(perMin: number, nowMs: number): boolean {
-      const { hz, slowed } = drawnRate(perMin)
+      const { hz, slowed } = drawnRate(perMin, Math.min(max, MAX_DRAWN_HZ))
       const dt = Number.isFinite(last) && Number.isFinite(nowMs) ? Math.max(0, nowMs - last) / 1000 : 0
       if (Number.isFinite(nowMs)) last = nowMs
       if (reduced()) still()

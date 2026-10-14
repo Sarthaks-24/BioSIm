@@ -232,8 +232,14 @@
       "g": "grams (1000 g = 1 kg)",
       "kcal": "kilocalories of food energy",
       "kcalPerH": "kilocalories of energy per hour",
-      "gPerMin": "grams each minute"
-    }
+      "gPerMin": "grams each minute",
+      "breathsPerMin": "breaths in and out in one minute",
+      "mL": "millilitres (1000 mL = 1 litre)",
+      "mLPerMin": "millilitres each minute"
+    },
+    "breathsPerMin": "{{n}} breaths a minute",
+    "mL": "{{n}} mL",
+    "mLPerMin": "{{n}} mL a minute"
   },
   "anatomy": {
     "liver": "Liver",
@@ -558,6 +564,35 @@
         "name": "Activity ends"
       },
       "never": "Not within 48 h"
+    },
+    "lungs": {
+      "breathRate": {
+        "name": "Breaths a minute",
+        "short": "Breaths",
+        "desc": "How many times a minute the body breathes in and out. The model works it out from the carbon dioxide the body makes: more work makes more carbon dioxide, and more breaths carry it away."
+      },
+      "tidalVolume": {
+        "name": "Air per breath",
+        "short": "Air per breath",
+        "desc": "How much air goes in with each breath. Harder work makes breaths deeper as well as faster."
+      }
+    },
+    "gas": {
+      "o2UseRate": {
+        "name": "Oxygen used",
+        "short": "Oxygen used",
+        "desc": "The oxygen the body takes from the air each minute, worked out from the energy it uses (Weir’s formula)."
+      },
+      "co2OutRate": {
+        "name": "Carbon dioxide made",
+        "short": "Carbon dioxide made",
+        "desc": "The carbon dioxide the body makes each minute and breathes out."
+      },
+      "exchangeRatio": {
+        "name": "Carbon dioxide for each oxygen",
+        "short": "CO₂ for each O₂",
+        "desc": "How much carbon dioxide is made for each unit of oxygen used: about 0.8 at rest, nearer 1 when the body runs mostly on sugar."
+      }
     }
   },
   "limits": {
@@ -569,7 +604,10 @@
     "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people.",
     "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still.",
     "activityMet": "Each activity uses an average value from the 2024 Compendium of Physical Activities for a 65 kg adult. Real people differ with speed, fitness and size. The extra energy used after stopping is not shown.",
-    "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals."
+    "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals.",
+    "gasExchange": "Oxygen used and carbon dioxide made are worked out from the energy the body uses (Weir’s formula, without protein). The air in the lungs is taken to keep the same carbon dioxide, so the blood’s oxygen and carbon dioxide do not change here.",
+    "breathSplit": "How the extra air is shared between faster and deeper breaths is a rule picked by hand (a model estimate): real people differ.",
+    "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster."
   },
   "profiles": {
     "adult-ref": {
@@ -588,11 +626,20 @@
     },
     "lymph": {
       "name": "Lymph & germ defence"
+    },
+    "breathing": {
+      "name": "Breathing",
+      "what": "lungs"
     }
   },
   "lifeProcess": {
     "nutrition": "Nutrition",
-    "transport": "Transportation"
+    "respiration": "Respiration",
+    "transport": "Transportation",
+    "excretion": "Excretion",
+    "control": "Control and coordination",
+    "movement": "Moving and body heat",
+    "reproduction": "Growing up"
   },
   "stage": {
     "meal": "Meal",
@@ -621,7 +668,11 @@
     "thisMeal": "This meal",
     "keptMeal": "The kept meal",
     "particles": "Food pieces in the body",
-    "pressPlay": "Press ▶ to watch {{meal}} go through the body"
+    "pressPlay": "Press ▶ to watch {{meal}} go through the body",
+    "prevSystem": "Previous body system",
+    "nextSystem": "Next body system",
+    "packLoading": "Getting the {{what}} ready…",
+    "packFailed": "Couldn’t load the {{what}}. Check internet and tap Try again."
   },
   "keep": {
     "button": "Keep to compare",
@@ -763,7 +814,7 @@
     "strips": "Show the Stomach, Blood sugar or Energy graph",
     "help": "This list",
     "letters": "Letter keys",
-    "lettersHelp": "Space, K, P, T, 1, 2, 3, S, B, E and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work.",
+    "lettersHelp": "Space, K, P, T, 1, 2, 3, S, B, E, [, ], L and ? as shortcuts. Turn them off if they get in the way of a screen reader or voice control. The arrows and Page Up / Down still work.",
     "motion": "Reduce motion",
     "motionHelp": "The food pieces in the body stop tumbling. The clock still moves when you press Play.",
     "motionDevice": "Until you choose here, this follows the device’s own setting.",
@@ -771,7 +822,9 @@
     "on": "On",
     "off": "Off",
     "offNote": "off",
-    "typing": "Keys typed in a search box or a form are never taken as shortcuts."
+    "typing": "Keys typed in a search box or a form are never taken as shortcuts.",
+    "systems": "Previous or next body system",
+    "picker": "Pick a body system"
   },
   "update": {
     "ready": "A new version of LifePeek is ready.",
@@ -878,6 +931,66 @@
         "cells": "About 5,000–10,000 white cells per µL of blood (a µL is one millionth of a litre); labs differ.",
         "source": "Source: OpenStax Anatomy and Physiology 2e, sections 18.4 (white cells) and 21.2 (stomach acid)."
       }
+    },
+    "breathing": {
+      "strips": {
+        "breaths": "Breaths a minute",
+        "depth": "Air per breath",
+        "gas": "O₂ and CO₂"
+      },
+      "label": {
+        "nasal": "Nasal passage",
+        "trachea": "Trachea (windpipe)",
+        "lungs": "Lungs",
+        "diaphragm": "Diaphragm"
+      },
+      "doing": {
+        "rest": "resting",
+        "walk": "walking",
+        "walkBrisk": "brisk walking",
+        "run": "running"
+      },
+      "now": {
+        "organ": "Lungs",
+        "rate": "{{n}} a minute",
+        "kept": "Kept: {{n}} a minute"
+      },
+      "chip": {
+        "who": "typical adult, {{doing}}",
+        "speed": "shown at its true speed",
+        "slowed": "animation slowed",
+        "info": "About the breathing speed",
+        "why": "The clock moves hours in seconds. Breathing is drawn at its true speed for {{time}}."
+      },
+      "moves": "Moves mostly with walking or running; the meal moves it a little.",
+      "book": "Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute",
+      "children": "Most children your age (12–15): 15–21 a minute at rest",
+      "summary": {
+        "rest": "At rest, breathing stays about the same after a meal: about {{n}} a minute.",
+        "restReason": "Breathing moves mostly with walking or running. Try a walk.",
+        "peak": "Fastest during the {{doing}}: about {{n}} a minute (rest {{rest}}).",
+        "deeper": "Each breath is deeper too: about {{from}} mL at rest, {{to}} mL then.",
+        "runBook": "Older NCERT Class 7 book: up to 25 a minute in hard exercise; hard running goes higher.",
+        "compare": "Fastest: about {{run}} a minute with this plan, {{kept}} with the kept one.",
+        "same": "Breathing is about the same in both: about {{n}} a minute."
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way, with no walk or run.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
+      },
+      "lesson": {
+        "title": "Why do you breathe faster when you run?",
+        "question": "How many breaths a minute during the run, and at rest?"
+      }
+    }
+  },
+  "picker": {
+    "title": "Body systems",
+    "same": "same as at the start",
+    "doing": {
+      "walk": "walking",
+      "walkBrisk": "brisk walking",
+      "run": "running"
     }
   }
 }

@@ -87,6 +87,8 @@ export const LESSON_PACKS = {
       // E-3b-ui: the meal sheet's Activity half and the bouts' marks on the graphs and the dock.
       'src/components/ActivitySheet.tsx',
       'src/components/stage/BoutMarks.tsx',
+      // U-2: the body-system picker (the title in the first paint opens it).
+      'src/components/SystemPicker.tsx',
       // A bout poses the body (and Digestion's `full` framing shows the legs): R93 #6.
       LIMBS,
     ],

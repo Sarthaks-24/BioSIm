@@ -12,6 +12,7 @@ import { readPref, writePref } from './prefs.ts'
  * - 1, 2, 3: show the lit system's first, second or third graph (when the graphs show one at a
  *   time), and read its values out. S, B, E: digestion's Stomach, Blood sugar and Energy, v3.0
  *   only (each slot's `letter`, systems/digestion/def.ts; architecture §0).
+ * - [ and ]: the previous or next body system; L: the body-system picker (U-2, ui-ux §3.2).
  * - ?: this list, with the switches.
  *
  * Keys typed into a text box, a list or a dialog are never taken, nor keys a focused control
@@ -48,6 +49,9 @@ export type KeyAction =
   | 'slotS'
   | 'slotB'
   | 'slotE'
+  | 'prevSystem'
+  | 'nextSystem'
+  | 'picker'
 
 const LETTERS: Record<string, KeyAction> = {
   k: 'play',
@@ -60,6 +64,9 @@ const LETTERS: Record<string, KeyAction> = {
   s: 'slotS',
   b: 'slotB',
   e: 'slotE',
+  '[': 'prevSystem',
+  ']': 'nextSystem',
+  l: 'picker',
   '?': 'help',
 }
 

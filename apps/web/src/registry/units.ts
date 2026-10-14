@@ -7,4 +7,7 @@ export const UNIT_KEYS: Partial<Record<Unit, string>> = {
   kcal: 'units.kcal',
   'kcal/h': 'units.kcalPerH',
   'g/min': 'units.gPerMin',
+  'breaths/min': 'units.breathsPerMin',
+  mL: 'units.mL',
+  'mL/min': 'units.mLPerMin',
 }

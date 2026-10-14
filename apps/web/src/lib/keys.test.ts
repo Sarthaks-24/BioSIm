@@ -34,6 +34,11 @@ describe('the stage’s key map', () => {
     expect(['s', 'b', 'e'].map((k) => actionFor(press(k), false))).toEqual(['slotS', 'slotB', 'slotE'])
   })
 
+  it('[ and ] step to the previous or next body system, L opens the picker (U-2); the off-switch turns them off', () => {
+    expect(['[', ']', 'l', 'L'].map((k) => actionFor(press(k), false))).toEqual(['prevSystem', 'nextSystem', 'picker', 'picker'])
+    expect(['[', ']', 'l'].map((k) => actionFor(press(k), true))).toEqual([null, null, null])
+  })
+
   it('leaves Ctrl, Alt and Cmd combinations to the browser', () => {
     expect(actionFor(press('t', { ctrlKey: true }), false)).toBeNull()
     expect(actionFor(press('p', { metaKey: true }), false)).toBeNull()

@@ -197,7 +197,7 @@ describe('the rhythm layer (flash safety, WCAG 2.3.1)', () => {
   it('the layer enforces the cap and reduced motion itself: it is given the rate, never a phase', () => {
     const style = { transform: '', transformOrigin: '', willChange: '' }
     let reduced = false
-    const layer = rhythmLayer({ style }, [0, 0], 0.1, () => reduced)
+    const layer = rhythmLayer({ style }, [0, 0], 0.1, { reduced: () => reduced })
     // 600 a minute is drawn at 2.5 Hz: a tenth of a second is a quarter cycle, never more.
     expect(layer.tick(600, 0)).toBe(true)
     layer.tick(600, 100)
@@ -223,7 +223,7 @@ describe('the rhythm layer (flash safety, WCAG 2.3.1)', () => {
         },
       }),
     }
-    const layer = rhythmLayer(el, [10, 20], 0.1, () => false)
+    const layer = rhythmLayer(el, [10, 20], 0.1, { reduced: () => false })
     expect(style.willChange).toBe('transform')
     expect(style.transformOrigin).toBe('10px 20px')
     // 15 a minute is a quarter cycle a second: ticks at 0, 1 s, 1 s and 1.0004 s.
