@@ -188,6 +188,9 @@ describe('the words are the model’s numbers (ui-ux §6, §7)', () => {
     const burger = run([...one('cheeseburger'), ...one('fries')])
     expect(at(burger, INSULIN, 480)).toBeGreaterThan(2)
     expect(en.limits.insulinHigh).toContain('stays raised for hours')
+    // The 2-hour figure is about the lab test, said as such, with its study (V-6: Takahashi 2018, 62 young women, 5.8× at 120 min; R120 #8).
+    expect(en.limits.insulinHigh).toMatch(/75 g glucose drink \(the lab sugar test, not one of the app’s foods\)/)
+    expect(en.limits.insulinHigh).toMatch(/young women measured about 6×: Takahashi 2018/)
   })
 })
 
