@@ -1,8 +1,8 @@
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { EVENT_IDS, PARAMS, PARAM_SOURCES, buildMeal } from '../src/index.ts'
-import { HUMAN_PROVIDES, simulate } from '../src/run.ts'
+import { PARAM_SOURCES, buildMeal } from '../src/index.ts'
+import { HUMAN_MODEL, HUMAN_PROVIDES, RUN_EVENT_IDS, simulate } from '../src/run.ts'
 import { goldenCoverage, type GoldenCall } from '../src/core/coverage.ts'
 import { parseGoldenCalls, scanGoldenCalls } from './golden-scan.ts'
 import { lookup } from './fixtures.ts'
@@ -23,7 +23,7 @@ const report = goldenCoverage(calls)
  * Ratchet: the number of calls never goes down, so unwrapping a test (golden → plain it) fails here
  * even when other tests still cover its IDs. Raise these when you add tests.
  */
-const AT_LEAST = { golden: 42, fails: 4, pinned: 29 }
+const AT_LEAST = { golden: 51, fails: 6, pinned: 37 }
 
 describe('golden coverage', () => {
   it('the scan finds the wrapped physiology tests', () => {
@@ -65,13 +65,13 @@ describe('what the engine produces', () => {
   })
 
   it('moments = every event', () => {
-    expect([...sim.moments.keys()].sort()).toEqual([...EVENT_IDS].sort())
+    expect([...sim.moments.keys()].sort()).toEqual([...RUN_EVENT_IDS].sort())
   })
 
-  it('every number in PARAMS has a PARAM_SOURCES line', () => {
+  it('every number in PARAMS and the packs’ PACK_PARAMS (the run’s params) has a PARAM_SOURCES line', () => {
     const leaves = (o: object, path: string[] = []): string[] =>
       Object.entries(o).flatMap(([k, v]) => (typeof v === 'number' ? [[...path, k].join('.')] : leaves(v as object, [...path, k])))
-    expect(leaves(PARAMS).filter((p) => !(p in PARAM_SOURCES))).toEqual([])
+    expect(leaves(HUMAN_MODEL.params).filter((p) => !(p in PARAM_SOURCES))).toEqual([])
   })
 })
 

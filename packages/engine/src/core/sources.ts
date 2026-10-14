@@ -458,7 +458,8 @@ export const SOURCES = {
     check: 'checked',
     usedFor: 'meal CO peak 30–60 min after eating; small meal back by 2 h, large meal still raised (hold-outs)',
     url: 'https://doi.org/10.1111/j.1748-1716.1991.tb09125.x',
-    citation: 'Waaler BA, Eriksen M, Toska K. The effect of meal size on postprandial increase in cardiac output. Acta Physiol Scand 1991;142:33–39.',
+    citation:
+      'Waaler BA, Eriksen M, Toska K. The effect of meal size on postprandial increase in cardiac output. Acta Physiol Scand 1991;142:33–39.',
   },
   /**
    * Checked 2026-10-14 (V-3, full text, Gut 33:497, Table III): isocaloric intraduodenal loads:
@@ -470,7 +471,8 @@ export const SOURCES = {
     check: 'checked',
     usedFor: 'gut blood flow per kcal: fat and protein alike, carbohydrate less (weights 1 / 1 / 0.6, the 0.6 calibrated)',
     url: 'https://doi.org/10.1136/gut.33.4.497',
-    citation: 'Sieber C, Beglinger C, Jäger K, Stalder GA. Intestinal phase of superior mesenteric artery blood flow in man. Gut 1992;33:497–501.',
+    citation:
+      'Sieber C, Beglinger C, Jäger K, Stalder GA. Intestinal phase of superior mesenteric artery blood flow in man. Gut 1992;33:497–501.',
   },
   /**
    * Checked 2026-10-13 (V-0b, full PDF): CO peak rise "2.19 l/min" (1 MJ), "1.78 l/min" (2 MJ),
@@ -481,7 +483,8 @@ export const SOURCES = {
     check: 'checked',
     usedFor: 'largest meal CO rise read (3.15 L/min, the gut-rise ceiling); bigger meals keep CO raised longer',
     url: 'https://doi.org/10.1079/BJN19940190',
-    citation: 'Sidery MB, Macdonald IA. The effect of meal size on the cardiovascular responses to food ingestion. Br J Nutr 1994;71:835–848.',
+    citation:
+      'Sidery MB, Macdonald IA. The effect of meal size on the cardiovascular responses to food ingestion. Br J Nutr 1994;71:835–848.',
   },
   /**
    * Checked 2026-10-14 (V-3, openstax.org §19.4): "Normal range for SV would be 55–100 mL"; "the

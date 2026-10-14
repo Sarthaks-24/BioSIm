@@ -231,7 +231,8 @@ describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', ()
         // The signal table too (Float32 copies), in its row order.
         const tableBefore = buildSignalTable(mealOf(m), before.signals)
         const tableAfter = buildSignalTable(mealOf(m), after.signals)
-        expect([...tableAfter.keys()].slice(0, tableBefore.size)).toEqual([...tableBefore.keys()])
+        // Rows only get added: the earlier rows keep their order (a later pack's rows may follow effort's).
+        expect([...tableAfter.keys()].filter((id) => tableBefore.has(id))).toEqual([...tableBefore.keys()])
         for (const [id, sr] of tableBefore) expect(sameBytes(tableAfter.get(id)!.values, sr.values), `${m} ${id}`).toBe(true)
         expect([...after.moments]).toEqual([...before.moments])
         expect([...after.signals.keys()].filter((id) => !before.signals.has(id))).toEqual([
@@ -246,7 +247,9 @@ describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', ()
   it('the rows before the effort pack keep their place in the signal table', () => {
     const keys = [...run('cola:1').signals.keys()]
     expect(keys).toEqual([...RUN_SIGNAL_IDS])
-    expect(keys.slice(-3)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
+    const at = keys.indexOf('muscle.energyRate')
+    expect(keys.slice(at, at + 3)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
+    expect(keys.slice(0, at)).toEqual(RUN_SIGNAL_IDS.slice(0, at))
   })
 
   it('rest: no plan, an empty plan and bouts at MET 1 give resting muscle and no sweat, to the byte', () => {

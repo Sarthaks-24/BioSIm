@@ -6,7 +6,6 @@ import {
   ACTIVE_SIGNAL_IDS,
   EVENTS,
   EVENT_IDS,
-  PARAMS,
   PARAM_SOURCES,
   RESERVED_SIGNAL_IDS,
   SIGNALS,
@@ -20,9 +19,16 @@ import {
 import {
   BREATHING_SIGNALS,
   BREATHING_SIGNAL_IDS,
+  CIRCULATION_EVENTS,
+  CIRCULATION_EVENT_IDS,
+  CIRCULATION_SIGNALS,
+  CIRCULATION_SIGNAL_IDS,
   EFFORT_SIGNALS,
   EFFORT_SIGNAL_IDS,
+  HUMAN_MODEL,
   HUMAN_PROVIDES,
+  RUN_EVENT_IDS,
+  RUN_EVENTS,
   RUN_SIGNAL_IDS,
   RUN_SIGNALS,
 } from '../src/run.ts'
@@ -35,8 +41,15 @@ import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/c
  */
 
 const signals: SignalMeta[] = Object.values(ALL_SIGNALS)
-const events: EventMeta[] = Object.values(EVENTS)
-const allIds = [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS, ...EVENT_IDS] as string[]
+const events: EventMeta[] = Object.values(RUN_EVENTS)
+const allIds = [
+  ...ACTIVE_SIGNAL_IDS,
+  ...BREATHING_SIGNAL_IDS,
+  ...EFFORT_SIGNAL_IDS,
+  ...CIRCULATION_SIGNAL_IDS,
+  ...RESERVED_SIGNAL_IDS,
+  ...RUN_EVENT_IDS,
+] as string[]
 const allRows: (SignalMeta | EventMeta)[] = [...signals, ...events]
 
 /** Dotted, at least two segments, each camelCase starting with a lowercase letter. */
@@ -86,6 +99,12 @@ const FROZEN: Record<string, string> = {
   'muscle.energyRate': 'kcal/h',
   'skin.sweatRate': 'mL/h',
   'skin.sweatTotal': 'mL',
+  // S-3, the circulation pack (core/catalog/circulation.ts). heart.rate keeps its reserved unit.
+  'heart.output': 'L/min',
+  'heart.strokeVolume': 'mL',
+  'blood.flow.gut': 'mL/min',
+  'blood.flow.muscle': 'mL/min',
+  'event.gutFlowPeak': 'min',
   'event.stomachHalfEmpty': 'min',
   'event.glucosePeak': 'min',
   'event.glucoseBackToBase': 'min',
@@ -110,11 +129,13 @@ describe('catalog IDs', () => {
     expect(Object.keys(EVENTS).sort()).toEqual([...EVENT_IDS].sort())
     expect(Object.keys(BREATHING_SIGNALS).sort()).toEqual([...BREATHING_SIGNAL_IDS].sort())
     expect(Object.keys(EFFORT_SIGNALS).sort()).toEqual([...EFFORT_SIGNAL_IDS].sort())
+    expect(Object.keys(CIRCULATION_SIGNALS).sort()).toEqual([...CIRCULATION_SIGNAL_IDS].sort())
+    expect(Object.keys(CIRCULATION_EVENTS).sort()).toEqual([...CIRCULATION_EVENT_IDS].sort())
     expect(Object.keys(SIGNAL_DOCS).sort()).toEqual(
-      [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort(),
+      [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...CIRCULATION_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort(),
     )
-    expect(Object.keys(EVENT_DOCS).sort()).toEqual([...EVENT_IDS].sort())
-    for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(EVENTS)]) expect(row.id).toBe(key)
+    expect(Object.keys(EVENT_DOCS).sort()).toEqual([...RUN_EVENT_IDS].sort())
+    for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(RUN_EVENTS)]) expect(row.id).toBe(key)
   })
 
   it('every row has a one-sentence definition (catalog-docs.ts)', () => {
@@ -164,6 +185,27 @@ describe('pack rows (architecture §1.3 lazy rows)', () => {
       expect(EFFORT_SIGNALS[id].validRange!.low, id).toBeLessThan(EFFORT_SIGNALS[id].validRange!.high)
     }
     expect(EFFORT_SIGNALS['skin.sweatRate'].validRange).toMatchObject({ low: 0, high: 3000, basis: 'cited' })
+  })
+
+  it('S-3 activates heart.rate (unit kept) as a graphed sim-clock level and adds the circulation rows and event, lazily', () => {
+    expect(RESERVED_SIGNAL_IDS as readonly string[]).not.toContain('heart.rate')
+    expect(EVENT_IDS as readonly string[]).not.toContain('event.gutFlowPeak')
+    for (const id of CIRCULATION_SIGNAL_IDS) {
+      const row = CIRCULATION_SIGNALS[id]
+      expect(ACTIVE_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(row, id).toMatchObject({ status: 'assumption', clock: 'sim', shipsIn: 'v3.0' })
+      expect(isChartable(row), id).toBe(true)
+      expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
+    }
+    expect(CIRCULATION_SIGNALS['heart.rate']).toMatchObject({ unit: 'beats/min', kind: 'level', validRange: { low: 40, high: 191 } })
+    expect(CIRCULATION_SIGNALS['heart.strokeVolume'].validRange).toMatchObject({ low: 55, high: 100, basis: 'cited' })
+    // A meal moves heart rate, output and gut flow, never stroke volume or muscle flow (model §2.3).
+    expect(CIRCULATION_SIGNAL_IDS.filter((id) => CIRCULATION_SIGNALS[id].reactsToMeal)).toEqual([
+      'heart.rate',
+      'heart.output',
+      'blood.flow.gut',
+    ])
+    expect(CIRCULATION_EVENTS['event.gutFlowPeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.flow.gut', shipsIn: 'v3.0' })
   })
 })
 
@@ -223,7 +265,7 @@ describe('catalog rows', () => {
     // A 'Model estimate' signal must say what it does not know.
     for (const id of RUN_SIGNAL_IDS) if (RUN_SIGNALS[id].status === 'assumption') expect(RUN_SIGNALS[id].limitKey, id).toBeDefined()
     // Markers and the human organism only point at signals the engine produces.
-    for (const e of events) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
+    for (const e of events) expect(RUN_SIGNAL_IDS, e.id).toContain(e.foundOn)
     expect([...HUMAN_PROVIDES].sort()).toEqual([...RUN_SIGNAL_IDS].sort())
   })
 })
@@ -253,7 +295,7 @@ describe('source registry', () => {
 
   it('every PARAM_SOURCES key is a real parameter and cites registered sources', () => {
     for (const [path, entry] of Object.entries(PARAM_SOURCES)) {
-      const value = path.split('.').reduce<unknown>((o, seg) => (o as Record<string, unknown> | undefined)?.[seg], PARAMS)
+      const value = path.split('.').reduce<unknown>((o, seg) => (o as Record<string, unknown> | undefined)?.[seg], HUMAN_MODEL.params)
       expect(typeof value, path).toBe('number')
       for (const id of entry!.sources) expect(isRegisteredSource(id), `${path} → ${id}`).toBe(true)
     }

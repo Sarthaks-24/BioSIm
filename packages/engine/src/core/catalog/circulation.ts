@@ -11,13 +11,7 @@
  */
 import type { EventMeta, SignalMeta } from '../catalog.ts'
 
-export const CIRCULATION_SIGNAL_IDS = [
-  'heart.rate',
-  'heart.output',
-  'heart.strokeVolume',
-  'blood.flow.gut',
-  'blood.flow.muscle',
-] as const
+export const CIRCULATION_SIGNAL_IDS = ['heart.rate', 'heart.output', 'heart.strokeVolume', 'blood.flow.gut', 'blood.flow.muscle'] as const
 export type CirculationSignalId = (typeof CIRCULATION_SIGNAL_IDS)[number]
 
 export const CIRCULATION_EVENT_IDS = ['event.gutFlowPeak'] as const

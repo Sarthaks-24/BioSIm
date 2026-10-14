@@ -180,6 +180,28 @@ A walk gives about 330 mL/h, a run about 980 mL/h. Digesting a meal makes heat t
 
 **Limits.** Core temperature is held at 37 °C; sweating switches on and off with the bout; the room is warm and cannot be chosen; sweat that drips without evaporating is left out, so the sweat rate is a minimum. The muscle share is a man's (women average 30.6 %, Janssen 2000), and the resting muscle rate is an average for young adults of normal weight.
 
+## Heart and blood (model version 3, S-3)
+
+The `circulation` module runs after muscles and skin. It reads the oxygen used (`gas.o2UseRate`), the food effect, the absorbed nutrients and the MET, and writes five rows and one event. All are *assumption* ("Model estimate"). Like breathing's, its catalog rows are lazy (`core/catalog/circulation.ts`), and so are its numbers: `packParams.ts` is loaded with the engine, not with the first page. Sources were read in steps V-0, V-0b and V-3.
+
+- **Resting output.** Resting O2 use at the fasting RQ (215 mL/min) over an a–v O2 difference of 50 mL per litre of blood: CO = 4.31 L/min. The 50 is Klabunde's worked Fick example (0.20 − 0.15 mL/mL); Higginbotham 1986 measured 58 at rest, which would give 3.7, below OpenStax's 4–8 L/min, so 50 is kept as a calibration.
+- **Moving** adds 5.5 L/min of blood per L/min of extra O2 (Stringer 2005: "approximately 5-6"; Cook 2005: 5.8). The extra O2 is the activity's share of this minute's O2 use, so the food effect's O2 is not counted again: the gut takes more O2 out of the blood it already gets.
+- **Digesting** adds the gut's extra flow: 3 × Rw / (Rw + 2.5) L/min, where Rw is the absorbed energy per minute weighted fat 1, protein 1, carbohydrate 0.6. Sieber 1992 found fat and protein alike and carbohydrate "significantly less" (his velocity data give about 0.2–0.3); high-carbohydrate meals still raise CO a lot (Sidery 1994), so 0.6 is a calibration. K = 2.5 kcal/min is fitted so a 1526 kcal mixed meal raises CO by 1.3 L/min (Eriksen 1994: about 1.3 L/min for 1400–1600 kcal); the ceiling 3 L/min is about the largest meal rise read (Sidery 1994: 3.15).
+- **CO** = resting + moving + gut. Eriksen 1994 found exercise after a meal adds to the meal's rise, "pure summation".
+- **Stroke volume** = 65 mL × (1 + 0.4 × min(1, moving rise / 5 L/min)): at most 1.4 times, then flat (Higginbotham 1986, 41 → 58 mL/m², "increased no further"). OpenStax §19.4's "70 to approximately 130 mL" is the book's range. A meal does not change it. **Heart rate** = CO / SV, at most 191 (220 − age).
+- **Where blood goes.** Gut 24 % and muscles 21 % of resting CO (OpenStax Table 20.3: 1400 and 1200 of 5800 mL/min); muscles take 90 % of the moving rise (Table 20.3, mild exercise 3300 of 3700). `event.gutFlowPeak` is the first minute gut flow is highest (none if it rises less than 10 mL/min).
+
+| | Output | Beats/min | Per beat | Muscle flow | Gut flow |
+|---|---|---|---|---|---|
+| Rest | 4.31 L/min | 66 | 65 mL | 905 mL/min | 1034 mL/min |
+| Walk (3.8 MET) | 7.9 L/min | 94 | 84 mL | 4.1 L/min | 1034 mL/min |
+| Run (9.3 MET) | 14.8 L/min | 162 | 91 mL | 10.3 L/min | 1034 mL/min |
+| 1526 kcal meal, peak | 5.6 L/min | 86 | 65 mL | 905 mL/min | 2.3 L/min |
+
+**Tests** (`test/circulation.test.ts`): at rest, with or without a meal, CO 4–8 L/min, HR 60–100 and SV 55–100 mL (OpenStax §19.4); the CO slope 5–6 per litre of O2 (Stringer 2005, Cook 2005); SV at most 1.4× and flat past the plateau (Higginbotham 1986); resting gut and muscle shares, and about half the blood to muscles in a walk (Table 20.3); hold-outs: the meal peak 30–90 min after the meal starts (Waaler 1991; the minute does not depend on K), a large meal still raising CO at 2 h (Waaler 1991, Sidery 1994), meal and walk adding up (Eriksen 1994), and per kcal fat ≥ protein > carbohydrate (Sieber 1992). Pinned: the Eriksen calibration, worked values, walk 7–11 and run 13–19 L/min, HR ≤ 191, everything rising with MET, water changing nothing, no food-effect O2 counted twice, and adding the module leaving every other signal byte-identical. Two known limits: Waaler's "after a small meal, CO is nearly back to fasting by 2 h" fails for a 491 kcal solid meal, and a solid meal's peak comes late, both because solids leave the stomach at a steady rate for hours here (the deferred emptying change). A small sweet drink is back by 2 h.
+
+**Limits.** Studies were small and mostly lying down or seated; the HR/SV split is assumed (a meal raises HR only; Waaler 1991 saw both rise); no baroreflex, posture, fitness, blood volume or blood pressure; the CO slope is for steady bouts (non-linear in ramp tests, Stringer 2005); gut flow stays up in exercise, where Table 20.3 shows it falling (Eriksen 1994 found it held in reclining exercise after a meal); 220 − age is ±10–12 beats and not for children.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -204,6 +226,9 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `lungs.breathRate`, `lungs.tidalVolume` | breaths/min, mL | assumption | breaths and depth that carry the CO2 away at 40 mm Hg (breathing pack row) | OpenStax §22.3 |
 | `muscle.energyRate` | kcal/h | assumption | resting muscle (13 kcal/kg/day × 38.4 % × kg ÷ 24) + energy of moving | Wang 2012, Janssen 2000 |
 | `skin.sweatRate`, `skin.sweatTotal` | mL/h, mL | assumption | energy of moving ÷ 0.58 kcal per mL evaporated | Baker 2019, Baker & Wolfe 2020, OpenStax ch. 24 |
+| `heart.output` | L/min | assumption | resting O2 ÷ 50 mL/L + 5.5 × extra O2 of moving + the gut's rise (circulation pack row) | OpenStax §19.4, Stringer 2005, Cook 2005, Eriksen 1994, Waaler 1991 |
+| `heart.rate`, `heart.strokeVolume` | beats/min, mL | assumption | SV 65 mL up to 1.4× with moving; HR = CO ÷ SV, at most 191 | OpenStax §19.4, Higginbotham 1986 |
+| `blood.flow.gut`, `blood.flow.muscle` | mL/min | assumption | 24 % / 21 % of resting CO + the meal's rise / 90 % of the moving rise | OpenStax Table 20.3, Sieber 1992 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -212,6 +237,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `event.glucoseBackToBase` | first minute after the peak within 5 mg/dL of fasting | ADA 2001 (context) |
 | `event.mostlyAbsorbed` | 90 % of the carbohydrate, protein and fat that will be absorbed is in the body | OpenStax |
 | `event.firstLeftovers` | leftovers (fibre) start leaving the body, with a between-person range | OpenStax, Nandhra 2023 |
+| `event.gutFlowPeak` | gut blood flow is highest after a meal (circulation pack, lazy row) | Waaler 1991 |
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
@@ -266,6 +292,16 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 32. Baker LB. Physiology of sweat gland function: the roles of sweating and sweat composition in human health. *Temperature* 2019;6:211–259.
 33. Baker LB, Wolfe AS. Physiological mechanisms determining eccrine sweat composition. *Eur J Appl Physiol* 2020;120:719–752.
 34. OpenStax. *Anatomy and Physiology 2e*, ch. 24 (§24.6 Energy and Heat Balance). Rice University.
+35. Klabunde RE. Measurement of Cardiac Output. *Cardiovascular Physiology Concepts* (CVPhysiology.com), revised 2023.
+36. Higginbotham MB, Morris KG, Williams RS, McHale PA, Coleman RE, Cobb FR. Regulation of stroke volume during submaximal and maximal upright exercise in normal man. *Circ Res* 1986;58:281–291.
+37. Stringer WW, Whipp BJ, Wasserman K, et al. Non-linear cardiac output dynamics during ramp-incremental cycle ergometry. *Eur J Appl Physiol* 2005;93:634–639.
+38. Cook L, Tomczak C, Busse E, Tsang J, Wojcik W, Haennel R. Impact of a right ventricular impedance sensor on the cardiovascular responses to exercise in pacemaker dependent patients. *Indian Pacing Electrophysiol J* 2005;5:160–174.
+39. Eriksen M, Waaler BA. Priority of blood flow to splanchnic organs in humans during pre- and post-meal exercise. *Acta Physiol Scand* 1994;150:363–372.
+40. Waaler BA, Eriksen M, Toska K. The effect of meal size on postprandial increase in cardiac output. *Acta Physiol Scand* 1991;142:33–39.
+41. Sieber C, Beglinger C, Jäger K, Stalder GA. Intestinal phase of superior mesenteric artery blood flow in man. *Gut* 1992;33:497–501.
+42. Sidery MB, Macdonald IA. The effect of meal size on the cardiovascular responses to food ingestion. *Br J Nutr* 1994;71:835–848.
+43. Betts JG, et al. *Anatomy and Physiology 2e*, ch. 19 The Cardiovascular System: The Heart (§19.4). OpenStax, 2022.
+44. Betts JG, et al. *Anatomy and Physiology 2e*, ch. 20 The Cardiovascular System: Blood Vessels and Circulation (§20.4, Table 20.3). OpenStax, 2022.
 
 The food data comes from:
 

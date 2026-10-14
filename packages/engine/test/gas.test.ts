@@ -285,12 +285,14 @@ describe('insertion and rest invariance (model D13 iii, iv)', () => {
   const plans: ActivityBout[][] = [[], [walk, { kind: 'run', startMin: 600, durMin: 30 }]]
 
   it('(iii) adding gas leaves every signal, internal array and moment that existed before it byte-identical', () => {
-    const without = HUMAN_MODULES.filter((m) => m.id !== 'gas')
-    expect(without).toHaveLength(HUMAN_MODULES.length - 1)
+    // circulation reads gas, so both sides leave it out (its own insertion test is in circulation.test.ts).
+    const withGas = HUMAN_MODULES.filter((m) => m.id !== 'circulation')
+    const without = withGas.filter((m) => m.id !== 'gas')
+    expect(without).toHaveLength(HUMAN_MODULES.length - 2)
     for (const m of FULL ? meals : meals.slice(0, 3))
       for (const plan of plans) {
         const before = runModules(without, setup(m, plan))
-        const after = runModules(HUMAN_MODULES, setup(m, plan))
+        const after = runModules(withGas, setup(m, plan))
         for (const [id, w] of before.signals) {
           const a = after.signals.get(id)!
           expect(firstDiff(w.values, a.values), `${m} ${id}`).toBe(-1)
@@ -368,7 +370,7 @@ describe('contract: status, ranges, speed', () => {
 
   it('gas runs in ≤ 2 ms (median of 21 runs, 48 h at 1 min)', () => {
     const out = runModules(
-      HUMAN_MODULES.filter((m) => m.id !== 'gas'),
+      HUMAN_MODULES.filter((m) => m.id !== 'gas' && m.id !== 'circulation'),
       setup('cheeseburger:1,fries:1,cola:1', [walk]),
     )
     const store = out.signals

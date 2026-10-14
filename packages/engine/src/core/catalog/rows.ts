@@ -3,7 +3,16 @@
  * (core/catalog/<pack>.ts, architecture §1.3). Only the run chunk, tests and scripts import this
  * file; the main entry keeps the lean catalog. The signal table lists rows in this order.
  */
-import { ACTIVE_SIGNAL_IDS, EVENTS, EVENT_IDS, SIGNALS, type EventId, type EventMeta, type RunSignalId, type SignalMeta } from '../catalog.ts'
+import {
+  ACTIVE_SIGNAL_IDS,
+  EVENTS,
+  EVENT_IDS,
+  SIGNALS,
+  type EventId,
+  type EventMeta,
+  type RunSignalId,
+  type SignalMeta,
+} from '../catalog.ts'
 import { BREATHING_SIGNAL_IDS, BREATHING_SIGNALS } from './breathing.ts'
 import { EFFORT_SIGNAL_IDS, EFFORT_SIGNALS } from './effort.ts'
 import { CIRCULATION_EVENTS, CIRCULATION_EVENT_IDS, CIRCULATION_SIGNALS, CIRCULATION_SIGNAL_IDS } from './circulation.ts'
