@@ -60,12 +60,44 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const [attempt, setAttempt] = useState(0)
   // 0: nothing said yet, 1: "Getting the lungs ready…", 2: the connection is slow.
   const [said, setSaid] = useState(0)
+  // Try again was pressed: "Getting the lungs ready…" at once, so the status stays (R120 #12).
+  const retried = useRef(false)
   useEffect(() => {
-    setSaid(0)
+    setSaid(retried.current ? 1 : 0)
+    retried.current = false
     if (!switching || switching.failed) return
     const ids = [setTimeout(() => setSaid(1), SAY_MS), setTimeout(() => setSaid(2), SLOW_MS)]
     return () => ids.forEach(clearTimeout)
   }, [switching])
+  // A switch that takes the focused control away (the 3D view's "Whole body" when a flat-only row
+  // is lit, a graph tab of the old row) puts focus on the title, not on the page (R120 #19). Its
+  // new view may come a little later (a lazy pack), so the check waits for the page to change.
+  const focused = useRef<Element | null>(null)
+  useEffect(
+    () =>
+      useRunStore.subscribe((s, prev) => {
+        if (s.layer !== prev.layer) focused.current = document.activeElement
+      }),
+    [],
+  )
+  useEffect(() => {
+    const was = focused.current
+    focused.current = null
+    if (!was || was === document.body) return
+    const check = () => {
+      if (was.isConnected) return false
+      if (document.activeElement === document.body || !document.activeElement) button.current?.focus({ preventScroll: true })
+      return true
+    }
+    if (check()) return
+    const watch = new MutationObserver(() => check() && watch.disconnect())
+    watch.observe(document.body, { childList: true, subtree: true })
+    const stop = setTimeout(() => watch.disconnect(), 5000)
+    return () => {
+      watch.disconnect()
+      clearTimeout(stop)
+    }
+  }, [layer])
   const rows = pickerSystems(preview)
   const many = rows.length > 1
   const close = () => usePicker.setState({ open: false })
@@ -117,7 +149,12 @@ export default function SystemTitle({ run }: { run: RunResult }) {
           {switching.failed && (
             <button
               type="button"
-              onClick={() => useRunStore.getState().setLayer(switching.to)}
+              onClick={() => {
+                // The button goes away as the pack is asked for again: focus to the title first (R120 #12).
+                button.current?.focus()
+                retried.current = true
+                useRunStore.getState().setLayer(switching.to)
+              }}
               className="min-h-11 rounded-control bg-surface-sunk px-3 font-semibold text-ink hover:bg-surface-sunk-hover lg:min-h-9"
             >
               {t('graph.retry')}
