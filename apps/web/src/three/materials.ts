@@ -23,6 +23,9 @@ export interface LayerUniforms {
   uGrowAt: IUniform<Vector3[]>
   /** Per organ: −1 = empty, faded back; 0 = normal; 1 = the active stage. */
   uState: IUniform<number[]>
+  /** Per organ, a `dashes` layer's dash density (0 = none) and how far its dashes have moved (Layer3d.dashes). */
+  uDash: IUniform<number[]>
+  uFlow: IUniform<number[]>
   /** Outline width as a share of the distance to the camera (constant on screen). */
   uOutline: IUniform<number>
   /** How far an empty organ fades (BODY_LOOK.fade). */
@@ -37,6 +40,8 @@ export const layerUniforms = (organs: number): LayerUniforms => {
     uFill: { value: new Array<number>(organs).fill(0) },
     uGrowAt: { value: Array.from({ length: organs }, () => new Vector3()) },
     uState: { value: new Array<number>(organs).fill(0) },
+    uDash: { value: new Array<number>(organs).fill(0) },
+    uFlow: { value: new Array<number>(organs).fill(0) },
     uOutline: { value: 0 },
     uFadeAmount: { value: 0 },
     uShade: { value: 0 },
@@ -68,16 +73,39 @@ const stretch = (grow: boolean, p: string, n: string) =>
     : `${p} += ${n} * inflate * uFill[int(organ + 0.5)];`
 
 /**
- * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
- * baked into the shader), shared only by bodies showing the same layer. `grow`: see `stretch`.
+ * A `dashes` layer's dashes (Layer3d.dashes), scene units: each dash is DASH.length long, and at
+ * density 1 the gap after it is DASH.gap (the flat heart's 3 px and 10 px at its usual scale).
  */
-export function tissueMaterial(u: LayerUniforms, key: string, grow = false): MeshStandardMaterial {
+export const DASH = { length: 0.03, gap: 0.09 } as const
+
+/**
+ * The dashes (GLSL, after the rim light): pale, down the middle of the tube as seen (where it faces
+ * the camera), each DASH.length long, the gap shrinking as the density grows; `fwidth` keeps their
+ * ends soft at any distance. Only a layer with `dashes` gets it.
+ */
+const DASHES = `
+        float lpDensity = uDash[int(vOrgan + 0.5)];
+        if (lpDensity > 0.0) {
+          float lpPeriod = ${DASH.length.toFixed(3)} + ${DASH.gap.toFixed(3)} / lpDensity;
+          float lpFrom = abs(fract((vAlong - uFlow[int(vOrgan + 0.5)]) / lpPeriod) - 0.5) * lpPeriod;
+          float lpSoft = fwidth(vAlong);
+          float lpOn = 1.0 - smoothstep(${(DASH.length / 2).toFixed(3)} - lpSoft, ${(DASH.length / 2).toFixed(3)} + lpSoft, lpFrom);
+          outgoingLight = mix(outgoingLight, vec3(0.9), 0.8 * lpOn * smoothstep(0.84, 0.94, facing));
+        }`
+
+/**
+ * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
+ * baked into the shader), shared only by bodies showing the same layer. `grow`: see `stretch`;
+ * `dashes`: see DASHES.
+ */
+export function tissueMaterial(u: LayerUniforms, key: string, grow = false, dashes = false): MeshStandardMaterial {
   const N = u.uState.value.length
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: FrontSide })
   m.onBeforeCompile = (shader) => {
     shader.uniforms.uFill = u.uFill
     if (grow) shader.uniforms.uGrowAt = u.uGrowAt
     shader.uniforms.uState = u.uState
+    if (dashes) Object.assign(shader.uniforms, { uDash: u.uDash, uFlow: u.uFlow })
     shader.uniforms.uFade = { value: FADE }
     shader.uniforms.uFadeAmount = u.uFadeAmount
     shader.vertexShader = shader.vertexShader
@@ -91,6 +119,12 @@ export function tissueMaterial(u: LayerUniforms, key: string, grow = false): Mes
             ? `
         uniform vec3 uGrowAt[${N}];`
             : ''
+        }${
+          dashes
+            ? `
+        attribute float along;
+        varying float vAlong;`
+            : ''
         }
         varying float vOrgan;`,
       )
@@ -98,7 +132,7 @@ export function tissueMaterial(u: LayerUniforms, key: string, grow = false): Mes
         '#include <begin_vertex>',
         `#include <begin_vertex>
         ${stretch(grow, 'transformed', 'objectNormal')}
-        vOrgan = organ;`,
+        vOrgan = organ;${dashes ? ' vAlong = along;' : ''}`,
       )
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -107,7 +141,14 @@ export function tissueMaterial(u: LayerUniforms, key: string, grow = false): Mes
         uniform float uState[${N}];
         uniform vec3 uFade;
         uniform float uFadeAmount;
-        varying float vOrgan;
+        varying float vOrgan;${
+          dashes
+            ? `
+        uniform float uDash[${N}];
+        uniform float uFlow[${N}];
+        varying float vAlong;`
+            : ''
+        }
         float organState() { return uState[int(vOrgan + 0.5)]; }`,
       )
       .replace(
@@ -125,7 +166,7 @@ export function tissueMaterial(u: LayerUniforms, key: string, grow = false): Mes
         float rim = pow(1.0 - facing, 2.5);
         outgoingLight += mix(diffuseColor.rgb, vec3(1.0), 0.55) * rim * (0.32 + 0.25 * lpActive) * (1.0 - 0.6 * lpFaded);
         // The active organ glows a little from within, so it reads as "here" even in grey light.
-        outgoingLight += diffuseColor.rgb * lpActive * 0.16;
+        outgoingLight += diffuseColor.rgb * lpActive * 0.16;${dashes ? DASHES : ''}
         #include <opaque_fragment>`,
       )
   }

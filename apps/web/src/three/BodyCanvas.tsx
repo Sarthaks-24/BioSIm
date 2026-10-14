@@ -173,7 +173,7 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
       )}
       {/* Measured from the start (hidden, not removed), placed by the 3D body's frames. */}
       <div style={drawn ? undefined : { opacity: 0 }}>
-        {layer?.overlay && <LayerOverlay key={layer.id} layer={layer} reduced={reduced} rhythm={rhythm} register={register} />}
+        {layer?.overlay && <LayerOverlay key={layer.id} layer={layer} reduced={reduced} t={t} rhythm={rhythm} register={register} />}
         {overlay}
       </div>
       {!drawn && placeholder && <div className="absolute inset-0">{placeholder}</div>}
@@ -530,12 +530,14 @@ type Place = Parameters<OverlayProps['register']>[0]
 /** The lit layer's own drawing over the canvas (Layer3d.overlay: plain DOM, made and cleaned up here). */
 function LayerOverlay({ layer, ...props }: OverlayProps & { layer: Layer3d }) {
   const host = useRef<HTMLDivElement>(null)
-  const { reduced, rhythm, register } = props
+  const { reduced, t, rhythm, register } = props
   useEffect(
-    () => (host.current ? layer.overlay?.(host.current, { reduced, rhythm, register }) : undefined),
-    [layer, reduced, rhythm, register],
+    () => (host.current ? layer.overlay?.(host.current, { reduced, t, rhythm, register }) : undefined),
+    [layer, reduced, t, rhythm, register],
   )
-  return <div ref={host} aria-hidden="true" className="pointer-events-none absolute inset-0" />
+  // Not hidden from screen readers: a layer's words (the heart's colour key) are read as the flat
+  // drawing's; its pictures (the air dashes, the still arrows) hide themselves.
+  return <div ref={host} className="pointer-events-none absolute inset-0" />
 }
 
 /**

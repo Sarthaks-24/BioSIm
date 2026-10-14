@@ -75,7 +75,7 @@ describe('3D lungs (A-3)', () => {
   it('grows as the flat drawing scales: from the lungs’ top, by lungScale; the windpipe stays', () => {
     expect(LUNGS_3D.grow!.origins).toHaveLength(ORGANS.length)
     expect(LUNGS_3D.grow!.origins[ORGANS.indexOf('lungs')]).toEqual([LUNG_TOP.x, LUNG_TOP.y, LUNG_TOP.z])
-    const out: LayerState = { state: ORGANS.map(() => 9), fill: ORGANS.map(() => 9) }
+    const out: LayerState = { state: ORGANS.map(() => 9), fill: ORGANS.map(() => 9), dash: ORGANS.map(() => 0), flow: ORGANS.map(() => 0) }
     const walk = run(26, 1100)
     LUNGS_3D.write(out, walk, 5, 0.5)
     const full = lungScale(1100, fillAt(0.5)) - 1
@@ -84,7 +84,7 @@ describe('3D lungs (A-3)', () => {
     expect(out.fill[ORGANS.indexOf('airway')]).toBe(9) // never written: zero from the uniforms' start
     expect(out.state.every((s) => s === 0)).toBe(true)
     // A deeper breath swells more: rest vs walk keep the model's ratio of the swell (plan §4).
-    const rest = { state: [...out.state], fill: [...out.fill] }
+    const rest = { ...out, state: [...out.state], fill: [...out.fill] }
     LUNGS_3D.write(rest, run(15, 500), 5, 0.5)
     expect(out.fill[ORGANS.indexOf('lungs')]!).toBeGreaterThan(rest.fill[ORGANS.indexOf('lungs')]! * 1.8)
     // The windpipe and food pipe never move; the lungs and the diaphragm move whole.

@@ -41,6 +41,14 @@ export interface Layer3d {
    * diaphragm from the lungs' top). uFill is then the extra size: 0.2 = 20 % bigger.
    */
   grow?: { origins: readonly (readonly [number, number, number])[] }
+  /**
+   * Dashes drawn on the tubes in the tissue shader (A-5: the blood along the vessels): `along` then
+   * holds a vertex's distance from its tube's start in scene units, and an organ whose
+   * `LayerState.dash` is above 0 shows short pale dashes down the middle of its tubes, that many
+   * times as dense as at 1, moved forward by its `LayerState.flow` (scene units). Absent: the shader
+   * has none (the other layers' programs are unchanged).
+   */
+  dashes?: boolean
   /** A rhythm drawn at its true speed on the real clock (a breath, a beat; anatomy plan §4). */
   rhythm?: Rhythm3d
   /** Its own labels in place of Digestion's (anatomy/human/<system>.ts LABELS). */
@@ -79,6 +87,8 @@ export interface Labels3d {
 /** What a layer's overlay gets from the 3D body. */
 export interface OverlayProps {
   reduced: boolean
+  /** The page's text (a key the layer draws in its overlay: the heart's colour key). */
+  t: TFunction
   /** The rhythm's phase and rate now (read, not React state: they change every frame). */
   rhythm: { phase: number; hz: number }
   /** Hands the 3D body a function it calls each frame it draws, with that frame's projection; returns the unregister. */
@@ -91,6 +101,10 @@ export interface LayerState {
   state: number[]
   /** How full a stretching organ is, 0…1 (stomach, later bladder); with `Layer3d.grow`, its extra size (lungs). 0 elsewhere. */
   fill: number[]
+  /** With `Layer3d.dashes`: how dense an organ's dashes are (0 = none, 1 = the resting look). */
+  dash: number[]
+  /** With `Layer3d.dashes`: how far an organ's dashes have moved along its tubes (scene units). */
+  flow: number[]
 }
 
 /** Geometry tier (anatomy plan §9): a 2 GB phone builds lighter meshes. Part of the cache key. */

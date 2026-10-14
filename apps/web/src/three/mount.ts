@@ -154,8 +154,8 @@ export function mountLayer(layer: Layer3d, tier: Tier): MountedLayer {
     layer,
     geometry: layers.get(layer, tier),
     uniforms,
-    state: { state: uniforms.uState.value, fill: uniforms.uFill.value },
-    tissue: tissueMaterial(uniforms, layer.id, grow),
+    state: { state: uniforms.uState.value, fill: uniforms.uFill.value, dash: uniforms.uDash.value, flow: uniforms.uFlow.value },
+    tissue: tissueMaterial(uniforms, layer.id, grow, !!layer.dashes),
     outline: outlineMaterial(uniforms, grow),
   }
 }
