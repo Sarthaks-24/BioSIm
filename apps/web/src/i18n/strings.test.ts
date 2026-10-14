@@ -91,9 +91,9 @@ describe('never "your book" on screen (R9)', () => {
  * body", "your age"), and not every number is cited: some are the model's estimates, marked so.
  */
 describe('a model, not yours (R120 #13, #14, #20)', () => {
-  const YOURS = /\byour body\b/i
+  const YOURS = /\byour (body|age)\b/i
 
-  it('no English string says "your body"; About says the body is a model, not yours', () => {
+  it('no English string says "your body" or "your age" ("children aged 12–15"); About says the body is a model, not yours', () => {
     expect(strings(en).filter((s) => YOURS.test(s))).toEqual([])
     expect(en.about.lead).toContain('inside a typical healthy body (a model, not yours)')
   })

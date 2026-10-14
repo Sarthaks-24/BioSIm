@@ -243,7 +243,7 @@ describe('the book, the children’s band and "Why does the model differ from th
     expect(t('sys.circulation.book')).toBe('Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute')
     const beats = DEFS.circulation.slots!.find((s) => s.id === 'beats')!
     expect(beats.reference).toEqual({ low: 62, high: 96 })
-    expect(t('sys.circulation.children')).toBe('Most children your age (12–15): 62–96 a minute at rest')
+    expect(t('sys.circulation.children')).toBe('Most children aged 12–15: 62–96 a minute at rest')
     expect(t('sys.circulation.moves')).toBe('Moves mostly with walking or running; a meal moves it a little.')
     expect(t('sys.circulation.bp.value')).toBe('Blood pressure 120/80: book value, held.')
   })

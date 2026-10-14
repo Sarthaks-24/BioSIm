@@ -1627,7 +1627,7 @@
       },
       "moves": "Moves mostly with walking or running; the meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 15–18 breaths a minute",
-      "children": "Most children your age (12–15): 15–21 a minute at rest",
+      "children": "Most children aged 12–15: 15–21 a minute at rest",
       "summary": {
         "rest": "At rest, breathing stays about the same after a meal: about {{n}} a minute.",
         "restReason": "Breathing moves mostly with walking or running. Try a walk.",
@@ -1707,7 +1707,7 @@
       },
       "moves": "Moves mostly with walking or running; a meal moves it a little.",
       "book": "Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute",
-      "children": "Most children your age (12–15): 62–96 a minute at rest",
+      "children": "Most children aged 12–15: 62–96 a minute at rest",
       "bp": {
         "value": "Blood pressure 120/80: book value, held.",
         "held": "About the same all day in this model: it is not worked out here.",
@@ -2043,7 +2043,7 @@
         },
         "hunger": {
           "name": "Hunger signal (ghrelin, from the stomach)",
-          "text": "Rises before meals and helps make us feel hungry.",
+          "text": "Made by the stomach while fasting; it rises just before meals and acts on the brain to make us feel hungry.",
           "source": "OpenStax Anatomy and Physiology 2e, §23.4, Table 23.6"
         }
       },
