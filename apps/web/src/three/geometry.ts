@@ -8,41 +8,25 @@ import {
   LatheGeometry,
   Matrix4,
   OctahedronGeometry,
-  Quaternion,
   SphereGeometry,
-  TorusGeometry,
   Vector2,
   Vector3,
 } from 'three'
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
 import { ARM, TORSO_PROFILE, armRadius } from '../anatomy/human/base.ts'
-import {
-  APPENDIX,
-  ESOPHAGUS,
-  GALLBLADDER,
-  LARGE_INTESTINE,
-  LIVER,
-  PANCREAS,
-  PHARYNX,
-  SMALL_INTESTINE,
-  STOMACH,
-  STOMACH_EMPTY,
-  STOMACH_STRETCH,
-  stomachRadius,
-  stomachStretchWeight,
-} from '../anatomy/human/digestion.ts'
-import type { Spline3 } from '../anatomy/spline.ts'
-import { ILEUM_TONE, JEJUNUM_TONE, LIT_ORGANS, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones/digestion.ts'
+import { LAYER_ATTRIBUTES } from './layer.ts'
 
 /**
- * Every organ is modelled in code from the anatomy curves, so the models, the flat fallback and
- * the particle paths can never drift apart, and nothing has to be downloaded.
+ * The 3D body's geometry kit. Every organ is modelled in code from the anatomy curves, so the
+ * models, the flat fallback and the particle paths can never drift apart, and nothing has to be
+ * downloaded (anatomy plan D1, D2).
  *
- * The lit digestion layer is ONE merged mesh (plan-systems-3d §3.1, §3.5): per vertex it carries
- * its colour (with soft cavity shading baked in), which organ it belongs to (`organ`, so the
- * shader can highlight or fade one organ), and how far it moves out when the stomach fills
- * (`inflate`, only on the stomach). One draw for the organs, one for their ink outline.
+ * A system's lit layer (three/layers/<system>.ts) is ONE merged mesh (plan-systems-3d §3.1, §3.5):
+ * per vertex it carries its colour (with soft cavity shading baked in), which organ it belongs to
+ * (`organ`, so the shader can highlight or fade one organ), and the rest of LAYER_ATTRIBUTES
+ * (three/layer.ts). One draw for the organs, one for their ink outline. The shell and the food
+ * particles are the base, shared by every layer. three/mount.ts builds and caches all of it.
  */
 
 interface TubeOptions {
@@ -58,6 +42,12 @@ interface TubeOptions {
   caps?: boolean | 'start' | 'end'
 }
 
+/** A curve a tube follows: the anatomy's Spline3, or three's own CatmullRomCurve3 (a lazy layer's: it imports nothing of /sim). */
+export interface Curve3 {
+  getPointAt(u: number, out: Vector3): unknown
+  getTangentAt(u: number, out: Vector3): unknown
+}
+
 const WORLD_Z = new Vector3(0, 0, 1)
 const WORLD_X = new Vector3(1, 0, 0)
 
@@ -67,7 +57,7 @@ const WORLD_X = new Vector3(1, 0, 0)
  * twisting along its length. Each ring closes on itself (no duplicated seam vertex), so the
  * shading has no seam line. The `along` attribute holds u for every vertex.
  */
-export function organTube(curve: Spline3, o: TubeOptions): BufferGeometry {
+export function organTube(curve: Curve3, o: TubeOptions): BufferGeometry {
   const radial = o.radial ?? 16
   const flatten = o.flatten ?? 1
   const positions: number[] = []
@@ -134,7 +124,7 @@ export function organTube(curve: Spline3, o: TubeOptions): BufferGeometry {
 }
 
 /** Round off a tube's ends over the first/last `end` of its length. */
-const rounded = (end: number) => (u: number) => {
+export const rounded = (end: number) => (u: number) => {
   const e = Math.min(u, 1 - u) / end
   return e >= 1 ? 1 : Math.sqrt(Math.max(0, 1 - (1 - e) * (1 - e)))
 }
@@ -143,7 +133,7 @@ const rounded = (end: number) => (u: number) => {
  * Sculpt a unit sphere (or any primitive) into a solid organ by remapping each vertex. The
  * primitive's seam and pole vertices are welded first, so the normals are smooth all round.
  */
-function sculpt(source: BufferGeometry, fn: (v: Vector3) => void): BufferGeometry {
+export function sculpt(source: BufferGeometry, fn: (v: Vector3) => void): BufferGeometry {
   source.deleteAttribute('uv')
   source.deleteAttribute('normal')
   const geo = mergeVertices(source)
@@ -158,53 +148,17 @@ function sculpt(source: BufferGeometry, fn: (v: Vector3) => void): BufferGeometr
   return geo
 }
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-const smoothstep = (a: number, b: number, x: number) => {
+export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+export const smoothstep = (a: number, b: number, x: number) => {
   const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return k * k * (3 - 2 * k)
-}
-
-function buildLiver(): BufferGeometry {
-  // Wedge: a thick, domed right lobe (viewer's left) tapering to a thin left lobe that lies over
-  // the stomach. The top follows the diaphragm; underneath, the front edge is sharp (the liver's
-  // inferior border) and the back is full.
-  return sculpt(new SphereGeometry(1, 56, 40), (v) => {
-    const s = (v.x + 1) / 2 // 0 = right lobe edge, 1 = left lobe tip
-    // Direction around the long axis, and how far out from it (0–1) this vertex is.
-    const ring = Math.sqrt(Math.max(1e-6, 1 - v.x * v.x))
-    const ry = v.y / ring
-    const rz = v.z / ring
-    const out = Math.min(1, Math.hypot(v.y, v.z) / ring)
-    // Superellipse end caps keep the lobes full instead of pinching to a point like a sphere.
-    const blunt = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(2 * s - 1), 4)), 0.25)
-    const top = lerp(0.32, 0.07, Math.pow(s, 1.1)) // domed under the diaphragm
-    const bottom = lerp(0.5, 0.0, Math.pow(s, 0.7)) // slanted lower edge: big right lobe, thin left lobe
-    const deep = lerp(0.4, 0.12, s)
-    // Lower front quarter pulled into a ridge: the sharp inferior border.
-    const lowerFront = Math.max(0, -ry) * Math.max(0, rz)
-    const y = ry > 0 ? ry * top : ry * bottom * (1 + 0.25 * lowerFront)
-    const z = rz * deep * (ry < 0 ? 1 - 0.45 * Math.max(0, -ry) * (rz > 0 ? 1 : 0.3) : 1)
-    // Shallow notch between the lobes (falciform ligament) on the front surface.
-    const notch = 1 - 0.18 * Math.exp(-(((s - 0.58) / 0.05) ** 2)) * Math.max(0, rz)
-    v.set(LIVER.center.x - 0.6 + s * 1.18, LIVER.center.y + y * out * blunt * notch, LIVER.center.z + z * out * blunt)
-  })
-}
-
-function buildGallbladder(): BufferGeometry {
-  // Pear tucked under the right lobe, tilted so its round fundus peeks below the liver's edge.
-  return sculpt(new SphereGeometry(1, 24, 16), (v) => {
-    const pear = v.y < 0 ? 1 : 0.62 - 0.22 * v.y
-    const x = v.x * 0.05 * pear
-    const y = v.y * 0.1
-    v.set(GALLBLADDER.center.x + x + y * 0.35, GALLBLADDER.center.y + y, GALLBLADDER.center.z + v.z * 0.045 * pear)
-  })
 }
 
 /**
  * The skin shell: torso, head and tapering arms, drawn as a rim only. The spleen is not part of it
  * (A-0): it belongs to the lymph system (anatomy/human/lymph.ts) and is drawn with that layer.
  */
-function buildShell(): BufferGeometry {
+export function buildShell(): BufferGeometry {
   const profile = ([...TORSO_PROFILE, [0, 2.5]] as [number, number][]).map(([x, y]) => new Vector2(x!, y!))
   // Flatter at the back than the front, like a real chest and belly.
   const torso = sculpt(new LatheGeometry(profile, 64), (v) => v.set(v.x, v.y, v.z * (v.z > 0 ? 0.58 : 0.5)))
@@ -227,50 +181,61 @@ function buildShell(): BufferGeometry {
   return mergeGeometries([torso, head, ...arms])!
 }
 
-/** Organs of the digestion layer, in the order the shader's state array uses. */
-export const ORGANS = LIT_ORGANS
-const organIndex = (o: LitOrgan) => ORGANS.indexOf(o)
-
-interface Part {
+/** A part of a lit layer, before `layerGeometry` gives it the shared attribute set. */
+export interface Part<O extends string = string> {
   geo: BufferGeometry
-  organ: LitOrgan
+  organ: O
   /** Colour per vertex; gets the vertex's `along` (u) if the part is a tube. */
   tint?: (u: number, base: Color, out: Color) => void
-  /** Stretch along the normal (scene units) at full fill; stomach only. */
+  /** Stretch along the normal (scene units) at full fill (stomach; later lungs, bladder). */
   inflate?: (u: number) => number
-  /** Cavity shading from the surrounding loops (intestines). */
+  /** Cavity shading from the samples (intestines). */
   occlude?: boolean
+  /** Heart chamber (A-5); 0 elsewhere. */
+  chamber?: number
+  /** Body segment for posing (A-1b); 0 = torso. */
+  seg?: number
 }
 
-const JEJUNUM = new Color(JEJUNUM_TONE)
-const ILEUM = new Color(ILEUM_TONE)
-const PYLORUS = new Color(PYLORUS_TONE)
-
-/** Fills in the per-vertex attributes the lit-layer shader reads, and drops the rest. */
-function prepare(part: Part, samples: Float32Array): BufferGeometry {
+/**
+ * Fills in the per-vertex attributes the lit-layer shaders read (LAYER_ATTRIBUTES, zero defaults;
+ * `along` is kept), and drops the rest.
+ */
+function prepare<O extends string>(part: Part<O>, organs: readonly O[], tones: Record<O, string>, samples?: Float32Array): BufferGeometry {
   const { geo } = part
   const n = geo.getAttribute('position').count
-  const along = geo.getAttribute('along')
-  const base = new Color(ORGAN_TONE[part.organ])
+  const alongIn = geo.getAttribute('along')
+  const base = new Color(tones[part.organ])
   const c = new Color()
   const colors = new Float32Array(n * 3)
-  const organ = new Float32Array(n).fill(organIndex(part.organ))
+  const organ = new Float32Array(n).fill(organs.indexOf(part.organ))
+  const along = new Float32Array(n)
   const inflate = new Float32Array(n)
-  const occlusion = part.occlude ? bakeOcclusion(geo, samples) : null
+  const chamber = new Float32Array(n).fill(part.chamber ?? 0)
+  const seg = new Float32Array(n).fill(part.seg ?? 0)
+  const occlusion = part.occlude && samples ? bakeOcclusion(geo, samples) : null
   for (let i = 0; i < n; i++) {
-    const u = along ? along.getX(i) : 0
+    const u = alongIn ? alongIn.getX(i) : 0
+    along[i] = u
     c.copy(base)
     part.tint?.(u, base, c)
     if (occlusion) c.multiplyScalar(occlusion[i]!)
     colors.set([c.r, c.g, c.b], i * 3)
     if (part.inflate) inflate[i] = part.inflate(u)
   }
-  geo.deleteAttribute('along')
-  geo.deleteAttribute('uv')
+  for (const name of Object.keys(geo.attributes)) if (!(LAYER_ATTRIBUTES as readonly string[]).includes(name)) geo.deleteAttribute(name)
   geo.setAttribute('color', new Float32BufferAttribute(colors, 3))
   geo.setAttribute('organ', new Float32BufferAttribute(organ, 1))
+  geo.setAttribute('along', new Float32BufferAttribute(along, 1))
   geo.setAttribute('inflate', new Float32BufferAttribute(inflate, 1))
+  geo.setAttribute('chamber', new Float32BufferAttribute(chamber, 1))
+  geo.setAttribute('seg', new Float32BufferAttribute(seg, 1))
   return geo.index ? geo : mergeVertices(geo)
+}
+
+/** A layer's parts, prepared and merged into its one mesh. `samples`: points for the cavity shading. */
+export function layerGeometry<O extends string>(parts: Part<O>[], organs: readonly O[], tones: Record<O, string>, samples?: Float32Array) {
+  return mergeGeometries(parts.map((p) => prepare(p, organs, tones, samples)))!
 }
 
 /**
@@ -323,137 +288,13 @@ function bakeOcclusion(geo: BufferGeometry, samples: Float32Array): Float32Array
   return out
 }
 
-/** Points along the gut's centre lines, for the cavity shading. */
-function gutSamples(): Float32Array {
-  const pts: number[] = []
-  const p = new Vector3()
-  for (const [curve, n] of [
-    [SMALL_INTESTINE, 700],
-    [LARGE_INTESTINE, 220],
-    [STOMACH, 40],
-  ] as const) {
-    for (let i = 0; i <= n; i++) {
-      curve.getPointAt(i / n, p)
-      pts.push(p.x, p.y, p.z)
-    }
-  }
-  return new Float32Array(pts)
-}
-
-function buildPylorus(): BufferGeometry {
-  const geo = new TorusGeometry(0.046, 0.014, 10, 24)
-  const tan = STOMACH.getTangentAt(1, new Vector3())
-  const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), tan)
-  geo.applyMatrix4(new Matrix4().compose(STOMACH.getPointAt(1, new Vector3()), q, new Vector3(1, 1, 1)))
-  return geo
-}
-
-function buildDigestion(): BufferGeometry {
-  const haustraPouches = 34
-  const samples = gutSamples()
-  const parts: Part[] = [
-    { organ: 'liver', geo: buildLiver() },
-    { organ: 'gallbladder', geo: buildGallbladder() },
-    {
-      organ: 'pancreas',
-      geo: organTube(PANCREAS, {
-        segments: 48,
-        radial: 14,
-        radius: (u) => lerp(0.078, 0.034, u) * rounded(0.12)(u),
-        flatten: 0.55,
-        caps: true,
-      }),
-      // Lobulated look: a faint lighter/darker ripple along its length.
-      tint: (u, base, out) => out.copy(base).multiplyScalar(0.94 + 0.06 * Math.sin(u * 60)),
-    },
-    { organ: 'esophagus', geo: organTube(PHARYNX, { segments: 12, radius: (u) => lerp(0.05, 0.043, u), radial: 14, caps: 'start' }) },
-    {
-      organ: 'esophagus',
-      geo: organTube(ESOPHAGUS, {
-        segments: 60,
-        radial: 14,
-        // Slight narrowings where the aorta and diaphragm press on it.
-        radius: (u) => 0.042 * (1 - 0.18 * Math.exp(-(((u - 0.35) / 0.05) ** 2)) - 0.15 * Math.exp(-(((u - 0.82) / 0.05) ** 2))),
-        flatten: 0.8,
-      }),
-    },
-    {
-      organ: 'stomach',
-      // Built empty; the shader stretches it along the normals as it fills (ends pinned).
-      geo: organTube(STOMACH, {
-        segments: 96,
-        radial: 28,
-        radius: (u) => stomachRadius(u) * STOMACH_EMPTY,
-        flatten: 0.72,
-        caps: true,
-        // Very gentle longitudinal folding on the greater curvature.
-        shape: (u, a) => 1 + 0.025 * Math.sin(u * 46) * Math.max(0, Math.cos(a)),
-      }),
-      inflate: (u) => stomachRadius(u) * STOMACH_STRETCH * stomachStretchWeight(u),
-      // Darker towards the pylorus's muscular antrum.
-      tint: (u, base, out) => out.copy(base).lerp(PYLORUS, smoothstep(0.75, 1, u) * 0.5),
-    },
-    { organ: 'stomach', geo: buildPylorus(), tint: (_u, _base, out) => out.copy(PYLORUS) },
-    {
-      organ: 'smallIntestine',
-      geo: organTube(SMALL_INTESTINE, {
-        segments: 560,
-        radial: 10,
-        radius: (u) => (u < 0.08 ? 0.056 : 0.052) * rounded(0.004)(u),
-        caps: true,
-      }),
-      // The jejunum (first part) is slightly redder, the ileum (last part) paler.
-      tint: (u, base, out) => {
-        out.copy(base)
-        if (u < 0.45) out.lerp(JEJUNUM, 0.4 * (1 - u / 0.45))
-        else out.lerp(ILEUM, 0.45 * smoothstep(0.45, 1, u))
-      },
-      occlude: true,
-    },
-    {
-      organ: 'largeIntestine',
-      geo: organTube(LARGE_INTESTINE, {
-        segments: 320,
-        radial: 16,
-        radius: (u) => {
-          if (u < 0.05) return lerp(0.11, 0.09, u / 0.05) * rounded(0.012)(u) // caecum
-          if (u > 0.9) return lerp(0.075, 0.05, (u - 0.9) / 0.1) * rounded(0.01)(u) // rectum → anal canal
-          return 0.085
-        },
-        shape: (u, a) => {
-          if (u > 0.88) return 1
-          // Haustra: the colon's row of pouches, pinched between three taeniae coli bands (soft).
-          const pouch = 0.5 - 0.5 * Math.cos(u * haustraPouches * Math.PI * 2)
-          const band = Math.pow(Math.max(0, Math.cos(3 * a)), 10)
-          return 0.92 + 0.12 * pouch - 0.07 * band
-        },
-        caps: true,
-      }),
-      occlude: true,
-    },
-    { organ: 'largeIntestine', geo: organTube(APPENDIX, { segments: 20, radial: 10, radius: (u) => 0.018 * rounded(0.2)(u), caps: true }) },
-  ]
-  return mergeGeometries(parts.map((p) => prepare(p, samples)))!
-}
-
-let cache: ReturnType<typeof build> | null = null
-
-function build() {
+/** The food particles, one shape per nutrient (shared by every layer). */
+export function buildParticles(): Record<NutrientKind, BufferGeometry> {
   return {
-    shell: buildShell(),
-    digestion: buildDigestion(),
-    particles: {
-      carbs: new SphereGeometry(0.03, 12, 8),
-      protein: new BoxGeometry(0.045, 0.045, 0.045),
-      fat: new OctahedronGeometry(0.036),
-      fiber: new CylinderGeometry(0.01, 0.01, 0.09, 6),
-      water: new IcosahedronGeometry(0.02, 1),
-    } satisfies Record<NutrientKind, BufferGeometry>,
+    carbs: new SphereGeometry(0.03, 12, 8),
+    protein: new BoxGeometry(0.045, 0.045, 0.045),
+    fat: new OctahedronGeometry(0.036),
+    fiber: new CylinderGeometry(0.01, 0.01, 0.09, 6),
+    water: new IcosahedronGeometry(0.02, 1),
   }
-}
-
-/** Geometry is built once and shared by every body on the page. */
-export function sharedGeometry() {
-  cache ??= build()
-  return cache
 }

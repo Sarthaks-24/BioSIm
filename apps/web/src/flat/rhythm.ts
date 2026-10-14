@@ -1,4 +1,5 @@
 import { useMotion } from '../state/motion.ts'
+import { MAX_DRAWN_HZ, STILL_PHASE, drawnRate } from './rate.ts'
 
 /**
  * The rhythm layer (anatomy plan §2.0, §4): how a flat drawing shows a beat or a breath. The
@@ -15,26 +16,9 @@ import { useMotion } from '../state/motion.ts'
  * The ticker (lib/ticker.ts, U-2) calls it on the real clock, ≤ 30 fps.
  */
 
-/** The fastest rhythm drawn, in cycles per second (150 a minute). */
-export const MAX_DRAWN_HZ = 2.5
-/** The fastest breath drawn (48 a minute; ui-ux §4, architecture §1.7): a run's 33 a minute is 0.55 Hz. */
-export const MAX_BREATH_HZ = 0.8
-
-/** The phase a still (reduced motion) rhythm is drawn at: mid-way, as the plan's still frames are. */
-export const STILL_PHASE = 0.5
-
-/**
- * How fast a rhythm of `perMin` (beats or breaths a minute, from the run) is drawn: its rate in
- * Hz, capped at `max` (MAX_DRAWN_HZ; breaths MAX_BREATH_HZ), and whether it was slowed (the chip
- * then says "animation slowed").
- */
-export function drawnRate(perMin: number, max = MAX_DRAWN_HZ): { hz: number; slowed: boolean } {
-  // No number (a missing signal, NaN, ∞) draws nothing moving rather than a wild rate.
-  if (!Number.isFinite(perMin)) return { hz: 0, slowed: false }
-  const hz = Math.max(0, perMin) / 60
-  return hz > max ? { hz: max, slowed: true } : { hz, slowed: false }
-}
-
+// The rate caps are in rate.ts (pure: a drawing's maths and the 3D layers import them without this
+// file's motion store); re-exported here for the flat rhythm layer's callers.
+export { MAX_BREATH_HZ, MAX_DRAWN_HZ, STILL_PHASE, drawnRate } from './rate.ts'
 /**
  * The size of a rhythm element at `phase` (0…1, one cycle): 1 at the start of the cycle, 1 +
  * `amplitude` at its middle, a smooth (cosine) swell. Size only.

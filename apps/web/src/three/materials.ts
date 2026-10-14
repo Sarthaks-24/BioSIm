@@ -1,7 +1,7 @@
 import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
 import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones/base.ts'
 import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
-import { ORGANS } from './geometry.ts'
+import type { DashLook } from './layer.ts'
 
 /**
  * Materials of the 3D body (plan-systems-3d §3.1, roadmap 3D-1):
@@ -13,12 +13,20 @@ import { ORGANS } from './geometry.ts'
  * Shader code is injected with onBeforeCompile, so three.js keeps its own lighting.
  */
 
-/** Uniforms shared by the organs and their outline, written per frame from the body state. */
+/**
+ * Uniforms shared by a layer's organs and their outline, written per frame from the body state.
+ * Both arrays have one slot per organ (Layer3d.organs order); the shaders are sized by that count.
+ */
 export interface LayerUniforms {
-  /** Stomach stretch, 0…1 (anatomy stomachFill). */
-  uFill: IUniform<number>
-  /** Per organ (ORGANS order): −1 = empty, faded back; 0 = normal; 1 = the active stage. */
+  /** Per organ, how far it is stretched, 0…1 (stomach: anatomy stomachFill); a `grow` layer's extra size (lungs). */
+  uFill: IUniform<number[]>
+  /** Per organ, the point a `grow` layer's organ grows from (Layer3d.grow); unused otherwise. */
+  uGrowAt: IUniform<Vector3[]>
+  /** Per organ: −1 = empty, faded back; 0 = normal; 1 = the active stage. */
   uState: IUniform<number[]>
+  /** Per organ, a `dashes` layer's dash density (0 = none) and how far its dashes have moved (Layer3d.dashes). */
+  uDash: IUniform<number[]>
+  uFlow: IUniform<number[]>
   /** Outline width as a share of the distance to the camera (constant on screen). */
   uOutline: IUniform<number>
   /** How far an empty organ fades (BODY_LOOK.fade). */
@@ -28,10 +36,13 @@ export interface LayerUniforms {
   uLift: IUniform<Vector3>
 }
 
-export const layerUniforms = (): LayerUniforms => {
+export const layerUniforms = (organs: number): LayerUniforms => {
   const u: LayerUniforms = {
-    uFill: { value: 0 },
-    uState: { value: ORGANS.map(() => 0) },
+    uFill: { value: new Array<number>(organs).fill(0) },
+    uGrowAt: { value: Array.from({ length: organs }, () => new Vector3()) },
+    uState: { value: new Array<number>(organs).fill(0) },
+    uDash: { value: new Array<number>(organs).fill(0) },
+    uFlow: { value: new Array<number>(organs).fill(0) },
     uOutline: { value: 0 },
     uFadeAmount: { value: 0 },
     uShade: { value: 0 },
@@ -50,15 +61,57 @@ export function setLook(u: LayerUniforms, look: BodyLook) {
   u.uLift.value.fromArray(l.outlineLift)
 }
 
-const N = ORGANS.length
-
 const FADE = new Color(FADE_TONE)
 
-export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
+/**
+ * How a vertex moves as its organ fills (GLSL, `p` the position): out along its normal (the stomach),
+ * or, for a `grow` layer, away from its organ's point (Layer3d.grow: the lungs swell as a whole). A
+ * layer without `grow` gets exactly the shader it had (Digestion's look is unchanged).
+ */
+const stretch = (grow: boolean, p: string, n: string) =>
+  grow
+    ? `${p} += (${p} - uGrowAt[int(organ + 0.5)]) * inflate * uFill[int(organ + 0.5)];`
+    : `${p} += ${n} * inflate * uFill[int(organ + 0.5)];`
+
+/**
+ * A `dashes` layer's dashes (Layer3d.dashes), scene units: each dash is DASH.length long, and at
+ * density 1 the gap after it is DASH.gap (the flat heart's 3 px and 10 px at its usual scale).
+ */
+export const DASH = { length: 0.03, gap: 0.09 } as const
+
+/**
+ * The dashes (GLSL, after the rim light): pale, down the middle of the tube as seen (where it faces
+ * the camera), each DASH.length long, the gap shrinking as the density grows; `fwidth` keeps their
+ * ends soft at any distance. Only a layer with `dashes` gets it. `look`: their colour and width
+ * (Layer3d.dashes; by default the blood's pale streak, `cover` 0.16).
+ */
+const dashGlsl = (look?: DashLook) => {
+  const ink = look ? new Color(look.ink) : new Color(0.9, 0.9, 0.9)
+  const from = 1 - (look?.cover ?? 0.16)
+  return `
+        float lpDensity = uDash[int(vOrgan + 0.5)];
+        if (lpDensity > 0.0) {
+          float lpPeriod = ${DASH.length.toFixed(3)} + ${DASH.gap.toFixed(3)} / lpDensity;
+          float lpFrom = abs(fract((vAlong - uFlow[int(vOrgan + 0.5)]) / lpPeriod) - 0.5) * lpPeriod;
+          float lpSoft = fwidth(vAlong);
+          float lpOn = 1.0 - smoothstep(${(DASH.length / 2).toFixed(3)} - lpSoft, ${(DASH.length / 2).toFixed(3)} + lpSoft, lpFrom);
+          outgoingLight = mix(outgoingLight, vec3(${[ink.r, ink.g, ink.b].map((c) => c.toFixed(4)).join(', ')}), 0.8 * lpOn * smoothstep(${from.toFixed(2)}, ${(from + 0.1).toFixed(2)}, facing));
+        }`
+}
+
+/**
+ * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
+ * baked into the shader), shared only by bodies showing the same layer. `grow`: see `stretch`;
+ * `dashes`: see `dashGlsl`.
+ */
+export function tissueMaterial(u: LayerUniforms, key: string, grow = false, dashes: boolean | DashLook = false): MeshStandardMaterial {
+  const N = u.uState.value.length
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: FrontSide })
   m.onBeforeCompile = (shader) => {
     shader.uniforms.uFill = u.uFill
+    if (grow) shader.uniforms.uGrowAt = u.uGrowAt
     shader.uniforms.uState = u.uState
+    if (dashes) Object.assign(shader.uniforms, { uDash: u.uDash, uFlow: u.uFlow })
     shader.uniforms.uFade = { value: FADE }
     shader.uniforms.uFadeAmount = u.uFadeAmount
     shader.vertexShader = shader.vertexShader
@@ -67,14 +120,25 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         `#include <common>
         attribute float organ;
         attribute float inflate;
-        uniform float uFill;
+        uniform float uFill[${N}];${
+          grow
+            ? `
+        uniform vec3 uGrowAt[${N}];`
+            : ''
+        }${
+          dashes
+            ? `
+        attribute float along;
+        varying float vAlong;`
+            : ''
+        }
         varying float vOrgan;`,
       )
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        transformed += objectNormal * inflate * uFill;
-        vOrgan = organ;`,
+        ${stretch(grow, 'transformed', 'objectNormal')}
+        vOrgan = organ;${dashes ? ' vAlong = along;' : ''}`,
       )
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -83,7 +147,14 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         uniform float uState[${N}];
         uniform vec3 uFade;
         uniform float uFadeAmount;
-        varying float vOrgan;
+        varying float vOrgan;${
+          dashes
+            ? `
+        uniform float uDash[${N}];
+        uniform float uFlow[${N}];
+        varying float vAlong;`
+            : ''
+        }
         float organState() { return uState[int(vOrgan + 0.5)]; }`,
       )
       .replace(
@@ -101,12 +172,12 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         float rim = pow(1.0 - facing, 2.5);
         outgoingLight += mix(diffuseColor.rgb, vec3(1.0), 0.55) * rim * (0.32 + 0.25 * lpActive) * (1.0 - 0.6 * lpFaded);
         // The active organ glows a little from within, so it reads as "here" even in grey light.
-        outgoingLight += diffuseColor.rgb * lpActive * 0.16;
+        outgoingLight += diffuseColor.rgb * lpActive * 0.16;${dashes ? dashGlsl(dashes === true ? undefined : dashes) : ''}
         #include <opaque_fragment>`,
       )
   }
-  // Same program for every body on the page.
-  m.customProgramCacheKey = () => 'lifepeek-tissue'
+  // One program per layer, shared by every body on the page that shows it.
+  m.customProgramCacheKey = () => `lifepeek-tissue:${key}:${N}`
   return m
 }
 
@@ -116,21 +187,36 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
  * paper or another organ, a thin outline shows. Faded organs get a fainter line. On the
  * projector the line is wider and near-black (setLook).
  */
-export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
+export function outlineMaterial(u: LayerUniforms, grow = false): ShaderMaterial {
+  const N = u.uState.value.length
   return new ShaderMaterial({
     side: BackSide,
     vertexColors: true,
-    uniforms: { uFill: u.uFill, uState: u.uState, uOutline: u.uOutline, uShade: u.uShade, uLift: u.uLift, uFade: { value: FADE } },
+    uniforms: {
+      uFill: u.uFill,
+      ...(grow && { uGrowAt: u.uGrowAt }),
+      uState: u.uState,
+      uOutline: u.uOutline,
+      uShade: u.uShade,
+      uLift: u.uLift,
+      uFade: { value: FADE },
+    },
     vertexShader: /* glsl */ `
       attribute float organ;
       attribute float inflate;
-      uniform float uFill;
+      uniform float uFill[${N}];${
+        grow
+          ? `
+      uniform vec3 uGrowAt[${N}];`
+          : ''
+      }
       uniform float uOutline;
       uniform float uState[${N}];
       varying vec3 vInk;
       varying float vFaded;
       void main() {
-        vec3 p = position + normal * inflate * uFill;
+        vec3 p = position;
+        ${stretch(grow, 'p', 'normal')}
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         vec3 n = normalize(normalMatrix * normal);
         mv.xyz += n * uOutline * -mv.z;

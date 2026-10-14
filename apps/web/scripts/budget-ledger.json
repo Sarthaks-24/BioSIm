@@ -111,6 +111,15 @@
         "engineKB": 11.974,
         "simRatchetKB": 188.679,
         "simEngineRatchetKB": 200.753
+      },
+      {
+        "wp": "A-0 + A-3 + A-5 + A-6 (3D)",
+        "at": "2026-10-14",
+        "on": "v3 9943cfe (S-7) + wp/a6-kidneys3d (A-0 3D plumbing, A-3 lungs, A-5 heart, A-6 kidneys), merged: three/mount.ts and kit.ts in the first 3D view (259.7 -> 262.2 KB, enforced <= 270), breathing, circulation and kidneys 3D layers each a lazy chunk (6.3 / 7.4 / 6.9 KB); /sim 188.479 -> 188.674 (+0.195: BodyView hands the row's layer to the 3D body, the rhythm and rate hooks in flat/rate.ts, flat/rhythm.ts and the three rows' 3D layer names), engine 11.974 unchanged",
+        "simKB": 188.674,
+        "engineKB": 11.974,
+        "simRatchetKB": 188.874,
+        "simEngineRatchetKB": 200.948
       }
     ]
   },

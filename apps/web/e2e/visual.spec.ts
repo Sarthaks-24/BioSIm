@@ -145,3 +145,27 @@ test('sim 3D desktop en', async ({ page }) => {
     maxDiffPixelRatio: 0.05,
   })
 })
+
+// The 3D body alone (A-0 3D: the shared plumbing must not change digestion's look), at an empty, a
+// full and an emptying stomach, desktop and phone. With VISUAL_ZERO=1 the canvas must be exact.
+const SHOTS_3D = [
+  { name: 'desktop', width: 1440, height: 900 },
+  { name: 'phone390', width: 390, height: 844 },
+]
+for (const view of SHOTS_3D) {
+  for (const t of [0, 30, 240]) {
+    test(`3D body ${view.name} t=${t}`, async ({ page }) => {
+      onlyIn('visual-3d')
+      await page.setViewportSize({ width: view.width, height: view.height })
+      await returningVisitor(page)
+      await page.goto(`/sim?v=3&a=cheeseburger:1,cola:1&t=${t}`)
+      const body = page.locator('[data-body="3d"][data-ready]')
+      await expect(body).toBeVisible({ timeout: 30_000 })
+      await settle(page)
+      await expect(body.locator('canvas')).toHaveScreenshot(`body-3d-${view.name}-${t}.png`, {
+        animations: 'disabled',
+        ...(ZERO ? { maxDiffPixels: 0, threshold: 0 } : { maxDiffPixelRatio: 0.05 }),
+      })
+    })
+  }
+}

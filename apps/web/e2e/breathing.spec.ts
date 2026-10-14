@@ -17,8 +17,10 @@ test.beforeEach(({ page }) => returningVisitor(page))
 async function open(page: Page, url: string) {
   await goto(page, url)
   await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="breathing"]')).toBeAttached()
+  await expect(page.locator('[data-layer="breathing"]').first()).toBeAttached()
   await bodySettled(page)
+  // With WebGL the flat lungs stand in until the 3D ones have drawn (A-3): then only one picture is left.
+  await expect(page.locator('[data-layer="breathing"]')).toHaveCount(1, { timeout: 30_000 })
 }
 
 /** The chip's number: the breaths a minute it says. */
@@ -28,7 +30,8 @@ test('a link lights breathing: lungs, chip, three graphs, the book line and the 
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, REST)
-  await expect(page.locator('[data-body="flat"][data-framing="chest"]')).toBeVisible()
+  // With WebGL the 3D lungs (A-3), else the flat ones: the chest framing either way.
+  await expect(page.locator('[data-body][data-framing="chest"][data-ready]')).toBeVisible()
   await expect(page.locator('[data-system-title="breathing"]')).toContainText('Breathing')
   await expect(page.locator('[data-rhythm-chip]')).toContainText(/1\d a minute/)
   for (const label of ['Lungs', 'Diaphragm'])
@@ -182,4 +185,65 @@ test('while the pack loads the lit system stays drawn and the title says so; a f
   // The link keeps what was asked for.
   expect(new URL(failing.url()).searchParams.get('layer')).toBe('breathing')
   await fresh.close()
+})
+
+test('the 3D lungs (A-3): rest and a walk visibly differ, the GPU within plan §9; shots', async ({ page }, info) => {
+  test.skip(!['desktop', 'projector', 'phone'].includes(info.project.name), 'WebGL projects with motion')
+  test.setTimeout(180_000)
+  const lungs = page.locator('[data-body="3d"][data-layer="breathing"]')
+  /** The biggest lung size drawn over a little more than one resting breath (read in the page), and the drawn rate. */
+  const sample = async () => {
+    await expect(lungs).toHaveAttribute('data-breath', 'moving', { timeout: 30_000 })
+    return page.evaluate(
+      () =>
+        new Promise<{ biggest: number; hz: number }>((done) => {
+          const el = document.querySelector<HTMLElement>('[data-body="3d"][data-layer="breathing"]')!
+          let biggest = 0
+          const t0 = performance.now()
+          const timer = setInterval(() => {
+            biggest = Math.max(biggest, Number(el.dataset.lungScale))
+            if (performance.now() - t0 < 4500) return
+            clearInterval(timer)
+            done({ biggest, hz: Number(el.dataset.breathHz) })
+          }, 50)
+        }),
+    )
+  }
+  const rendered = () =>
+    page.evaluate(() => {
+      const r = (window as unknown as { __lifepeekGl: { render: { calls: number; triangles: number } } }).__lifepeekGl.render
+      return { calls: r.calls, triangles: r.triangles }
+    })
+  await open(page, REST)
+  const rest = await sample()
+  const gl = await rendered()
+  expect(gl.calls).toBeLessThanOrEqual(60)
+  expect(gl.triangles).toBeLessThanOrEqual(150_000)
+  if (process.env.E2E_SHOTS) await page.screenshot({ path: `../../.shots/a3-lungs3d-rest-${info.project.name}.png` })
+  await open(page, WALK)
+  const walk = await sample()
+  if (process.env.E2E_SHOTS) await page.screenshot({ path: `../../.shots/a3-lungs3d-walk-${info.project.name}.png` })
+  // Faster and deeper on the walk (the model: about 400 mL a breath at rest, 820 on the walk, so the
+  // drawn swell nearly doubles); never past 0.8 a second.
+  expect(walk.hz).toBeGreaterThan(rest.hz + 0.08)
+  expect(walk.hz).toBeLessThanOrEqual(0.8)
+  expect(walk.biggest - 1).toBeGreaterThan(1.6 * (rest.biggest - 1))
+})
+
+test('the 3D lungs on a 2 GB phone: the light mesh, at most 60k triangles and 20 draws (plan §9)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'phone', 'one phone project')
+  await page.addInitScript(() => Object.defineProperty(navigator, 'deviceMemory', { get: () => 2 }))
+  await open(page, WALK)
+  await expect(page.locator('[data-body="3d"][data-layer="breathing"][data-breath]')).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(800)
+  const { gl, held } = await page.evaluate(() => {
+    const w = window as unknown as {
+      __lifepeekGl: { render: { calls: number; triangles: number } }
+      __lifepeek3d: () => { layers: string[] }
+    }
+    return { gl: { calls: w.__lifepeekGl.render.calls, triangles: w.__lifepeekGl.render.triangles }, held: w.__lifepeek3d().layers }
+  })
+  expect(held).toContain('low:breathing')
+  expect(gl.calls).toBeLessThanOrEqual(20)
+  expect(gl.triangles).toBeLessThanOrEqual(60_000)
 })

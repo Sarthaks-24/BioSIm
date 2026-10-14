@@ -22,6 +22,8 @@ export const KIDNEYS: SystemDef = {
   slots: [],
   knownLimits: [],
   draw: 'layer',
+  // Its 3D kidneys, ureters and bladder (A-6, v3.1): a lazy chunk, loaded the first time Kidneys & water is lit on a device with WebGL.
+  layer3d: () => import('../../three/layers/kidneys.ts'),
   pack: 'kidneys',
   inputs: ['meal', 'activity'],
   rhythms: [],

@@ -14,7 +14,8 @@ import type {
   Unit,
 } from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
-import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
+import type { Layer3d } from '../three/layer.ts'
+import type { LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
 import { CIRCULATION } from './circulation/row.ts'
@@ -210,8 +211,12 @@ export interface SystemDef {
    * loads with the pack when the system is first lit (A-0 flat registry; R71, R74).
    */
   draw: 'body' | 'layer'
-  /** Its 3D layer (v3.1+, optional per system: R43). Without one the system is drawn flat on every device. */
-  layer3d?: Loader<LayerComponent>
+  /**
+   * Its 3D layer (v3.1+, optional per system: R43): a lazy chunk of ≤ 20 KB gz (three/layers/<id>.ts),
+   * mounted by the 3D body in place of the last one (three/mount.ts). Without one the system is drawn
+   * flat on every device. Digestion's is in the 3D body's own chunk, so its row has none.
+   */
+  layer3d?: Loader<Layer3d>
   /** Its pack (architecture §0): the lazy chunks and the text section `sys.<pack>`. */
   pack: PackId
   inputs: readonly InputKind[]

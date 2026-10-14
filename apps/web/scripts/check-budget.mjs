@@ -196,6 +196,12 @@
 //   144.6 → 145.0 KB. The bundler split the codec's meal and activity modules out of the entry when a
 //   lazy chunk imported the codec without lib/presets.ts (+1.3 KB measured): the lesson's link goes
 //   through presetHref (lib/flagship.ts).
+//   A-0 3D half (2026-10-14, branch wp/a0-3d from v3 ce63198; v3.1): the 3D plumbing (three/mount.ts:
+//   mount and dispose, the layer cache and LRU; per-layer program keys, uFill[N], the shared
+//   attributes) and digestion's layer in three/layers/: "3D body (lazy)" is now "first 3D view",
+//   259.7 → 260.7 KB (+1.0, enforced ≤ 270), plus the 3D-layer check (each other layer a lazy chunk
+//   ≤ 20 KB). /sim 187.862 → 187.888 KB (+0.03: BodyView hands the row's layer to the 3D body),
+//   under the ratchet, so no ledger row.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -215,9 +221,12 @@ const BUDGETS = [
   // The stage (pages/Simulator.tsx) is /sim since WP-19; /next only redirects to it.
   // 194 is the LAST raise (R42, W-1): if a v3 step would pass it, the engine worker (W-2) lands first.
   { name: '/sim before 3D', roots: SIM_ROOTS, max: 194 * KB, mode: 'enforce' },
-  // What a device with WebGL downloads on top, once, for the 3D body (three.js, @react-three).
+  // The first 3D view (anatomy plan §8, A-0 3D half): what a device with WebGL downloads on top of
+  // /sim, once, for the 3D body: three.js, @react-three, the base (shell, food) and digestion's lit
+  // layer, which is in the same chunk. Every other system's layer is a lazy chunk of its own (the
+  // 3D-layer check below). 270 KB gz, enforced.
   {
-    name: '3D body (lazy)',
+    name: 'first 3D view',
     roots: ['src/three/BodyCanvas.tsx'],
     minus: SIM_ROOTS,
     max: 270 * KB,
@@ -386,6 +395,29 @@ console.log(
   `System chunks take from /sim only index, jsx-runtime, i18n, kit, the route, clock (enforce): ${trapProblems.length ? 'FAILS' : 'ok'}`,
 )
 
+// 3D layers (anatomy plan §3, §8; A-0 3D half): digestion's is in the first 3D view; every other
+// system's layer (three/layers/<id>.ts, SystemDef.layer3d) is a lazy chunk of ≤ 20 KB gz on top of
+// the first 3D view, so lighting a system never grows what every WebGL device downloads first.
+const LAYER_MAX = 20 * KB
+const layerProblems = []
+{
+  if (manifest['src/three/layers/digestion.ts']?.isDynamicEntry)
+    layerProblems.push('src/three/layers/digestion.ts is a lazy chunk: it belongs in the first 3D view')
+  const first = new Set(staticFiles(['src/three/BodyCanvas.tsx', ...SIM_ROOTS]))
+  const lines = []
+  for (const [key, chunk] of Object.entries(manifest)) {
+    if (!chunk.isDynamicEntry || !key.startsWith('src/three/layers/')) continue
+    const bytes = staticFiles([key])
+      .filter((f) => !first.has(f))
+      .reduce((sum, f) => sum + gzip(f), 0)
+    lines.push(`${key} ${kb(bytes)}`)
+    if (bytes > LAYER_MAX) layerProblems.push(`${key} is ${kb(bytes)} gz, over ${kb(LAYER_MAX)}`)
+  }
+  console.log(
+    `\n3D layers: digestion's in the first 3D view, each other ≤ ${kb(LAYER_MAX)} (enforce): ${lines.length ? lines.join(', ') : 'none lazy yet'}; ${layerProblems.length ? 'FAILS' : 'ok'}`,
+  )
+}
+
 // Every lazy JS file works offline once saved (plan qa-fixes §3.2, as R71 and R93 #7 changed it): it is
 // in at least one entry of pack-manifest.json, so Teach's "Save for class offline" saves it, or on
 // this allow-list of files a lesson never needs (the "new version" note and its service-worker helper).
@@ -488,8 +520,10 @@ if (guardProblems.length) {
   process.exit(1)
 }
 
-if (ratchetProblems.length || trapProblems.length) {
-  console.error(`\nA v3 ratchet or the system-chunk check failed:\n  ${[...ratchetProblems, ...trapProblems].join('\n  ')}`)
+if (ratchetProblems.length || trapProblems.length || layerProblems.length) {
+  console.error(
+    `\nA v3 ratchet, the system-chunk or the 3D-layer check failed:\n  ${[...ratchetProblems, ...trapProblems, ...layerProblems].join('\n  ')}`,
+  )
   process.exit(1)
 }
 

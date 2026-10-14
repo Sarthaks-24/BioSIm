@@ -6,7 +6,8 @@ import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
 // clock (at most 2.5 a second, size only), dashes denser where the blood goes, the rhythm chip, the
 // colour key, three graphs with the book line, the children's band, the "Why different?" card and
 // the held blood pressure; beside a kept plan "Where blood goes" one flow at a time. Projects
-// desktop, phone, projector and reduced. E2E_SHOTS=1 saves rest, walk and kept pictures to .shots/.
+// desktop, phone, projector and reduced, drawn in 3D there (A-5), and nowebgl, drawn flat. E2E_SHOTS=1
+// saves rest, walk and kept pictures to .shots/.
 
 const PLAN = '/sim?v=3&a=roti:1&act=walk.30.20&layer=circulation'
 const REST = `${PLAN}&t=10`
@@ -20,9 +21,14 @@ test.beforeEach(({ page }) => returningVisitor(page))
 async function open(page: Page, url: string) {
   await goto(page, url)
   await page.locator('[data-stage]').waitFor()
-  await expect(page.locator('[data-layer="circulation"]')).toBeAttached()
+  await expect(page.locator('[data-layer="circulation"]').first()).toBeAttached()
   await bodySettled(page)
+  // With WebGL the flat heart stands in until the 3D one has drawn (A-5): then only one picture is left.
+  await expect(page.locator('[data-layer="circulation"]')).toHaveCount(1, { timeout: 30_000 })
 }
+
+/** Whether this project draws the 3D heart (every project with WebGL). */
+const in3d = () => test.info().project.name !== 'nowebgl'
 
 /** The chip's number: the beats a minute it says. */
 const chipRate = (page: Page) => page.locator('[data-rhythm-chip]').getAttribute('data-rhythm-chip').then(Number)
@@ -38,7 +44,10 @@ test('a link lights Heart & blood: heart, chip, colour key, three graphs, book l
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await open(page, REST)
-  await expect(page.locator('[data-body="flat"][data-framing="torso"]')).toBeVisible()
+  // With WebGL the 3D heart (A-5), else the flat one: the torso framing either way.
+  await expect(
+    page.locator(in3d() ? '[data-body="3d"][data-framing="torso"][data-ready]' : '[data-body="flat"][data-framing="torso"]'),
+  ).toBeVisible()
   await expect(page.locator('[data-system-title="circulation"]')).toContainText('Heart & blood')
   await expect(page.locator('[data-rhythm-chip]')).toContainText(/6\d/)
   for (const [key, label] of <[string, string][]>[
@@ -73,6 +82,8 @@ test('rest and a walk visibly differ: faster beat, faster dashes, denser to the 
   await expect(layer).toHaveAttribute('data-dash-legs', '1')
   await shot(page, 'rest')
   await open(page, WALK)
+  // The 3D heart writes its read-out a few times a second, from its first frames.
+  await expect(layer).toHaveAttribute('data-dash-speed', /\d/)
   const walk = await chipRate(page)
   await expect(page.locator('[data-rhythm-chip]')).toContainText(/walking/)
   await shot(page, 'walk')
@@ -93,7 +104,29 @@ test('the beat moves on the real clock, size only, at most 2.5 a second; a run s
   expect(await chipRate(page)).toBeGreaterThan(150)
   await expect(page.locator('[data-rhythm-chip]')).toContainText('animation slowed')
   expect(Number(await layer.getAttribute('data-beat-hz'))).toBeLessThanOrEqual(2.5)
-  // No colour change per beat: the heart's pixels never change, only its transform (WCAG 2.3.1).
+  if (in3d()) {
+    // 3D: the ventricles' drawn size changes with the beat; nothing else (the layer writes only the
+    // heart's size per beat, never a state or a colour: three/layers/circulation.test.ts).
+    const sizes = await layer.evaluate(
+      (el: HTMLElement) =>
+        new Promise<string[]>((done) => {
+          const seen = new Set<string>()
+          const t0 = performance.now()
+          const timer = setInterval(() => {
+            seen.add(el.dataset.ventricleScale!)
+            if (performance.now() - t0 < 2500) return
+            clearInterval(timer)
+            done([...seen])
+          }, 20)
+        }),
+    )
+    if (reduced) {
+      expect(sizes).toEqual(['1.000'])
+      await expect(layer.locator('[data-arrows] path')).not.toHaveCount(0)
+    } else expect(sizes.length).toBeGreaterThan(1)
+    return
+  }
+  // Flat: no colour change per beat: the heart's pixels never change, only its transform (WCAG 2.3.1).
   const sample = () =>
     layer.evaluate((el) =>
       [...el.querySelectorAll('canvas')]
@@ -132,11 +165,80 @@ test('a link with activity and no layer opens Heart & blood (R39, live since H-1
   for (const url of ['/sim?v=3&a=roti:1&act=walk.30.20&t=40', '/sim?v=3&a=roti:1&act=walk.30.20&t=40&preview=1']) {
     await goto(page, url)
     await expect(page.locator('[data-system-title="circulation"]')).toBeVisible()
-    await expect(page.locator('[data-layer="circulation"]')).toBeAttached()
+    await expect(page.locator('[data-layer="circulation"]').first()).toBeAttached()
     // Written back, the link names the layer it shows (R93).
     await expect.poll(() => new URL(page.url()).searchParams.get('layer')).toBe('circulation')
   }
   await goto(page, '/sim?v=3&a=roti:1&t=40')
   await page.locator('[data-stage]').waitFor()
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
+})
+
+test('the 3D heart (A-5): rest and a walk visibly differ, the GPU within plan §9; shots', async ({ page }, info) => {
+  test.skip(!['desktop', 'projector', 'phone'].includes(info.project.name), 'WebGL projects with motion')
+  test.setTimeout(180_000)
+  const heart = page.locator('[data-body="3d"][data-layer="circulation"]')
+  /** The ventricles' sizes drawn over a few beats (read in the page), the drawn rate and the beat's squeeze. */
+  const sample = async () => {
+    await expect(heart).toHaveAttribute('data-beat', 'moving', { timeout: 30_000 })
+    return page.evaluate(
+      () =>
+        new Promise<{ sizes: number; hz: number; squeeze: number }>((done) => {
+          const el = document.querySelector<HTMLElement>('[data-body="3d"][data-layer="circulation"]')!
+          const sizes = new Set<string>()
+          const t0 = performance.now()
+          const timer = setInterval(() => {
+            sizes.add(el.dataset.ventricleScale!)
+            if (performance.now() - t0 < 3000) return
+            clearInterval(timer)
+            done({ sizes: sizes.size, hz: Number(el.dataset.beatHz), squeeze: Number(el.dataset.squeeze) })
+          }, 20)
+        }),
+    )
+  }
+  const rendered = () =>
+    page.evaluate(() => {
+      const r = (window as unknown as { __lifepeekGl: { render: { calls: number; triangles: number } } }).__lifepeekGl.render
+      return { calls: r.calls, triangles: r.triangles }
+    })
+  const shot3d = (name: string) =>
+    process.env.E2E_SHOTS ? page.screenshot({ path: `../../.shots/a5-heart3d-${name}-${info.project.name}.png` }) : null
+  await open(page, REST)
+  const rest = await sample()
+  await expect(heart).toHaveAttribute('data-dash-legs', '1')
+  const gl = await rendered()
+  expect(gl.calls).toBeLessThanOrEqual(60)
+  expect(gl.triangles).toBeLessThanOrEqual(150_000)
+  await shot3d('rest')
+  await open(page, WALK)
+  const walk = await sample()
+  await shot3d('walk')
+  // Faster, a bigger squeeze (more blood per beat), dashes faster and denser to the legs; never past 2.5 a second.
+  expect(walk.hz).toBeGreaterThan(rest.hz + 0.3)
+  expect(walk.hz).toBeLessThanOrEqual(2.5)
+  expect(walk.squeeze).toBeGreaterThan(rest.squeeze + 0.01)
+  expect(walk.squeeze).toBeLessThanOrEqual(0.12)
+  expect(Math.min(rest.sizes, walk.sizes)).toBeGreaterThan(1)
+  expect(Number(await heart.getAttribute('data-dash-legs'))).toBeGreaterThanOrEqual(3)
+  expect(Number(await heart.getAttribute('data-dash-speed'))).toBeGreaterThan(1.5)
+  // The colour key and its caption, as the flat drawing's.
+  await expect(heart.locator('[data-blood-key]')).toContainText('Blue is a convention: blood is always red.')
+})
+
+test('the 3D heart on a 2 GB phone: the light mesh, at most 60k triangles and 20 draws (plan §9)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'phone', 'one phone project')
+  await page.addInitScript(() => Object.defineProperty(navigator, 'deviceMemory', { get: () => 2 }))
+  await open(page, WALK)
+  await expect(page.locator('[data-body="3d"][data-layer="circulation"][data-beat]')).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(800)
+  const { gl, held } = await page.evaluate(() => {
+    const w = window as unknown as {
+      __lifepeekGl: { render: { calls: number; triangles: number } }
+      __lifepeek3d: () => { layers: string[] }
+    }
+    return { gl: { calls: w.__lifepeekGl.render.calls, triangles: w.__lifepeekGl.render.triangles }, held: w.__lifepeek3d().layers }
+  })
+  expect(held).toContain('low:circulation')
+  expect(gl.calls).toBeLessThanOrEqual(20)
+  expect(gl.triangles).toBeLessThanOrEqual(60_000)
 })

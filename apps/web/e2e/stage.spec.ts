@@ -55,8 +55,9 @@ test('organ labels never overlap and stay inside the body picture', async ({ pag
     await page.goto(url)
     const body = page.getByRole('img', { name: /^(The body|शरीर)/ })
     await expect(body).toBeVisible()
-    // With WebGL the flat body shows while the 3D code loads; test the 3D one.
-    if (test.info().project.name !== 'nowebgl') await expect(page.locator('[data-body="3d"]')).toBeVisible()
+    // With WebGL the flat body shows while the 3D code loads; test the 3D one, once drawn (until then
+    // the flat stand-in's labels are on the page too).
+    if (test.info().project.name !== 'nowebgl') await expect(page.locator('[data-body="3d"][data-ready]')).toBeVisible({ timeout: 30_000 })
     await bodySettled(page)
     await page.evaluate(() => document.fonts.ready)
     const slider = page.getByRole('slider').first()
@@ -228,4 +229,199 @@ test.describe('/sim stage', () => {
     await page.goto('/sim?v=3&a=cola:1&o=frog&lang=hi')
     await expect(page.getByRole('note').filter({ hasText: 'LifePeek के नए संस्करण' })).toBeVisible()
   })
+})
+
+/** What the 3D body holds on the GPU and in three/mount.ts's cache (BodyCanvas puts both on window). */
+function gpu(page: Page) {
+  return page.evaluate(() => {
+    const w = window as unknown as {
+      __lifepeekGl: { memory: { geometries: number; textures: number }; programs?: unknown[] }
+      __lifepeek3d: () => { layers: string[]; builds: number; uploaded: number; bytes: number }
+    }
+    const { geometries, textures } = w.__lifepeekGl.memory
+    return { geometries, textures, programs: w.__lifepeekGl.programs?.length ?? -1, ...w.__lifepeek3d() }
+  })
+}
+
+test('switching systems 20× leaves one WebGL context and the 3D body at its base (A-0 3D)', async ({ page }) => {
+  onlyIn('desktop', 'phone')
+  test.setTimeout(300_000)
+  // Every WebGL context the page makes, so a leaked one (made and never lost) shows. lib/webgl.ts's
+  // probe makes one, once, off the page: `onPage` counts only the bodies' live contexts.
+  await page.addInitScript(() => {
+    const made: WebGLRenderingContext[] = []
+    Object.assign(window, { __lpContexts: made })
+    const get = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+      const ctx = (get as (...a: unknown[]) => unknown).call(this, type, ...rest)
+      if (ctx && type.startsWith('webgl') && !made.includes(ctx as WebGLRenderingContext)) made.push(ctx as WebGLRenderingContext)
+      return ctx
+    } as typeof get
+  })
+  const contexts = () =>
+    page.evaluate(() => {
+      const made = (window as unknown as { __lpContexts: WebGLRenderingContext[] }).__lpContexts
+      const live = made.filter((c) => !c.isContextLost())
+      return { live: live.length, onPage: live.filter((c) => (c.canvas as HTMLCanvasElement).isConnected).length }
+    })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=cola:1&preview=1')
+  const ready = page.locator('[data-body="3d"][data-ready]')
+  await expect(ready).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(1000)
+  const base = await gpu(page)
+  expect(base.layers).toEqual(['high:digestion'])
+  const first = await contexts()
+  expect(first.onPage).toBe(1)
+  for (let i = 0; i < 20; i++) {
+    // `[`: the row before, round the list (Skin, drawn flat: the 3D body goes); `]`: back to digestion.
+    // (Breathing, the row after, has a 3D layer since A-3: the 3D-to-3D swap is the next test.)
+    await page.locator('body').press('[')
+    await expect(page.locator('[data-layer="skin"]')).toBeAttached({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+    if (i === 0 || i === 19) {
+      // No body on the page: nothing we cache is still known to a renderer (it would keep an old context alive).
+      await expect
+        .poll(
+          async () =>
+            (await page.evaluate(() => (window as unknown as { __lifepeek3d: () => { uploaded: number } }).__lifepeek3d())).uploaded,
+        )
+        .toBe(0)
+      await expect.poll(contexts).toEqual({ live: first.live - 1, onPage: 0 })
+    }
+    await page.locator('body').press(']')
+    await expect(ready).toBeVisible({ timeout: 30_000 })
+  }
+  await page.waitForTimeout(1000)
+  // One context on the page, and none left over from the 20 bodies before it.
+  expect(await contexts()).toEqual(first)
+  await expect(page.locator('[data-body="3d"] canvas')).toHaveCount(1)
+  const after = await gpu(page)
+  // Geometries, textures and programs back at base; digestion's mesh was built once, its arrays cached.
+  expect(after).toEqual(base)
+})
+
+/** The renderer's last frame: draw calls and triangles (anatomy plan §9 counts what is rendered). */
+const rendered = (page: Page) =>
+  page.evaluate(() => {
+    const r = (window as unknown as { __lifepeekGl: { render: { calls: number; triangles: number } } }).__lifepeekGl.render
+    return { calls: r.calls, triangles: r.triangles }
+  })
+
+test('digestion, breathing, the heart and the kidneys swap their 3D layers in one canvas: one context, the GPU back at base (A-3, A-5, A-6, R99)', async ({
+  page,
+}) => {
+  onlyIn('desktop', 'phone')
+  test.setTimeout(420_000)
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=roti:1&act=walk.30.20&layer=digestion&preview=1&t=40')
+  const body = page.locator('[data-body="3d"][data-ready]')
+  await expect(body).toBeVisible({ timeout: 30_000 })
+  await expect(body).toHaveAttribute('data-layer', 'digestion')
+  // The canvas this body draws in: the very same element (so the same WebGL context) after every swap.
+  await page.locator('[data-body="3d"] canvas').evaluate((c) => Object.assign(c, { lpFirst: true }))
+  const sameCanvas = () =>
+    page.evaluate(() => ({
+      tagged: [...document.querySelectorAll('[data-body="3d"] canvas')].filter((c) => (c as unknown as { lpFirst?: boolean }).lpFirst)
+        .length,
+      onPage: document.querySelectorAll('[data-body="3d"] canvas').length,
+    }))
+  await page.waitForTimeout(1000)
+  const base = await gpu(page)
+  expect(base.layers).toEqual(['high:digestion'])
+  const lungs = page.locator('[data-body="3d"][data-layer="breathing"][data-breath]')
+  const heart = page.locator('[data-body="3d"][data-layer="circulation"][data-beat]')
+  const kidneys = page.locator('[data-body="3d"][data-layer="kidneys"][data-drops]')
+  /** Anatomy plan §9, high tier: at most 150k triangles and 60 draw calls rendered. */
+  const withinGpu = async () => {
+    await page.waitForTimeout(800)
+    const gl = await rendered(page)
+    expect(gl.calls).toBeLessThanOrEqual(60)
+    expect(gl.triangles).toBeLessThanOrEqual(150_000)
+  }
+  // `]` lights the row after (digestion, breathing, Heart & blood, Kidneys & water), `[` the row before.
+  for (let i = 0; i < 4; i++) {
+    await page.locator('body').press(']')
+    await expect(lungs).toBeVisible({ timeout: 30_000 })
+    // The chest framing; the lungs breathe at the run's rate, at most 0.8 a second.
+    await expect(lungs).toHaveAttribute('data-framing', 'chest')
+    expect(Number(await lungs.getAttribute('data-breath-hz'))).toBeLessThanOrEqual(0.8)
+    if (i === 0) await withinGpu()
+    expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+    await page.locator('body').press(']')
+    await expect(heart).toBeVisible({ timeout: 30_000 })
+    // The torso framing (the legs' vessels show); the heart beats at the run's rate, at most 2.5 a second; the breath's attributes went with its layer.
+    await expect(heart).toHaveAttribute('data-framing', 'torso')
+    expect(Number(await heart.getAttribute('data-beat-hz'))).toBeLessThanOrEqual(2.5)
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-breath', /.*/)
+    if (i === 0) await withinGpu()
+    expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+    await page.locator('body').press(']')
+    await expect(kidneys).toBeVisible({ timeout: 30_000 })
+    // The torso framing too; the bladder drawn at most 600 mL; the beat's attributes went with its layer.
+    await expect(kidneys).toHaveAttribute('data-framing', 'torso')
+    await expect(kidneys).toHaveAttribute('data-bladder-drawn', /^\d+$/)
+    expect(Number(await kidneys.getAttribute('data-bladder-drawn'))).toBeLessThanOrEqual(600)
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-beat', /.*/)
+    if (i === 0) await withinGpu()
+    expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+    await page.locator('body').press('[')
+    await expect(heart).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-drops', /.*/)
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-bladder-drawn', /.*/)
+    await page.locator('body').press('[')
+    await expect(lungs).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-beat', /.*/)
+    await page.locator('body').press('[')
+    await expect(page.locator('[data-body="3d"][data-layer="digestion"]')).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-breath', /.*/)
+    expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+  }
+  await page.waitForTimeout(1000)
+  const after = await gpu(page)
+  // Geometries, textures and programs back at base: the lungs', the heart's and the kidneys' buffers
+  // and programs were freed. Four layers through a 2-layer cache: some were built again; at most two stay, digestion with them.
+  expect({ ...after, layers: [], bytes: 0, builds: 0 }).toEqual({ ...base, layers: [], bytes: 0, builds: 0 })
+  expect(after.layers).toContain('high:digestion')
+  expect(after.layers.length).toBeLessThanOrEqual(2)
+  expect(after.bytes).toBeLessThanOrEqual(4_000_000)
+})
+
+test('no WebGL: breathing is drawn flat and its 3D layer never loads (R43)', async ({ page }) => {
+  onlyIn('nowebgl')
+  const loaded: string[] = []
+  page.on('request', (r) => {
+    if (/layer3d-/.test(r.url())) loaded.push(r.url())
+  })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=roti:1&act=walk.30.20&layer=breathing&preview=1&t=40')
+  await expect(page.locator('[data-body="flat"][data-framing="chest"] [data-layer="breathing"]')).toBeAttached({ timeout: 30_000 })
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+  expect(loaded).toEqual([])
+})
+
+test('no WebGL: Heart & blood is drawn flat and its 3D layer never loads (R43)', async ({ page }) => {
+  onlyIn('nowebgl')
+  const loaded: string[] = []
+  page.on('request', (r) => {
+    if (/layer3d-/.test(r.url())) loaded.push(r.url())
+  })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=roti:1&act=walk.30.20&layer=circulation&preview=1&t=40')
+  await expect(page.locator('[data-body="flat"][data-framing="torso"] [data-layer="circulation"]')).toBeAttached({ timeout: 30_000 })
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+  expect(loaded).toEqual([])
+})
+
+test('no WebGL: Kidneys & water is drawn flat and its 3D layer never loads (R43)', async ({ page }) => {
+  onlyIn('nowebgl')
+  const loaded: string[] = []
+  page.on('request', (r) => {
+    if (/layer3d-/.test(r.url())) loaded.push(r.url())
+  })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=water:2&layer=kidneys&preview=1&t=80')
+  await expect(page.locator('[data-body="flat"][data-framing="torso"] [data-layer="kidneys"]')).toBeAttached({ timeout: 30_000 })
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+  expect(loaded).toEqual([])
 })

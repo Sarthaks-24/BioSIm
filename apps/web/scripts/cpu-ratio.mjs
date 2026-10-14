@@ -10,7 +10,9 @@
 // the same build twice and pass --pr-path with the new layer lit.
 //
 //   node scripts/cpu-ratio.mjs --base http://localhost:4391 --pr http://localhost:4392 [--rounds 6] [--ms 3000]
-//        [--base-path /sim?...] [--pr-path /sim?...] [--enforce] [--json out.json]
+//        [--base-path /sim?...] [--pr-path /sim?...] [--webgl] [--enforce] [--json out.json]
+//
+// --webgl: with (software) WebGL, so the 3D body draws: a new 3D layer against Digestion's (A-3 on).
 //
 // Report-only by default (T0): it prints the verdict and exits 0, also when it cannot measure. With
 // --enforce it exits 1 when the gate fails or the run does (the CI job passes it since T10, FP-9).
@@ -37,8 +39,12 @@ let browser
 
 /** Runs the comparison; returns the exit code. */
 async function run() {
-  // Flat body (no WebGL): the CPU the stage itself spends, without software-rendered 3D.
-  browser = await chromium.launch({ args: ['--disable-3d-apis'] })
+  // Flat body (no WebGL): the CPU the stage itself spends, without software-rendered 3D. With
+  // --webgl, SwiftShader as the e2e tests use (playwright.config.ts).
+  const webgl = process.argv.includes('--webgl')
+  browser = await chromium.launch({
+    args: webgl ? ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--disable-3d-apis'],
+  })
   const builds = []
   for (const [name, origin, path] of [
     ['base', base, arg('base-path', CPU_PATH)],
