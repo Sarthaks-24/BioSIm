@@ -149,6 +149,56 @@ export const PACK_PARAMS = {
     /** event.gutFlowPeak only when gut flow rises at least this much (mL/min): a display choice. */
     gutPeakMinRiseMlPerMin: 10,
   },
+
+  /**
+   * Insulin, open loop (model §2.5 E1, S-6; sources read in V-6). Insulin is worked out from blood
+   * glucose G and the glucose coming in from the gut, Ra, and is never fed back into glucose (D5
+   * C1; glucose keeps its own insulin-action term, glucose.ts). Every number but c is Dalla Man
+   * 2007's meal model (BioModels BIOMD0000000379, normal subject), in its units, pmol/kg/min:
+   * secretion S = S_b + Y + K·max(0, dG/dt) + c·Ra, basal S_b = 1.8, with a static part that
+   * follows glucose above fasting, dY/dt = −α(Y − β·max(0, G − 90)) (α 0.05, β 0.11), and a
+   * dynamic part while glucose rises (K 2.3). The liver takes out a share of the insulin passing
+   * through it, HE = m6 − m5·S (0.59 at basal), less as secretion rises, so blood insulin rises
+   * more than secretion: at steady state I_p = S / ((m2 + m4)/(1 − HE) − m2) (the model's liver
+   * and plasma compartments; m1 cancels). Blood insulin, as a multiple of fasting, follows that
+   * steady state's ratio to basal with a half-life of about 5 min (Lebovitz 2011, "~5 min";
+   * Duckworth 1998's 4–6 min seen through BioNumbers): dI/dt = n(target − I), n = ln 2/5 per min,
+   * which stands in for the model's compartment lags. c·Ra (Ra in g/min of glycemic carbohydrate
+   * absorbed, glucose.ts's input) stands in for the gut hormones' boost; no source gives it, so c
+   * is calibrated: 75 g of glucose → 12× fasting at the 30-min sample, Takahashi 2018's normal
+   * type (74.1 / 6.2 µU/mL = 12.0×; the accepted range is 6–20× at the 30 or 60 min sample). It
+   * then carries about 60 % of the 30-min rise. At 120 min the model gives 9× (Takahashi 5.8×): the
+   * gut is still absorbing and the open loop has no insulin pulling glucose down (a stated limit).
+   * Fasting is 1 (no unit: never µU/mL). The band is Takahashi's between-person spread at the
+   * 30-min sample (74.1 ± 33.4 µU/mL, ±45 %), applied to the rise above fasting.
+   */
+  insulin: {
+    alphaPerMin: 0.05,
+    betaPerMgDl: 0.11,
+    kDynamic: 2.3,
+    basalSecretion: 1.8,
+    liverM2: 0.484,
+    liverM4: 0.194,
+    liverM5: 0.0304,
+    liverM6: 0.6471,
+    raGainPerGPerMin: 9,
+    halfLifeMin: 5,
+    bandLow: 0.55,
+    bandHigh: 1.45,
+    /** event.insulinPeak only when insulin rises at least this much above fasting (× fasting): a display choice. */
+    peakMinRise: 0.1,
+  },
+
+  /**
+   * The brain's glucose use, a constant (model §2.5, D15): about 5.6 mg per 100 g of brain per minute
+   * (Mergenthaler 2013), and the brain is about 2 % of body weight (the same review): 1.3 kg in the
+   * 65 kg reference man, 5.6 × 13 × 60 / 1000 = 4.37 ≈ 4.4 g/h, 106 g a day, inside Cahill & Owen
+   * 1968's "100 to 145 grams of glucose/24 hours". The same all day: the liver supplies it between
+   * meals (E2 adds the liver).
+   */
+  brain: {
+    glucoseGPerH: 4.4,
+  },
 } as const
 
 /** The pack half of a run's parameter set (params.ts `Params` = the core half & this). */

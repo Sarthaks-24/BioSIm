@@ -9,6 +9,7 @@ import { BREATHING_SIGNALS } from './catalog/breathing.ts'
 import { EFFORT_SIGNALS } from './catalog/effort.ts'
 import { CIRCULATION_SIGNALS } from './catalog/circulation.ts'
 import { KIDNEY_SIGNALS } from './catalog/kidneys.ts'
+import { CONTROL_SIGNALS } from './catalog/control.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -33,17 +34,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     reactsToMeal: true,
     shipsIn: 'lookInside',
   },
-  'blood.insulin': {
-    id: 'blood.insulin',
-    unit: 'xFasting',
-    status: 'assumption',
-    clock: 'sim',
-    kind: 'level',
-    sourceIds: [],
-    i18nKey: k('blood.insulin'),
-    reactsToMeal: true,
-    shipsIn: 'bloodSugar',
-  },
   'liver.glucoseOutput': {
     id: 'liver.glucoseOutput',
     unit: 'g/min',
@@ -64,17 +54,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     sourceIds: [],
     i18nKey: k('liver.glycogenG'),
     reactsToMeal: true,
-    shipsIn: 'bloodSugar',
-  },
-  'brain.glucoseUse': {
-    id: 'brain.glucoseUse',
-    unit: 'g/h',
-    status: 'assumption',
-    clock: 'sim',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('brain.glucoseUse'),
-    reactsToMeal: false,
     shipsIn: 'bloodSugar',
   },
 }
@@ -197,8 +176,10 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Running total of skin.sweatRate since the meal started, in mL.',
     retired: [],
   },
+  // The control pack's rows (core/catalog/control.ts, S-6): reserved since v2, activated with units kept.
   'blood.insulin': {
-    definition: "Plasma insulin as a multiple of the fasting level. NOT today's lagged 'insulin action' term in glucose.ts.",
+    definition:
+      "Plasma insulin as a multiple of the fasting level (1 = before eating; never µU/mL), worked out from blood glucose and the glucose coming in from the gut and never fed back into glucose (open loop, E1). NOT the lagged 'insulin action' term in glucose.ts.",
     retired: ['insulin.relative', 'insulin.action', 'pancreas.insulinAction', 'pancreas.insulinSecretion'],
   },
   'liver.glucoseOutput': {
@@ -210,7 +191,8 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     retired: ['glycogen.liver'],
   },
   'brain.glucoseUse': {
-    definition: 'Glucose the brain uses per hour (cited constant; does not react to the meal).',
+    definition:
+      'Glucose the brain uses per hour: a cited constant, 4.4 g/h (about 106 g a day), the same all day; it does not react to the meal (the liver supplies it between meals).',
     retired: ['brain.glucoseUseGPerH'],
   },
   // The circulation pack's rows (core/catalog/circulation.ts, S-3). heart.rate was reserved as a
@@ -328,6 +310,11 @@ export const EVENT_DOCS: { readonly [Id in RunEventId]: CatalogDocs } = {
     definition: 'First minute when blood.flow.gut is highest. Absent if it rises by less than 10 mL/min (water, a fasting rest).',
     retired: [],
   },
+  // The control pack's moment (core/catalog/control.ts, S-6).
+  'event.insulinPeak': {
+    definition: 'First minute when blood.insulin is highest. Absent if it never rises by 0.1× fasting (water, no food).',
+    retired: [],
+  },
   // The kidneys pack's moments (core/catalog/kidneys.ts, S-4).
   'event.bladderFirstUrge': {
     definition:
@@ -348,5 +335,6 @@ export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
   ...EFFORT_SIGNALS,
   ...KIDNEY_SIGNALS,
   ...CIRCULATION_SIGNALS,
+  ...CONTROL_SIGNALS,
   ...RESERVED_SIGNALS,
 }

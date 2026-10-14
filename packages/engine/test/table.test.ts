@@ -23,6 +23,7 @@ import {
 import {
   BREATHING_SIGNAL_IDS,
   CIRCULATION_SIGNAL_IDS,
+  CONTROL_SIGNAL_IDS,
   EFFORT_SIGNAL_IDS,
   HUMAN_MODEL,
   HUMAN_MODULES,
@@ -83,6 +84,7 @@ describe('signal table', () => {
       ...EFFORT_SIGNAL_IDS,
       ...KIDNEY_SIGNAL_IDS,
       ...CIRCULATION_SIGNAL_IDS,
+      ...CONTROL_SIGNAL_IDS,
     ])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!

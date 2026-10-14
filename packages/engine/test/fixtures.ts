@@ -98,6 +98,15 @@ export const glucose60 = food({
   glycemicIndex: { value: 100, reference: 'glucose' },
 })
 
+/** The WHO oral glucose tolerance test drink: 75 g glucose in 300 mL water (Takahashi 2018's test, S-6). */
+export const glucose75 = food({
+  id: 'glucose-75',
+  phase: 'liquid',
+  grams: 375,
+  nutrients: { energyKcal: 300, carbsG: 75, sugarsG: 75, fiberG: 0, proteinG: 0, fatG: 0, waterG: 300 },
+  glycemicIndex: { value: 100, reference: 'glucose' },
+})
+
 /**
  * Gribok et al. 2016's lunch shakes (Table 2), drunk in under 15 min: high-carbohydrate 548 kcal
  * (123 g carbohydrate, 3 g fat, 7 g protein) and high-fat 519 kcal (12 g, 51 g, 7 g). The paper
@@ -114,5 +123,5 @@ export function gribokShake(kind: 'carb' | 'fat', gi = 70): Food {
   })
 }
 
-export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60, gribokShake('carb'), gribokShake('fat')]
+export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60, gribokShake('carb'), gribokShake('fat'), glucose75]
 export const lookup = (id: string) => all.find((f) => f.id === id)

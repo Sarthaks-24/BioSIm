@@ -359,6 +359,7 @@ const guardProblems = []
     'muscleMassShare', // muscles and skin (effort)
     'adhTauMin', // water and kidneys
     'restAvdo2MlPerL', // heart and blood (circulation)
+    'raGainPerGPerMin', // hormones (insulin, S-6)
   ]
   for (const f of staticFiles(SIM_ROOTS)) {
     const text = fs.readFileSync(path.join(dist, f), 'utf8')

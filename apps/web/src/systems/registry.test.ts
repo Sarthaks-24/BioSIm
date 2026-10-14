@@ -72,7 +72,7 @@ describe('systems registry (architecture §5.2)', () => {
         { id: 'blood', signals: ['lungs.tidalVolume' as never], unit: 'mL/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
-        { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
+        { id: 'gut', signals: ['liver.glucoseOutput' as never], unit: 'mg/dL' },
       ],
       organs: ['lungs' as never],
     }
@@ -86,8 +86,8 @@ describe('systems registry (architecture §5.2)', () => {
       'breathing: slot 2 (blood) unit mL/min has no text (registry/units.ts)',
       'breathing: slot 2 (blood) signal lungs.tidalVolume has no row registered by its pack',
       "breathing: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
-      'breathing: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
-      'breathing: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
+      'breathing: slot 4 (gut) signal liver.glucoseOutput is not provided by the engine (PROVIDES)',
+      'breathing: slot 4 (gut) signal liver.glucoseOutput has no row registered by its pack',
     ])
   })
 

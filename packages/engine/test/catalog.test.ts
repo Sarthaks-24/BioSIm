@@ -24,6 +24,10 @@ import {
   CIRCULATION_EVENT_IDS,
   CIRCULATION_SIGNALS,
   CIRCULATION_SIGNAL_IDS,
+  CONTROL_EVENTS,
+  CONTROL_EVENT_IDS,
+  CONTROL_SIGNALS,
+  CONTROL_SIGNAL_IDS,
   EFFORT_SIGNALS,
   EFFORT_SIGNAL_IDS,
   HUMAN_MODEL,
@@ -54,6 +58,7 @@ const allIds = [
   ...EFFORT_SIGNAL_IDS,
   ...KIDNEY_SIGNAL_IDS,
   ...CIRCULATION_SIGNAL_IDS,
+  ...CONTROL_SIGNAL_IDS,
   ...RESERVED_SIGNAL_IDS,
   ...RUN_EVENT_IDS,
 ] as string[]
@@ -147,6 +152,8 @@ describe('catalog IDs', () => {
     expect(Object.keys(KIDNEY_EVENTS).sort()).toEqual([...KIDNEY_EVENT_IDS].sort())
     expect(Object.keys(CIRCULATION_SIGNALS).sort()).toEqual([...CIRCULATION_SIGNAL_IDS].sort())
     expect(Object.keys(CIRCULATION_EVENTS).sort()).toEqual([...CIRCULATION_EVENT_IDS].sort())
+    expect(Object.keys(CONTROL_SIGNALS).sort()).toEqual([...CONTROL_SIGNAL_IDS].sort())
+    expect(Object.keys(CONTROL_EVENTS).sort()).toEqual([...CONTROL_EVENT_IDS].sort())
     expect(Object.keys(SIGNAL_DOCS).sort()).toEqual(
       [
         ...ACTIVE_SIGNAL_IDS,
@@ -154,6 +161,7 @@ describe('catalog IDs', () => {
         ...EFFORT_SIGNAL_IDS,
         ...KIDNEY_SIGNAL_IDS,
         ...CIRCULATION_SIGNAL_IDS,
+        ...CONTROL_SIGNAL_IDS,
         ...RESERVED_SIGNAL_IDS,
       ].sort(),
     )
@@ -251,6 +259,23 @@ describe('pack rows (architecture §1.3 lazy rows)', () => {
     ])
     expect(CIRCULATION_EVENTS['event.gutFlowPeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.flow.gut', shipsIn: 'v3.0' })
   })
+
+  it('S-6 activates blood.insulin and brain.glucoseUse (units kept) and adds the insulin peak, lazily, for v3.1', () => {
+    for (const id of CONTROL_SIGNAL_IDS) {
+      const row = CONTROL_SIGNALS[id]
+      expect(RESERVED_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(ACTIVE_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(row, id).toMatchObject({ status: 'assumption', clock: 'sim', shipsIn: 'v3.1' })
+      expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
+    }
+    // × before eating, never µU/mL (model §2.5), with a between-person band; the brain's use is a constant.
+    expect(CONTROL_SIGNALS['blood.insulin']).toMatchObject({ unit: 'xFasting', kind: 'level', reactsToMeal: true })
+    expect(CONTROL_SIGNALS['blood.insulin'].band).toMatchObject({ status: 'assumption', sourceIds: ['takahashi2018'] })
+    expect(CONTROL_SIGNALS['brain.glucoseUse']).toMatchObject({ unit: 'g/h', kind: 'rate', reactsToMeal: false })
+    expect(CONTROL_SIGNALS['brain.glucoseUse'].validRange).toMatchObject({ low: 100 / 24, high: 145 / 24, basis: 'cited' })
+    expect(EVENT_IDS as readonly string[]).not.toContain('event.insulinPeak')
+    expect(CONTROL_EVENTS['event.insulinPeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.insulin', shipsIn: 'v3.1' })
+  })
 })
 
 describe('catalog rows', () => {
@@ -263,9 +288,9 @@ describe('catalog rows', () => {
     for (const s of signals.filter((s) => s.clock === 'real')) expect(isChartable(s), s.id).toBe(false)
   })
 
-  // Model ACTIVATION_LOG: a reserved row activates with shipsIn 'v3.0' (or 'v3.1'), its unit kept.
-  it("every active row ships in 'v2.0' or 'v3.0', and every reserved row in neither", () => {
-    const active = ['v2.0', 'v3.0']
+  // Model ACTIVATION_LOG: a reserved row activates with shipsIn 'v3.0' or 'v3.1', its unit kept.
+  it("every active row ships in 'v2.0', 'v3.0' or 'v3.1', and every reserved row in none of them", () => {
+    const active = ['v2.0', 'v3.0', 'v3.1']
     for (const id of RUN_SIGNAL_IDS) expect(active, id).toContain(RUN_SIGNALS[id].shipsIn)
     for (const id of RESERVED_SIGNAL_IDS) expect(active, id).not.toContain(RESERVED_SIGNALS[id].shipsIn)
     for (const e of events) expect(active, e.id).toContain(e.shipsIn)
@@ -312,6 +337,7 @@ describe('catalog rows', () => {
     for (const e of Object.values(EVENTS)) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     for (const e of Object.values(KIDNEY_EVENTS)) expect(KIDNEY_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     for (const e of Object.values(CIRCULATION_EVENTS)) expect(CIRCULATION_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
+    for (const e of Object.values(CONTROL_EVENTS)) expect(CONTROL_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     expect([...HUMAN_PROVIDES].sort()).toEqual([...RUN_SIGNAL_IDS].sort())
   })
 })

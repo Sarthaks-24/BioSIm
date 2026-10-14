@@ -18,6 +18,7 @@ import { BREATHING_SIGNAL_IDS, BREATHING_SIGNALS } from './breathing.ts'
 import { EFFORT_SIGNAL_IDS, EFFORT_SIGNALS } from './effort.ts'
 import { KIDNEY_EVENT_IDS, KIDNEY_EVENTS, KIDNEY_SIGNAL_IDS, KIDNEY_SIGNALS } from './kidneys.ts'
 import { CIRCULATION_EVENTS, CIRCULATION_EVENT_IDS, CIRCULATION_SIGNALS, CIRCULATION_SIGNAL_IDS } from './circulation.ts'
+import { CONTROL_EVENTS, CONTROL_EVENT_IDS, CONTROL_SIGNALS, CONTROL_SIGNAL_IDS } from './control.ts'
 
 export const RUN_SIGNAL_IDS: readonly RunSignalId[] = [
   ...ACTIVE_SIGNAL_IDS,
@@ -25,6 +26,7 @@ export const RUN_SIGNAL_IDS: readonly RunSignalId[] = [
   ...EFFORT_SIGNAL_IDS,
   ...KIDNEY_SIGNAL_IDS,
   ...CIRCULATION_SIGNAL_IDS,
+  ...CONTROL_SIGNAL_IDS,
 ]
 
 export const RUN_SIGNALS: { readonly [Id in RunSignalId]: SignalMeta<Id> } = {
@@ -33,13 +35,19 @@ export const RUN_SIGNALS: { readonly [Id in RunSignalId]: SignalMeta<Id> } = {
   ...EFFORT_SIGNALS,
   ...KIDNEY_SIGNALS,
   ...CIRCULATION_SIGNALS,
+  ...CONTROL_SIGNALS,
 }
 
 export const isRunSignal = (id: string): id is RunSignalId => Object.hasOwn(RUN_SIGNALS, id)
 
 /** Every moment a run can carry, lean events first. */
-export const RUN_EVENT_IDS: readonly RunEventId[] = [...EVENT_IDS, ...KIDNEY_EVENT_IDS, ...CIRCULATION_EVENT_IDS]
+export const RUN_EVENT_IDS: readonly RunEventId[] = [...EVENT_IDS, ...KIDNEY_EVENT_IDS, ...CIRCULATION_EVENT_IDS, ...CONTROL_EVENT_IDS]
 
-export const RUN_EVENTS: { readonly [Id in RunEventId]: EventMeta<Id> } = { ...EVENTS, ...KIDNEY_EVENTS, ...CIRCULATION_EVENTS }
+export const RUN_EVENTS: { readonly [Id in RunEventId]: EventMeta<Id> } = {
+  ...EVENTS,
+  ...KIDNEY_EVENTS,
+  ...CIRCULATION_EVENTS,
+  ...CONTROL_EVENTS,
+}
 
 export const isRunEvent = (id: string): id is RunEventId => Object.hasOwn(RUN_EVENTS, id)

@@ -13,7 +13,7 @@
 import type { Meal } from '../meal.ts'
 import type { Params } from '../params.ts'
 import { SIGNALS, type ActiveSignalId, type RunEventId, type RunSignalId, type SignalId, type SignalMeta } from './catalog.ts'
-import { RUN_EVENTS } from './catalog/rows.ts'
+import { RUN_EVENTS, RUN_SIGNALS } from './catalog/rows.ts'
 import type { ActivityBout } from './activity.ts'
 import type { ProfileDef } from './profile.ts'
 import type { EventPoint, Rhythm } from './signal.ts'
@@ -157,8 +157,8 @@ export function runModules<P>(modules: readonly ModelModule<P>[], setup: RunSetu
   const store = new Map<ModuleSignalId, Written>()
   const moments = new Map<RunEventId, EventPoint>()
   const rhythms = new Map<SignalId, Rhythm>()
-  // Lean rows only: a pack's lazy rows (core/catalog/<pack>.ts) never have a band.
-  const metas: Partial<Record<ModuleSignalId, SignalMeta>> = SIGNALS
+  // Every row the run knows: a pack's lazy row may have a band too (blood.insulin, S-6).
+  const metas: Partial<Record<ModuleSignalId, SignalMeta>> = RUN_SIGNALS
   for (const m of modules) {
     const writes: readonly ModuleSignalId[] = [...m.provides, ...(m.internal ?? [])]
     const fail = (why: string): never => {
