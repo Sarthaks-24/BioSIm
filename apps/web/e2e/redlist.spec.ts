@@ -396,45 +396,52 @@ test.describe('desktop', () => {
     })
   })
 
-  test('B18 the clock keeps pace when frames are slow (250 ms)', async ({ page }) => {
-    await red('B18', async (problems) => {
-      await page.goto('/sim')
-      await stageReady(page)
-      const slider = page.getByRole('slider').first()
-      const advance = async (slow: boolean) => {
-        await slider.press('Home')
-        return page.evaluate(async (slow) => {
-          const w = window as unknown as { __burn?: boolean }
-          w.__burn = slow
-          if (slow) {
-            // Every frame takes about 250 ms of main-thread work (a 2 GB phone drawing the 3D body).
-            const burn = () => {
-              const t = performance.now()
-              while (performance.now() - t < 240);
-              if (w.__burn) requestAnimationFrame(burn)
+  // Load-sensitive (R79): it times real frames in the page, and a busy machine (the whole suite on
+  // 4 workers) can slow the normal run too (8.9 vs 10 seen once). One more try, tagged so a run
+  // can pick or skip it (--grep @load-sensitive); a real regression (B18 was 37 %) fails both.
+  test.describe('load-sensitive', () => {
+    test.describe.configure({ retries: 1 })
+
+    test('B18 the clock keeps pace when frames are slow (250 ms)', { tag: '@load-sensitive' }, async ({ page }) => {
+      await red('B18', async (problems) => {
+        await page.goto('/sim')
+        await stageReady(page)
+        const slider = page.getByRole('slider').first()
+        const advance = async (slow: boolean) => {
+          await slider.press('Home')
+          return page.evaluate(async (slow) => {
+            const w = window as unknown as { __burn?: boolean }
+            w.__burn = slow
+            if (slow) {
+              // Every frame takes about 250 ms of main-thread work (a 2 GB phone drawing the 3D body).
+              const burn = () => {
+                const t = performance.now()
+                while (performance.now() - t < 240);
+                if (w.__burn) requestAnimationFrame(burn)
+              }
+              requestAnimationFrame(burn)
             }
-            requestAnimationFrame(burn)
-          }
-          const value = () => Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow'))
-          const play = [...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Play')!
-          play.click()
-          const t0 = performance.now()
-          await new Promise((r) => setTimeout(r, 3000))
-          const v = value()
-          const secs = (performance.now() - t0) / 1000
-          w.__burn = false
-          ;[...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Pause')?.click()
-          return v / secs
-        }, slow)
-      }
-      const normal = await advance(false)
-      const slow = await advance(true)
-      const ratio = slow / normal
-      // ±10 % (T7): real elapsed time, timed in the page.
-      if (Math.abs(ratio - 1) > 0.1)
-        problems.push(
-          `with 250 ms frames the clock runs at ${Math.round(100 * ratio)} % of its pace (${slow.toFixed(1)} vs ${normal.toFixed(1)} sim min/s)`,
-        )
+            const value = () => Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow'))
+            const play = [...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Play')!
+            play.click()
+            const t0 = performance.now()
+            await new Promise((r) => setTimeout(r, 3000))
+            const v = value()
+            const secs = (performance.now() - t0) / 1000
+            w.__burn = false
+            ;[...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Pause')?.click()
+            return v / secs
+          }, slow)
+        }
+        const normal = await advance(false)
+        const slow = await advance(true)
+        const ratio = slow / normal
+        // ±10 % (T7): real elapsed time, timed in the page.
+        if (Math.abs(ratio - 1) > 0.1)
+          problems.push(
+            `with 250 ms frames the clock runs at ${Math.round(100 * ratio)} % of its pace (${slow.toFixed(1)} vs ${normal.toFixed(1)} sim min/s)`,
+          )
+      })
     })
   })
 

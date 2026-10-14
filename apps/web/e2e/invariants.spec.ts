@@ -19,47 +19,15 @@ import {
   type Mode,
 } from './helpers/gate.ts'
 
-// Track A invariants (T0; plan qa-fixes §3.1, §3.2) on the new window sizes and engines. All of
-// them report for now (INVARIANTS below): the stage fails most of them before FP-1 and FP-2 (the
-// red list, e2e/red-list.md). T2 enforces phone-small and tablet-portrait, T3 landscape and
-// projector-sizes, T7 storage-blocked, T5 the dock and timeline checks on every Chromium project
-// (TIMELINE); webkit-* and firefox-* report for a week first. T4's overlay checks (FP-5) are in
-// e2e/overlays.spec.ts, which runs on these projects too.
+// Track A invariants (T0; plan qa-fixes §3.1, §3.2) on the new window sizes and engines. They
+// reported from T0 (the stage failed most of them before FP-1 and FP-2: the red list,
+// e2e/red-list.md); T2, T3, T5 and T7 enforced their parts, and T11 (the v2.1 gate) enforces every
+// Chromium project. Still report-only: webkit-* and firefox-* (nightly, a clean week first), the
+// first screen of the two smallest phones (FIRST_SCREEN), the dvh fallback, and the Hindi link.
+// T4's overlay checks (FP-5) are in e2e/overlays.spec.ts, which runs on these projects too.
 
-/** Report or enforce, per project. A T-step flips its projects when its FP lands. */
+/** Report or enforce, per project. */
 export const INVARIANTS: Record<string, Mode> = {
-  'phone-small': 'report',
-  'phone-560': 'report',
-  'phone-xs': 'report',
-  'tablet-portrait': 'report',
-  landscape: 'report',
-  'projector-sizes': 'report',
-  'storage-blocked': 'enforce',
-  'webkit-desktop': 'report',
-  'webkit-phone': 'report',
-  'firefox-desktop': 'report',
-}
-const PROJECTS = Object.keys(INVARIANTS)
-/**
- * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project. T2
- * (FP-1) enforces them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
- * projector-sizes; the project's other checks (overlaps, overlays, Back, console, links) belong
- * to other FPs and follow INVARIANTS until those land.
- */
-const BODY_VISIBLE: Record<string, Mode> = {
-  ...INVARIANTS,
-  'phone-small': 'enforce',
-  'tablet-portrait': 'enforce',
-  landscape: 'enforce',
-  'projector-sizes': 'enforce',
-}
-/**
- * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
- * hour labels apart, the moments' targets and list, Settings on touch). T5 enforces them on every
- * Chromium project; webkit-* and firefox-* follow INVARIANTS (a week of reports first).
- */
-const TIMELINE: Record<string, Mode> = {
-  ...INVARIANTS,
   'phone-small': 'enforce',
   'phone-560': 'enforce',
   'phone-xs': 'enforce',
@@ -67,7 +35,31 @@ const TIMELINE: Record<string, Mode> = {
   landscape: 'enforce',
   'projector-sizes': 'enforce',
   'storage-blocked': 'enforce',
+  'webkit-desktop': 'report',
+  'webkit-phone': 'report',
+  'firefox-desktop': 'report',
 }
+const PROJECTS = Object.keys(INVARIANTS)
+/**
+ * The "body visible" checks (FP-1's acceptance: body, first screen, no scroll) per project: T2
+ * (FP-1) enforced them on phone-small and tablet-portrait, T3 (FP-2) on landscape and
+ * projector-sizes, T11 on phone-560 and phone-xs.
+ */
+const BODY_VISIBLE: Record<string, Mode> = INVARIANTS
+/**
+ * Play and graph 1's plot in the first screen (§3.2), per project. On a 360×560 window (a 360×640
+ * phone with its browser bars) and on 320×568, Play and the graph sit up to ≈ 130 px below the
+ * first screen (the body comes first, ≥ 160 / 120 px): the plan keeps these two report-only
+ * (qa-fixes §3.1: phone-560 "enforce after 1 green week", phone-xs "report"); the body itself is
+ * enforced there.
+ */
+const FIRST_SCREEN: Record<string, Mode> = { ...BODY_VISIBLE, 'phone-560': 'report', 'phone-xs': 'report' }
+/**
+ * The dock and timeline checks (FP-3's acceptance: no overlapping controls, the slider's tap grid,
+ * hour labels apart, the moments' targets and list, Settings on touch). T5 enforced them on every
+ * Chromium project; webkit-* and firefox-* follow INVARIANTS (a week of reports first).
+ */
+const TIMELINE: Record<string, Mode> = INVARIANTS
 
 const KEPT = '/sim?v=2&a=cola:1&b=cheeseburger:1,fries:1&t=60'
 /** The stage states of FP-1's acceptance: default, kept, first visit, empty, 6 foods. */
@@ -188,7 +180,7 @@ for (const l of ['en', 'pseudo'] as const) {
               body: page.locator('[data-body]'),
               'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
             },
-            { mode },
+            { mode: FIRST_SCREEN[project]! },
           )
         }
         if (noScroll(project)) await expectNoPageScroll(page, { mode })

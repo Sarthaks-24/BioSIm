@@ -1,8 +1,8 @@
 import { Fragment, type ReactNode } from 'react'
 
 // A web address, without punctuation that ends the sentence after it (English or Hindi), or an email
-// address. The project email is still "<project email>" (no "@", so plain text) until the user gives
-// it (B20, T12b); then it is a mailto: link with no other change.
+// address. The project email is still a placeholder in en.json (no "@", so plain text) until the
+// user gives it (B20, T12b); then it is a mailto: link with no other change.
 const ADDRESS = /(https?:\/\/[^\s,]*[^\s.,;:!?।)]|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)/
 
 /** Turns bare web and email addresses into links (email: mailto:, in this tab). */

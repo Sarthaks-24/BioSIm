@@ -2,7 +2,7 @@ name: Release gate
 
 # The release gate's file checks (apps/web/scripts/release-gate.mjs): placeholders, the INDB sent
 # date, unread sources, the Hindi review, GOVERNANCE.md, the changelog entry. Run by hand from the
-# Actions tab before tagging a release (docs/RELEASE-CHECKLIST.md). It is not part of CI: it fails
+# Actions tab before tagging a release (docs/RELEASE-v2.1.md). It is not part of CI: it fails
 # until the maintainer's own items are done.
 
 on:
