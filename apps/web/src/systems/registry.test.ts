@@ -198,7 +198,7 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
     expect((await pack.rows()).default.map((r) => r.id)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
     const { default: uis, DEFS } = await pack.ui!()
     expect(uis.bones!.card).toBeTypeOf('function')
-    expect(uis.skin!.chip).toBeTypeOf('function')
+    expect(uis.skin!.note).toBeTypeOf('function')
     expect(DEFS!.muscles!.slots!.map((s) => s.signals)).toEqual([['muscle.energyRate']])
     expect(DEFS!.skin!.slots!.map((s) => [s.signals, s.unit])).toEqual([[['skin.sweatRate'], 'mL/h']])
     const drawings = (await pack.drawing!()).default

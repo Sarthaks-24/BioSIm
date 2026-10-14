@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt } from '@lifepeek/engine'
 import { DROPS, HEAD, LABELS, SKIN_VESSELS, type SkinLabel } from '../../anatomy/human/skin.ts'
@@ -123,15 +123,16 @@ export default function SkinLayer({ sim, view, band, width: w, height: h, reduce
   // The drops' count and the vessels' step at the clock's minute, with hysteresis; each shown at most once a real second.
   const last = useRef({ n: 0, wide: false })
   const sweat = useClock(
-    useCallback(
-      (s: { simMin: number }) => {
+    useMemo(() => {
+      // A new run starts from no sweat.
+      last.current = { n: 0, wide: false }
+      return (s: { simMin: number }) => {
         const rate = seriesOf(sim, 'skin.sweatRate')
         const v = rate ? valueAt(rate, s.simMin, sim.stepMin) : 0
         last.current = { n: dropCount(v, last.current.n), wide: vesselsWide(v, last.current.wide) }
         return `${last.current.n}|${last.current.wide ? 1 : 0}`
-      },
-      [sim],
-    ),
+      }
+    }, [sim]),
   )
   const [count, widened] = useSteady(sweat).split('|').map(Number) as [number, number]
 
@@ -139,8 +140,10 @@ export default function SkinLayer({ sim, view, band, width: w, height: h, reduce
   useEffect(() => {
     const c = main.current
     if (!posed || !c || w === 0 || h === 0) return
-    if (shownPose.current && shownPose.current !== band && ghost.current) crossFade(c, ghost.current, reduced)
-    shownPose.current = band
+    const pose = posed.limbs.band
+    if (shownPose.current && shownPose.current !== pose && ghost.current)
+      crossFade([narrow.current, wide.current, c], ghost.current, reduced)
+    shownPose.current = pose
     const ctx = sized(c, w, h)
     if (ctx) paintRim(ctx, posed, look, m)
     for (const [ref, isWide] of [
@@ -161,7 +164,7 @@ export default function SkinLayer({ sim, view, band, width: w, height: h, reduce
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, { vessels: { limb: 'arm', side: -1, u: 0.68 } }) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h)
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 
@@ -169,7 +172,7 @@ export default function SkinLayer({ sim, view, band, width: w, height: h, reduce
   return (
     <div
       data-layer="skin"
-      data-pose={posed ? band : undefined}
+      data-pose={posed?.limbs.band}
       data-drops={count}
       data-vessels={widened ? 'wide' : 'narrow'}
       className="pointer-events-none absolute inset-0 overflow-hidden"

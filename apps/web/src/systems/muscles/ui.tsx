@@ -6,7 +6,7 @@ import { BONES_TONE } from '../../anatomy/tones/bones.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
 import type { GraphSlotDef, NowProps, SystemUi } from '../registry.ts'
-import { doingAt, seriesOf, timesRest, valueText } from './effort.ts'
+import { doingAt, restOf, seriesOf, timesRest, valueText } from './effort.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from './lesson.ts'
 import { effortStripSummary, musclesSummary, skinSummary } from './summary.ts'
 
@@ -43,7 +43,7 @@ function useAtClock<T>(run: RunResult | null, signal: string, pick: (v: number, 
     useCallback(
       (s: { simMin: number }) => {
         const series = run && seriesOf(run, signal)
-        return series ? pick(valueAt(series, s.simMin, run.stepMin), series.values[0]!) : null
+        return series ? pick(valueAt(series, s.simMin, run.stepMin), restOf(series)) : null
       },
       [run, signal], // eslint-disable-line react-hooks/exhaustive-deps -- `pick` is a module-level function
     ),
@@ -151,20 +151,17 @@ function SkinNow({ run, kept, className }: NowProps) {
 }
 
 /**
- * The thermometer card over the body (ui-ux §7; model §2.9): "Body temperature: kept within a narrow
- * range". The model holds it; it is never worked out, graphed or coloured red, and never an alarm.
- * ⓘ says why: sweat takes the extra heat of moving away.
+ * The thermometer card (ui-ux §7; model §2.9): "Body temperature: kept within a narrow range", over
+ * skin's graph (not over the body: the body's picture stays uncovered on a phone and a projector).
+ * The model holds it; it is never worked out, graphed or coloured red, and never an alarm. ⓘ says
+ * why: sweat takes the extra heat of moving away.
  */
 function Thermometer() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const whyId = useId()
   return (
-    <div
-      data-thermometer=""
-      style={{ maxWidth: 'min(26rem, 90%)' }}
-      className="pointer-events-auto flex flex-wrap items-center gap-x-1.5 rounded-control bg-surface-raised/90 px-1.5 text-caption text-ink-muted lg:text-control"
-    >
+    <div data-thermometer="" className="flex flex-wrap items-center gap-x-1.5 text-caption text-ink-muted lg:text-control">
       {/* A plain thermometer in ink with a cool blue bulb: the same whatever the walk or run. */}
       <svg viewBox="0 0 10 20" width="10" height="20" aria-hidden="true" focusable="false" className="shrink-0 text-ink">
         <path d="M3.4 2.5a1.6 1.6 0 0 1 3.2 0v9.4a3.4 3.4 0 1 1-3.2 0z" fill="none" stroke="currentColor" strokeWidth="1.2" />
@@ -194,11 +191,12 @@ function Thermometer() {
   )
 }
 
-/** The lines under a graph (ui-ux §6, R75): what moves it (only walking or running); under sweat, what sweat is. */
+/** The lines under a graph (ui-ux §6, R75): what moves it (only walking or running); under sweat, the thermometer card and what sweat is. */
 function StripNote({ slot }: { slot: GraphSlotDef }) {
   const { t } = useTranslation()
   return (
     <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
+      {slot.id === 'sweat' && <Thermometer />}
       <p data-moves="">{t('sys.effort.moves')}</p>
       {slot.id === 'sweat' && <p className="[@media(height<42.5rem)]:hidden">{t('sys.effort.skin.notFat')}</p>}
     </div>
@@ -227,10 +225,11 @@ function BonesNow({ className = '' }: NowProps) {
 function BonesCard() {
   const { t } = useTranslation()
   const { bone, joint, cartilage } = BONES_TONE
+  const titleId = useId()
   return (
-    <section data-card="bones" aria-labelledby="bones-card-title" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink">
+    <section data-card="bones" aria-labelledby={titleId} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto text-ink">
       <header className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h3 id="bones-card-title" className="text-title font-extrabold">
+        <h3 id={titleId} className="text-title font-extrabold">
           {t('sys.effort.bones.card.title')}
         </h3>
         <StatusTag status="illustration" />
@@ -284,7 +283,6 @@ const SKIN_UI: SystemUi = {
   summary: skinSummary,
   stripSummary: effortStripSummary,
   moments,
-  chip: Thermometer,
   note: StripNote,
   lessons: [SKIN_LESSON],
 }

@@ -212,8 +212,9 @@ export default function BonesLayer({ view, band, width: w, height: h, reduced, p
   useEffect(() => {
     const c = main.current
     if (!posed || !c || w === 0 || h === 0) return
-    if (shownPose.current && shownPose.current !== band && ghost.current) crossFade(c, ghost.current, reduced)
-    shownPose.current = band
+    const pose = posed.limbs.band
+    if (shownPose.current && shownPose.current !== pose && ghost.current) crossFade([c], ghost.current, reduced)
+    shownPose.current = pose
     const ctx = sized(c, w, h)
     if (ctx) paintBones(ctx, posed, look, m)
   }, [posed, w, h, view, look]) // eslint-disable-line react-hooks/exhaustive-deps -- `m` follows w, h and view; `band` comes with `posed`
@@ -225,14 +226,14 @@ export default function BonesLayer({ view, band, width: w, height: h, reduced, p
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, { hinge: { limb: 'leg', side: 1, u: KNEE_U } }) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h)
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 
   return (
     <div
       data-layer="bones"
-      data-pose={posed ? band : undefined}
+      data-pose={posed?.limbs.band}
       data-outline={look.pale}
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >

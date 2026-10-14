@@ -146,8 +146,6 @@ export interface Posed {
   legRadius: (u: number) => number
   /** The posed skin: arms under the torso, the torso with both legs, arms over it (scene units). */
   figure: { under: Pt[][]; body: Pt[]; over: Pt[][] }
-  /** Boxes no label may take in a picture: those over an arm in front of the torso (R89; flat/limbs.ts armBlocker). */
-  blocker: (frame: Frame) => (box: { x: number; y: number; w: number; h: number }) => boolean
 }
 
 /**
@@ -169,7 +167,6 @@ export function usePosed(band: ActivityBand, kit: LayerKit): Posed | null {
           base: m.limbKit(),
           legRadius: m.legRadius,
           figure: m.figure(band),
-          blocker: (f) => m.armBlocker(band, f),
         }),
       () => live && window.addEventListener('online', again, { once: true }),
     )
@@ -178,7 +175,8 @@ export function usePosed(band: ActivityBand, kit: LayerKit): Posed | null {
       window.removeEventListener('online', again)
     }
   }, [band, kit, tries])
-  return posed?.limbs.band === band ? posed : null
+  // The last pose stays until the next one is here, so a band's edge never shows a frame without one.
+  return posed
 }
 
 /** A limb of the pose by kind and side, with its radius along it. */
@@ -208,12 +206,13 @@ export function posedLabels<K extends string>(
 
 /**
  * Cross-fades a layer at a band's edge (anatomy plan §2.4: the pose changes only there, over 300 ms;
- * a cut under reduced motion): the old picture is copied to `ghost`, which then fades out over the
- * new one. Call before painting the new pose.
+ * a cut under reduced motion): the old picture (its canvases, `layers`) is copied to `ghost`, which
+ * then fades out over the new one. Call before painting the new pose.
  */
-export function crossFade(from: HTMLCanvasElement, ghost: HTMLCanvasElement, reduced: boolean) {
+export function crossFade(layers: readonly (HTMLCanvasElement | null)[], ghost: HTMLCanvasElement, reduced: boolean) {
   const ctx = ghost.getContext('2d')
-  if (!ctx || !from.width) return
+  const from = layers[0]
+  if (!ctx || !from?.width) return
   ghost.width = from.width
   ghost.height = from.height
   ghost.style.width = from.style.width
@@ -221,7 +220,13 @@ export function crossFade(from: HTMLCanvasElement, ghost: HTMLCanvasElement, red
   ghost.style.transition = 'none'
   ghost.style.opacity = reduced ? '0' : '1'
   if (reduced) return
-  ctx.drawImage(from, 0, 0)
+  // Every canvas of the layer as it shows now (a hatch step or the vessels' at its opacity).
+  for (const c of layers)
+    if (c?.width) {
+      ctx.globalAlpha = Number(c.style.opacity || 1)
+      ctx.drawImage(c, 0, 0)
+    }
+  ctx.globalAlpha = 1
   // The next frame starts the fade (the copy is shown first, at full strength).
   requestAnimationFrame(() => {
     ghost.style.transition = 'opacity 300ms linear'

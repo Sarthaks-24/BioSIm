@@ -600,7 +600,7 @@
       "energyRate": {
         "name": "Energy used by muscles",
         "short": "Muscles",
-        "desc": "How much energy the muscles use each hour. At rest they use a small, steady share of the body’s energy; walking or running adds all of its extra energy here, and most of it ends up as heat."
+        "desc": "How much energy the muscles use each hour. At rest they use about a fifth of the body’s resting energy, steadily; walking or running adds all of its extra energy here, and most of it ends up as heat."
       }
     },
     "skin": {
@@ -1050,7 +1050,10 @@
           "restReason": "Muscles work harder only with walking or running. Try a walk.",
           "peak": "During the {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
           "compare": "At the most, muscles use about {{run}}× their resting energy with this plan, {{kept}}× with the kept one.",
-          "same": "Muscles work about the same in both plans."
+          "same": "Muscles work about the same in both plans.",
+          "compareRest": "At the most, muscles use about {{most}}× their resting energy with {{which}}; with the other they stay at rest.",
+          "this": "this plan",
+          "kept": "the kept one"
         },
         "lesson": {
           "title": "How much harder do muscles work in a run?",

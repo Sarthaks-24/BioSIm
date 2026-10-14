@@ -62,7 +62,6 @@ const posedFor = (band: ActivityBand): Posed => ({
   base: limbs.limbKit(),
   legRadius: limbs.legRadius,
   figure: limbs.figure(band),
-  blocker: (f) => limbs.armBlocker(band, f),
 })
 
 describe('muscles and skin move only with walking or running (R75)', () => {
@@ -294,7 +293,13 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
     expect(s.headline).toBe(`During the run, muscles use about ${k}× their resting energy; most ends up as heat.`)
     expect(s.headline).not.toMatch(/kcal/)
     expect(musclesSummary(r, run(), t, 'en')!.headline).toBe(
-      `At the most, muscles use about ${k}× their resting energy with this plan, 1× with the kept one.`,
+      `At the most, muscles use about ${k}× their resting energy with this plan; with the other they stay at rest.`,
+    )
+    expect(musclesSummary(run(), r, t, 'en')!.headline).toBe(
+      `At the most, muscles use about ${k}× their resting energy with the kept one; with the other they stay at rest.`,
+    )
+    expect(musclesSummary(r, run([bout('walk')]), t, 'en')!.headline).toMatch(
+      /^At the most, muscles use about \d+× their resting energy with this plan, \d+× with the kept one\.$/,
     )
     expect(musclesSummary(r, r, t, 'en')!.headline).toBe('Muscles work about the same in both plans.')
   })

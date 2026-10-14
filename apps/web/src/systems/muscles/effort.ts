@@ -38,7 +38,9 @@ export function lastKindAt(bouts: readonly ActivityBout[], min: number): Exclude
 /**
  * A step of a value with hysteresis (anatomy plan §4, scrub-safe): the step goes up only once the
  * value is past the boundary by MARGIN of it, and down only once it is that far below, so a value
- * near a boundary never flickers between two steps.
+ * near a boundary never flickers between two steps. A margin of the boundary, not half a step (the
+ * plan's words): the steps are uneven (40, 240, 420 kcal/h), and half of the 200 kcal/h step would
+ * put a brisk walk (≈ 273) on either side by its history; 8 % keeps each kind on its own step.
  */
 const MARGIN = 0.08
 export function stepOf(value: number, bounds: readonly number[], prev: number): number {
@@ -69,6 +71,9 @@ export function dropCount(mlPerH: number, prev = 0): number {
 
 /** The skin's vessels widen one step while sweat is made (Drawing only), with hysteresis. */
 export const vesselsWide = (mlPerH: number, prev = false) => (prev ? mlPerH > 10 : mlPerH > 30)
+
+/** A run's resting value of a series: its lowest (a bout may start at 0:00, so not its first). */
+export const restOf = (s: Series) => Math.min(...s.values)
 
 /** The muscles' energy over their resting energy, whole from 2 up ("about 43×"); 1 near rest. */
 export const timesRest = (rate: number, rest: number) => (rate < rest * 1.5 ? 1 : Math.round(rate / rest))

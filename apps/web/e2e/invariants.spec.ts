@@ -190,7 +190,8 @@ for (const l of ['en', 'pseudo'] as const) {
             {
               Play: page.getByRole('button', { name: playName(l), exact: true }),
               body: page.locator('[data-body]'),
-              'graph plot': page.locator('figure svg[role="img"]').filter({ visible: true }),
+              // A Drawing-only row's card stands in the graph's place (R11: lymph, the Bones card).
+              'graph plot': page.locator('figure svg[role="img"], [data-card]').filter({ visible: true }),
             },
             { mode: FIRST_SCREEN[project]! },
           )

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt } from '@lifepeek/engine'
 import {
@@ -163,7 +163,14 @@ function paintHatch(
       ctx.restore()
       continue
     }
-    if (s.kind !== 'muscle' || !working.includes(s.group)) continue
+    if (s.kind !== 'muscle' || !working.includes(s.group)) {
+      // A muscle that is not working hides the hatch of what is under it (a back arm under the chest).
+      ctx.save()
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.fill()
+      ctx.restore()
+      continue
+    }
     if (step === 1) {
       ctx.fillStyle = lighter(MUSCLES_TONE.muscle, 0.03)
       ctx.fill()
@@ -220,29 +227,32 @@ function MusclesLayer({ sim, view, band, width: w, height: h, reduced, projector
   const look = projector ? LOOK.projector : LOOK.normal
   const m = frameOf(w, h, view)
 
-  // The hatch step at the clock's minute, with hysteresis; shown at most once a real second.
+  // The hatch step at the clock's minute (with hysteresis, from rest for each new run) and which
+  // groups work (the bout's kind at this minute, or the last bout's while the muscles ease off):
+  // both shown at most once a real second, so a hatch never changes faster than that.
   const prev = useRef(0)
-  const step = useClock(
-    useCallback(
-      (s: { simMin: number }) => {
-        const rate = seriesOf(sim, 'muscle.energyRate')
-        return (prev.current = rate ? hatchStep(valueAt(rate, s.simMin, sim.stepMin), prev.current) : 0)
-      },
-      [sim],
-    ),
-  )
-  const shown = useSteady(step)
-  // Which groups work: the bout's kind at this minute, or the last bout's while the muscles ease off.
-  const kind = useClock(useCallback((s: { simMin: number }) => lastKindAt(sim.activity, s.simMin), [sim]))
+  const selector = useMemo(() => {
+    prev.current = 0
+    return (s: { simMin: number }) => {
+      const rate = seriesOf(sim, 'muscle.energyRate')
+      prev.current = rate ? hatchStep(valueAt(rate, s.simMin, sim.stepMin), prev.current) : 0
+      return `${prev.current}|${lastKindAt(sim.activity, s.simMin) ?? ''}`
+    }
+  }, [sim])
+  const [shownStep, shownKind] = useSteady(useClock(selector)).split('|') as [string, string]
+  const shown = Number(shownStep)
+  const kind = (shownKind || null) as keyof typeof WORKING | null
   const shapes = useMemo(() => posed && muscleShapes(posed), [posed])
   const shownPose = useRef('')
 
   useEffect(() => {
     const c = main.current
     if (!posed || !shapes || !c || w === 0 || h === 0) return
-    const key = `${band}|${w}|${h}`
-    if (shownPose.current && shownPose.current.split('|')[0] !== band && ghost.current) crossFade(c, ghost.current, reduced)
-    shownPose.current = key
+    const pose = posed.limbs.band
+    // At a band's edge the old picture, hatch and all, fades out over the new one.
+    if (shownPose.current && shownPose.current !== pose && ghost.current)
+      crossFade([c, ...hatch.map((r) => r.current)], ghost.current, reduced)
+    shownPose.current = pose
     const ctx = sized(c, w, h)
     if (!ctx) return
     paintGhost(ctx, posed, m)
@@ -265,7 +275,7 @@ function MusclesLayer({ sim, view, band, width: w, height: h, reduced, projector
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, LIMB_LABELS) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h)
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 
@@ -273,7 +283,7 @@ function MusclesLayer({ sim, view, band, width: w, height: h, reduced, projector
   return (
     <div
       data-layer="muscles"
-      data-pose={posed ? band : undefined}
+      data-pose={posed?.limbs.band}
       data-hatch={shown}
       data-working={kind ?? ''}
       className="pointer-events-none absolute inset-0 overflow-hidden"

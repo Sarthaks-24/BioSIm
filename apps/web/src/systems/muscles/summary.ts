@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import type { ActiveSignalId, RunResult } from '@lifepeek/engine'
 import { formatDuration } from '../../lib/time.ts'
 import type { Summary } from '../registry.ts'
-import { doingAt, isFlat, peakOf, seriesOf, timesRest, valueText, whole } from './effort.ts'
+import { doingAt, isFlat, peakOf, restOf, seriesOf, timesRest, valueText, whole } from './effort.ts'
 
 /**
  * Muscles' and skin's sentences (U-1; ui-ux §6, §7): the summary under the body and each graph's
@@ -29,7 +29,7 @@ function peakTimes(run: RunResult) {
   const s = seriesOf(run, MUSCLE)
   if (!s) return null
   const peak = peakOf(s, run.stepMin)
-  return { k: timesRest(peak.value, s.values[0]!), atMin: peak.atMin, flat: isFlat(s) }
+  return { k: timesRest(peak.value, restOf(s)), atMin: peak.atMin, flat: isFlat(s) }
 }
 
 /**
@@ -44,7 +44,18 @@ export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunct
   if (other) {
     if (now.k === other.k) return { headline: t('sys.effort.muscles.summary.same') }
     const text = whole(now.k, lang)
-    return { headline: t('sys.effort.muscles.summary.compare', { run: text, kept: whole(other.k, lang) }), key: { text, line: 'run' } }
+    // A plan at rest is said as such ("…with the kept one they stay at rest"), never "1×".
+    const [hi, lo] = now.k > other.k ? [now, other] : [other, now]
+    const key = lo.k === 1 ? 'compareRest' : 'compare'
+    return {
+      headline: t(`sys.effort.muscles.summary.${key}`, {
+        run: text,
+        kept: whole(other.k, lang),
+        most: whole(hi.k, lang),
+        which: t(`sys.effort.muscles.summary.${hi === now ? 'this' : 'kept'}`),
+      }),
+      key: { text, line: 'run' },
+    }
   }
   const kind = boutAt(run, now.atMin)
   if (kind === 'rest' || now.flat || now.k < 2)
