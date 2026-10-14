@@ -25,11 +25,11 @@
       {
         "wp": "U-1",
         "at": "2026-10-14",
-        "on": "v3 6201885 + U-1 (/sim 186.876 → 187.132, +0.256: the effort pack's three rows, their names, the mL-an-hour unit and the label plumbing that keeps organ labels off posed arms, R89; the arm test itself is in the legs' chunk)",
-        "simKB": 187.132,
-        "engineKB": 10.661,
-        "simRatchetKB": 187.332,
-        "simEngineRatchetKB": 198.093
+        "on": "v3 6201885 + U-1 (/sim 186.876 → 187.153, +0.277: the effort pack's three rows, their names, the mL-an-hour unit and the label plumbing that keeps organ labels off posed arms, R89; the arm test itself is in the legs' chunk)",
+        "simKB": 187.153,
+        "engineKB": 10.662,
+        "simRatchetKB": 187.353,
+        "simEngineRatchetKB": 198.115
       }
     ]
   },

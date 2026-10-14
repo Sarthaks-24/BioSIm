@@ -181,9 +181,9 @@
 //   chunk was in none) or on the allow-list.
 //   U-1 (2026-10-14, branch v3): the effort pack (muscles, skin, the bones card) with three rows in the
 //   first paint, their names, the mL-an-hour unit and the plumbing that keeps organ labels off a posed
-//   arm (R89; the arm test is in the legs' chunk): /sim 186.876 → 187.132 KB on v3 6201885 (+0.26),
-//   /sim + engine 197.793 KB. The pack takes its rows from the run chunk (a copy split them out of it:
-//   +0.3 KB measured). Effort pack 13.4 KB gz (its entry with texts 16.3 KB).
+//   arm (R89; the arm test is in the legs' chunk): /sim 186.876 → 187.153 KB on v3 6201885 (+0.28),
+//   /sim + engine 197.815 KB. The pack takes its rows from the run chunk (a copy split them out of it:
+//   +0.3 KB measured). Effort pack 13.5 KB gz (its entry with texts 16.3 KB).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
