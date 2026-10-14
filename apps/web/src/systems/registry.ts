@@ -1,10 +1,22 @@
 import type { ComponentType, RefObject } from 'react'
 import type { TFunction } from 'i18next'
-import type { ActiveSignalId, ActivityBout, CatalogId, Clock, EventMeta, MealItem, RunResult, SignalMeta, Unit } from '@lifepeek/engine'
+import type {
+  ActiveSignalId,
+  ActivityBout,
+  CatalogId,
+  Clock,
+  EventMeta,
+  MealItem,
+  RunEventId,
+  RunResult,
+  SignalMeta,
+  Unit,
+} from '@lifepeek/engine'
 import type { Moment } from '../lib/moments.ts'
 import type { LayerComponent, LifeProcess, Loader, OrganId, SystemCamera } from '../registry/types.ts'
 import { DIGESTION } from './digestion/def.ts'
 import { BREATHING } from './breathing/row.ts'
+import { CIRCULATION } from './circulation/row.ts'
 import { LYMPH } from './lymph/def.ts'
 
 /**
@@ -85,6 +97,17 @@ export interface GraphSlotDef {
   range?: readonly [number, number]
   /** A range drawn as a pale band across the graph, its key under it (breathing: most children's breaths, R57). */
   reference?: { low: number; high: number }
+  /**
+   * Beside a kept plan its lines show one at a time, each against its kept ghost, picked under the
+   * graph (Heart & blood's "Where blood goes": Gut | Muscles; ui-ux §7). Alone, both lines show.
+   */
+  oneWithKept?: boolean
+}
+
+/** Which of a slot's lines shows, when they show one at a time (GraphSlotDef.oneWithKept), and how to pick another. */
+export interface SlotPick {
+  at: number
+  set: (index: number) => void
 }
 
 /** The text key of a slot's tab (and its table's title): `stage.strips.<id>`, or the pack's own. */
@@ -125,7 +148,7 @@ export interface SystemUi {
   /** A rhythm system's chip over the body ("≋ 15 a minute · typical adult, resting · shown at its true speed"; ui-ux §4). */
   chip?: ComponentType<{ run: RunResult }>
   /** Lines under one of its graphs: what moves it, the book's value, a reference band's key (ui-ux §6, R10, R29, R57). */
-  note?: ComponentType<{ slot: GraphSlotDef }>
+  note?: ComponentType<{ slot: GraphSlotDef; pick?: SlotPick }>
   /** Its lessons (each with its release, R18), for Teach once the row is public (X-1). */
   lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */
@@ -199,7 +222,7 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, LYMPH]
+export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, LYMPH]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 
@@ -210,10 +233,11 @@ const isPublic = (id: SystemId) => !!systemOf(id)?.public
 
 /**
  * The system a link with no `layer` opens: Heart & blood when it carries activity (R39), once that
- * row is public; until then Digestion. linkQuery writes `layer` only when it differs from this.
+ * row is public, or already in a preview session (`?preview=1`, where hidden built rows open); until
+ * then Digestion. linkQuery writes `layer` only when it differs from this.
  */
-export const defaultSystemFor = (activity: readonly ActivityBout[]): SystemId =>
-  activity.length && isPublic('circulation') ? 'circulation' : DEFAULT_SYSTEM
+export const defaultSystemFor = (activity: readonly ActivityBout[], preview = false): SystemId =>
+  activity.length && (isPublic('circulation') || (preview && !!systemOf('circulation'))) ? 'circulation' : DEFAULT_SYSTEM
 
 /**
  * The system a link opens (architecture §5.2): what it asks for if that row is public, or is built
@@ -221,11 +245,11 @@ export const defaultSystemFor = (activity: readonly ActivityBout[]): SystemId =>
  */
 export function systemForLink(asked: string | undefined, activity: readonly ActivityBout[], preview: boolean): SystemId {
   const s = systemOf(asked)
-  return s && (s.public || preview) ? s.id : defaultSystemFor(activity)
+  return s && (s.public || preview) ? s.id : defaultSystemFor(activity, preview)
 }
 
-/** One catalog row as a pack registers it. */
-export type CatalogRow = SignalMeta | EventMeta
+/** One catalog row as a pack registers it (a pack's moments too: Heart & blood's gut-flow peak). */
+export type CatalogRow = SignalMeta | EventMeta<RunEventId>
 
 const ROWS = new Map<CatalogId, CatalogRow>()
 const REGISTERED = new Map<PackId, Set<CatalogId>>()

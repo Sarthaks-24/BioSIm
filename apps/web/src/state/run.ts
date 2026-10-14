@@ -238,7 +238,7 @@ export function linkQuery(
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
     // The system asked for, while its pack loads or after it failed to (a reload asks for it again).
-    ...((run.switching?.to ?? run.layer) !== defaultSystemFor(run.activity) ? { layer: run.switching?.to ?? run.layer } : {}),
+    ...((run.switching?.to ?? run.layer) !== defaultSystemFor(run.activity, run.preview) ? { layer: run.switching?.to ?? run.layer } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
     act: run.activity,
     bact: run.kept?.activity ?? [],

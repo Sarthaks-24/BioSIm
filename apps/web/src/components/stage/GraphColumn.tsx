@@ -77,6 +77,8 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   // The legend names both meals (council 2026-10-13): "— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g".
   const runName = shortPlanNames(meal, activity, i18n.language, t)
   const keptName = keptRun ? shortPlanNames(keptRun.items, keptRun.activity, i18n.language, t) : ''
+  // A slot whose lines show one at a time beside a kept plan (Where blood goes: Gut | Muscles): the one picked.
+  const [picks, setPicks] = useState<Readonly<Record<string, number>>>({})
 
   return (
     <section
@@ -106,16 +108,19 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
           )}
           <StripStack weights={visible.map(() => 1)}>
             {visible.map((slot) => {
-              const [id, secondId] = slot.signals
+              const one = !!kept && !!slot.oneWithKept
+              const at = one ? (picks[slot.id] ?? 0) : 0
+              const [id, secondId] = one ? [slot.signals[at]!] : slot.signals
+              const pick = one ? { at, set: (i: number) => setPicks((p) => ({ ...p, [slot.id]: i })) } : undefined
               return (
                 <RunStrip
-                  key={slot.id}
+                  key={`${slot.id}${at}`}
                   slot={slot}
                   summarize={stripSummary}
                   series={run.signals.get(id) as ChartableSeries}
                   second={secondId ? run.signals.get(secondId) : null}
-                  range={slot.range ?? organism.signalOverrides[id]?.displayRange}
-                  note={Note && <Note slot={slot} />}
+                  range={(one ? undefined : slot.range) ?? organism.signalOverrides[id]?.displayRange}
+                  note={Note && <Note slot={slot} pick={pick} />}
                   run={run}
                   kept={kept}
                   runName={runName}

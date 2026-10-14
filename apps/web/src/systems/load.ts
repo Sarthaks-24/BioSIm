@@ -59,6 +59,9 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // U-2: its rows, words and moments, its English (with the signal and unit texts its graphs name)
   // and its flat lungs, one lazy module under systems/breathing/ (cache-tiers.mjs: lazy tier).
   breathing: onePack(() => import('./breathing/pack.ts')),
+  // U-3: Heart & blood's rows (and its one moment), words and moments, its English and its flat
+  // heart, one lazy module under systems/circulation/ (cache-tiers.mjs finds it: lazy tier).
+  circulation: onePack(() => import('./circulation/pack.ts')),
   // A-11a: Drawing only, no engine half (no rows) until S-5 (v3.1); its UI and map are one chunk.
   lymph: {
     rows: async () => ({ default: [] }),
