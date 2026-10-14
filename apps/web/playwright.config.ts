@@ -5,7 +5,8 @@ import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/te
 // pseudo-locale (VITE_PSEUDO=1) and Hindi (VITE_HINDI=1, paused in real builds, R47), so it goes to its own folder (dist-e2e) and port: `dist` stays the
 // real build that `npm run budget` measures, and a plain `npm run preview` on 4173 is never
 // mistaken for the test build.
-const E2E_PORT = 4174
+// E2E_PORT picks another port, so two checkouts (worktrees) can run their tests at once.
+const E2E_PORT = Number(process.env.E2E_PORT ?? 4174)
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${E2E_PORT}`
 
 // Software WebGL (SwiftShader), so the 3D body draws on CI machines without a GPU.
@@ -37,6 +38,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'links.spec.ts',
       'overlays.spec.ts',
       'web-basics.spec.ts',
+      'screen-reader.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
