@@ -186,6 +186,7 @@
       "drinkWater": "Where does the water from a drink go?",
       "musclesRun": "How much harder do muscles work in a run?",
       "sweatRun": "Where does the heat of a run go?",
+      "reflexHotPan": "Why do you pull your hand back before you feel the pain?",
       "insulinCola": "Who keeps blood sugar steady?"
     },
     "lessonNotes": {
@@ -217,6 +218,7 @@
       "drinkWater": "How much urine an hour at the most, with four glasses and with one?",
       "musclesRun": "How many times their resting energy do the muscles use during the run?",
       "sweatRun": "How much sweat does the skin make in the run, and how much at rest?",
+      "reflexHotPan": "How many milliseconds does the reflex take, and the route through the brain?",
       "insulinCola": "How high does insulin go after a glass of cola, and after a glass of water?"
     },
     "flagship": {
@@ -1148,6 +1150,10 @@
       "name": "Kidneys & water",
       "what": "kidneys"
     },
+    "nerves": {
+      "name": "Brain & nerves",
+      "what": "brain and nerves"
+    },
     "hormones": {
       "name": "Hormones",
       "what": "pancreas"
@@ -1787,9 +1793,70 @@
       }
     },
     "control": {
+      "nerves": {
+        "sugar": "The brain uses about {{g}} g of sugar an hour, about the same all day, whatever the meal.",
+        "now": "Nerves carry signals in thousandths of a second: try the hot pan.",
+        "map": {
+          "brain": "Brain",
+          "cord": "Spinal cord",
+          "nerves": "Nerves",
+          "forebrain": "Fore-brain",
+          "cerebellum": "Cerebellum",
+          "medulla": "Medulla"
+        },
+        "demo": {
+          "title": "Hot pan: reflex or thinking?",
+          "lead": "The same touch, twice, slowed down: the reflex through the spinal cord (●) and the route through the brain (○).",
+          "picture": "A hand touches a hot pan. A sensory neuron runs from the fingertip up the arm to the spinal cord; in the cord a relay neuron passes the signal to a motor neuron, which runs back to the arm muscle. The route through the brain goes up the spinal cord to the brain and back down.",
+          "brainPart": "Brain",
+          "cordPart": "Spinal cord",
+          "receptor": "Receptor",
+          "sensory": "Sensory neuron",
+          "relay": "Relay neuron",
+          "motor": "Motor neuron",
+          "effector": "Effector (arm muscle)",
+          "pan": "Hot pan",
+          "reflex": "Reflex",
+          "brain": "Through the brain",
+          "ms": "{{ms}} ms",
+          "play": "Touch the hot pan",
+          "pause": "Pause",
+          "resume": "Go on",
+          "again": "Again",
+          "back": "Back",
+          "next": "Next",
+          "step": "{{n}} of {{total}}",
+          "steps": {
+            "start": "0 ms: the fingertip touches the hot pan, and the heat receptor starts a signal.",
+            "cord": "{{ms}} ms: the signal reaches the spinal cord along the sensory neuron. A relay neuron passes it to the motor neuron; the route through the brain goes up the cord instead.",
+            "reflex": "{{ms}} ms: the arm muscle gets the signal and pulls the hand back.",
+            "brain": "{{ms}} ms: the command through the brain reaches the arm muscle."
+          },
+          "playing": "The signals are on their way…",
+          "result": "The brain route takes about three times as long: {{brain}} ms against {{reflex}} ms.",
+          "resultSlow": "Without myelin even the reflex takes {{reflex}} ms, about {{times}} times as long as with it.",
+          "myelin": "Myelin off (thin fibres)",
+          "beyond": "Beyond class 10",
+          "myelinNote": "A what-if: real motor nerves always have myelin. Without it, every nerve here would be as slow as a thin fibre with no myelin, about {{c}} m/s.",
+          "slowed": "Slowed down about {{times}} times: the counters show the real time.",
+          "clock": "The meal clock does not move this demo: nerves work in thousandths of a second.",
+          "sourcesTitle": "Sources and limits",
+          "book": "Book (NCERT Class 10, Ch 6, p. 102): reflex arcs evolved because “the thinking process of the brain is not fast enough”.",
+          "limits": "Model estimate: lengths of an average adult arm; heat goes in on a thin fibre with myelin at {{in}} m/s and the command comes out on a thick one at {{out}} m/s; each synapse takes {{synapse}} ms, and thinking adds {{thinking}} ms (from reaction-time studies). The clock stops when the muscle gets the signal: the skin's sensors and the muscle's own pull are left out. Children's arms are shorter, so their times are shorter."
+        }
+      },
       "strips": {
         "sugar": "Blood sugar",
         "insulin": "Insulin (× before eating)"
+      },
+      "sig": {
+        "insulin": {
+          "name": "Insulin",
+          "short": "Insulin"
+        },
+        "insulinPeak": {
+          "name": "Most insulin"
+        }
       },
       "label": {
         "pancreas": "Pancreas",

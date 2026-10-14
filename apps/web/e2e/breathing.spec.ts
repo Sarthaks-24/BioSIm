@@ -105,8 +105,8 @@ test('the title opens the picker; keys [ ] L; Esc closes it and the title keeps 
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
   await page.keyboard.press('l')
   await expect(picker).toBeVisible()
-  // Every built row is public: switched away, all nine stay in the picker (R93 #4).
-  await expect(picker.locator('[data-system-row]')).toHaveCount(9)
+  // Every built row is public: switched away, all ten stay in the picker (R93 #4; U-7 added Brain & nerves, U-6 Hormones).
+  await expect(picker.locator('[data-system-row]')).toHaveCount(10)
   await expect(picker.locator('[data-system-row="breathing"]')).toBeVisible()
   await page.keyboard.press('ArrowDown')
   await page.keyboard.press('Escape')

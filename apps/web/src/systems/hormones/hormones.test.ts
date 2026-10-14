@@ -213,6 +213,14 @@ describe('the words never score, never dose (content-i18n §6)', () => {
   })
 })
 
+describe('the pack’s own copies of the catalog’s names (systems/hormones/text.ts)', () => {
+  it('sys.control.sig.* say what signals.* say', () => {
+    expect(en.sys.control.sig.insulin.name).toBe(en.signals.blood.insulin.name)
+    expect(en.sys.control.sig.insulin.short).toBe(en.signals.blood.insulin.short)
+    expect(en.sys.control.sig.insulinPeak.name).toBe(en.signals.event.insulinPeak.name)
+  })
+})
+
 describe('the lesson (R18): cola against water, opened at the most insulin', () => {
   it('v3.1, on the insulin graph, at the cola’s insulin peak; water stays at 1×', () => {
     expect(HORMONES_LESSON.release).toBe('v3.1')

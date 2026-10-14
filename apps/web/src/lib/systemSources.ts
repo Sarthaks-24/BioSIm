@@ -50,4 +50,15 @@ export const SYSTEM_SOURCES: { readonly [S in SystemId]?: readonly string[] } = 
   muscles: ['wang2012', 'janssen2000', 'herrmann2024', 'icmr-nin2020'],
   bones: [],
   skin: ['baker2019', 'bakerwolfe2020', 'openstax-ap2e-24', 'herrmann2024', 'icmr-nin2020'],
+  // U-7: the brain's sugar use (brain.glucoseUse's row), then the nerve demo's pages (systems/nerves/NerveDemo.tsx DEMO_SOURCES, V-7).
+  nerves: [
+    'mergenthaler2013',
+    'cahill1968',
+    'kiernan2003',
+    'khosrawi2018',
+    'davisIuReflexes',
+    'byrneNeuroOnline',
+    'jain2015',
+    'isoardo2026',
+  ],
 }

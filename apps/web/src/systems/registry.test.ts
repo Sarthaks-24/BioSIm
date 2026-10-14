@@ -87,6 +87,7 @@ describe('systems registry (architecture §5.2)', () => {
       ],
       organs: ['pituitary' as never],
     }
+    // The control pack is built (U-7's Brain & nerves), so a hormones row would find its PackDef.
     expect(systemProblems(hormones, ctx)).toEqual([
       "hormones: organ pituitary is not one of the organism's organs",
       'hormones: 5 graph slots: at most 3 (keys 1–3)',
@@ -244,6 +245,8 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
       'circulation',
       'kidneys',
       'lymph',
+      // U-7: the nerve demo, public once its acceptance passed (v3.1, on v3); control before movement, as the picker groups them.
+      'nerves',
       'hormones',
       'muscles',
       'bones',
@@ -262,7 +265,8 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('breathing', true, 1)).toBe('circulation')
     expect(stepSystem('circulation', true, 1)).toBe('kidneys')
     expect(stepSystem('kidneys', true, 1)).toBe('lymph')
-    expect(stepSystem('lymph', true, 1)).toBe('hormones')
+    expect(stepSystem('lymph', true, 1)).toBe('nerves')
+    expect(stepSystem('nerves', true, 1)).toBe('hormones')
     expect(stepSystem('hormones', true, 1)).toBe('muscles')
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     expect(stepSystem('digestion', true, -1)).toBe('skin')

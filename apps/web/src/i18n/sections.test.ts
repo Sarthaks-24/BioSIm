@@ -32,6 +32,7 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/kidneys/lesson.ts',
     'systems/hormones/lesson.ts',
     'systems/muscles/lesson.ts',
+    'systems/nerves/lesson.ts',
     // The worksheet shows only on Teach (`/teach?sheet=<lesson>`), so Teach's words are there.
     'components/Worksheet.tsx',
   ],

@@ -86,10 +86,10 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
     text: () => import('virtual:lifepeek-en/sys.lymph'),
     drawing: () => lymph().then((m) => ({ default: m.drawing })),
   },
-  // U-6: Hormones' rows (from the engine's chunk) and moment, words, English (with the signal and
-  // unit texts) and flat pancreas, one lazy module under systems/hormones/ (cache-tiers.mjs: lazy
-  // tier). Brain & nerves (U-7) is the same pack: it joins this module.
-  control: onePack(() => import('./hormones/pack.ts')),
+  // U-7 and U-6: Brain & nerves (the nerve demo, its words, English and flat brain) and Hormones
+  // (insulin and blood sugar, the brain card, the flat pancreas), one lazy module: systems/nerves/pack.ts
+  // gathers both rows' parts, each kept in its own folder (cache-tiers.mjs: lazy tier).
+  control: onePack(() => import('./nerves/pack.ts')),
 }
 
 const loading = new Map<PackId, Promise<void>>()

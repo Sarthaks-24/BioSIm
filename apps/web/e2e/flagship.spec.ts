@@ -27,7 +27,14 @@ const tabbed = () => test.info().project.name !== 'desktop'
  * (U-6), so pause 1 is its insulin graph in place of Digestion's (R38: v3.1, never a sixth pause).
  */
 const PAUSES = [
-  { step: 1, pause: 'insulin', system: 'hormones', t: 50, graph: 'Insulin (× before eating)', question: 'What does the pancreas do after the roti?' },
+  {
+    step: 1,
+    pause: 'insulin',
+    system: 'hormones',
+    t: 50,
+    graph: 'Insulin (× before eating)',
+    question: 'What does the pancreas do after the roti?',
+  },
   { step: 2, pause: 'blood', system: 'circulation', t: 51, graph: 'Where blood goes', question: 'Where is more blood going?' },
   { step: 3, pause: 'breaths', system: 'breathing', t: 70, graph: 'Breaths a minute', question: 'Why are breaths faster now?' },
   { step: 4, pause: 'sweat', system: 'skin', t: 75, graph: 'Sweat made', question: 'Where does the extra heat go?' },
@@ -43,17 +50,17 @@ async function expectPause(page: Page, p: (typeof PAUSES)[number]) {
   if (tabbed()) await expect(front(page, p.graph)).toBeVisible()
 }
 
-test('a ?preview=1 visit shows what a plain one does: the lesson card, the systems, six chapters, nine Science sections', async ({
+test('a ?preview=1 visit shows what a plain one does: the lesson card, the systems, six chapters, ten Science sections', async ({
   page,
 }) => {
   await goto(page, '/?preview=1')
   await expect(page.locator('[data-flagship]')).toBeVisible()
-  await expect(page.locator('[data-systems] [data-system]')).toHaveCount(9)
+  await expect(page.locator('[data-systems] [data-system]')).toHaveCount(10)
   await goto(page, '/teach?preview=1')
   await expect(page.locator('[data-flagship]')).toBeVisible()
   await expect(page.locator('[data-chapter]')).toHaveCount(6)
   await goto(page, '/science?preview=1')
-  await expect(page.locator('section[data-system]')).toHaveCount(9)
+  await expect(page.locator('section[data-system]')).toHaveCount(10)
 })
 
 test('Home: the lesson is the first call to action, then a static list of the systems', async ({ page }) => {
@@ -68,7 +75,7 @@ test('Home: the lesson is the first call to action, then a static list of the sy
   ])
   expect(cardTop).toBeLessThan(simTop)
   const systems = page.locator('[data-systems] [data-system]')
-  await expect(systems).toHaveCount(9)
+  await expect(systems).toHaveCount(10)
   await expect(systems.first()).toContainText('Digestion')
   await shot(page, 'home')
   if (test.info().project.name === 'desktop') await checkAxe(page)
@@ -186,7 +193,7 @@ test('Teach: the lesson on top, then the lessons by NCERT chapter, each with its
 test('Science: one section per system, each with the sources its rows cite', async ({ page }) => {
   await goto(page, '/science')
   const sections = page.locator('section[data-system]')
-  await expect(sections).toHaveCount(9)
+  await expect(sections).toHaveCount(10)
   await expect(page.locator('section[data-system="breathing"] li')).toHaveCount(7)
   await expect(page.locator('section[data-system="lymph"]')).toContainText('Drawing only')
   // Each source links to its entry in the reference list.

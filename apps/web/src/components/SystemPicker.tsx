@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { valueAt, type ActivityBout, type RunResult, type SignalMeta } from '@lifepeek/engine'
+import { valueAt, type ActivityBout, type RunResult, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
 import type { TFunction } from 'i18next'
 import picker from 'virtual:lifepeek-en/picker'
 import lifeProcess from 'virtual:lifepeek-en/lifeProcess'
@@ -48,7 +48,7 @@ export default function SystemPicker({
   onPick,
   run,
   first,
-  drawing,
+  tag,
   format,
   doing,
 }: {
@@ -60,8 +60,8 @@ export default function SystemPicker({
   run: RunResult
   /** A row's first graph, once its pack has brought its graphs (systems/registry.ts). */
   first: (id: SystemId) => GraphSlotDef | undefined
-  /** A Drawing-only row (R11: nothing moves it, so no value): lymph's map and card. */
-  drawing: (id: SystemId) => boolean
+  /** A row with no value, its tag: Drawing only (R11: lymph's map and card), or the nerve demo's Model estimate (U-7). */
+  tag: (id: SystemId) => SignalStatus | undefined
   /** The stage's own number writer and bout reader (lib/formatSignal.ts, lib/bouts.ts), handed in. */
   format: (value: number, meta: SignalMeta, t: TFunction, lang: string) => string
   doing: (bouts: readonly ActivityBout[], min: number) => string
@@ -118,9 +118,9 @@ export default function SystemPicker({
                           }`}
                         >
                           <span className="text-control text-ink">{t(`systems.${id}.name`)}</span>
-                          {drawing(id) && (
+                          {!v && tag(id) && (
                             <span className="ml-auto">
-                              <StatusTag status="illustration" quiet />
+                              <StatusTag status={tag(id)!} quiet />
                             </span>
                           )}
                           {v && (
