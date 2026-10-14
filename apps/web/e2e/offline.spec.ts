@@ -117,6 +117,73 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
   }
 })
 
+/** What a cache holds, as paths (with their search), or [] if there is no such cache. */
+const cached = (page: Page, name: string) =>
+  page.evaluate(async (name) => {
+    if (!(await caches.has(name))) return []
+    return (await (await caches.open(name)).keys()).map((r) => {
+      const u = new URL(r.url)
+      return u.pathname + u.search
+    })
+  }, name)
+
+// R120 #1: a lesson saved for class goes to lp-saved, which never expires; lp-lazy (on first use)
+// keeps 150 files. Before, both shared lp-lazy at 40 files, fewer than one lesson's save: the next
+// files opened pushed saved ones out, and the lesson failed offline in class.
+test('a saved lesson stays saved after browsing 200 other lazy files: lp-saved is never pushed out', async ({ page, context }) => {
+  onlyIn('desktop')
+  test.slow()
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/teach')
+  await installed(page)
+  // Controlled by the service worker from here (the first visit is not: "prompt", no clients.claim).
+  await page.reload()
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller)
+  const lessons = page.locator('[data-lesson]')
+  await expect(lessons.first().getByText('Not saved for offline')).toBeVisible()
+  // One lesson, then all of them.
+  await lessons
+    .first()
+    .getByRole('button', { name: /^Save for class offline: / })
+    .click()
+  await expect(lessons.first().getByText('Ready for class offline ✓')).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: 'Save all for class offline' }).click()
+  const count = await lessons.count()
+  await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count, { timeout: 30_000 })
+  const manifest = (await (await page.request.get('/pack-manifest.json')).json()) as {
+    cache: string
+    entries: { id: string; tier: string; urls: string[] }[]
+  }
+  expect(manifest.cache).toBe('lp-saved')
+  const saved = await cached(page, 'lp-saved')
+  const lazyUrls = manifest.entries.filter((e) => e.tier === 'lazy').flatMap((e) => e.urls)
+  const lesson = manifest.entries.filter((e) => e.id === 'stage' || e.id === '3d').flatMap((e) => e.urls)
+  for (const url of lesson) expect(saved, 'the stage’s parts and 3D are in lp-saved').toContain(url)
+  // Casual browsing: 200 more lazy files (the real ones under other addresses; the lazy tier has
+  // about 60), each kept in lp-lazy on first use, more than its 150.
+  await page.evaluate(async (urls) => {
+    for (let i = 0; i < 200; i++) await (await fetch(`${urls[i % urls.length]}?browse=${i}`)).arrayBuffer()
+  }, lazyUrls)
+  // lp-lazy pushed the lesson's files out (least recently used first; Workbox's expiration runs
+  // after each put, a few entries behind); lp-saved kept all of it.
+  await expect.poll(async () => (await cached(page, 'lp-lazy')).filter((u) => lesson.includes(u)), { timeout: 20_000 }).toEqual([])
+  expect((await cached(page, 'lp-lazy')).length).toBeLessThan(170)
+  expect(new Set(await cached(page, 'lp-saved'))).toEqual(new Set(saved))
+  const href = await lessons.first().getByRole('link').first().getAttribute('href')
+  await context.setOffline(true)
+  try {
+    await page.goto('/teach')
+    await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count)
+    await page.goto(href!)
+    await expect(page.locator('[data-body="3d"]')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+    await page.locator('body').press('t')
+    await expect(page.getByRole('dialog', { name: 'The graphs as a table' })).toBeVisible()
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
 test.describe('a stale file after a deploy (vite:preloadError)', () => {
   // The service worker would answer from its cache; the test needs the file to fail.
   test.use({ serviceWorkers: 'block' })
