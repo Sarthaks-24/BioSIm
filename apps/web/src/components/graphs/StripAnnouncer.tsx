@@ -4,7 +4,7 @@ import { valueAt, type RunResult } from '@lifepeek/engine'
 import { formatSignal } from '../../lib/formatSignal.ts'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
-import type { Slot } from '../stage/GraphColumn.tsx'
+import type { GraphSlotDef } from '../../systems/registry.ts'
 
 /** How long the clock must stay still before the graphs' values are read out (ms). */
 const SETTLE_MS = 700
@@ -37,9 +37,9 @@ export default function StripAnnouncer({
   kept,
 }: {
   /** Every graph of the lit layer (S, B and E can ask for one that is not in view). */
-  slots: readonly Slot[]
+  slots: readonly GraphSlotDef[]
   /** The graphs in view. */
-  shown: readonly Slot[]
+  shown: readonly GraphSlotDef[]
   run: RunResult
   kept: RunResult | null
 }) {
@@ -49,7 +49,7 @@ export default function StripAnnouncer({
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
-    const readout = (from: readonly Slot[]) => {
+    const readout = (from: readonly GraphSlotDef[]) => {
       const { simMin } = useClock.getState()
       const parts = from.flatMap((slot) =>
         slot.signals.flatMap((id, i) => {

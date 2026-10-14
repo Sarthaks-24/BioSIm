@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  DEFAULT_PROFILE,
-  ORGANISM_PROFILES,
-  SIGNALS,
-  isActiveSignal,
-  isChartable,
-  type ActiveSignalId,
-  type OrganismId,
-} from '@lifepeek/engine'
+import { DEFAULT_PROFILE, ORGANISM_PROFILES, SIGNALS, isActiveSignal, type ActiveSignalId, type OrganismId } from '@lifepeek/engine'
 import { PROVIDES } from '@lifepeek/engine/run'
 import * as humanAnatomy from '../anatomy/human.ts'
 import en from '../i18n/en.json'
@@ -44,32 +36,16 @@ describe.each(entries)('registry: %s', (id, { organism, systems, organs }) => {
     expect(new Set(organIds).size).toBe(organIds.length)
   })
 
-  it('lists only organs it has, and signals it provides', () => {
-    for (const s of systems) {
-      for (const o of s.organs) expect(organIds, `${s.id} → ${o}`).toContain(o)
-      for (const sig of s.signals) expect(isProvided(sig), `${s.id} → ${sig}`).toBe(true)
-    }
+  // Each system's organs, graphs, rows and texts: systems/registry.test.ts (W-1).
+  it('drives organs only with signals it provides', () => {
     for (const o of organs) for (const sig of Object.values(o.drives ?? {})) expect(isProvided(sig), `${o.id} → ${sig}`).toBe(true)
     for (const sig of Object.keys(organism.signalOverrides)) expect(isProvided(sig), `override ${sig}`).toBe(true)
-  })
-
-  it('never lists a drawing-only or real-clock signal as a graph', () => {
-    for (const s of systems) for (const sig of s.signals) expect(isChartable(SIGNALS[sig]), `${s.id} → ${sig}`).toBe(true)
   })
 
   it('points every organ at a shape in its anatomy file', () => {
     for (const o of organs) {
       const shape = ANATOMY[id][o.anatomyRef]
       expect(shape, `${o.id} → ${o.anatomyRef}`).toBeTypeOf('object')
-    }
-  })
-
-  it('draws every layer flat (no WebGL needed)', async () => {
-    // A system the body draws ('body') needs no layer: the shared flat body (BodyView) draws it.
-    for (const s of systems) {
-      if (s.draw === 'body') continue
-      const mod = await s.draw.layerFlat()
-      expect(mod.default, s.id).toBeTypeOf('function')
     }
   })
 

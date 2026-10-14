@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
-import type { ActiveSignalId, Clock, OrganismId, ProfileId, RunResult } from '@lifepeek/engine'
+import type { ActiveSignalId, OrganismId, ProfileId, RunResult } from '@lifepeek/engine'
+import type { SystemDef, SystemId } from '../systems/registry.ts'
 
 /**
  * The registry: organisms, their systems and organs as data (ROADMAP A5 + O-0, plans/v2
@@ -7,7 +8,8 @@ import type { ActiveSignalId, Clock, OrganismId, ProfileId, RunResult } from '@l
  * hard-wiring digestion, so adding a system later is one `SystemDef` entry plus its flat and
  * 3D layer components; adding an organism is one more folder next to `human/`.
  * Grouped by organism: system and organ IDs may repeat across organisms, and their names are
- * global i18n keys. `registry.test.ts` checks every reference; `i18n.test.ts` marks the keys used.
+ * global i18n keys. The systems themselves (SystemId, SystemDef) are in systems/registry.ts (W-1).
+ * `registry.test.ts` checks every reference; `i18n.test.ts` marks the keys used.
  */
 
 /** A layer's props: the run it draws. Settled when the first layer ships. */
@@ -21,11 +23,10 @@ export type LayerComponent = ComponentType<LayerProps>
 /** Dynamic import, so the registry stays data-only and every drawing is its own chunk. */
 export type Loader<C> = () => Promise<{ default: C }>
 
-/** NCERT "Life Processes" groups. Drives the later "compare across organisms" picker. */
-export type LifeProcess = 'nutrition' | 'respiration' | 'transport' | 'excretion' | 'control'
+/** NCERT "Life Processes" groups (and movement, protection, reproduction: architecture §5.1). Group the picker's rows. */
+export type LifeProcess = 'nutrition' | 'respiration' | 'transport' | 'excretion' | 'control' | 'movement' | 'protection' | 'reproduction'
 
-/** Later: | 'bloodSugar' | 'energy' | 'circulation' | 'breathing' | 'kidneys' (plan-architecture §4.6). */
-export type SystemId = 'digestion'
+export type { SystemDef, SystemId }
 
 /** Organ IDs are organism-neutral, like signal IDs (a cow's stomach is still 'stomach'). */
 export type OrganId = 'mouth' | 'esophagus' | 'stomach' | 'smallIntestine' | 'largeIntestine' | 'liver' | 'pancreas'
@@ -52,27 +53,6 @@ export interface OrganismDef {
   defaultSystem: SystemId
   /** Per-organism display hints (a cow's blood sugar needs another axis). The graphs read `displayRange`. */
   signalOverrides: Partial<Record<ActiveSignalId, { displayRange?: readonly [number, number] }>>
-}
-
-export interface SystemDef {
-  id: SystemId
-  /** `systems.${id}` (.name). */
-  i18nKey: string
-  lifeProcess: LifeProcess
-  /** 'sim' = moves with the meal clock; 'real' = always running; 'both' = has loops of each kind. */
-  clock: Clock | 'both'
-  camera?: CameraPreset
-  /** Organs lit when this system is on. */
-  organs: readonly OrganId[]
-  /** Graphs shown beside the body for this system, in priority order. Never an 'illustration' signal. */
-  signals: readonly ActiveSignalId[]
-  /** `limits.*` texts "How we know" lists for this system, besides each signal's own `limitKey`. */
-  knownLimits: readonly string[]
-  /**
-   * How the system is drawn. 'body': the organism's own body draws it (digestion in v2.0).
-   * Otherwise a layer over the base body; the flat layer is required, like the flat body.
-   */
-  draw: 'body' | { layerFlat: Loader<LayerComponent>; layer3d?: Loader<LayerComponent> }
 }
 
 export interface OrganDef<Ref extends string = string> {

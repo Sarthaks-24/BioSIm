@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RunResult } from '@lifepeek/engine'
-import { compareSummary, singleSummary, type Summary } from '../../lib/summary.ts'
+import type { Summary } from '../../systems/registry.ts'
+import { useSystemUi } from '../../systems/ui.ts'
 import { LineSwatch } from './KeptTag.tsx'
 
 /** The headline with its key number ("8×", "35 min") in the colour of the line it is about. */
@@ -24,7 +25,8 @@ function Headline({ summary }: { summary: Summary }) {
  * The summary sentence (council verdict #3): the answer in one sentence, under the body, so
  * nobody has to read a graph to get the point. One meal: when half of it has left the stomach.
  * With a kept meal: which stomach empties faster, about how many times, and why, only when the
- * reason is true (lib/summary.ts). It does not depend on the clock, so it is there from 0 min.
+ * reason is true (systems/digestion/summary.ts: the lit system's `SystemUi.summary`, W-1). It does
+ * not depend on the clock, so it is there from 0 min.
  *
  * It is the stage's answer, so it reads louder than the Now line (council round 2, C4): a step
  * up in size, semibold, and its key number in the colour of its line (blue for this meal, the
@@ -34,7 +36,8 @@ function Headline({ summary }: { summary: Summary }) {
 export default function SummaryLine({ run, kept, className = '' }: { run: RunResult; kept: RunResult | null; className?: string }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
-  const summary = useMemo(() => (kept ? compareSummary(run, kept, t, lang) : singleSummary(run, t, lang)), [run, kept, t, lang])
+  const { summary: summarize } = useSystemUi()
+  const summary = useMemo(() => summarize(run, kept, t, lang), [summarize, run, kept, t, lang])
   if (!summary) return null
   return (
     <p data-summary={kept ? 'compare' : 'single'} className={`flex items-start gap-2 text-control text-ink ${className}`}>

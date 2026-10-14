@@ -9,7 +9,7 @@ import { formatDuration } from '../../lib/time.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
 import { Segmented } from '../kit/index.ts'
-import type { Slot } from '../stage/GraphColumn.tsx'
+import type { GraphSlotDef, SystemUi } from '../../systems/registry.ts'
 import Sheet from '../stage/Sheet.tsx'
 import { shortMealNames } from '../stage/mealText.ts'
 
@@ -25,12 +25,15 @@ export default function StripTable({
   kept,
   slots,
   slot,
+  ui,
 }: {
   run: RunResult
   kept: RunResult | null
   /** The lit layer's graphs (GraphColumn's slots). */
-  slots: readonly Slot[]
+  slots: readonly GraphSlotDef[]
   slot: string | null
+  /** The lit system's graph sentences and moments. */
+  ui: SystemUi
 }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -41,7 +44,7 @@ export default function StripTable({
   const runName = shortMealNames(meal, lang)
   const keptName = keptItems ? shortMealNames(keptItems, lang) : ''
 
-  const signals = (current?.signals ?? []) as ActiveSignalId[]
+  const signals: readonly ActiveSignalId[] = current?.signals ?? []
   const cols = current ? tableColumns(signals, run, kept) : []
   const two = signals.length > 1
   const header = (c: TableColumn) =>
@@ -58,7 +61,7 @@ export default function StripTable({
   }
   const graphName = (signals: readonly ActiveSignalId[]) =>
     signals.length > 1 ? t('stage.strips.energy') : t(`${run.signals.get(signals[0]!)?.meta.i18nKey}.name`)
-  const moments = momentRows(run, kept)
+  const moments = momentRows(ui.moments, run, kept)
   // "Half the energy has left…" for a meal with energy, "Half has left…" for water: when the two
   // meals would be named differently, the row takes the moment's plain catalog name.
   const momentName = (m: (typeof moments)[number]) => {
@@ -96,7 +99,9 @@ export default function StripTable({
           <table data-strip-table={current.id} className="w-full border-collapse">
             <caption className="mb-2 text-left">
               <span className="block font-semibold">{graphName(signals)}</span>
-              <span className="block max-w-[65ch] text-ink-muted">{stripDescription(signals[0]!, run, kept, keptName, t, lang)}</span>
+              <span className="block max-w-[65ch] text-ink-muted">
+                {stripDescription(ui.stripSummary, signals[0]!, run, kept, keptName, t, lang)}
+              </span>
             </caption>
             <thead>
               <tr className="border-b-2 border-border">

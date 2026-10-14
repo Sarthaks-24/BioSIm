@@ -37,7 +37,7 @@ export function catalogKeys(): KeyUse {
   return { required, optional }
 }
 
-/** Organisms, their profiles, systems (with life process and known limits) and organs. */
+/** Organisms, their profiles, systems (with life process, known limits and graph slots) and organs. */
 export function registryKeys(): KeyUse {
   const required = new Set<string>()
   for (const { organism, systems, organs } of Object.values(ORGANISMS)) {
@@ -47,6 +47,11 @@ export function registryKeys(): KeyUse {
       required.add(`${s.i18nKey}.name`)
       required.add(`lifeProcess.${s.lifeProcess}`)
       for (const k of s.knownLimits) required.add(k)
+      // Each graph's tab name, its limits and its ring labels (systems/registry.ts GraphSlotDef).
+      for (const slot of s.slots) {
+        required.add(`stage.strips.${slot.id}`)
+        for (const k of [...(slot.limits ?? []), ...Object.values(slot.marks ?? {})]) required.add(k)
+      }
     }
     for (const o of organs) required.add(o.i18nKey)
   }

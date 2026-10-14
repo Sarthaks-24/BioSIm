@@ -56,7 +56,7 @@ describe('vercel.json rewrites', () => {
     expect(vercel.rewrites).toHaveLength(1)
     const [{ source, destination }] = vercel.rewrites
     expect(destination).toBe('/index.html')
-    // Same list as Workbox's navigateFallbackDenylist in vite.config.ts (00 D-NOTICES).
+    // Same list as Workbox's navigateFallbackDenylist in scripts/cache-policy.mjs (00 D-NOTICES).
     const served = ['api/', 'assets/', 'sw.js', 'workbox-', 'manifest.webmanifest', 'favicon', 'icon-', 'THIRD_PARTY_NOTICES']
     // The share picture and the install screenshots (WP-19) are files too, never the app.
     for (const name of [...served, 'robots.txt', 'sitemap.xml', 'stats.json', 'og-image', 'screenshots/']) expect(source).toContain(name)
@@ -77,8 +77,8 @@ describe('vercel.json rewrites', () => {
 })
 
 describe('the service worker agrees with the rewrites', () => {
-  it('Workbox sends the same plain files to the network, never the app shell (vite.config.ts)', () => {
-    const vite = fs.readFileSync(path.join(root, 'apps', 'web', 'vite.config.ts'), 'utf8')
+  it('Workbox sends the same plain files to the network, never the app shell (scripts/cache-policy.mjs)', () => {
+    const vite = fs.readFileSync(path.join(root, 'apps', 'web', 'scripts', 'cache-policy.mjs'), 'utf8')
     const start = vite.indexOf('navigateFallbackDenylist')
     const deny = vite.slice(start, vite.indexOf('],', start))
     const [{ source }] = vercel.rewrites

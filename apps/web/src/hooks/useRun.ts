@@ -3,7 +3,7 @@ import type { ActivityBout, MealItem, ProfileId, RunResult } from '@lifepeek/eng
 import { lookupFood } from '../data/foods.ts'
 import { useRunStore } from '../state/run.ts'
 import { useClock } from '../state/clock.ts'
-import { runMoments } from '../lib/moments.ts'
+import type { Moment } from '../lib/moments.ts'
 
 /** A stable empty plan, so a selector without a kept run returns the same value each time. */
 const NO_ACTIVITY: readonly ActivityBout[] = []
@@ -112,12 +112,13 @@ export function useRun(which: 'current' | 'kept'): { run: RunResult | null; pend
 
 /**
  * Hands the key moments to the meal clock, so "next / previous moment" (PageDown / PageUp, a
- * clicker) steps through every marker on the dock's timeline (lib/moments.ts): this meal's and
- * the kept meal's, in time order, each time once.
+ * clicker) steps through every marker on the dock's timeline: this meal's and the kept meal's, in
+ * time order, each time once. `moments` is the lit system's (SystemUi.moments; digestion's is
+ * lib/moments.ts runMoments).
  */
-export function useMomentsOnClock(run: RunResult | null, kept: RunResult | null = null) {
+export function useMomentsOnClock(moments: (run: RunResult) => Moment[], run: RunResult | null, kept: RunResult | null = null) {
   useEffect(() => {
-    const times = [run, kept].flatMap((sim) => (sim && sim.meal.items.length > 0 ? runMoments(sim).map((m) => m.atMin) : []))
+    const times = [run, kept].flatMap((sim) => (sim && sim.meal.items.length > 0 ? moments(sim).map((m) => m.atMin) : []))
     useClock.getState().setMoments(times)
-  }, [run, kept])
+  }, [moments, run, kept])
 }
