@@ -54,7 +54,7 @@ export default function BodyView({ sim, label, band }: { sim: RunResult; label: 
             </>
           }
         >
-          <BodyCanvas sim={sim} label={label} onContextLost={() => setLost(true)} placeholder={flat} />
+          <BodyCanvas sim={sim} label={label} onContextLost={() => setLost(true)} placeholder={flat} layer3d={system?.layer3d} />
         </Suspense>
       </WebGLBoundary>
     )

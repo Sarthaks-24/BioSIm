@@ -13,24 +13,18 @@ import {
   setConsoleFunction,
 } from 'three'
 import { NUTRIENT_KINDS, activeStage, type NutrientKind, type RunResult, type StageId } from '@lifepeek/engine'
+import type { Loader } from '../registry/types.ts'
 import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { particlePosition, tumble } from '../anatomy/human/digestion.ts'
-import { bodyStateAt } from '../anatomy/bodyState.ts'
 import { useCalloutSpecs, useCallouts, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
 import { useMotion } from '../state/motion.ts'
 import { useProjector } from '../hooks/useProjector.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
-import { ORGANS, sharedGeometry } from './geometry.ts'
-import {
-  layerUniforms,
-  outlineMaterial,
-  particleMaterial,
-  setLook,
-  shellMaterial,
-  tissueMaterial,
-  type LayerUniforms,
-} from './materials.ts'
-import { quality } from './quality.ts'
+import { particleMaterial, setLook } from './materials.ts'
+import { geometryTier, quality } from './quality.ts'
+import type { Layer3d, Tier } from './layer.ts'
+import { mountBase, mountLayer, mountStats, pinBase, pinLayer, releaseBase, releaseLayer, type MountedBase } from './mount.ts'
+import { DIGESTION_3D } from './layers/digestion.ts'
 
 // three.js r183 deprecated THREE.Clock, which fiber still makes for every canvas: a console warning
 // on every load (B19) that is not ours to fix. Only that line is dropped; the rest goes on as before.
@@ -47,6 +41,8 @@ interface Props {
   onContextLost?: () => void
   /** Shown in the body's place until the 3D body has drawn its first frame (the flat body). */
   placeholder?: ReactNode
+  /** The lit system's 3D layer (SystemDef.layer3d), loaded on first use; none = digestion's, in this chunk. */
+  layer3d?: Loader<Layer3d>
 }
 
 /**
@@ -59,12 +55,14 @@ interface Props {
  * that then changed). Until it has drawn, the placeholder (the flat body) stays, so the body is
  * never blank. `data-ready` on the box says the 3D body is drawn (the e2e tests wait for it).
  */
-export default function BodyCanvas({ sim, label, onContextLost, placeholder }: Props) {
+export default function BodyCanvas({ sim, label, onContextLost, placeholder, layer3d }: Props) {
   // Read outside <Canvas> and passed down, so the scene does not depend on context bridging.
   const clock = useBodyClock()
   const stage = useStage(sim, clock)
   const reduced = useMotion((s) => s.reduced)
   const q = useMemo(() => quality(), [])
+  const tier = useMemo(() => geometryTier(), [])
+  const layer = useLayer3d(layer3d)
   const [width, setWidth] = useState(0)
   const invalidate = useRef<() => void>(() => {})
   const { overlay, place } = useCallouts(useCalloutSpecs(stage, width), () => invalidate.current())
@@ -124,11 +122,14 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
             lostListener.current = { canvas: gl.domElement, listener }
             // The ?debug=fps overlay (BodyView) reads draw calls and triangles from here; the e2e
             // label check projects the organs itself, with the camera.
-            Object.assign(window, { __lifepeekGl: gl.info, __lifepeekCamera: camera })
+            // __lifepeek3d: what three/mount.ts holds (the e2e leak check after switching systems).
+            Object.assign(window, { __lifepeekGl: gl.info, __lifepeekCamera: camera, __lifepeek3d: mountStats })
           }}
         >
           <Lighting />
-          <Body sim={sim} clock={clock} reduced={reduced} />
+          {/* One lit layer at a time (anatomy plan D5); a new system's layer replaces it once it has loaded. */}
+          {layer && <LitLayer key={layer.id} layer={layer} tier={tier} sim={sim} clock={clock} />}
+          <Base tier={tier} sim={sim} clock={clock} reduced={reduced} />
           <OrbitControls
             makeDefault
             enablePan={false}
@@ -140,7 +141,7 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder }: P
           />
           <LabelProjector place={place} />
           <Invalidator sim={sim} clock={clock} reduced={reduced} />
-          <FirstFrame onDrawn={() => setDrawn(true)} />
+          {layer && <FirstFrame onDrawn={() => setDrawn(true)} />}
         </Canvas>
       )}
       {/* Measured from the start (hidden, not removed), placed by the 3D body's frames. */}
@@ -215,6 +216,35 @@ function FirstFrame({ onDrawn }: { onDrawn: () => void }) {
 }
 
 /**
+ * The layer to draw: digestion's at once (it is in this chunk); another system's once its chunk has
+ * loaded, and until then the one before stays (null on a first mount: the placeholder stays). A
+ * chunk that does not arrive is thrown to BodyView's boundary, which shows the flat body and why.
+ */
+function useLayer3d(load: Loader<Layer3d> | undefined): Layer3d | null {
+  const [layer, setLayer] = useState<Layer3d | null>(load ? null : DIGESTION_3D)
+  const [, fail] = useState(0)
+  useEffect(() => {
+    if (!load) {
+      setLayer(DIGESTION_3D)
+      return
+    }
+    let live = true
+    load().then(
+      (m) => live && setLayer(m.default),
+      (error: unknown) =>
+        live &&
+        fail(() => {
+          throw error
+        }),
+    )
+    return () => {
+      live = false
+    }
+  }, [load])
+  return layer
+}
+
+/**
  * Where most of the meal is now. Re-renders only when that changes (a few times per meal), not
  * every sim minute while playing.
  */
@@ -254,59 +284,47 @@ function Invalidator({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock
   return null
 }
 
-/** Organ highlight per frame: −1 faded (empty), 0 normal, 1 where the meal is now. */
-function writeState(u: LayerUniforms, sim: RunResult, t: number) {
-  const s = bodyStateAt(sim, t)
-  u.uFill.value = s.stomachFill
-  const state = u.uState.value
-  for (let i = 0; i < ORGANS.length; i++) {
-    const organ = ORGANS[i]!
-    switch (organ) {
-      case 'esophagus':
-        state[i] = s.stage === 'mouth' || s.stage === 'esophagus' ? 1 : 0
-        break
-      case 'stomach':
-      case 'smallIntestine':
-      case 'largeIntestine':
-        state[i] = s.stage === organ ? 1 : s.holds[organ] ? 0 : -1
-        break
-      default:
-        state[i] = 0
-    }
-  }
-}
-
-function Body({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; reduced: boolean }) {
-  const geo = sharedGeometry()
-  const mats = useMemo(() => {
-    const u = layerUniforms()
-    return { u, tissue: tissueMaterial(u), outline: outlineMaterial(u), shell: shellMaterial() }
-  }, [])
-  useEffect(
-    () => () => {
-      mats.tissue.dispose()
-      mats.outline.dispose()
-      mats.shell.dispose()
-    },
-    [mats],
-  )
+/**
+ * The lit layer: one merged mesh, drawn as tissue and as its ink outline. three/mount.ts owns its
+ * mesh and materials (`dispose={null}`: fiber's teardown leaves them to it), and frees their GPU
+ * side when the layer goes; the mesh's arrays stay cached for the next mount.
+ */
+function LitLayer({ layer, tier, sim, clock }: { layer: Layer3d; tier: Tier; sim: RunResult; clock: BodyClock }) {
+  const m = useMemo(() => mountLayer(layer, tier), [layer, tier])
+  useEffect(() => {
+    pinLayer(m)
+    return () => releaseLayer(m)
+  }, [m])
   // Runs before the scene is drawn (priority -1), so the uniforms belong to this frame's time.
-  useFrame(() => writeState(mats.u, sim, clock.now()), -1)
+  useFrame(() => layer.write(m.state, sim, clock.now()), -1)
   // The projector look (3D-5): wider, near-black outlines, less fade. Same shaders, new uniforms.
   const projector = useProjector()
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
-    setLook(mats.u, projector ? 'projector' : 'normal')
+    setLook(m.uniforms, projector ? 'projector' : 'normal')
     invalidate()
-  }, [mats, projector, invalidate])
+  }, [m, projector, invalidate])
 
   return (
-    <group>
-      <mesh geometry={geo.digestion} material={mats.tissue} />
-      <mesh geometry={geo.digestion} material={mats.outline} />
-      <mesh geometry={geo.shell} material={mats.shell} renderOrder={20} />
-      <Swarm sim={sim} clock={clock} reduced={reduced} />
-    </group>
+    <>
+      <mesh geometry={m.geometry} material={m.tissue} dispose={null} />
+      <mesh geometry={m.geometry} material={m.outline} dispose={null} />
+    </>
+  )
+}
+
+/** The base every layer shares: the skin shell and the food particles. */
+function Base({ tier, sim, clock, reduced }: { tier: Tier; sim: RunResult; clock: BodyClock; reduced: boolean }) {
+  const b = useMemo(() => mountBase(tier), [tier])
+  useEffect(() => {
+    pinBase(b)
+    return () => releaseBase(b)
+  }, [b])
+  return (
+    <>
+      <mesh geometry={b.shell} material={b.shellMaterial} renderOrder={20} dispose={null} />
+      <Swarm particles={b.particles} sim={sim} clock={clock} reduced={reduced} />
+    </>
   )
 }
 
@@ -329,8 +347,17 @@ function DepthClear() {
   return <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} onBeforeRender={(gl) => gl.clearDepth()} />
 }
 
-function Swarm({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; reduced: boolean }) {
-  const geo = sharedGeometry()
+function Swarm({
+  particles,
+  sim,
+  clock,
+  reduced,
+}: {
+  particles: MountedBase['particles']
+  sim: RunResult
+  clock: BodyClock
+  reduced: boolean
+}) {
   const meshes = useRef<Partial<Record<NutrientKind, InstancedMesh>>>({})
   const materials = useMemo(() => Object.fromEntries(NUTRIENT_KINDS.map((k) => [k, particleMaterial(NUTRIENT_COLOR[k])])), []) as Record<
     NutrientKind,
@@ -375,7 +402,7 @@ function Swarm({ sim, clock, reduced }: { sim: RunResult; clock: BodyClock; redu
             ref={(m) => {
               meshes.current[kind] = m ?? undefined
             }}
-            args={[geo.particles[kind], materials[kind], byKind[kind].length]}
+            args={[particles[kind], materials[kind], byKind[kind].length]}
             renderOrder={10}
             frustumCulled={false}
           />

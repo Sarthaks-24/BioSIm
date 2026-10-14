@@ -1,3 +1,5 @@
+import type { Tier } from './layer.ts'
+
 /**
  * Cheap-phone settings for the 3D body (roadmap 3D-1 phone fixes, plan-systems-3d §3.5).
  *
@@ -23,4 +25,12 @@ export const LOW_MEMORY_GB = 2
 export function quality(hints: DeviceHints = typeof navigator === 'undefined' ? {} : (navigator as DeviceHints)): Quality {
   const low = hints.deviceMemory !== undefined && hints.deviceMemory <= LOW_MEMORY_GB
   return low ? { dpr: 1.25, antialias: false } : { dpr: 1.5, antialias: true }
+}
+
+/**
+ * The geometry tier (anatomy plan §9): a 2 GB phone builds lighter 3D meshes. Only the 3D body
+ * reads it (the meshes are cached per tier: three/mount.ts), so the flat body's download has none of it.
+ */
+export function geometryTier(hints: DeviceHints = typeof navigator === 'undefined' ? {} : (navigator as DeviceHints)): Tier {
+  return hints.deviceMemory !== undefined && hints.deviceMemory <= LOW_MEMORY_GB ? 'low' : 'high'
 }

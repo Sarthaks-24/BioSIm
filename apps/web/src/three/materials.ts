@@ -1,7 +1,6 @@
 import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
 import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones/base.ts'
 import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
-import { ORGANS } from './geometry.ts'
 
 /**
  * Materials of the 3D body (plan-systems-3d §3.1, roadmap 3D-1):
@@ -13,11 +12,14 @@ import { ORGANS } from './geometry.ts'
  * Shader code is injected with onBeforeCompile, so three.js keeps its own lighting.
  */
 
-/** Uniforms shared by the organs and their outline, written per frame from the body state. */
+/**
+ * Uniforms shared by a layer's organs and their outline, written per frame from the body state.
+ * Both arrays have one slot per organ (Layer3d.organs order); the shaders are sized by that count.
+ */
 export interface LayerUniforms {
-  /** Stomach stretch, 0…1 (anatomy stomachFill). */
-  uFill: IUniform<number>
-  /** Per organ (ORGANS order): −1 = empty, faded back; 0 = normal; 1 = the active stage. */
+  /** Per organ, how far it is stretched, 0…1 (stomach: anatomy stomachFill; lungs and bladder later). */
+  uFill: IUniform<number[]>
+  /** Per organ: −1 = empty, faded back; 0 = normal; 1 = the active stage. */
   uState: IUniform<number[]>
   /** Outline width as a share of the distance to the camera (constant on screen). */
   uOutline: IUniform<number>
@@ -28,10 +30,10 @@ export interface LayerUniforms {
   uLift: IUniform<Vector3>
 }
 
-export const layerUniforms = (): LayerUniforms => {
+export const layerUniforms = (organs: number): LayerUniforms => {
   const u: LayerUniforms = {
-    uFill: { value: 0 },
-    uState: { value: ORGANS.map(() => 0) },
+    uFill: { value: new Array<number>(organs).fill(0) },
+    uState: { value: new Array<number>(organs).fill(0) },
     uOutline: { value: 0 },
     uFadeAmount: { value: 0 },
     uShade: { value: 0 },
@@ -50,11 +52,14 @@ export function setLook(u: LayerUniforms, look: BodyLook) {
   u.uLift.value.fromArray(l.outlineLift)
 }
 
-const N = ORGANS.length
-
 const FADE = new Color(FADE_TONE)
 
-export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
+/**
+ * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
+ * baked into the shader), shared only by bodies showing the same layer.
+ */
+export function tissueMaterial(u: LayerUniforms, key: string): MeshStandardMaterial {
+  const N = u.uState.value.length
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: FrontSide })
   m.onBeforeCompile = (shader) => {
     shader.uniforms.uFill = u.uFill
@@ -67,13 +72,13 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         `#include <common>
         attribute float organ;
         attribute float inflate;
-        uniform float uFill;
+        uniform float uFill[${N}];
         varying float vOrgan;`,
       )
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        transformed += objectNormal * inflate * uFill;
+        transformed += objectNormal * inflate * uFill[int(organ + 0.5)];
         vOrgan = organ;`,
       )
     shader.fragmentShader = shader.fragmentShader
@@ -105,8 +110,8 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
         #include <opaque_fragment>`,
       )
   }
-  // Same program for every body on the page.
-  m.customProgramCacheKey = () => 'lifepeek-tissue'
+  // One program per layer, shared by every body on the page that shows it.
+  m.customProgramCacheKey = () => `lifepeek-tissue:${key}:${N}`
   return m
 }
 
@@ -117,6 +122,7 @@ export function tissueMaterial(u: LayerUniforms): MeshStandardMaterial {
  * projector the line is wider and near-black (setLook).
  */
 export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
+  const N = u.uState.value.length
   return new ShaderMaterial({
     side: BackSide,
     vertexColors: true,
@@ -124,13 +130,13 @@ export function outlineMaterial(u: LayerUniforms): ShaderMaterial {
     vertexShader: /* glsl */ `
       attribute float organ;
       attribute float inflate;
-      uniform float uFill;
+      uniform float uFill[${N}];
       uniform float uOutline;
       uniform float uState[${N}];
       varying vec3 vInk;
       varying float vFaded;
       void main() {
-        vec3 p = position + normal * inflate * uFill;
+        vec3 p = position + normal * inflate * uFill[int(organ + 0.5)];
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         vec3 n = normalize(normalMatrix * normal);
         mv.xyz += n * uOutline * -mv.z;
