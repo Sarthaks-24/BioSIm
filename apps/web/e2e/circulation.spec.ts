@@ -52,7 +52,7 @@ test('a link lights Heart & blood: heart, chip, colour key, three graphs, book l
   await expect(graphs.locator('[data-status="assumption"]').first()).toHaveText('Model estimate')
   await expect(graphs.locator('[data-reference]')).toHaveCount(1)
   await expect(graphs.locator('[data-book]')).toHaveText('Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute')
-  await expect(graphs.locator('[data-band-key]')).toContainText('Most children your age (12–15): 62–96')
+  await expect(graphs.locator('[data-band-key]')).toContainText('Most children aged 12–15: 62–96')
   // "Why does the model differ from the book?" for the heart (R9, R82, R86).
   await graphs.getByRole('button', { name: 'Why different? ›' }).click()
   const why = graphs.locator('[data-why="sys.circulation.why"]')
