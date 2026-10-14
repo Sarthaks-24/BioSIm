@@ -143,7 +143,7 @@ test('each page is served with its own head (built HTML, before any JavaScript)'
 
 // R120 #10: the full Content-Security-Policy of vercel.json, which vite preview sends too
 // (vite.config.ts, lifepeek-site-headers). Nothing the app does may be refused under it: every page,
-// the 3D body, the engine worker, the stage's sheets, the system picker and Teach's offline save.
+// the 3D body, the stage's sheets, the system picker and Teach's offline save.
 test('the CSP: sent as in vercel.json, and nothing on any page is refused under it', async ({ page, request }) => {
   test.slow()
   const vercel = JSON.parse(
@@ -171,11 +171,9 @@ test('the CSP: sent as in vercel.json, and nothing on any page is refused under 
     await open(page, url)
     expect(await violations(), url).toEqual([])
   }
-  // The stage: the 3D body, the engine worker (after the first run), the table sheet, the picker.
-  const worker = page.waitForEvent('worker', (w) => /engine-worker-/.test(w.url()))
+  // The stage: the 3D body, the table sheet, the picker (3.0 has no engine worker: it came with v3.1's W-2).
   await open(page, '/sim?v=3&a=cola:1')
   await expect(page.locator('[data-body="3d"][data-ready]')).toBeVisible({ timeout: 30_000 })
-  await worker
   await page.locator('body').press('p')
   await expect(page.locator('[data-line="kept"]').filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 })
   await page.locator('body').press('t')
