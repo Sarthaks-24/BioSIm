@@ -216,10 +216,12 @@ check(
   for (const file of files.filter((f) => fs.existsSync(path.join(root, f)))) {
     const text = read(file)
     if (/VITE_PSEUDO\W+1/.test(text)) problems.push(`${file} turns on VITE_PSEUDO (the e2e build's test language)`)
+    if (/VITE_E2E\W+1/.test(text)) problems.push(`${file} turns on VITE_E2E (the e2e build's 3D test handles on window)`)
     if (/VITE_HINDI\W+1/.test(text) && !HINDI)
       problems.push(`${file} turns on VITE_HINDI: run the gate with VITE_HINDI=1 so the Hindi review check runs`)
   }
   if (process.env.VITE_PSEUDO === '1') problems.push('VITE_PSEUDO=1 is set: run the gate as the production build is made, without it')
+  if (process.env.VITE_E2E === '1') problems.push('VITE_E2E=1 is set: run the gate as the production build is made, without it')
   check('Production build settings (no test language; Hindi only with its review, R47)', problems)
 }
 

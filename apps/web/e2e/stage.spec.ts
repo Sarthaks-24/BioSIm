@@ -288,6 +288,10 @@ test('switching systems 20× leaves one WebGL context and the 3D body at its bas
         )
         .toBe(0)
       await expect.poll(contexts).toEqual({ live: first.live - 1, onPage: 0 })
+      // Nor on window: the gone body's renderer, camera and scene are not kept alive (R120 #15).
+      expect(
+        await page.evaluate(() => ['__lifepeekGl', '__lifepeekCamera', '__lifepeekScene', '__lifepeekSnap'].filter((k) => k in window)),
+      ).toEqual([])
     }
     await page.locator('body').press(']')
     await expect(ready).toBeVisible({ timeout: 30_000 })

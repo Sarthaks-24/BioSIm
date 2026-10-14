@@ -160,12 +160,20 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
   const lostListener = useRef<{ canvas: HTMLCanvasElement; listener: (e: Event) => void } | null>(null)
   const lost = useRef(onContextLost)
   lost.current = onContextLost
+  // This body's renderer info, when its test handles are on window (TEST_HANDLES).
+  const handles = useRef<object | null>(null)
   useEffect(
     () => () => {
       const l = lostListener.current
       l?.canvas.removeEventListener('webglcontextlost', l.listener)
       lostListener.current = null
       lost.current = undefined
+      // Its renderer's test handles go with it, unless a newer body has put its own there
+      // (__lifepeek3d, three/mount.ts's cache, holds no renderer: it stays).
+      const w = window as unknown as Record<string, unknown>
+      if (handles.current && w.__lifepeekGl === handles.current)
+        for (const k of ['__lifepeekGl', '__lifepeekCamera', '__lifepeekScene', '__lifepeekSnap']) delete w[k]
+      handles.current = null
     },
     [],
   )
@@ -202,10 +210,13 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
             }
             gl.domElement.addEventListener('webglcontextlost', listener)
             lostListener.current = { canvas: gl.domElement, listener }
-            // The ?debug=fps overlay (BodyView) reads draw calls and triangles from here; the e2e
-            // label check projects the organs itself, with the camera.
+            // Test handles, only with ?debug=fps or in the e2e build (R120 #15: in production they
+            // kept the last renderer and its scene alive after the 3D body went), and taken off
+            // when this body goes. The ?debug=fps overlay (BodyView) reads draw calls and triangles
+            // from here; the e2e label check projects the organs itself, with the camera.
             // __lifepeek3d: what three/mount.ts holds (the e2e leak check after switching systems).
             // __lifepeekScene and __lifepeekSnap (draw now, as a PNG): the e2e double-rim check draws the skin alone (A-1a).
+            if (!TEST_HANDLES) return
             Object.assign(window, {
               __lifepeekGl: gl.info,
               __lifepeekCamera: camera,
@@ -213,6 +224,7 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
               __lifepeekScene: scene,
               __lifepeekSnap: () => (gl.render(scene, camera), gl.domElement.toDataURL()),
             })
+            handles.current = gl.info
           }}
         >
           <Lighting />
@@ -270,6 +282,13 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
     </div>
   )
 }
+
+/**
+ * The 3D body's handles on window (renderer info, camera, scene, a snapshot): for the ?debug=fps
+ * readout (docs/PHONE-CHECK.md) and the e2e build (VITE_E2E=1, playwright.config.ts) only.
+ */
+const TEST_HANDLES =
+  import.meta.env.VITE_E2E === '1' || (typeof location !== 'undefined' && new URLSearchParams(location.search).get('debug') === 'fps')
 
 /** Narrower than this (CSS px), the whole-body switch shows only its icon. */
 const NARROW_PX = 460
@@ -624,6 +643,14 @@ function DepthClear() {
     g.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3))
     return { geometry: g, material: new MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }) }
   }, [])
+  // Its own GPU buffers and program, freed when it goes (R120 #15).
+  useEffect(
+    () => () => {
+      geometry.dispose()
+      material.dispose()
+    },
+    [geometry, material],
+  )
   return <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} onBeforeRender={(gl) => gl.clearDepth()} />
 }
 

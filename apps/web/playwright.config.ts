@@ -240,7 +240,8 @@ export default defineConfig({
         url: `http://localhost:${E2E_PORT}`,
         // The +40 % pseudo-locale for hindi.spec.ts (i18n/pseudo.ts). Only this build has it; Vercel never sets it.
         // Hindi too: it is paused in real builds (R47, i18n/language.ts), but its tests keep running here.
-        env: { VITE_PSEUDO: '1', VITE_HINDI: '1' },
+        // VITE_E2E: the 3D body's test handles on window (three/BodyCanvas.tsx; production: only with ?debug=fps).
+        env: { VITE_PSEUDO: '1', VITE_HINDI: '1', VITE_E2E: '1' },
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
       },
