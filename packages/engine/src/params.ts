@@ -5,6 +5,7 @@
  */
 
 import type { OrganismId } from './core/organism.ts'
+import type { PackParams } from './packParams.ts'
 
 /** Bumped whenever outputs change for the same input. Stored in share links as `v=`. */
 export const MODEL_VERSION = 3
@@ -166,57 +167,6 @@ export const PARAMS = {
     },
   },
 
-  /**
-   * Breathing (model §2.2, S-2; sources read in V-2). Oxygen used and carbon dioxide made come from
-   * the energy used (x.energy.total) through Weir's equation without protein, kcal = (3.941 +
-   * 1.106·RQ) per L O2 (Kaiyala 2019, Eq 1). RQ starts at the fasting value, rises with blood
-   * glucose (kRQ, calibrated on Gribok 2016's carbohydrate shake), and in a bout never falls below
-   * a floor that grows with MET (more carbohydrate burned at higher effort; a calibration, R51).
-   * Breathing carries the CO2 away with alveolar CO2 held at 40 mm Hg (OpenStax §22.4), so alveolar
-   * air VA = 0.863·VCO2/40 L/min (0.863 = 760·310/273/1000, the gas-law constant from mL/min dry at
-   * 0 °C to L/min at body temperature). The split of VA into breaths and depth is hand-picked: rate
-   * f = 15·(VA/VA_rest)^(1/3) (15/min at rest, inside OpenStax's 12–18 and the book's 15–18), depth
-   * VT = VA/f + 150 mL of dead space, at most 2.5 L.
-   */
-  gas: {
-    weirO2: 3.941,
-    weirCo2: 1.106,
-    rqFasting: 0.82,
-    rqPerMgDl: 0.0025,
-    rqFloorBase: 0.8,
-    rqFloorPerMet: 0.0127,
-    rqMin: 0.7,
-    rqMax: 1,
-    alveolarCo2MmHg: 40,
-    alveolarK: 0.863,
-    restBreathsPerMin: 15,
-    breathRateExponent: 1 / 3,
-    deadSpaceMl: 150,
-    tidalMaxMl: 2500,
-  },
-
-  /**
-   * Effort: muscles and skin (model §2.7, §2.9; S-1). Resting skeletal muscle uses 13 kcal per kg
-   * per day (Elia 1992, via Wang 2012) and is 38.4 % of a man's body mass (Janssen 2000, MRI), so
-   * 13 × 0.384 × 65 kg = 325 kcal/day, 21.6 % of the reference man's resting use; all of the
-   * activity extra goes to muscle. In a warm room the extra heat of moving leaves as evaporated
-   * sweat, 580 kcal per kg (Baker 2019): 0.58 kcal per mL. At rest heat leaves by radiation,
-   * convection, conduction and evaporation, "about" 60/15/3/20 % (OpenStax A&P 2e §24.6; the four
-   * add up to 98 %, so they are used as shares of their sum). In moving, the dry routes keep their
-   * resting values and sweat carries the rest (the warm-room assumption).
-   */
-  effort: {
-    muscleKcalPerKgDay: 13,
-    muscleMassShare: 0.384,
-    sweatKcalPerMl: 0.58,
-    restHeatLoss: {
-      radiation: 60,
-      convection: 15,
-      conduction: 3,
-      evaporation: 20,
-    },
-  },
-
   glucose: {
     /** Typical fasting glucose: CGM mean 89 mg/dL in healthy adults (Freckmann et al. 2007). */
     fastingMgDl: 90,
@@ -268,18 +218,23 @@ export const PARAMS = {
 } as const
 
 /** Same shape as PARAMS, with plain `number`s instead of the literal values. */
-type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> }
+export type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> }
+
+/** The main-thread half of the parameter set: PARAMS's shape. */
+export type CoreParams = Widen<typeof PARAMS>
 
 /**
- * The shape of the human parameter set. Model modules take one of these as an argument (the
- * `ctx.params` rule) instead of reading PARAMS, so a test or a later organism can pass its own
- * numbers. PARAMS stays the human set.
+ * The shape of a run's parameter set: PARAMS and the packs' numbers (packParams.ts, run chunk only,
+ * R75). Model modules take one of these as an argument (the `ctx.params` rule) instead of reading
+ * PARAMS, so a test or a later organism can pass its own numbers. The human run's set is
+ * HUMAN_MODEL.params (simulate.ts).
  */
-export type Params = Widen<typeof PARAMS>
+export type Params = CoreParams & PackParams
 
 /**
- * Each organism's parameter set, for the screen's display thresholds (the graphs' "back near the
- * before-meal level"), read without loading the engine (E-2: HUMAN_MODEL, which also holds the
- * modules, is in the lazy `@lifepeek/engine/run` entry). The run uses the same object.
+ * Each organism's main-thread parameter set, for the screen's display thresholds (the graphs'
+ * "back near the before-meal level"), read without loading the engine (E-2: HUMAN_MODEL, which also
+ * holds the modules, is in the lazy `@lifepeek/engine/run` entry). The run uses these numbers plus
+ * the packs' (packParams.ts).
  */
-export const ORGANISM_PARAMS: { readonly [O in OrganismId]: Params } = { human: PARAMS }
+export const ORGANISM_PARAMS: { readonly [O in OrganismId]: CoreParams } = { human: PARAMS }

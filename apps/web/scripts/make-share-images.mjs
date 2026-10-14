@@ -1,6 +1,6 @@
 // Makes the pictures other sites and the install dialog show (D-EXTRA, WP-19), from the real
 // stage, so they never show an old screen:
-//   public/og-image.png          1200 × 630, the link preview (index.html og:image; also upload it
+//   public/og-image.png          1200 × 630, the link preview (og:image of every page; also upload it
 //                                as GitHub → Settings → Social preview)
 //   public/screenshots/wide.jpg  1280 × 800, the install dialog on a laptop (manifest screenshots)
 //   public/screenshots/narrow.jpg 780 × 1688 (390 × 844 at 2×), the install dialog on a phone
@@ -52,12 +52,12 @@ async function stage(viewport, deviceScaleFactor, url) {
 // The install dialog's two pictures.
 {
   const { context, page } = await stage({ width: 1280, height: 800 }, 1, LESSON)
-  await page.screenshot({ path: path.join(pub, 'screenshots', 'wide.jpg'), type: 'jpeg', quality: 82 })
+  await page.screenshot({ path: path.join(pub, 'screenshots', 'wide.jpg'), type: 'jpeg', quality: 75 })
   await context.close()
 }
 {
   const { context, page } = await stage({ width: 390, height: 844 }, 2, '/sim?v=2&a=cola:1&t=40')
-  await page.screenshot({ path: path.join(pub, 'screenshots', 'narrow.jpg'), type: 'jpeg', quality: 82 })
+  await page.screenshot({ path: path.join(pub, 'screenshots', 'narrow.jpg'), type: 'jpeg', quality: 75 })
   await context.close()
 }
 
@@ -92,3 +92,7 @@ async function stage(viewport, deviceScaleFactor, url) {
 
 await browser.close()
 console.log('Wrote public/og-image.png, public/screenshots/wide.jpg and narrow.jpg')
+// The share picture must stay ≤ 80 KB (T12c; scripts/share-images.test.mjs checks): the screenshot
+// is about 200 KB, so reduce it to 256 colours, kept a PNG for WhatsApp and the like, e.g. with
+// Pillow: Image.open(f).convert('RGB').quantize(256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(f, optimize=True)
+console.log('Now reduce public/og-image.png to 256 colours (≤ 80 KB): see the end of this script.')

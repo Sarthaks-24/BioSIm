@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Vec3 } from '../spline.ts'
 import { ARM, FRAMINGS, TORSO_PROFILE } from './base.ts'
-import { ACTIVITY_BANDS, BAND_OF, bandAt } from './bands.ts'
+import { ACTIVITY_BANDS } from './bands.ts'
 import { LIMB_KIT } from './kit.ts'
 import { KNEE_U, POSES, SOLE_Y, legJoints, legRadius, posedLimbs, setLimbKit } from './limbs.ts'
 
@@ -18,27 +18,6 @@ function torsoHalfWidth(y: number): number {
   }
   return 0
 }
-
-describe('activity bands (R4, R16, R32)', () => {
-  it('rest and one band per public kind; the hidden kinds take the band nearest their MET', () => {
-    expect(ACTIVITY_BANDS).toEqual(['rest', 'walk', 'walkBrisk', 'run'])
-    expect([BAND_OF.walk, BAND_OF.walkBrisk, BAND_OF.run]).toEqual(['walk', 'walkBrisk', 'run'])
-    expect(BAND_OF.sitClass).toBe('rest')
-  })
-
-  it('the band at a minute is the bout covering it (start in, end out), else rest', () => {
-    const bouts = [
-      { kind: 'walk', startMin: 30, durMin: 20 },
-      { kind: 'run', startMin: 240, durMin: 10 },
-    ] as const
-    expect(bandAt(bouts, 0)).toBe('rest')
-    expect(bandAt(bouts, 30)).toBe('walk')
-    expect(bandAt(bouts, 49.9)).toBe('walk')
-    expect(bandAt(bouts, 50)).toBe('rest')
-    expect(bandAt(bouts, 245)).toBe('run')
-    expect(bandAt([], 245)).toBe('rest')
-  })
-})
 
 describe('legs and poses (anatomy plan §1, D7)', () => {
   const soles = (band: (typeof ACTIVITY_BANDS)[number]) =>

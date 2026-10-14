@@ -10,7 +10,7 @@ import { useSystemUi } from '../../systems/ui.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
 import StripAnnouncer from '../graphs/StripAnnouncer.tsx'
-import { shortMealNames } from './mealText.ts'
+import { shortPlanNames } from './boutText.ts'
 
 /**
  * The lit system's graph slots (systems/registry.ts) that have a line to draw for this run: never an
@@ -64,7 +64,8 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const { t, i18n } = useTranslation()
   const profile = useRunStore((s) => s.profile)
   const meal = useRunStore((s) => s.meal)
-  const keptItems = useRunStore((s) => s.kept?.items)
+  const activity = useRunStore((s) => s.activity)
+  const keptRun = useRunStore((s) => s.kept)
   const { organism } = ORGANISMS[DEFAULT_ORGANISM]
   const slots = useSlots(run)
   const { stripSummary } = useSystemUi()
@@ -74,8 +75,8 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const shown = slots.some((s) => s.id === tab) ? tab : slots[0]?.id
   const visible = useMemo(() => (tabbed ? slots.filter((s) => s.id === shown) : slots), [tabbed, slots, shown])
   // The legend names both meals (council 2026-10-13): "— Cola 145 g   - - Kept: Cheeseburger + French fries 230 g".
-  const runName = shortMealNames(meal, i18n.language)
-  const keptName = keptItems ? shortMealNames(keptItems, i18n.language) : ''
+  const runName = shortPlanNames(meal, activity, i18n.language, t)
+  const keptName = keptRun ? shortPlanNames(keptRun.items, keptRun.activity, i18n.language, t) : ''
 
   return (
     <section

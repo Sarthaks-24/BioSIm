@@ -1,6 +1,6 @@
 import type { FoodPhase } from './schema.ts'
 import type { Meal } from './meal.ts'
-import type { Params } from './params.ts'
+import type { CoreParams } from './params.ts'
 
 /**
  * Gastric emptying — the one stage the model computes from the food.
@@ -31,7 +31,7 @@ export interface EmptyingCurve {
 /** Even a zero-calorie solid (salad) needs time to be ground and pushed out. Modelling assumption. */
 const SOLID_MIN_EMPTY_MIN = 60
 
-export function emptyingCurves(meal: Meal, params: Params): Record<FoodPhase, EmptyingCurve> {
+export function emptyingCurves(meal: Meal, params: CoreParams): Record<FoodPhase, EmptyingCurve> {
   const s = params.stomach
   // Drink calories eaten with a solid meal go first and use up part of the solids' time budget.
   const drinkMinutes = meal.liquid.energyKcal / s.energyKcalPerMin

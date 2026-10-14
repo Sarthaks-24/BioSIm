@@ -8,6 +8,7 @@ import {
   decodeShareState,
   encodeShareState,
   mealKcal,
+  sortBouts,
   type ActivityBout,
   type LinkChange,
   type MealItem,
@@ -15,7 +16,8 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { DEFAULT_SYSTEM, defaultSystemFor, systemForLink, type SystemId } from '../systems/registry.ts'
+import { DEFAULT_SYSTEM, defaultSystemFor, systemForLink, systemOf, type SystemId } from '../systems/registry.ts'
+import { loadPack } from '../systems/load.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
 import { useStripTab } from './stripTab.ts'
@@ -68,7 +70,9 @@ export interface RunState {
   /** Returns false if growing the meal would go over the cap (shrinking is always allowed). */
   setServings: (foodId: string, servings: number) => boolean
   removeFood: (foodId: string) => void
-  /** Copies the current meal into `kept` (the meal stays as it is). An empty meal is not kept. */
+  /** The activity plan as a whole (the sheet and the chips' ✕ change it; links are read by loadLink). Kept in start order. */
+  setActivity: (bouts: readonly ActivityBout[]) => void
+  /** Copies the current meal and bouts into `kept` (they stay as they are). An empty plan is not kept. */
   keep: () => void
   unkeep: () => void
   setLayer: (layer: SystemId) => void
@@ -82,6 +86,14 @@ export const DEFAULT_LAYER: SystemId = DEFAULT_SYSTEM
 export const DEFAULT_RUN_PROFILE: ProfileId = DEFAULT_PROFILE[DEFAULT_ORGANISM]
 /** What a bare `/sim` opens: the first preset's meal (cola), nothing kept, so Play works at once. */
 export const DEFAULT_MEAL: readonly MealItem[] = DEFAULT_PRESET.meal
+
+/** The system last asked for: a slower pack that arrives after a newer choice does not light its system. */
+let wanted: SystemId = DEFAULT_LAYER
+/** Loads the pack of a system (systems/load.ts); null when it is ready, or the system has no row yet. */
+const packFor = (layer: SystemId) => {
+  const s = systemOf(layer)
+  return s ? loadPack(s.pack) : null
+}
 
 const fitsCap = (items: MealItem[]) => mealKcal(items, lookupFood) <= PARAMS.maxMealKcal
 /** A kept run with no food and no activity is no kept run. */
@@ -132,16 +144,26 @@ export const useRunStore = create<RunState>((set, get) => ({
     return true
   },
   removeFood: (foodId) => set({ meal: get().meal.filter((i) => i.foodId !== foodId), capBlocked: false }),
+  setActivity: (bouts) => set({ activity: sortBouts(bouts) }),
 
   keep: () => {
     const { meal, profile, activity } = get()
     if (meal.length || activity.length) set({ kept: keptOf(meal, profile, activity) })
   },
   unkeep: () => set({ kept: null }),
-  // A new system starts on its first graph (architecture §5.2).
+  // A new system starts on its first graph (architecture §5.2). Its pack (rows, UI, words: I-1)
+  // loads first, and the lit system stays drawn meanwhile (R71: never clear the screen; a failed
+  // load keeps it too, and U-2's picker says so and offers Try again).
   setLayer: (layer) => {
-    if (layer !== get().layer) useStripTab.setState({ tab: null })
-    set({ layer })
+    wanted = layer
+    const light = () => {
+      if (wanted !== layer) return
+      if (layer !== get().layer) useStripTab.setState({ tab: null })
+      set({ layer })
+    }
+    const loading = packFor(layer)
+    if (loading) loading.then(light, () => {})
+    else light()
   },
 
   loadLink: (search) => {
@@ -168,7 +190,8 @@ export const useRunStore = create<RunState>((set, get) => ({
       activity,
       kept: keptOf(keptItems, profile, s.bact ?? []),
       profile,
-      layer,
+      // A system whose pack has not loaded yet is lit once it has (setLayer); the lit one meanwhile.
+      layer: packFor(layer) ? get().layer : layer,
       preview,
       linkModelVersion: params.has('v') ? s.modelVersion : null,
       unknownOrganism: s.unknownOrganism ?? null,
@@ -176,6 +199,7 @@ export const useRunStore = create<RunState>((set, get) => ({
       changes,
       capBlocked: false,
     })
+    get().setLayer(layer)
     // A link opens paused at its time (never auto-plays).
     useClock.getState().pause()
     useClock.getState().setSimMin(s.t)

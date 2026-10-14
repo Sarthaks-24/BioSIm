@@ -13,6 +13,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
+    "links": "node scripts/check-links.mjs",
     "hero": "tsx scripts/build-hero.ts",
     "resting-body": "tsx scripts/build-resting-body.ts",
     "lint:placeholders": "node scripts/lint-placeholders.mjs",

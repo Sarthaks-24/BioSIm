@@ -602,7 +602,7 @@ export async function linkRoundTripProblems(page: Page, path: string): Promise<s
   const asked = new URL(path, 'http://x').searchParams
   const got = new URL(page.url()).searchParams
   const problems: string[] = []
-  for (const key of ['a', 'b', 't', 'who', 'layer']) {
+  for (const key of ['a', 'b', 't', 'who', 'layer', 'act', 'bact']) {
     const want = asked.get(key)
     if (want != null && got.get(key) !== want) problems.push(`${key}=${want} came back as ${got.get(key) ?? '(none)'}`)
   }

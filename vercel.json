@@ -14,10 +14,13 @@
       ]
     }
   ],
+  "redirects": [{ "source": "/next", "destination": "/sim", "statusCode": 301 }],
   "rewrites": [
-    {
-      "source": "/((?!api/|assets/|sw.js|workbox-|manifest.webmanifest|favicon|icon-|THIRD_PARTY_NOTICES|robots.txt|sitemap.xml|stats.json|og-image|screenshots/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/sim", "destination": "/sim/index.html" },
+    { "source": "/teach", "destination": "/teach/index.html" },
+    { "source": "/science", "destination": "/science/index.html" },
+    { "source": "/about", "destination": "/about/index.html" },
+    { "source": "/privacy", "destination": "/privacy/index.html" },
+    { "source": "/stats", "destination": "/stats/index.html" }
   ]
 }

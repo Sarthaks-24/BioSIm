@@ -130,10 +130,13 @@ export interface SystemDef {
   /** `limits.*` texts "How we know" lists for this system, besides each signal's own `limitKey`. */
   knownLimits: readonly string[]
   /**
-   * How the system is drawn. 'body': the organism's own body draws it (digestion).
-   * Otherwise a layer over the base body; the flat layer is required, like the flat body.
+   * How the system is drawn. 'body': the organism's own body draws it (digestion). 'layer': a flat
+   * layer over the base body, from its pack's drawing module (systems/load.ts `PackDef.drawing`), which
+   * loads with the pack when the system is first lit (A-0 flat registry; R71, R74).
    */
-  draw: 'body' | { layerFlat: Loader<LayerComponent>; layer3d?: Loader<LayerComponent> }
+  draw: 'body' | 'layer'
+  /** Its 3D layer (v3.1+, optional per system: R43). Without one the system is drawn flat on every device. */
+  layer3d?: Loader<LayerComponent>
   /** The labels its picture can show (anatomy/callouts.ts): each must sit inside its framing. */
   callouts: readonly CalloutId[]
   /** Its pack (architecture §0): the lazy chunks and the text section `sys.<pack>`. */

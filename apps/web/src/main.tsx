@@ -2,12 +2,25 @@ import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router'
 import './styles.css'
-import { i18nReady } from './i18n/index.ts'
+import { addEnglish, i18nReady } from './i18n/index.ts'
 import { readPref } from './lib/prefs.ts'
 import Layout, { type RouteHandle } from './components/Layout.tsx'
 import Home from './pages/Home.tsx'
 import { ErrorPage, NotFound } from './pages/Misc.tsx'
 
+// Home's words are a page section (I-1, scripts/i18n-sections.mjs): not in every page's first
+// download. Its code stays here (a lazy Home splits the entry's shared code into more files, which
+// costs more than it saves). On "/" the words start loading with the app and the first draw waits
+// for them, so Home draws at once; opened later, Home waits for them like any lazy page.
+let homeWords = false
+const loadHomeWords = () =>
+  import('virtual:lifepeek-en/home').then((m) => {
+    addEnglish(m.default)
+    homeWords = true
+  })
+const homeFirst = location.pathname === '/' ? loadHomeWords() : undefined
+const HomeWithWords = lazy(() => loadHomeWords().then(() => ({ default: Home })))
+const HomePage = () => (homeWords ? <Home /> : page(<HomeWithWords />))
 // The one-screen stage (WP-19 made it /sim; WP-20 deleted v1's page and gave it that file name).
 const Simulator = lazy(() => import('./pages/Simulator.tsx'))
 const Teach = lazy(() => import('./pages/Teach.tsx'))
@@ -29,7 +42,7 @@ const router = createBrowserRouter([
     element: <Layout />,
     errorElement: <ErrorPage />,
     children: [
-      { path: '/', element: <Home /> },
+      { path: '/', element: <HomePage /> },
       { path: '/sim', element: page(<Simulator />), handle: { fit: true } satisfies RouteHandle },
       { path: '/next', element: <ToSim /> },
       { path: '/teach', element: page(<Teach />) },
@@ -46,7 +59,10 @@ const router = createBrowserRouter([
 // Reload once to pick up the new version instead of failing.
 // The flag stops a reload loop; it's cleared once the app has run for a while, so a later update
 // in the same tab can reload again.
+// Offline, a reload could not fetch it either: the part says it needs the internet once and the
+// page stays as it is (components/BodyView.tsx, LoadBoundary.tsx; R71).
 window.addEventListener('vite:preloadError', (e) => {
+  if (!navigator.onLine) return
   try {
     if (sessionStorage.getItem('lifepeek:reloaded')) return
     sessionStorage.setItem('lifepeek:reloaded', '1')
@@ -79,7 +95,7 @@ const draw = () =>
       <RouterProvider router={router} />
     </StrictMode>,
   )
-void i18nReady.then(draw, draw)
+void Promise.all([i18nReady, homeFirst]).then(draw, draw)
 
 // The service worker, and the "new version is ready" note (components/UpdateToast.tsx), once the
 // page has loaded (a module script always runs before "load"): not part of any page's first

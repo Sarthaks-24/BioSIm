@@ -8,7 +8,7 @@ import { nowKey, nowKeysOf, nowWhere, parseNowKey, type Amount, type NowWhere } 
 import { useClock } from '../../state/clock.ts'
 import { useRunStore } from '../../state/run.ts'
 import { LineSwatch, UnkeepButton } from '../../components/stage/KeptTag.tsx'
-import { mealNames, shortMealNames } from '../../components/stage/mealText.ts'
+import { planNames, shortPlanNames } from '../../components/stage/boutText.ts'
 import type { NowProps } from '../registry.ts'
 
 /**
@@ -151,6 +151,7 @@ export function NowLine({ run, kept, open, onToggle, moreRef, panelId, className
   const w = useNowWhere(run)!
   const keptWhere = useNowWhere(kept)
   const keptItems = useRunStore((s) => s.kept?.items)
+  const keptBouts = useRunStore((s) => s.kept?.activity)
   const drink = isDrinkOnly(run.meal)
   const keptDrink = !!kept && isDrinkOnly(kept.meal)
   const job = jobText(w.stage, drink, t)
@@ -161,7 +162,7 @@ export function NowLine({ run, kept, open, onToggle, moreRef, panelId, className
   const jobs = useMemo(() => [...new Set(versions.map((v) => v.stage))], [versions])
   // The kept meal's row holds its longest version the same way (it goes from "being eaten" to
   // "the gut is finished with it", and may wrap differently in Hindi or on the projector).
-  const keptName = keptItems ? t('now.kept', { meal: shortMealNames(keptItems, i18n.language) }) : ''
+  const keptName = keptItems ? t('now.kept', { meal: shortPlanNames(keptItems, keptBouts ?? [], i18n.language, t) }) : ''
   const keptVersions = useMemo(
     () => (kept ? [...new Set(nowKeysOf(kept).map((k) => keptText(parseNowKey(k), keptDrink, t)))] : []),
     [kept, keptDrink, t],
@@ -213,7 +214,10 @@ export function NowLine({ run, kept, open, onToggle, moreRef, panelId, className
             </span>
           </span>
           {/* On a phone this row stands in for the meal bar's kept tag (styles.css), so it has its ✕. */}
-          <UnkeepButton meal={mealNames(keptItems, i18n.language)} className="-my-2.5 ml-auto self-center rounded-control lg:hidden" />
+          <UnkeepButton
+            meal={planNames(keptItems, keptBouts ?? [], i18n.language, t)}
+            className="-my-2.5 ml-auto self-center rounded-control lg:hidden"
+          />
         </p>
       )}
     </div>

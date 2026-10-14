@@ -2,8 +2,11 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { EVENTS, SIGNALS, type ActiveSignalId } from '@lifepeek/engine'
 import en from './en.json'
-import { ENGLISH_ONLY, PAGE_SECTIONS, coreText, englishFor } from '../../scripts/i18n-sections.mjs'
+import { ENGLISH_ONLY, PACK_SECTIONS, PAGE_SECTIONS, coreText, englishFor, sectionText } from '../../scripts/i18n-sections.mjs'
+import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
+import { PACK_IDS, SYSTEMS } from '../systems/registry.ts'
 
 /**
  * The English split (scripts/i18n-sections.mjs, review 15 LOW 5): a key of a page section that is
@@ -11,10 +14,15 @@ import { ENGLISH_ONLY, PAGE_SECTIONS, coreText, englishFor } from '../../scripts
  * with that section (they import `virtual:lifepeek-en/<section>`, or only those files draw them)
  * may use it; anywhere else it would show as its raw key until then. Add a file here only when it
  * loads with its section; otherwise keep the key in the core (PAGE_SECTIONS).
+ *
+ * A pack's section `sys.<packId>` (I-1) comes with the pack, so only its systems' folders
+ * (`systems/<system>/`) may use its keys.
  */
 const ALLOWED: Record<string, readonly string[]> = {
   privacy: ['pages/Privacy.tsx'],
   about: ['pages/About.tsx'],
+  // main.tsx loads Home's words before it draws Home; Home loads the race after.
+  home: ['pages/Home.tsx', 'components/HomeRace.tsx'],
   teach: ['pages/Teach.tsx'],
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
@@ -34,6 +42,19 @@ const ALLOWED: Record<string, readonly string[]> = {
   units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts'],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
+  mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],
+  activity: ['components/ActivitySheet.tsx'],
+}
+
+/** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */
+const PACK_FOLDERS: Record<string, readonly string[]> = Object.fromEntries(
+  PACK_SECTIONS.map((name) => [name, (PACK_SYSTEMS as Record<string, string[]>)[name.slice('sys.'.length)]!.map((s) => `systems/${s}/`)]),
+)
+
+/** The section a key's text is in: `sys.<packId>` for a pack's key, else its first segment. */
+const sectionOf = (key: string) => {
+  const [first, second] = key.split('.')
+  return first === 'sys' ? `sys.${second}` : first!
 }
 
 function flatKeys(obj: unknown, prefix = '', out = new Set<string>()): Set<string> {
@@ -77,13 +98,87 @@ describe('the English split', () => {
       for (const m of src.matchAll(/`([a-z]\w*\.[\w.]*)\$\{[^}]+\}([\w.]*)`/gi))
         used.push([`${m[1]}…${m[2]}`, new RegExp(`^${escape(m[1]!)}[^.]+${escape(m[2]!)}(\\.|$)`)])
       for (const [key, pattern] of used) {
-        const section = key.split('.')[0]!
+        const section = sectionOf(key)
+        if (PACK_FOLDERS[section]?.some((folder) => file.startsWith(folder))) continue
+        if (section in PACK_FOLDERS) {
+          // Every pack key is outside the core.
+          if (all.some((k) => pattern.test(k))) wrong.push(`${file}: ${key} (${section} loads with its pack)`)
+          continue
+        }
         if (!(section in PAGE_SECTIONS) || ALLOWED[section]!.includes(file)) continue
         const missing = split(pattern)
         if (missing.length) wrong.push(`${file}: ${key} (${missing[0]}${missing.length > 1 ? ', …' : ''})`)
       }
     }
     expect(wrong).toEqual([])
+  })
+})
+
+describe('pack sections (I-1, architecture §5.3)', () => {
+  // en.json with two packs' words, as U-2 and U-4 will add them.
+  const withPacks = {
+    ...en,
+    sys: {
+      breathing: { now: { in: 'Breathing in' }, sig: { rate: { name: 'Breaths a minute' } } },
+      kidneys: { now: { idle: 'Filtering' } },
+    },
+  }
+
+  it('one section per PackId but core, which keeps its unprefixed keys (R26)', () => {
+    expect(PACK_SECTIONS).toEqual(PACK_IDS.filter((p) => p !== 'core').map((p) => `sys.${p}`))
+    expect(Object.keys(PACK_SYSTEMS).sort()).toEqual([...PACK_IDS].sort())
+    expect(sectionText(withPacks, 'sys.core')).toBeUndefined()
+    expect(sectionText(withPacks, 'sys.lungs')).toBeUndefined()
+    expect((en as Record<string, unknown>).sys ?? {}).not.toHaveProperty('core')
+  })
+
+  it("each pack's keys are in its own section only, never in the core text", () => {
+    const core = [...flatKeys(coreText(withPacks))]
+    expect(core.filter((k) => k.startsWith('sys.'))).toEqual([])
+    expect([...flatKeys(sectionText(withPacks, 'sys.breathing'))]).toEqual(['sys.breathing.now.in', 'sys.breathing.sig.rate.name'])
+    expect([...flatKeys(sectionText(withPacks, 'sys.kidneys'))]).toEqual(['sys.kidneys.now.idle'])
+    // A pack with no words yet loads an empty section.
+    expect(sectionText(withPacks, 'sys.effort')).toEqual({ sys: { effort: {} } })
+  })
+
+  it("en.json's sys blocks are known packs, and every key is in the core text or exactly one section", () => {
+    const sys = ((en as Record<string, unknown>).sys ?? {}) as Record<string, unknown>
+    for (const pack of Object.keys(sys)) expect(PACK_SECTIONS, `sys.${pack}`).toContain(`sys.${pack}`)
+    const core = flatKeys(coreText(en))
+    const owners = new Map<string, string[]>()
+    for (const name of [...Object.keys(PAGE_SECTIONS), ...PACK_SECTIONS])
+      for (const k of flatKeys(sectionText(en, name))) if (!core.has(k)) owners.set(k, [...(owners.get(k) ?? []), name])
+    const missing = [...flatKeys(en)].filter((k) => !core.has(k) && !owners.has(k))
+    expect(missing).toEqual([])
+    expect([...owners].filter(([, names]) => names.length > 1)).toEqual([])
+  })
+
+  it('no key needed at first paint lives in a lazy section: the lit systems, their graphs and moments', () => {
+    const core = flatKeys(coreText(en))
+    const all = flatKeys(en)
+    const needed: string[] = ['signals.event.never']
+    for (const s of SYSTEMS) {
+      needed.push(`${s.i18nKey}.name`)
+      if (s.pack !== 'core') continue
+      for (const slot of s.slots) {
+        needed.push(`stage.strips.${slot.id}`, ...Object.entries(slot.marks ?? {}).flat())
+        // R76: a graphed signal's names and sentences (the long description loads with "How we know").
+        for (const id of slot.signals as readonly ActiveSignalId[])
+          for (const leaf of ['name', 'short', 'summary', 'summaryNone'])
+            if (all.has(`${SIGNALS[id].i18nKey}.${leaf}`)) needed.push(`${SIGNALS[id].i18nKey}.${leaf}`)
+      }
+    }
+    // The dock's moments name every event the engine makes.
+    for (const row of Object.values(EVENTS)) if (row.shipsIn === 'v2.0' || row.shipsIn === 'v3.0') needed.push(`${row.i18nKey}.name`)
+    expect(needed.filter((k) => !all.has(k))).toEqual([])
+    expect(needed.filter((k) => !core.has(k))).toEqual([])
+  })
+
+  it('a signal no graph shows has its texts in the lazy signals section only (R76)', () => {
+    const core = flatKeys(coreText(en))
+    expect(core.has('signals.gut.absorbed.carbsG.name')).toBe(false)
+    expect(core.has('signals.energy.activityRate.name')).toBe(false)
+    expect(flatKeys(sectionText(en, 'signals')).has('signals.energy.activityRate.name')).toBe(true)
   })
 })
 

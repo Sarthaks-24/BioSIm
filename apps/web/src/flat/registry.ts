@@ -1,35 +1,15 @@
 import type { Framing } from '../anatomy/human/base.ts'
 import { LIMB_KIT } from '../anatomy/human/kit.ts'
 import type { ActivityBand } from '../anatomy/human/bands.ts'
-import type { LayerComponent } from '../registry/types.ts'
-import type { SystemDef, SystemId } from '../systems/registry.ts'
 
 /**
- * The flat registry (A-0; anatomy plan §1, §2.0): how the flat body finds a system's picture. A
- * system's row (systems/registry.ts) names its framing (`camera.framing`, one of FRAMINGS) and its
- * flat drawing: Digestion's organs are the body's own (`draw: 'body'`, first paint); every other
- * system's drawing is a lazy module (`draw.layerFlat`) that loads the first time that system is lit
- * and never before (R71, R74), so no system's drawing code is in the first download.
- * systems/registry.test.ts checks every row: a flat drawing, a VIEW, outlines and callouts.
+ * The flat registry (A-0; anatomy plan §1, §2.0): how the flat body finds what it draws. A system's
+ * row (systems/registry.ts) names its framing (`camera.framing`, one of FRAMINGS) and how it is
+ * drawn: Digestion's organs are the body's own (`draw: 'body'`, first paint); every other system is
+ * a flat layer from its pack's drawing module (systems/load.ts `PackDef.drawing`), which loads with
+ * the pack when the system is first lit (R71, R74). The legs and poses are a lazy chunk of their
+ * own, loaded here. systems/registry.test.ts checks every row: a drawing, a VIEW, outlines, labels.
  */
-
-const layers = new Map<SystemId, Promise<LayerComponent>>()
-
-/**
- * The lit system's flat layer, loading it on first use (once: the same promise afterwards), or
- * null for Digestion, whose organs the body draws itself.
- */
-export function flatLayer(system: SystemDef): Promise<LayerComponent> | null {
-  if (system.draw === 'body') return null
-  let layer = layers.get(system.id)
-  if (!layer) {
-    layer = system.draw.layerFlat().then((m) => m.default)
-    // A failed load is asked again the next time the system is lit (R71: "Try again").
-    layer.catch(() => layers.delete(system.id))
-    layers.set(system.id, layer)
-  }
-  return layer
-}
 
 /** The posed body with legs (flat/limbs.ts), a lazy chunk. */
 type Limbs = typeof import('./limbs.ts')

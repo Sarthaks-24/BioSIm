@@ -12,7 +12,7 @@
  * the gut in v3.0 (model D6, C3): the gut reads no activity.
  */
 import type { Meal } from '../meal.ts'
-import type { Params } from '../params.ts'
+import type { CoreParams } from '../params.ts'
 import { ABSORBED_ID, GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind } from '../nutrients.ts'
 import { emptyingCurves, retention } from '../stomach.ts'
 import { runSegment } from '../transit.ts'
@@ -35,7 +35,7 @@ export const ABSORB_RATE_ID = {
 const RATE_KINDS = Object.keys(ABSORB_RATE_ID) as (keyof typeof ABSORB_RATE_ID)[]
 
 /** Minute the meal starts arriving in the stomach (end of eating + swallow). */
-export const stomachArrivalMin = (meal: Meal, params: Params): number => meal.eatingMin + params.esophagus.transitMin
+export const stomachArrivalMin = (meal: Meal, params: CoreParams): number => meal.eatingMin + params.esophagus.transitMin
 
 export const gutModule: ModelModule = {
   id: 'gut',

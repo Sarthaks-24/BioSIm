@@ -6,7 +6,7 @@
  * See docs/MODEL.md "Energy in vs used".
  */
 import type { NutrientKind } from '../nutrients.ts'
-import type { Params } from '../params.ts'
+import type { CoreParams } from '../params.ts'
 import type { ProfileDef } from '../core/profile.ts'
 
 export interface EnergySeries {
@@ -25,7 +25,7 @@ export function energySignals(
   absorbedG: Readonly<Record<Extract<NutrientKind, 'carbs' | 'protein' | 'fat'>, ArrayLike<number>>>,
   profile: Pick<ProfileDef, 'restingKcalPerDay'>,
   stepMin: number,
-  params: Params,
+  params: CoreParams,
 ): EnergySeries {
   const f = params.energy.atwaterKcalPerG
   const { carbs, protein, fat } = absorbedG

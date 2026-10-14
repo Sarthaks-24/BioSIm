@@ -14,6 +14,8 @@ import LayerBar from './LayerBar.tsx'
 import ParticleKey from './ParticleKey.tsx'
 import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
+import { useActivityBand } from '../../lib/bouts.ts'
+import { BOUT_EMOJI, boutLabel, inSentence } from './boutText.ts'
 import { mealNames, shortFoodName } from './mealText.ts'
 
 /** The full stage text is downloaded when "More" is first opened (size budget). If it doesn't load, its panel says so. */
@@ -30,6 +32,8 @@ const MORE_FAILED =
 
 /** Foods offered when the meal is empty: a drink, an Indian staple, a fruit. */
 const EXAMPLES = ['cola', 'roti', 'apple'] as const
+/** The activity offered beside them (E-3b-ui, ui-ux §6): "Try: walk 20 min, from 0:30". One tap; its chip's ✕ undoes it. */
+const TRY_BOUT = { kind: 'walk', startMin: 30, durMin: 20 } as const
 
 /**
  * The body: the one big thing on the stage. The 3D body when the device can draw it (a separate
@@ -58,7 +62,11 @@ export default function BodyPane({
 }) {
   const { t, i18n } = useTranslation()
   const meal = useRunStore((s) => s.meal)
+  const resting = useRunStore((s) => s.activity.length === 0)
   const hasMeal = meal.length > 0
+  // The body's stance at the clock time (R4, R16, R32: rest, or one still pose per kind).
+  // The body's still pose for the band (A-0 flat, flat/limbs.ts); also on the box for the tests.
+  const band = useActivityBand()
   const layer = useRunStore((s) => s.layer)
   const oneLayer = pickerSystems(layer).length === 1
   // The lit system's Now line (W-1): digestion's says where the meal is.
@@ -94,12 +102,16 @@ export default function BodyPane({
         <LayerBar className="pointer-events-auto w-fit" />
       </div>
       {/* The body fills whatever height the stage leaves it (absolute, so the canvas can't push the row taller). */}
-      <div ref={bodyBox} className="relative min-h-40 flex-1 lg:min-h-0">
+      <div ref={bodyBox} data-activity-band={band} className="relative min-h-40 flex-1 lg:min-h-0">
         {/* With "More" open from 1024 px up, the body and its key move left of it (MORE_ROOM). */}
         <div className={`absolute inset-0 ${open ? MORE_ROOM : ''}`}>
           {/* With no food yet the body still shows, resting (R23): the picks are a card under it. */}
           <BodyClockContext value={MEAL_BODY_CLOCK}>
-            <BodyView sim={run} label={hasMeal ? t('stage.bodyLabel', { meal: mealNames(meal, i18n.language) }) : t('stage.bodyResting')} />
+            <BodyView
+              band={band}
+              sim={run}
+              label={hasMeal ? t('stage.bodyLabel', { meal: mealNames(meal, i18n.language) }) : t('stage.bodyResting')}
+            />
           </BodyClockContext>
           {/*
            * From 1024 px up, a band over the legs, out of the organs' way: what the food pieces are
@@ -162,6 +174,20 @@ export default function BodyPane({
                   </li>
                 )
               })}
+              {resting && (
+                // The one activity pick (R23: E-3b-ui adds only the stance and the activity chips here).
+                <li>
+                  <button
+                    type="button"
+                    data-try-bout=""
+                    onClick={() => useRunStore.getState().setActivity([TRY_BOUT])}
+                    className="flex min-h-11 items-center gap-1.5 rounded-control bg-surface-sunk px-2.5 text-control font-semibold whitespace-nowrap hover:bg-surface-sunk-hover lg:min-h-9"
+                  >
+                    <span aria-hidden="true">{BOUT_EMOJI.walk}</span>
+                    {t('activity.try', { bout: inSentence(boutLabel(TRY_BOUT, t)) })}
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         </div>

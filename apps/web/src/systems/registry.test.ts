@@ -5,7 +5,7 @@ import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { UNIT_KEYS } from '../registry/units.ts'
-import { PACK_SYSTEMS } from '../../scripts/pack-manifest.mjs'
+import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
 import { flatProblems, systemProblems, type CheckContext } from './check.ts'
 import type { ToneSet } from '../anatomy/tones/base.ts'
 import { TONES as LYMPH_TONES } from '../anatomy/tones/lymph.ts'
@@ -72,7 +72,7 @@ describe('systems registry (architecture §5.2)', () => {
         { id: 'blood', signals: ['lungs.tidalVolume' as never], unit: 'mL/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
-        { id: 'gut', signals: ['kidney.filtrationRate' as never], unit: 'mg/dL' },
+        { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
       ],
       organs: ['lungs' as never],
     }
@@ -86,8 +86,8 @@ describe('systems registry (architecture §5.2)', () => {
       'breathing: slot 2 (blood) unit mL/min has no text (registry/units.ts)',
       'breathing: slot 2 (blood) signal lungs.tidalVolume has no row registered by its pack',
       "breathing: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
-      'breathing: slot 4 (gut) signal kidney.filtrationRate is not provided by the engine (PROVIDES)',
-      'breathing: slot 4 (gut) signal kidney.filtrationRate has no row registered by its pack',
+      'breathing: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
+      'breathing: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
     ])
   })
 
@@ -108,7 +108,7 @@ describe('systems registry (architecture §5.2)', () => {
     expect(systemProblems({ ...DIGESTION, slots: [] }, ctx)).toEqual([
       'digestion: public with no graphs, but has no drawing of its own (a drawing-only row needs a layer, R11)',
     ])
-    expect(systemProblems({ ...DIGESTION, slots: [], draw: { layerFlat: async () => ({ default: () => null }) } }, ctx)).toEqual([])
+    expect(systemProblems({ ...DIGESTION, slots: [], draw: 'layer' }, ctx)).toEqual([])
   })
 
   it('keeps the frozen table: 11 systems, 8 packs, every system in its pack (architecture §0)', () => {
@@ -124,10 +124,12 @@ describe('systems registry (architecture §5.2)', () => {
     for (const s of SYSTEMS) expect(uiOf(s.id).now, s.id).toBeTypeOf('function')
   })
 
-  it('draws every layer flat (no WebGL needed)', async () => {
+  it("draws every layer flat (no WebGL needed): its pack's drawing module has it", async () => {
     for (const s of SYSTEMS) {
       if (s.draw === 'body') continue
-      expect((await s.draw.layerFlat()).default, s.id).toBeTypeOf('function')
+      const drawing = PACKS[s.pack]?.drawing
+      expect(drawing, `${s.id}: pack ${s.pack} has no drawing (PackDef.drawing)`).toBeTypeOf('function')
+      expect((await drawing!()).default[s.id], s.id).toBeTypeOf('function')
     }
   })
 })
@@ -137,7 +139,6 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
     // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download).
     const { TONES } = (await import(`../anatomy/tones/${s.id}.ts`)) as { TONES: ToneSet }
     expect(flatProblems(s, TONES)).toEqual([])
-    if (s.draw !== 'body') expect((await s.draw.layerFlat()).default).toBeTypeOf('function')
   })
 
   it('names what is wrong with a row', () => {
@@ -151,7 +152,7 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
     const bad: SystemDef = { ...DIGESTION, id: 'breathing', camera: { framing: 'side' as never }, callouts: ['mouth', 'kidney' as never] }
     expect(flatProblems(bad, tones)).toEqual([
       'breathing: framing side has no VIEW (anatomy/human/base.ts FRAMINGS)',
-      'breathing: is drawn by the body, but only Digestion is: it needs its own flat layer (draw.layerFlat)',
+      "breathing: is drawn by the body, but only Digestion is: it needs its own flat layer (draw: 'layer', its pack's drawing)",
       'breathing: 6 tones: at most 5 (anatomy plan §5)',
       'breathing: neighbours lungs/pinkish are too alike: CVD ΔE 0.7, normal ΔE 0.9',
       'breathing: neighbours lungs/windpipe name a tone it does not have',
@@ -166,7 +167,7 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
       id: 'lymph',
       pack: 'lymph',
       camera: { framing: 'full' },
-      draw: { layerFlat: async () => ({ default: () => null }) },
+      draw: 'layer',
     }
     expect(flatProblems(lymph, LYMPH_TONES)).toEqual([])
   })

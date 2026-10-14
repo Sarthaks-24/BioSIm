@@ -1,42 +1,55 @@
-import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Component, Suspense, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import type { RunResult } from '@lifepeek/engine'
 import type { ActivityBand } from '../anatomy/human/bands.ts'
 import FlatBody from '../flat/FlatBody.tsx'
-import { hasWebGL, sayFlat } from '../lib/webgl.ts'
 import { useRunStore } from '../state/run.ts'
-import { DIGESTION } from '../systems/digestion/def.ts'
 import { systemOf } from '../systems/registry.ts'
+import { hasWebGL, sayBody, use3dTries, type BodyNote } from '../lib/webgl.ts'
+import { isLoadError, lazyWithRetry } from './LoadBoundary.tsx'
+import type BodyCanvasType from '../three/BodyCanvas.tsx'
 
-const BodyCanvas = lazy(() => import('../three/BodyCanvas.tsx'))
+/** The 3D body loads when the stage first shows it, and is cached then (lp-lazy, T12d): not at install. */
+const bodyCanvas = lazyWithRetry<ComponentProps<typeof BodyCanvasType>>(() => import('../three/BodyCanvas.tsx'))
 
 /**
  * 3D when the device can, the flat diagram otherwise — while the 3D code loads, if WebGL is
- * missing, if it crashes, or if the GPU drops the context. When it stands in for good, the stage's
- * notes say why (stage/Notes.tsx), in a line of their own, not over the body.
+ * missing, if it crashes, if the GPU drops the context, or if its file doesn't arrive (offline
+ * before it was ever loaded: it needs the internet once). The stage's notes say why
+ * (stage/Notes.tsx), in a line of their own, not over the body; a slow or failed load too (R71).
  *
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
- * `band`: the activity band at this minute (anatomy/human/bands.ts): the flat body's still pose.
- *
+ * `band`: the activity band at this minute (lib/bouts.ts): the flat body's still pose (A-0).
  * A lit system with no 3D layer (every new system in v3.0, flat first: R43) is drawn flat on every
- * device, with no "can't show 3D" note: that is its picture, not a fallback.
+ * device, with no note: that is its picture, not a stand-in.
  */
-export default function BodyView({ sim, label, band = 'rest' }: { sim: RunResult; label: string; band?: ActivityBand }) {
+export default function BodyView({ sim, label, band }: { sim: RunResult; label: string; band?: ActivityBand }) {
   const [lost, setLost] = useState(false)
-  const system = systemOf(useRunStore((s) => s.layer)) ?? DIGESTION
-  const flatOnly = system.draw !== 'body' && !system.draw.layer3d
+  // Try again (or the internet coming back) asks for the 3D file again: a new boundary.
+  const tries = use3dTries()
+  const system = systemOf(useRunStore((s) => s.layer))
   const flat = <FlatBody sim={sim} label={label} band={band} system={system} />
-  const fallback = (
+  const fallback = (why: BodyNote) => (
     <>
       <FlatBody sim={sim} label={label} band={band} system={system} final />
-      {!flatOnly && <SayFlat />}
+      <Say why={why} />
     </>
   )
+  const BodyCanvas = bodyCanvas.Component
   const body =
-    !hasWebGL() || lost || flatOnly ? (
-      fallback
+    system?.draw === 'layer' && !system.layer3d ? (
+      <FlatBody sim={sim} label={label} band={band} system={system} final />
+    ) : !hasWebGL() || lost ? (
+      fallback('webgl')
     ) : (
-      <WebGLBoundary fallback={fallback}>
-        <Suspense fallback={flat}>
+      <WebGLBoundary key={tries} fallback={fallback} onLoadFail={bodyCanvas.reset}>
+        <Suspense
+          fallback={
+            <>
+              {flat}
+              <Say why="slow" after={6000} />
+            </>
+          }
+        >
           <BodyCanvas sim={sim} label={label} onContextLost={() => setLost(true)} placeholder={flat} />
         </Suspense>
       </WebGLBoundary>
@@ -49,20 +62,36 @@ export default function BodyView({ sim, label, band = 'rest' }: { sim: RunResult
   )
 }
 
-/** Tells the stage's notes that the flat body stands in for the 3D one (lib/webgl.ts). */
-function SayFlat() {
-  useEffect(sayFlat, [])
+/** Tells the stage's notes why the flat body is shown (lib/webgl.ts), `after` ms from now; a slow note goes with it. */
+function Say({ why, after = 0 }: { why: BodyNote; after?: number }) {
+  useEffect(() => {
+    const timer = setTimeout(() => sayBody(why), after)
+    return () => {
+      clearTimeout(timer)
+      sayBody('', 'slow')
+    }
+  }, [why, after])
   return null
 }
 
-/** If WebGL fails at runtime (driver bug, shader error), fall back instead of a blank box. */
-class WebGLBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false }
-  static getDerivedStateFromError() {
-    return { failed: true }
+/**
+ * If WebGL fails at runtime (driver bug, shader error), fall back instead of a blank box. If the 3D
+ * file did not arrive, the flat body stays too, and the note says why: offline it needs the
+ * internet once; online, Try again (main.tsx has already reloaded once for a stale file).
+ */
+class WebGLBoundary extends Component<
+  { fallback: (why: BodyNote) => ReactNode; onLoadFail: () => void; children: ReactNode },
+  { failed: BodyNote }
+> {
+  state = { failed: '' as BodyNote }
+  static getDerivedStateFromError(error: unknown) {
+    return { failed: isLoadError(error) ? (navigator.onLine ? 'failed' : 'offline') : 'webgl' }
+  }
+  componentDidCatch(error: unknown) {
+    if (isLoadError(error)) this.props.onLoadFail()
   }
   render() {
-    return this.state.failed ? this.props.fallback : this.props.children
+    return this.state.failed ? this.props.fallback(this.state.failed) : this.props.children
   }
 }
 

@@ -46,7 +46,12 @@ jobs:
           grep -q "SIL OPEN FONT LICENSE" apps/web/dist/THIRD_PARTY_NOTICES.txt
           grep -q "three" apps/web/dist/THIRD_PARTY_NOTICES.txt
           node apps/web/scripts/check-shipped-notices.mjs
-      # Enforces /sim ≤ 190 KB, the Home ratchet (147 KB), Track A ≤ +1.0 KB (R66) and the precache of every lazy chunk.
+      # Every link in the built site resolves as Vercel serves it (vercel.json), each page has its
+      # own head, sitemap and robots agree (T12b). Offline: outside addresses are checked by hand
+      # with `npm run links -w @lifepeek/web -- --external`.
+      - name: Links in the built site
+        run: npm run links -w @lifepeek/web
+      # Enforces /sim ≤ 190 KB, the Home ratchet (147 KB), Track A ≤ +1.0 KB (R66), and the precache: the core only, ≤ 1300 KB raw (R71).
       - name: Size budgets (and the Track A ledger)
         run: npm run budget -w @lifepeek/web
       # Report-only until the user gives the project email (B20, §4 gate): then add --enforce.

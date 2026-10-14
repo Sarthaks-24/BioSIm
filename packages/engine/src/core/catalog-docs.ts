@@ -4,9 +4,11 @@
  * carries only the lean catalog (catalog.ts). Same rules as catalog.ts: never rename or delete an
  * ID, only add. test/catalog.test.ts checks that the two files cover the same IDs.
  */
-import { SIGNALS, type EventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
+import { SIGNALS, type RunEventId, type ReservedSignalId, type SignalId, type SignalMeta } from './catalog.ts'
 import { BREATHING_SIGNALS } from './catalog/breathing.ts'
 import { EFFORT_SIGNALS } from './catalog/effort.ts'
+import { CIRCULATION_SIGNALS } from './catalog/circulation.ts'
+import { KIDNEY_SIGNALS } from './catalog/kidneys.ts'
 
 /** What a row means and which old names it replaces. */
 export interface CatalogDocs {
@@ -74,28 +76,6 @@ export const RESERVED_SIGNALS: { readonly [Id in ReservedSignalId]: SignalMeta<I
     i18nKey: k('brain.glucoseUse'),
     reactsToMeal: false,
     shipsIn: 'bloodSugar',
-  },
-  'heart.rate': {
-    id: 'heart.rate',
-    unit: 'beats/min',
-    status: 'illustration',
-    clock: 'real',
-    kind: 'rhythm',
-    sourceIds: [],
-    i18nKey: k('heart.rate'),
-    reactsToMeal: false,
-    shipsIn: 'alwaysRunning',
-  },
-  'kidney.filtrationRate': {
-    id: 'kidney.filtrationRate',
-    unit: 'mL/min',
-    status: 'illustration',
-    clock: 'real',
-    kind: 'rate',
-    sourceIds: [],
-    i18nKey: k('kidney.filtrationRate'),
-    reactsToMeal: false,
-    shipsIn: 'alwaysRunning',
   },
 }
 
@@ -233,9 +213,30 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Glucose the brain uses per hour (cited constant; does not react to the meal).',
     retired: ['brain.glucoseUseGPerH'],
   },
+  // The circulation pack's rows (core/catalog/circulation.ts, S-3). heart.rate was reserved as a
+  // real-clock beat; it activated as a graphed sim-clock level with its unit kept (ACTIVATION_LOG).
   'heart.rate': {
-    definition: 'Resting heart rate of the profile, shown as a real-time beat. Never graphed.',
+    definition:
+      'Heart beats a minute: heart.output divided by heart.strokeVolume (66 at rest), at most 191 (220 − age). Graphed; the drawn beat follows it.',
     retired: ['heart.rateBpm', 'vitals.heartRate', 'rhythm.heart'],
+  },
+  'heart.output': {
+    definition:
+      'Blood the heart pumps a minute (cardiac output, L/min): resting O2 use over a 50 mL/L a–v O2 difference, plus 5.5 L per L of extra O2 used by moving, plus the gut’s extra flow after a meal.',
+    retired: [],
+  },
+  'heart.strokeVolume': {
+    definition: 'Blood pumped per beat (mL): 65 at rest, rising with the moving part of heart.output up to 1.4×, then flat.',
+    retired: [],
+  },
+  'blood.flow.gut': {
+    definition:
+      'Blood flowing through the gut a minute (mL/min): 24 % of resting heart.output, plus a rise that grows with the absorbed energy (fat and protein count fully, carbohydrate 0.6).',
+    retired: [],
+  },
+  'blood.flow.muscle': {
+    definition: 'Blood flowing through the skeletal muscles a minute (mL/min): 21 % of resting heart.output plus 90 % of the moving rise.',
+    retired: [],
   },
   // The breathing pack's rows (core/catalog/breathing.ts, S-2). lungs.breathRate was reserved as a
   // real-clock rhythm; it activated as a sim-clock level with its unit kept (ACTIVATION_LOG).
@@ -260,14 +261,35 @@ export const SIGNAL_DOCS: { readonly [Id in SignalId]: CatalogDocs } = {
     definition: 'Air per breath (mL): the alveolar air per breath plus 150 mL of airway dead space, at most 2.5 L.',
     retired: ['lungs.vt', 'lungs.breathDepth'],
   },
+  // The kidneys pack's rows (core/catalog/kidneys.ts, S-4). kidney.filtrationRate was reserved as a
+  // real-clock illustration; it activated as a sim-clock constant with its unit kept (ACTIVATION_LOG).
+  'kidney.urineRate': {
+    definition:
+      'Urine made per hour (mL/h): a steady background of 1.5 L a day plus the extra water from the meal, sent out after an ADH lag, between 500 mL a day and 750 mL an hour.',
+    retired: ['kidney.urineMlPerH', 'urine.rate'],
+  },
+  'kidney.urineTotal': {
+    definition: 'Running total of kidney.urineRate since the meal started, in mL (background included).',
+    retired: ['kidney.urineMl'],
+  },
+  'kidney.bladderMl': {
+    definition: 'Urine in the bladder (mL): starts empty, fills with kidney.urineRate and empties at 300 mL (Model estimate).',
+    retired: ['bladder.volumeMl'],
+  },
+  'water.mealExtraMl': {
+    definition:
+      'Water from this meal still in the body (mL): water absorbed plus extra metabolic water, minus extra urine and sweat. Below 0 when sweat took more than the meal gave.',
+    retired: ['water.balanceMl'],
+  },
   'kidney.filtrationRate': {
-    definition: 'Plasma filtered by both kidneys per minute (GFR), shown as a caption. Never graphed.',
+    definition:
+      'Plasma filtered by both kidneys per minute (GFR), 125 mL/min, the same all day here. Caption and table only, never graphed.',
     retired: ['kidney.gfr', 'kidney.filtrationMlMin'],
   },
 }
 
 /** Definition and retired names of every event row. */
-export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
+export const EVENT_DOCS: { readonly [Id in RunEventId]: CatalogDocs } = {
   'event.stomachHalfEmpty': {
     // By energy on purpose: adding water to a meal never makes it look faster (a drink with
     // calories can, a little: its energy leaves first). So on a grams strip the half-way point in
@@ -301,6 +323,22 @@ export const EVENT_DOCS: { readonly [Id in EventId]: CatalogDocs } = {
     definition: 'Minute the last activity bout of the plan ends. Absent when the person only rests.',
     retired: [],
   },
+  // The circulation pack's event (lazy row, core/catalog/circulation.ts).
+  'event.gutFlowPeak': {
+    definition: 'First minute when blood.flow.gut is highest. Absent if it rises by less than 10 mL/min (water, a fasting rest).',
+    retired: [],
+  },
+  // The kidneys pack's moments (core/catalog/kidneys.ts, S-4).
+  'event.bladderFirstUrge': {
+    definition:
+      'First minute the bladder holds 150 mL, when the urge to pass urine is first felt (it can wait). Comes on every run, meal or not.',
+    retired: [],
+  },
+  'event.mostMealWaterPassed': {
+    definition:
+      "First minute when half of the meal's absorbed water has left as extra urine. Absent when the meal has under 1 mL of water, or sweat keeps it from happening within 48 h.",
+    retired: ['event.firstVoid'],
+  },
 }
 
 /** Every signal row: active, the packs' lazy rows, and reserved (tests and docs). */
@@ -308,5 +346,7 @@ export const ALL_SIGNALS: { readonly [Id in SignalId]: SignalMeta<Id> } = {
   ...SIGNALS,
   ...BREATHING_SIGNALS,
   ...EFFORT_SIGNALS,
+  ...KIDNEY_SIGNALS,
+  ...CIRCULATION_SIGNALS,
   ...RESERVED_SIGNALS,
 }

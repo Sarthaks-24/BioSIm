@@ -24,8 +24,10 @@ export default function KeepButton() {
   const why = useId()
   const keysOff = useKeys((s) => s.off)
   const same = !!kept && runKey(kept.items, kept.profile, kept.activity) === runKey(meal, profile, activity)
-  const off = meal.length === 0 || same
-  const reason = same ? t('keep.already') : meal.length === 0 ? t('stage.empty') : t('keep.help')
+  // A walk or run alone can be kept too (E-3b-ui: Keep keeps the bouts).
+  const empty = meal.length === 0 && activity.length === 0
+  const off = empty || same
+  const reason = same ? t('keep.already') : empty ? t('stage.empty') : t('keep.help')
   return (
     <>
       <IconButton

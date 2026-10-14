@@ -2,7 +2,7 @@
 
 **Model version:** see `MODEL_VERSION` in `packages/engine/src/params.ts`.
 
-Every tunable number lives in `params.ts`, next to its source. If you change one:
+Every tunable number lives in `params.ts`, next to its source; the system packs' numbers (breathing, muscles and skin, water and kidneys, heart and blood) live in `packParams.ts`, which only the engine chunk loads. If you change one:
 
 - bump `MODEL_VERSION`;
 - run `npm run calibrate -w @lifepeek/engine` to see the outputs next to their published targets;
@@ -180,6 +180,47 @@ A walk gives about 330 mL/h, a run about 980 mL/h. Digesting a meal makes heat t
 
 **Limits.** Core temperature is held at 37 °C; sweating switches on and off with the bout; the room is warm and cannot be chosen; sweat that drips without evaporating is left out, so the sweat rate is a minimum. The muscle share is a man's (women average 30.6 %, Janssen 2000), and the resting muscle rate is an average for young adults of normal weight.
 
+## Kidneys and water (model version 3, S-4)
+
+The `water` module runs last in today's order, after effort and circulation, and nothing reads what it writes. All five signals are *assumption* ("Model estimate"); their catalog rows and the two kidney moments are lazy (`core/catalog/kidneys.ts`), so the Digestion dock never lists the moments. This is a teaching model of a hormone delay and a washout up to the kidney's ceiling, not a model of osmolality or salt.
+
+**A steady background day** (model D17). The person drinks their usual amount on an ordinary day, which balances the usual 1.5 L of urine (OpenStax A&P 2e §26.2), the unnoticed losses (breath, skin) and the water metabolism makes at rest (0.12 mL per kcal: 180 mL a day for the reference man; IOM 2005 p85 gives 15, 10.5 and 11.1 g per 100 kcal for carbohydrate, protein and fat). None of that is drawn; only this meal's extra water `E` moves:
+
+    dE/dt = water absorbed + 0.12 × (energy used − resting) − (urine − U0) − sweat
+
+**Urine.** The kidney follows `E` through an ADH lag `S` (dS/dt = (E − S)/τ, τ = 10 min, a vasopressin half-life of 6.9 min inside Calvi 2024's 5–20 min) and makes
+
+    urine (mL/h) = clamp(62.5 + 60 × 0.03 × S, 21, 750)
+
+62.5 mL/h is 1.5 L a day; 21 mL/h is the least urine, "about 500 mL/day" (OpenStax §25.1); 750 mL/h sits inside IOM 2005's "0.7 to 1.0 L/hour" (p74). kx = 0.03 per min and τ are calibrated on Maughan 2016 (1 L of water: 1337 ± 330 mL of urine in 4 h; the model gives 1149 mL, held down by the 0.9 L the gut has absorbed by then) with kx·τ = 0.3, so urine never dips below the background after a drink. Worked values: 1 L of water peaks at 702 mL/h at 61 min, half of it is out by 77 min; 1.25 L is 77 % out (as extra urine) by 2 h; a day with one glass of water makes 1.75 L. Sweat leaves `E` below 0 when it took more than the meal gave: urine falls (never below 21 mL/h) and the background day's drinks make it up slowly (no thirst, model D5 C8).
+
+**Bladder.** Starts empty, fills with all the urine, and empties at 300 mL (Model estimate, inside §25.2's "300 to 400 mL"). `event.bladderFirstUrge` is the first minute it holds 150 mL ("an urge to void is sensed but is easily overridden", §25.2): 144 min on the background alone, 39 min after a litre of water. `event.mostMealWaterPassed` is the first minute half of the meal's absorbed water has left as extra urine. Filtration is a constant 125 mL/min (§25.5); "filtrate taken back" (99.2 % at rest) and "glucose in urine" (0: the kidney takes back about 375 mg/min, §25.6) are helpers in `modules/water.ts`.
+
+**Golden tests** (`test/water.test.ts`): Maughan calibration (1007–1667 mL in 4 h); hold-outs Crowe 1987 (peak 450–900 mL/h at 45–120 min; the abstract gives 10.86 mL/kg per hour after 20 mL/kg, the time window is a labelled guard) and 1.25 L ≥ 70 % passed in 2 h; urine ≤ 1000 mL/h (IOM p83); every preset meal 1.0–2.5 L in 24 h at rest; resting metabolic water 140–350 mL a day; equal water in, equal urine; never below 21 mL/h; bladder ≤ 600 mL. Pinned: a walk with sweating makes less urine; the body water balance every minute (absorbed + extra metabolic water = extra urine + sweat + `water.mealExtraMl`, ±0.5 mL); the 48 h drift test; adding the module and resting bouts change nothing else.
+
+**Limits.** Always well watered at the start (someone short of water keeps more of a drink: Crowe's 70 % against 100 %); no salt or other solutes, so milk and ORS pass like water (Maughan found less); no caffeine or alcohol; no night-time ADH and no sleep; GFR fixed; extra breath water in moving is left out; the drink is taken in one minute (Maughan's over 30 min); an adult man.
+## Heart and blood (model version 3, S-3)
+
+The `circulation` module runs after muscles and skin. It reads the oxygen used (`gas.o2UseRate`), the food effect, the absorbed nutrients and the MET, and writes five rows and one event. All are *assumption* ("Model estimate"). Like breathing's, its catalog rows are lazy (`core/catalog/circulation.ts`), and so are its numbers: `packParams.ts` is loaded with the engine, not with the first page. Sources were read in steps V-0, V-0b and V-3.
+
+- **Resting output.** Resting O2 use at the fasting RQ (215 mL/min) over an a–v O2 difference of 50 mL per litre of blood: CO = 4.31 L/min. The 50 is Klabunde's worked Fick example (0.20 − 0.15 mL/mL); Higginbotham 1986 measured 58 at rest, which would give 3.7, below OpenStax's 4–8 L/min, so 50 is kept as a calibration.
+- **Moving** adds 5.5 L/min of blood per L/min of extra O2 (Stringer 2005: "approximately 5-6"; Cook 2005: 5.8). The extra O2 is the activity's share of this minute's O2 use, so the food effect's O2 is not counted again: the gut takes more O2 out of the blood it already gets.
+- **Digesting** adds the gut's extra flow: 3 × Rw / (Rw + 2.5) L/min, where Rw is the absorbed energy per minute weighted fat 1, protein 1, carbohydrate 0.6. Sieber 1992 found fat and protein alike and carbohydrate "significantly less" (his velocity data give about 0.2–0.3); high-carbohydrate meals still raise CO a lot (Sidery 1994), so 0.6 is a calibration. K = 2.5 kcal/min is fitted so a 1526 kcal mixed meal raises CO by 1.3 L/min (Eriksen 1994: about 1.3 L/min for 1400–1600 kcal); the ceiling 3 L/min is about the largest meal rise read (Sidery 1994: 3.15).
+- **CO** = resting + moving + gut. Eriksen 1994 found exercise after a meal adds to the meal's rise, "pure summation".
+- **Stroke volume** = 65 mL × (1 + 0.4 × min(1, moving rise / 5 L/min)): at most 1.4 times, then flat (Higginbotham 1986, 41 → 58 mL/m², "increased no further"). OpenStax §19.4's "70 to approximately 130 mL" is the book's range. A meal does not change it. **Heart rate** = CO / SV, at most 191 (220 − age).
+- **Where blood goes.** Gut 24 % and muscles 21 % of resting CO (OpenStax Table 20.3: 1400 and 1200 of 5800 mL/min); muscles take 90 % of the moving rise (Table 20.3, mild exercise 3300 of 3700). `event.gutFlowPeak` is the first minute gut flow is highest (none if it rises less than 10 mL/min).
+
+| | Output | Beats/min | Per beat | Muscle flow | Gut flow |
+|---|---|---|---|---|---|
+| Rest | 4.31 L/min | 66 | 65 mL | 905 mL/min | 1034 mL/min |
+| Walk (3.8 MET) | 7.9 L/min | 94 | 84 mL | 4.1 L/min | 1034 mL/min |
+| Run (9.3 MET) | 14.8 L/min | 162 | 91 mL | 10.3 L/min | 1034 mL/min |
+| 1526 kcal meal, peak | 5.6 L/min | 86 | 65 mL | 905 mL/min | 2.3 L/min |
+
+**Tests** (`test/circulation.test.ts`): at rest, with or without a meal, CO 4–8 L/min, HR 60–100 and SV 55–100 mL (OpenStax §19.4); the CO slope 5–6 per litre of O2 (Stringer 2005, Cook 2005); SV at most 1.4× and flat past the plateau (Higginbotham 1986); resting gut and muscle shares, and about half the blood to muscles in a walk (Table 20.3); hold-outs: the meal peak 30–90 min after the meal starts (Waaler 1991; the minute does not depend on K), a large meal still raising CO at 2 h (Waaler 1991, Sidery 1994), meal and walk adding up (Eriksen 1994), and per kcal fat ≥ protein > carbohydrate (Sieber 1992). Pinned: the Eriksen calibration, worked values, walk 7–11 and run 13–19 L/min, HR ≤ 191, everything rising with MET, water changing nothing, no food-effect O2 counted twice, and adding the module leaving every other signal byte-identical. Two known limits: Waaler's "after a small meal, CO is nearly back to fasting by 2 h" fails for a 491 kcal solid meal, and a solid meal's peak comes late, both because solids leave the stomach at a steady rate for hours here (the deferred emptying change). A small sweet drink is back by 2 h.
+
+**Limits.** Studies were small and mostly lying down or seated; the HR/SV split is assumed (a meal raises HR only; Waaler 1991 saw both rise); no baroreflex, posture, fitness, blood volume or blood pressure; the CO slope is for steady bouts (non-linear in ramp tests, Stringer 2005); gut flow stays up in exercise, where Table 20.3 shows it falling (Eriksen 1994 found it held in reclining exercise after a meal); 220 − age is ±10–12 beats and not for children.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -204,6 +245,13 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `lungs.breathRate`, `lungs.tidalVolume` | breaths/min, mL | assumption | breaths and depth that carry the CO2 away at 40 mm Hg (breathing pack row) | OpenStax §22.3 |
 | `muscle.energyRate` | kcal/h | assumption | resting muscle (13 kcal/kg/day × 38.4 % × kg ÷ 24) + energy of moving | Wang 2012, Janssen 2000 |
 | `skin.sweatRate`, `skin.sweatTotal` | mL/h, mL | assumption | energy of moving ÷ 0.58 kcal per mL evaporated | Baker 2019, Baker & Wolfe 2020, OpenStax ch. 24 |
+| `kidney.urineRate`, `kidney.urineTotal` | mL/h, mL | assumption | background 1.5 L a day + the meal's extra water after an ADH lag, 21–750 mL/h (kidneys pack row) | OpenStax ch. 25–26, IOM 2005, Maughan 2016, Crowe 1987, Calvi 2024 |
+| `kidney.bladderMl` | mL | assumption | fills with urine, empties at 300 mL (kidneys pack row) | OpenStax §25.2 |
+| `water.mealExtraMl` | mL | assumption | the meal's water still in the body; below 0 after sweating (kidneys pack row) | OpenStax §23.7, IOM 2005 |
+| `kidney.filtrationRate` | mL/min | assumption | constant 125 (kidneys pack row) | OpenStax §25.5 |
+| `heart.output` | L/min | assumption | resting O2 ÷ 50 mL/L + 5.5 × extra O2 of moving + the gut's rise (circulation pack row) | OpenStax §19.4, Stringer 2005, Cook 2005, Eriksen 1994, Waaler 1991 |
+| `heart.rate`, `heart.strokeVolume` | beats/min, mL | assumption | SV 65 mL up to 1.4× with moving; HR = CO ÷ SV, at most 191 | OpenStax §19.4, Higginbotham 1986 |
+| `blood.flow.gut`, `blood.flow.muscle` | mL/min | assumption | 24 % / 21 % of resting CO + the meal's rise / 90 % of the moving rise | OpenStax Table 20.3, Sieber 1992 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -212,6 +260,9 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `event.glucoseBackToBase` | first minute after the peak within 5 mg/dL of fasting | ADA 2001 (context) |
 | `event.mostlyAbsorbed` | 90 % of the carbohydrate, protein and fat that will be absorbed is in the body | OpenStax |
 | `event.firstLeftovers` | leftovers (fibre) start leaving the body, with a between-person range | OpenStax, Nandhra 2023 |
+| `event.bladderFirstUrge` | the bladder first holds 150 mL (kidneys pack, lazy) | OpenStax §25.2 |
+| `event.mostMealWaterPassed` | half of the meal's absorbed water has left as extra urine (kidneys pack, lazy) | Maughan 2016, Crowe 1987 |
+| `event.gutFlowPeak` | gut blood flow is highest after a meal (circulation pack, lazy row) | Waaler 1991 |
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
@@ -266,6 +317,22 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 32. Baker LB. Physiology of sweat gland function: the roles of sweating and sweat composition in human health. *Temperature* 2019;6:211–259.
 33. Baker LB, Wolfe AS. Physiological mechanisms determining eccrine sweat composition. *Eur J Appl Physiol* 2020;120:719–752.
 34. OpenStax. *Anatomy and Physiology 2e*, ch. 24 (§24.6 Energy and Heat Balance). Rice University.
+35. OpenStax. *Anatomy and Physiology 2e*, ch. 25 (§25.1, §25.2, §25.5, §25.6). Rice University.
+36. OpenStax. *Anatomy and Physiology 2e*, ch. 26 (§26.2 Water Balance). Rice University.
+37. Institute of Medicine. *Dietary Reference Intakes for Water, Potassium, Sodium, Chloride, and Sulfate*, ch. 4. National Academies Press, 2005.
+38. Maughan RJ, et al. A randomized trial to assess the potential of different beverages to affect hydration status: development of a beverage hydration index. *Am J Clin Nutr* 2016;103:717–723.
+39. Crowe MJ, et al. Altered water excretion in healthy elderly men. *Age Ageing* 1987;16:285–293.
+40. Calvi A, et al. Urinary hyaluronidase activity is closely related to vasopressinergic system following an oral water load in men. *Front Endocrinol* 2024;15:1346082.
+41. Klabunde RE. Measurement of Cardiac Output. *Cardiovascular Physiology Concepts* (CVPhysiology.com), revised 2023.
+42. Higginbotham MB, Morris KG, Williams RS, McHale PA, Coleman RE, Cobb FR. Regulation of stroke volume during submaximal and maximal upright exercise in normal man. *Circ Res* 1986;58:281–291.
+43. Stringer WW, Whipp BJ, Wasserman K, et al. Non-linear cardiac output dynamics during ramp-incremental cycle ergometry. *Eur J Appl Physiol* 2005;93:634–639.
+44. Cook L, Tomczak C, Busse E, Tsang J, Wojcik W, Haennel R. Impact of a right ventricular impedance sensor on the cardiovascular responses to exercise in pacemaker dependent patients. *Indian Pacing Electrophysiol J* 2005;5:160–174.
+45. Eriksen M, Waaler BA. Priority of blood flow to splanchnic organs in humans during pre- and post-meal exercise. *Acta Physiol Scand* 1994;150:363–372.
+46. Waaler BA, Eriksen M, Toska K. The effect of meal size on postprandial increase in cardiac output. *Acta Physiol Scand* 1991;142:33–39.
+47. Sieber C, Beglinger C, Jäger K, Stalder GA. Intestinal phase of superior mesenteric artery blood flow in man. *Gut* 1992;33:497–501.
+48. Sidery MB, Macdonald IA. The effect of meal size on the cardiovascular responses to food ingestion. *Br J Nutr* 1994;71:835–848.
+49. Betts JG, et al. *Anatomy and Physiology 2e*, ch. 19 The Cardiovascular System: The Heart (§19.4). OpenStax, 2022.
+50. Betts JG, et al. *Anatomy and Physiology 2e*, ch. 20 The Cardiovascular System: Blood Vessels and Circulation (§20.4, Table 20.3). OpenStax, 2022.
 
 The food data comes from:
 

@@ -4,12 +4,11 @@ import { simulate } from '@lifepeek/engine/run'
 import { ACTIVITY_BANDS } from '../anatomy/human/bands.ts'
 import { FILL_SIGNAL, gramsIn } from '../anatomy/bodyState.ts'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
-import { DIGESTION } from '../systems/digestion/def.ts'
-import type { SystemDef } from '../systems/registry.ts'
 import { drivenAt, levelGate } from './drives.ts'
 import { LIMB_KIT } from '../anatomy/human/kit.ts'
 import { figure, takeKit } from './limbs.ts'
-import { flatLayer, limbsFor, loadLimbs } from './registry.ts'
+import { limbsFor, loadLimbs } from './registry.ts'
+import { LAZY_PACKS, loadPack, packDrawing, type PackDef } from '../systems/load.ts'
 import { poseSvg } from './restingBody.ts'
 import { MAX_DRAWN_HZ, STILL_PHASE, drawnRate, rhythmLayer, rhythmScale } from './rhythm.ts'
 
@@ -18,32 +17,25 @@ takeKit(LIMB_KIT)
 const src = (file: string) => fs.readFileSync(new URL(file, import.meta.url), 'utf8')
 
 describe('the flat registry loads on demand (R71, R74)', () => {
-  const layer = () => null
-  const breathing = (load: () => Promise<{ default: typeof layer }>): SystemDef => ({
-    ...DIGESTION,
-    id: 'breathing',
-    pack: 'breathing',
-    camera: { framing: 'chest' },
-    draw: { layerFlat: load },
-  })
-
-  it("Digestion's organs are the body's own: no layer to load", () => {
-    expect(flatLayer(DIGESTION)).toBeNull()
-  })
-
-  it("a system's drawing loads the first time it is lit, once; a failed load is tried again", async () => {
-    const load = vi.fn(async () => ({ default: layer }))
-    const sys = breathing(load)
-    expect(load).not.toHaveBeenCalled()
-    const first = flatLayer(sys)
-    expect(flatLayer(sys)).toBe(first)
-    expect(await first).toBe(layer)
-    expect(load).toHaveBeenCalledTimes(1)
-
-    const failing = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ default: layer })
-    const other = { ...breathing(failing), id: 'kidneys' as const }
-    await expect(flatLayer(other)).rejects.toThrow('offline')
-    expect(await flatLayer(other)).toBe(layer)
+  it("a system's drawing loads with its pack, the first time the system is lit, once; a failed load is tried again", async () => {
+    const layer = () => null
+    const drawing = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ default: { breathing: layer } })
+    const packs = LAZY_PACKS as Record<string, PackDef>
+    packs.breathing = { rows: async () => ({ default: [] }), drawing }
+    try {
+      expect(drawing).not.toHaveBeenCalled()
+      expect(packDrawing('breathing')).toBeUndefined()
+      await expect(loadPack('breathing')).rejects.toThrow('offline')
+      await loadPack('breathing')
+      expect(packDrawing('breathing')).toBe(layer)
+      expect(loadPack('breathing')).toBeNull()
+      expect(drawing).toHaveBeenCalledTimes(2)
+    } finally {
+      delete packs.breathing
+    }
   })
 
   it('the legs and poses load only when a picture shows them; Digestion at rest never does', async () => {

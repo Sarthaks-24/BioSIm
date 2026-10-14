@@ -357,10 +357,10 @@ test.describe('desktop', () => {
 
   test('B15 with 6 foods (and 3 bouts) every chip is visible or counted, on one row', async ({ page }) => {
     await red('B15', async (problems) => {
-      // `fixture=bouts`: the e2e build's three longest activity-bout chips (MealBar), as v3 will add them.
+      // Three of the longest bout chips a link can make ("Brisk walk 120 min, from 11:30"; E-3b-ui).
       for (const [url, count] of [
         [SIX_FOODS, 6],
-        [`${SIX_FOODS}&fixture=bouts`, 9],
+        [`${SIX_FOODS}&act=walkBrisk.690.120,walkBrisk.900.105,walkBrisk.1200.90`, 9],
       ] as const) {
         for (const w of [1440, 360, 320]) {
           await page.setViewportSize({ width: w, height: w > 400 ? 900 : 640 })

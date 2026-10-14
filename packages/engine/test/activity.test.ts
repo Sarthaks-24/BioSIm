@@ -17,7 +17,18 @@ import {
   type Params,
   type RunResult,
 } from '../src/index.ts'
-import { ACTIVITY_CODES, ENERGY_TOTAL, HUMAN_MODULES, LEFT_WATER, activityProblems, runModules, simulate } from '../src/run.ts'
+import {
+  ACTIVITY_CODES,
+  ENERGY_TOTAL,
+  HUMAN_MODEL,
+  HUMAN_MODULES,
+  KIDNEY_EVENT_IDS,
+  LEFT_WATER,
+  activityProblems,
+  runModules,
+  simulate,
+} from '../src/run.ts'
+import type { KidneyEventId } from '../src/core/catalog/kidneys.ts'
 import { FULL, firstDiff, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 import { paramsWith } from './modules/ctx.ts'
@@ -36,7 +47,7 @@ const mealOf = (m: string) => buildMeal(decodeMeal(m), lookup)
 const run = (m: string, activity: ActivityBout[] = []) => simulate(mealOf(m), { particles: 0, activity })
 const values = (sim: RunResult, id: ActiveSignalId) => sim.signals.get(id)!.values
 /** The run's modules again, for the arrays they wrote (Float64, internal ones too). */
-const arrays = (m: string, activity: ActivityBout[] = [], params: Params = PARAMS) =>
+const arrays = (m: string, activity: ActivityBout[] = [], params: Params = HUMAN_MODEL.params) =>
   runModules(HUMAN_MODULES, { input: { meal: mealOf(m), activity }, params, profile: PROFILES['adult-ref'], n: 2881, stepMin: 1 }).signals
 const kg = PROFILES['adult-ref'].weightKg
 const R = PROFILES['adult-ref'].restingKcalPerDay / 1440
@@ -324,9 +335,9 @@ describe('rest invariance (model D13 iv) and what activity never moves', () => {
         'energy.foodEffectRate',
       ] as const)
         expect(firstDiff(values(moving, id), values(rest, id)), `${m} ${id}`).toBe(-1)
-      expect([...rest.moments].filter(([id]) => !id.startsWith('event.activity'))).toEqual(
-        [...moving.moments].filter(([id]) => !id.startsWith('event.activity')),
-      )
+      // The meal's moments; activity's own and the kidneys' (sweat changes urine, S-4) may move.
+      const meal = ([id]: [string, unknown]) => !id.startsWith('event.activity') && !KIDNEY_EVENT_IDS.includes(id as KidneyEventId)
+      expect([...rest.moments].filter(meal)).toEqual([...moving.moments].filter(meal))
       expect(moving.particles).toEqual(rest.particles)
     }
   }, 30_000)
@@ -413,6 +424,8 @@ describe('fuzz: meals × activity plans', () => {
       }
       const sim = run(pick(menu), plan)
       for (const [id, s] of sim.signals) {
+        // The meal's water still in the body goes below 0 when sweat took more (S-4; its validRange).
+        if (id === 'water.mealExtraMl') continue
         // Not below 0 beyond rounding: energy.inRate dips by 1e-12 where nothing is absorbed.
         const bad = s.values.findIndex((v) => !Number.isFinite(v) || v < -1e-6)
         expect(bad, `${id} with ${activityKey(plan)}`).toBe(-1)

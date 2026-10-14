@@ -1,7 +1,7 @@
 import type { Meal } from './meal.ts'
 import type { FoodPhase } from './schema.ts'
 import { GRAMS_KEY, NUTRIENT_KINDS, type NutrientKind } from './nutrients.ts'
-import type { Params } from './params.ts'
+import type { CoreParams } from './params.ts'
 import { emptiedAt, type EmptyingCurve } from './stomach.ts'
 
 /**
@@ -54,7 +54,7 @@ export function makeParticles(
   curves: Record<FoodPhase, EmptyingCurve>,
   arrival: number,
   count: number,
-  params: Params,
+  params: CoreParams,
 ): Particle[] {
   if (meal.items.length === 0 || count <= 0) return []
   const rand = mulberry32(hashString(meal.items.map((i) => `${i.food.id}:${i.servings}`).join(',')))

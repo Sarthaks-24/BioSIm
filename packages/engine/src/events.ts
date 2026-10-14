@@ -1,6 +1,6 @@
 import type { Meal } from './meal.ts'
 import type { NutrientKind, Range } from './nutrients.ts'
-import type { Params } from './params.ts'
+import type { CoreParams } from './params.ts'
 import { stomachShare } from './stomach.ts'
 
 export interface SimEvents {
@@ -37,7 +37,7 @@ interface EventInput {
   n: number
 }
 
-export function computeEvents(meal: Meal, s: EventInput, params: Params): SimEvents {
+export function computeEvents(meal: Meal, s: EventInput, params: CoreParams): SimEvents {
   const firstIndex = (test: (i: number) => boolean): number | null => {
     for (let i = 0; i < s.n; i++) if (test(i)) return i * s.step
     return null

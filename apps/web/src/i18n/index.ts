@@ -5,6 +5,9 @@ import en from 'virtual:lifepeek-en/core'
 import { readPref, writePref } from '../lib/prefs.ts'
 import { HINDI, langPrefToSave, pickLanguage, type Language } from './language.ts'
 import { PSEUDO_LANG, pseudoBundle, pseudoText } from './pseudo.ts'
+// Adding a page's or a pack's English (i18n/text.ts: loadSection), apart from this file so the registry
+// loads a pack's words without the core text, and its unit tests without the build's English modules.
+export { addEnglish } from './text.ts'
 
 export { HINDI, type Language }
 /** The languages this build has: English only while Hindi is paused (R47, i18n/language.ts). */
@@ -74,17 +77,6 @@ i18n.on('languageChanged', (lng) => {
   const pref = langPrefToSave(lng, readPref('lang'))
   if (pref) writePref('lang', pref)
 })
-
-/**
- * Adds a page's own English text (its `virtual:lifepeek-en/<section>`), when the page's code
- * loads, before it draws. Hindi needs no such step: hi.json is fetched whole.
- */
-export function addEnglish(...texts: Record<string, unknown>[]) {
-  for (const text of texts) {
-    i18n.addResourceBundle('en', 'translation', text, true, true)
-    if (PSEUDO) i18n.addResourceBundle(PSEUDO_LANG, 'translation', pseudoBundle(text), true, true)
-  }
-}
 
 /** Pick the user's language from a food file's { en, hi? } text. */
 export function localized(text: { en: string; hi?: string | undefined } | undefined, lang: string): string {

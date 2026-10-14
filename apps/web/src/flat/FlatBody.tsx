@@ -24,7 +24,8 @@ import { FADE_TONE, PARTICLE_EDGE, SKIN } from '../anatomy/tones/base.ts'
 import { ILEUM_TONE, JEJUNUM_TONE, ORGAN_TONE, PYLORUS_TONE, type LitOrgan } from '../anatomy/tones/digestion.ts'
 import { DIGESTION } from '../systems/digestion/def.ts'
 import type { SystemDef } from '../systems/registry.ts'
-import { flatLayer, limbsFor, loadLimbs } from './registry.ts'
+import { packDrawing } from '../systems/load.ts'
+import { limbsFor, loadLimbs } from './registry.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
 import { quality } from '../three/quality.ts'
 import { useProjector } from '../hooks/useProjector.ts'
@@ -78,7 +79,8 @@ export default function FlatBody({
   const framing = system.camera.framing
   const view = FRAMINGS[framing]
   const organs = system.draw === 'body'
-  const Layer = useLoaded(flatLayer(system))
+  // Lit only once its pack has loaded (state/run.ts setLayer), so its drawing is here.
+  const Layer = organs ? undefined : packDrawing(system.id)
   const limbs = useLoaded(limbsFor(framing, band) ? loadLimbs() : null)
   const [stage, setStage] = useState<StageId>(() => activeStage(sim, clock.now()))
   const [size, setSize] = useState({ w: 0, h: 0 })

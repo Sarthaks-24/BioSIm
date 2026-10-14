@@ -167,6 +167,17 @@ describe('keep, unkeep, swap', () => {
     run().keep()
     expect(run().kept).toEqual({ items: one('cola'), profile: DEFAULT_RUN_PROFILE, activity: walk })
   })
+
+  it('setActivity keeps the plan in start order; a walk alone can be kept (E-3b-ui)', () => {
+    run().setActivity([
+      { kind: 'run', startMin: 120, durMin: 10 },
+      { kind: 'walk', startMin: 30, durMin: 20 },
+    ])
+    expect(run().activity.map((b) => b.startMin)).toEqual([30, 120])
+    run().keep()
+    expect(run().kept?.activity).toEqual(run().activity)
+    expect(linkQuery(run(), 0)).toContain('bact=walk.30.20%2Crun.120.10')
+  })
 })
 
 describe('meal cap (same rules as v1)', () => {

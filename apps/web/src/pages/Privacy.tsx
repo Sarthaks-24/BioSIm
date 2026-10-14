@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import RichText from '../components/RichText.tsx'
 import { MAKER } from '../lib/credits.ts'
+import { SITE_URL } from '../lib/site.ts'
 import { addEnglish } from '../i18n/index.ts'
 import privacyText from 'virtual:lifepeek-en/privacy'
 import PageShell from '../components/PageShell.tsx'
@@ -22,7 +23,7 @@ interface Section {
  */
 export default function Privacy() {
   const { t } = useTranslation()
-  const sections = t('privacy.sections', { returnObjects: true, name: MAKER.name }) as Section[]
+  const sections = t('privacy.sections', { returnObjects: true, name: MAKER.name, host: SITE_URL.replace(/^https?:\/\//, '') }) as Section[]
   const paras = (list: string[] | undefined) =>
     list?.map((p) => (
       <p key={p}>

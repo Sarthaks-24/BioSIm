@@ -3,7 +3,6 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
-  PARAMS,
   PROFILES,
   buildMeal,
   decodeMeal,
@@ -16,6 +15,7 @@ import {
 } from '../src/index.ts'
 import {
   ENERGY_TOTAL,
+  HUMAN_MODEL,
   HUMAN_MODULES,
   RUN_SIGNALS,
   RUN_SIGNAL_IDS,
@@ -44,7 +44,7 @@ const mealOf = (m: string) => buildMeal(decodeMeal(m), lookup)
 const run = (m: string, activity: ActivityBout[] = []) => simulate(mealOf(m), { particles: 0, activity })
 const values = (sim: RunResult, id: RunSignalId) => sim.signals.get(id)!.values
 const N = 2881
-const setupOf = (m: string, activity: ActivityBout[] = [], params: Params = PARAMS) => ({
+const setupOf = (m: string, activity: ActivityBout[] = [], params: Params = HUMAN_MODEL.params) => ({
   input: { meal: mealOf(m), activity },
   params,
   profile: PROFILES['adult-ref'],
@@ -74,8 +74,8 @@ describe('muscles: muscle.energyRate (model §2.7)', () => {
     ['wang2012', 'janssen2000'],
     'resting muscle = 13 kcal/kg/day (Elia 1992 via Wang 2012) × 38.4 % of body mass (Janssen 2000) × 65 kg ÷ 24 = 13.5 kcal/h, 18–26 % of resting use (21.6 %)',
     () => {
-      expect(PARAMS.effort.muscleKcalPerKgDay).toBe(13)
-      expect(PARAMS.effort.muscleMassShare).toBe(0.384)
+      expect(HUMAN_MODEL.params.effort.muscleKcalPerKgDay).toBe(13)
+      expect(HUMAN_MODEL.params.effort.muscleMassShare).toBe(0.384)
       const muscle = values(run(''), 'muscle.energyRate')
       expect(muscle[0]!).toBeCloseTo(13.52, 2)
       const share = muscle[600]! / Rh
@@ -115,7 +115,7 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
     ['baker2019', 'bakerwolfe2020'],
     'walk: extra heat ÷ 0.58 kcal/mL (580 kcal per kg evaporated) ≈ 330 mL/h, inside 0.2–0.4 L/h (Baker 2019 “~0.3 L/h … the very low end”; Baker & Wolfe 2020 walking 0.3–0.6 L/h)',
     () => {
-      expect(PARAMS.effort.sweatKcalPerMl).toBe(0.58)
+      expect(HUMAN_MODEL.params.effort.sweatKcalPerMl).toBe(0.58)
       const sim = run('cola:1', [walk60])
       const rate = values(sim, 'skin.sweatRate')[90]!
       expect(rate).toBeCloseTo((((2.8 * 3.5 * kg) / 200) * 60) / 0.58, 2) // 329.5 mL/h
@@ -171,7 +171,7 @@ describe('skin: skin.sweatRate and skin.sweatTotal (model §2.9)', () => {
 })
 
 describe('heat: made and lost (model §2.9, D10 helper)', () => {
-  const split = (total: number, activity: number) => heatLoss(total, activity, R, PARAMS.effort)
+  const split = (total: number, activity: number) => heatLoss(total, activity, R, HUMAN_MODEL.params.effort)
   const sum = (h: ReturnType<typeof split>) => h.radiation + h.convection + h.conduction + h.evaporation
 
   pinned('skin.sweatRate', 'identity: resting heat made = R (energy used at rest, e = 0), and all of it leaves', () => {
@@ -217,20 +217,23 @@ describe('heat: made and lost (model §2.9, D10 helper)', () => {
 })
 
 describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', () => {
-  const without = HUMAN_MODULES.filter((m) => m.id !== 'effort')
+  // Water (S-4) reads sweat, so the insertion is checked on the modules up to effort.
+  const upTo = HUMAN_MODULES.slice(0, HUMAN_MODULES.findIndex((m) => m.id === 'effort') + 1)
+  const without = upTo.filter((m) => m.id !== 'effort')
 
   it('adding effort leaves every existing signal, internal array and moment byte-identical', () => {
     for (const m of meals) {
       for (const plan of [[], [walk60, run60]] as ActivityBout[][]) {
         const before = runModules(without, setupOf(m, plan))
-        const after = runModules(HUMAN_MODULES, setupOf(m, plan))
+        const after = runModules(upTo, setupOf(m, plan))
         expect(before.signals.size).toBeGreaterThan(0)
         const changed = [...before.signals].filter(([id, w]) => !sameBytes(after.signals.get(id)!.values, w.values)).map(([id]) => id)
         expect(changed, m).toEqual([])
         // The signal table too (Float32 copies), in its row order.
         const tableBefore = buildSignalTable(mealOf(m), before.signals)
         const tableAfter = buildSignalTable(mealOf(m), after.signals)
-        expect([...tableAfter.keys()].slice(0, tableBefore.size)).toEqual([...tableBefore.keys()])
+        // Rows only get added: the earlier rows keep their order (a later pack's rows may follow effort's).
+        expect([...tableAfter.keys()].filter((id) => tableBefore.has(id))).toEqual([...tableBefore.keys()])
         for (const [id, sr] of tableBefore) expect(sameBytes(tableAfter.get(id)!.values, sr.values), `${m} ${id}`).toBe(true)
         expect([...after.moments]).toEqual([...before.moments])
         expect([...after.signals.keys()].filter((id) => !before.signals.has(id))).toEqual([
@@ -245,7 +248,9 @@ describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', ()
   it('the rows before the effort pack keep their place in the signal table', () => {
     const keys = [...run('cola:1').signals.keys()]
     expect(keys).toEqual([...RUN_SIGNAL_IDS])
-    expect(keys.slice(-3)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
+    const at = keys.indexOf('muscle.energyRate')
+    expect(keys.slice(at, at + 3)).toEqual(['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal'])
+    expect(keys.slice(0, at)).toEqual(RUN_SIGNAL_IDS.slice(0, at))
   })
 
   it('rest: no plan, an empty plan and bouts at MET 1 give resting muscle and no sweat, to the byte', () => {

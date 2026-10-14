@@ -7,9 +7,10 @@ import MomentList from './MomentList.tsx'
 import { addEnglish } from '../../i18n/index.ts'
 import keysText from 'virtual:lifepeek-en/keys'
 import tableText from 'virtual:lifepeek-en/table'
+import mealSheetText from 'virtual:lifepeek-en/mealSheet'
 
 // The sheets' own English comes with them (the stage keeps only the buttons' names).
-addEnglish(keysText, tableText)
+addEnglish(keysText, tableText, mealSheetText)
 
 export { default as FoodSearch } from './FoodSearch.tsx'
 

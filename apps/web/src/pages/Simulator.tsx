@@ -1,11 +1,13 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { RunResult } from '@lifepeek/engine'
 import i18n from '../i18n/index.ts'
 import { useLinkSync } from '../hooks/useLinkSync.ts'
 import { useProjector } from '../hooks/useProjector.ts'
 import { loadEngine, runKey, useEngineState, useMomentsOnClock, useRun } from '../hooks/useRun.ts'
 import { actionFor, keyBelongsToTarget, useKeys, type KeyAction } from '../lib/keys.ts'
 import { HORIZON_MIN, formatDuration } from '../lib/time.ts'
+import { boutMoments, hasPlan } from '../lib/moments.ts'
 import { useClock, useMealClock } from '../state/clock.ts'
 import { useRunStore } from '../state/run.ts'
 import { useSheet } from '../state/sheet.ts'
@@ -19,7 +21,7 @@ import MealBar from '../components/stage/MealBar.tsx'
 import Notes from '../components/stage/Notes.tsx'
 import SummaryLine from '../components/stage/SummaryLine.tsx'
 import Timeline from '../components/stage/Timeline.tsx'
-import { mealNames } from '../components/stage/mealText.ts'
+import { planNames } from '../components/stage/boutText.ts'
 import { announce, readOutSlot } from '../components/graphs/StripAnnouncer.tsx'
 import { LoadBoundary, LoadFailed, LoadFailedBox, lazyWithRetry } from '../components/LoadBoundary.tsx'
 
@@ -41,10 +43,10 @@ void loadEngine()
 function keep() {
   const { meal, profile, activity, kept } = useRunStore.getState()
   const t = i18n.t.bind(i18n)
-  if (!meal.length) return announce(t('stage.empty'))
+  if (!meal.length && !activity.length) return announce(t('stage.empty'))
   if (kept && runKey(kept.items, kept.profile, kept.activity) === runKey(meal, profile, activity)) return announce(t('keep.already'))
   useRunStore.getState().keep()
-  announce(t('keep.tag', { meal: mealNames(meal, i18n.language) }))
+  announce(t('keep.tag', { meal: planNames(meal, activity, i18n.language, t) }))
 }
 
 /**
@@ -106,7 +108,9 @@ export default function Simulator() {
   useMealClock()
   useLinkSync()
   const ui = useSystemUi()
-  useMomentsOnClock(ui.moments, run, kept)
+  // The lit system's moments and each bout's start and end (E-3b-ui), for a run with a meal or bouts.
+  const moments = useMemo(() => (r: RunResult) => (hasPlan(r) ? [...ui.moments(r), ...boutMoments(r)] : []), [ui.moments])
+  useMomentsOnClock(moments, run, kept)
 
   // The key map (lib/keys.ts): keyboard and presentation clicker. Keys a focused control uses
   // itself (typing, Space on a button, arrows on the slider) are left to it.
@@ -274,6 +278,8 @@ const WIDEST_MIN = 11 * 60 + 55
 /** "1 h 30 min" + "after eating". Re-renders only when the rounded text changes (every 5 sim minutes). */
 function ClockText() {
   const { t } = useTranslation()
+  // "after eating" with a meal, "from the start" with a walk or run alone (ui-ux §4).
+  const since = useRunStore((s) => (s.meal.length || !s.activity.length ? 'sim.afterEating' : 'sim.fromStart'))
   // The store calls this every frame while playing; the text is only made again when the whole
   // minute changes (formatDuration rounds to it first), not translated anew each frame.
   const text = useClock(
@@ -297,7 +303,7 @@ function ClockText() {
         </span>
         <span className="col-start-1 row-start-1">{text}</span>
       </span>
-      <span className="text-caption font-semibold whitespace-nowrap text-ink-muted">{t('sim.afterEating')}</span>
+      <span className="text-caption font-semibold whitespace-nowrap text-ink-muted">{t(since)}</span>
     </span>
   )
 }
