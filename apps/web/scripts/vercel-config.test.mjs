@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { ROUTE_TITLES } from '../src/lib/routeMeta.ts'
 
 // The deployed site's headers and rewrites live in the root vercel.json (verify-1 P6, 03 WP-22).
-// Playwright runs against `vite preview`, which never applies them, so this test is their only guard.
+// Playwright runs against `vite preview`, which sends the same "/(.*)" headers (vite.config.ts, lifepeek-site-headers).
 // Unknown paths get a real 404 (T12b): Vercel serves dist/404.html (scripts/prerender-head.mjs)
 // with status 404 for any path that is no file and no rewrite.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
@@ -41,11 +41,27 @@ describe('vercel.json security headers', () => {
     expect(everyPath.get('x-frame-options')).toBe('DENY')
   })
 
-  it('the CSP stays minimal: nothing that could block scripts, styles, workers, WebGL, fonts or stats.json', () => {
-    // A fuller CSP needs a check against the deployed site first (inline styles, blob: workers,
-    // the service worker, /stats.json). Until then only these directives, which load nothing.
+  it('the CSP: only the site itself, for every kind of file (R120 #10)', () => {
+    // No third parties (R74): scripts, styles, workers, fonts, the web manifest, fetches (stats.json,
+    // pack-manifest.json, /api) and forms are the site's own. Images: the site's, data: (the QR and
+    // the worksheet's pictures) and blob:. React's style props are set through the CSSOM, which the
+    // policy does not block, so style-src needs no 'unsafe-inline' (e2e/web-basics.spec.ts checks
+    // every page, the 3D body, the worker and Teach under it, with vite preview sending this header).
     const csp = directives(everyPath.get('content-security-policy') ?? '')
-    expect(Object.keys(csp).sort()).toEqual(['base-uri', 'frame-ancestors', 'object-src'])
+    expect(csp).toEqual({
+      'default-src': "'self'",
+      'script-src': "'self'",
+      'style-src': "'self'",
+      'img-src': "'self' data: blob:",
+      'connect-src': "'self'",
+      'worker-src': "'self'",
+      'font-src': "'self'",
+      'manifest-src': "'self'",
+      'form-action': "'self'",
+      'frame-ancestors': "'none'",
+      'object-src': "'none'",
+      'base-uri': "'self'",
+    })
   })
 
   it('camera, microphone and location are switched off', () => {
