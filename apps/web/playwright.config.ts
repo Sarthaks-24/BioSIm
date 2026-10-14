@@ -112,8 +112,8 @@ const projects: PlaywrightTestConfig['projects'] = [
   },
   {
     name: 'nowebgl',
-    // circulation.spec.ts: Heart & blood drawn flat (with WebGL it is drawn in 3D since A-5).
-    testMatch: ['stage.spec.ts', 'overlays.spec.ts', 'effort.spec.ts', 'circulation.spec.ts'],
+    // circulation.spec.ts, kidneys.spec.ts: Heart & blood, Kidneys & water drawn flat (with WebGL they are drawn in 3D since A-5, A-6).
+    testMatch: ['stage.spec.ts', 'overlays.spec.ts', 'effort.spec.ts', 'circulation.spec.ts', 'kidneys.spec.ts'],
     use: { viewport: desktop, launchOptions: noWebgl },
   },
   ...trackA(),

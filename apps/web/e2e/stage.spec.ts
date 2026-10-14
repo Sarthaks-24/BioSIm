@@ -290,11 +290,11 @@ const rendered = (page: Page) =>
     return { calls: r.calls, triangles: r.triangles }
   })
 
-test('digestion, breathing and the heart swap their 3D layers in one canvas: one context, the GPU back at base (A-3, A-5, R99)', async ({
+test('digestion, breathing, the heart and the kidneys swap their 3D layers in one canvas: one context, the GPU back at base (A-3, A-5, A-6, R99)', async ({
   page,
 }) => {
   onlyIn('desktop', 'phone')
-  test.setTimeout(300_000)
+  test.setTimeout(420_000)
   await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
   await page.goto('/sim?v=3&a=roti:1&act=walk.30.20&layer=digestion&preview=1&t=40')
   const body = page.locator('[data-body="3d"][data-ready]')
@@ -313,6 +313,7 @@ test('digestion, breathing and the heart swap their 3D layers in one canvas: one
   expect(base.layers).toEqual(['high:digestion'])
   const lungs = page.locator('[data-body="3d"][data-layer="breathing"][data-breath]')
   const heart = page.locator('[data-body="3d"][data-layer="circulation"][data-beat]')
+  const kidneys = page.locator('[data-body="3d"][data-layer="kidneys"][data-drops]')
   /** Anatomy plan §9, high tier: at most 150k triangles and 60 draw calls rendered. */
   const withinGpu = async () => {
     await page.waitForTimeout(800)
@@ -320,7 +321,7 @@ test('digestion, breathing and the heart swap their 3D layers in one canvas: one
     expect(gl.calls).toBeLessThanOrEqual(60)
     expect(gl.triangles).toBeLessThanOrEqual(150_000)
   }
-  // `]` lights the row after (digestion, breathing, Heart & blood), `[` the row before.
+  // `]` lights the row after (digestion, breathing, Heart & blood, Kidneys & water), `[` the row before.
   for (let i = 0; i < 4; i++) {
     await page.locator('body').press(']')
     await expect(lungs).toBeVisible({ timeout: 30_000 })
@@ -337,6 +338,19 @@ test('digestion, breathing and the heart swap their 3D layers in one canvas: one
     await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-breath', /.*/)
     if (i === 0) await withinGpu()
     expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+    await page.locator('body').press(']')
+    await expect(kidneys).toBeVisible({ timeout: 30_000 })
+    // The torso framing too; the bladder drawn at most 600 mL; the beat's attributes went with its layer.
+    await expect(kidneys).toHaveAttribute('data-framing', 'torso')
+    await expect(kidneys).toHaveAttribute('data-bladder-drawn', /^\d+$/)
+    expect(Number(await kidneys.getAttribute('data-bladder-drawn'))).toBeLessThanOrEqual(600)
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-beat', /.*/)
+    if (i === 0) await withinGpu()
+    expect(await sameCanvas()).toEqual({ tagged: 1, onPage: 1 })
+    await page.locator('body').press('[')
+    await expect(heart).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-drops', /.*/)
+    await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-bladder-drawn', /.*/)
     await page.locator('body').press('[')
     await expect(lungs).toBeVisible({ timeout: 30_000 })
     await expect(page.locator('[data-body="3d"]')).not.toHaveAttribute('data-beat', /.*/)
@@ -347,8 +361,8 @@ test('digestion, breathing and the heart swap their 3D layers in one canvas: one
   }
   await page.waitForTimeout(1000)
   const after = await gpu(page)
-  // Geometries, textures and programs back at base: the lungs' and the heart's buffers and programs
-  // were freed. Three layers through a 2-layer cache: some were built again; at most two stay, digestion with them.
+  // Geometries, textures and programs back at base: the lungs', the heart's and the kidneys' buffers
+  // and programs were freed. Four layers through a 2-layer cache: some were built again; at most two stay, digestion with them.
   expect({ ...after, layers: [], bytes: 0, builds: 0 }).toEqual({ ...base, layers: [], bytes: 0, builds: 0 })
   expect(after.layers).toContain('high:digestion')
   expect(after.layers.length).toBeLessThanOrEqual(2)
@@ -377,6 +391,19 @@ test('no WebGL: Heart & blood is drawn flat and its 3D layer never loads (R43)',
   await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
   await page.goto('/sim?v=3&a=roti:1&act=walk.30.20&layer=circulation&preview=1&t=40')
   await expect(page.locator('[data-body="flat"][data-framing="torso"] [data-layer="circulation"]')).toBeAttached({ timeout: 30_000 })
+  await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
+  expect(loaded).toEqual([])
+})
+
+test('no WebGL: Kidneys & water is drawn flat and its 3D layer never loads (R43)', async ({ page }) => {
+  onlyIn('nowebgl')
+  const loaded: string[] = []
+  page.on('request', (r) => {
+    if (/layer3d-/.test(r.url())) loaded.push(r.url())
+  })
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=water:2&layer=kidneys&preview=1&t=80')
+  await expect(page.locator('[data-body="flat"][data-framing="torso"] [data-layer="kidneys"]')).toBeAttached({ timeout: 30_000 })
   await expect(page.locator('[data-body="3d"]')).toHaveCount(0)
   expect(loaded).toEqual([])
 })
