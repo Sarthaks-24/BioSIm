@@ -3,7 +3,19 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { workboxPolicy } from './cache-policy.mjs'
-import { CORE_ROOTS, ENGINE, HINDI, LAZY_URL, LESSON_PACKS, LIMBS, cacheTiers, packManifest, tierProblems } from './cache-tiers.mjs'
+import {
+  CORE_ROOTS,
+  ENGINE,
+  HINDI,
+  LAZY_MAX_ENTRIES,
+  LAZY_URL,
+  LESSON_PACKS,
+  LIMBS,
+  SAVED_CACHE,
+  cacheTiers,
+  packManifest,
+  tierProblems,
+} from './cache-tiers.mjs'
 
 // Load on demand, small cache (T12d, R71): the tiers from a build manifest shaped like Vite's.
 const manifest = {
@@ -105,7 +117,9 @@ describe('cache tiers', () => {
 
   it('pack-manifest.json: the core (with the shell) as precache, each pack as lazy, by URL', () => {
     const pm = packManifest(tiers)
-    expect(pm.cache).toBe('lp-lazy')
+    // Teach saves a lesson into lp-saved, which never expires (R120 #1), not into the bounded lp-lazy.
+    expect(pm.cache).toBe('lp-saved')
+    expect(SAVED_CACHE).toBe('lp-saved')
     const core = pm.entries.find((e) => e.id === 'core')
     expect(core.tier).toBe('precache')
     expect(core.urls).toContain('/index.html')
@@ -203,6 +217,21 @@ describe("cache tiers with v3's packs (W-1; R71 load on demand)", () => {
     ])
   })
 
+  it('every file a lesson saves is a lazy file (the route that reads lp-saved), and lp-lazy holds the lazy tier twice (R120 #1)', () => {
+    const lazy = new Set(Array.from({ length: 58 }, (_, i) => `assets/part${i}-AAAAAAA${String.fromCharCode(65 + (i % 26))}.js`))
+    const packs = { stage: { webgl: false, files: ['assets/part0-AAAAAAAA.js', 'assets/run-AAAAAAAE.js'] } }
+    expect(tierProblems({ core: new Set(), lazy, packs }, [])).toEqual([
+      'assets/run-AAAAAAAE.js (saved with stage) is not a lazy file: lp-saved would not be read for it',
+    ])
+    // At 40 files (before R120), one lesson's save alone (about 45 files) overflowed lp-lazy.
+    expect(tierProblems({ core: new Set(), lazy }, [], () => true, 40)).toEqual([
+      'the lazy tier (58 files) does not fit twice in lp-lazy (40 files): raise LAZY_MAX_ENTRIES',
+    ])
+    expect(tierProblems({ core: new Set(), lazy }, [], () => true, 115)).toHaveLength(1)
+    expect(tierProblems({ core: new Set(), lazy }, [], () => true, 116)).toEqual([])
+    expect(LAZY_MAX_ENTRIES).toBe(150)
+  })
+
   it('the service worker keeps the lazy tier out of the precache and in lp-lazy on first use', async () => {
     const lazy = new Set(['assets/BodyCanvas-AAAAAAAG.js', 'assets/ui-AAAAAAAI.js'])
     const lists = []
@@ -218,7 +247,37 @@ describe("cache tiers with v3's packs (W-1; R71 load on demand)", () => {
     // Workbox writes the function's text into sw.js: it may name nothing from outside (LAZY_URL is written out).
     expect(rule.urlPattern.toString()).toContain(`/${LAZY_URL.source}/.test(url.pathname)`)
     expect(rule.urlPattern.toString()).not.toContain('LAZY_URL')
-    expect(rule.options.expiration).toEqual({ maxEntries: 40, maxAgeSeconds: 90 * 24 * 60 * 60, purgeOnQuotaError: true })
+    expect(rule.options.expiration).toEqual({ maxEntries: LAZY_MAX_ENTRIES, maxAgeSeconds: 90 * 24 * 60 * 60, purgeOnQuotaError: true })
+    // No other runtime cache expires what Teach saved: lp-saved is only read (first), by this route's plugin.
+    expect(policy.runtimeCaching.map((r) => r.options.cacheName)).toEqual(['stats', 'lp-lazy'])
+    const [saved] = rule.options.plugins
+    expect(Object.keys(rule.options).indexOf('plugins')).toBeGreaterThan(Object.keys(rule.options).indexOf('expiration'))
+    expect(saved.cachedResponseWillBeUsed.toString()).toContain("caches.open('lp-saved')")
+  })
+
+  it('the lazy route uses a file saved for class first, then lp-lazy, then the network', async () => {
+    const policy = workboxPolicy({ hindi: false, tiers: { ignoreLazyIn: () => {}, manifestTransform: async () => ({}) } })
+    const [plugin] = policy.runtimeCaching.find((r) => r.options.cacheName === 'lp-lazy').options.plugins
+    const saved = new Map([['/assets/BodyCanvas-AAAAAAAG.js', 'saved copy']])
+    const opened = []
+    const was = globalThis.caches
+    globalThis.caches = {
+      open: async (name) => (
+        opened.push(name),
+        { match: async (req, opts) => (opts?.ignoreVary ? (saved.get(req.url) ?? undefined) : undefined) }
+      ),
+    }
+    try {
+      const use = (url, cachedResponse) => plugin.cachedResponseWillBeUsed({ request: { url }, cachedResponse })
+      expect(await use('/assets/BodyCanvas-AAAAAAAG.js', 'lp-lazy copy')).toBe('saved copy')
+      expect(await use('/assets/BodyCanvas-AAAAAAAG.js', undefined)).toBe('saved copy')
+      expect(await use('/assets/ui-AAAAAAAI.js', 'lp-lazy copy')).toBe('lp-lazy copy')
+      // Neither: undefined, and CacheFirst goes to the network.
+      expect(await use('/assets/ui-AAAAAAAI.js', null)).toBeNull()
+      expect(new Set(opened)).toEqual(new Set(['lp-saved']))
+    } finally {
+      globalThis.caches = was
+    }
     expect(policy.maximumFileSizeToCacheInBytes).toBe(512 * 1024)
   })
 })
