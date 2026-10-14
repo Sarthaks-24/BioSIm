@@ -155,3 +155,146 @@ test('switched on: the last row, two panels beside the body (never on it), no in
   expect(await page.evaluate(() => sessionStorage.getItem('lifepeek:growingUp'))).toBeNull()
   expect(errors).toEqual([])
 })
+
+/** The files of a pack (pack-manifest.json), to slow or fail only those. */
+async function packUrls(page: Page, id: string) {
+  const manifest = (await (await page.request.get('/pack-manifest.json')).json()) as { entries: { id: string; urls: string[] }[] }
+  return manifest.entries.find((e) => e.id === id)!.urls
+}
+
+/** Turns the Growing up switch on or off from the settings sheet, and closes it. */
+async function setSwitch(page: Page, on: boolean) {
+  const { toggle } = await growingUpSwitch(page)
+  if ((await toggle.getAttribute('aria-checked')) !== String(on)) await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-checked', String(on))
+  await page.keyboard.press('Escape')
+}
+
+const noReproduction = async (page: Page) => {
+  expect(page.url()).not.toMatch(/reproduction/i)
+  await expect(page.locator('[data-card="reproduction"]')).toHaveCount(0)
+  await expect(page.locator('[data-system-title="reproduction"]')).toHaveCount(0)
+  expect(await page.evaluate(() => document.body.innerText)).not.toMatch(/reproduction|growing up/i)
+}
+
+test('switched off while its pack is still on its way (R120 #3): nothing is lit when it arrives; the link never keeps it', async ({
+  page,
+}) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  test.setTimeout(60_000)
+  await goto(page, '/sim?v=3&a=roti:1')
+  await page.locator('[data-stage]').waitFor()
+  const urls = await packUrls(page, 'reproduction')
+  await page.route(
+    (url) => urls.includes(url.pathname),
+    async (route) => {
+      await new Promise((r) => setTimeout(r, 3000))
+      return route.continue()
+    },
+  )
+  await setSwitch(page, true)
+  const picker = await pickerRows(page)
+  await picker.locator('[data-system-row="reproduction"]').click()
+  await expect(page.locator('[data-system-title] [role=status]')).toBeVisible()
+  await setSwitch(page, false)
+  await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
+  await expect(page.locator('[data-system-title] [role=status]')).toHaveCount(0)
+  // Well after the pack has arrived: still Digestion, no row, no word of it, no layer in the link.
+  await page.waitForTimeout(4000)
+  await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
+  await noReproduction(page)
+})
+
+test('a failed load, then the switch goes off (R120 #3, #12): Try again keeps the focus on the title; off, Digestion and no Try again', async ({
+  page,
+  browser,
+}) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  test.setTimeout(60_000)
+  const urls = await packUrls(page, 'reproduction')
+  // A fresh browser (no service worker: its cache would serve the files).
+  const fresh = await browser.newContext({ serviceWorkers: 'block' })
+  await fresh.addInitScript(() => {
+    localStorage.setItem('lifepeek:medicalNoteSeen', '1')
+    sessionStorage.setItem('lifepeek:growingUp', '1')
+  })
+  const failing = await fresh.newPage()
+  await failing.route(
+    (url) => urls.includes(url.pathname),
+    (route) => route.abort(),
+  )
+  await goto(failing, '/sim?v=3&a=roti:1&layer=reproduction')
+  await failing.locator('[data-stage]').waitFor()
+  const status = failing.locator('[data-system-title] [role=status]')
+  const retry = status.getByRole('button', { name: 'Try again' })
+  await expect(retry).toBeVisible({ timeout: 15_000 })
+  await retry.focus()
+  await failing.keyboard.press('Enter')
+  // The button goes away while the pack is asked for again: the title has the focus, and the status stays.
+  await expect(failing.getByRole('button', { name: /^Body system: / })).toBeFocused()
+  await expect(status).toBeVisible()
+  await expect(retry).toBeVisible({ timeout: 15_000 })
+  await setSwitch(failing, false)
+  await expect(failing.locator('[data-system-title="digestion"]')).toBeVisible()
+  await expect(status).toHaveCount(0)
+  await noReproduction(failing)
+  await fresh.close()
+})
+
+test('a link to it with the switch off never names it (R120 #5)', async ({ page }) => {
+  await goto(page, '/sim?v=3&a=roti:1&layer=reproduction')
+  await page.locator('[data-stage]').waitFor()
+  await expect(page.getByText('This link’s body system isn’t available here, so it shows Digestion.').first()).toBeAttached()
+  await noReproduction(page)
+})
+
+test('[ ] pressed quickly while packs load step on from the row on its way (R120 #6)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  await goto(page, '/sim?v=3&a=roti:1')
+  await page.locator('[data-stage]').waitFor()
+  await page.route('**/assets/pack-*.js', async (route) => {
+    await new Promise((r) => setTimeout(r, 2000))
+    return route.continue()
+  })
+  await page.locator('body').click({ position: { x: 5, y: 5 } })
+  await page.keyboard.press(']')
+  await page.keyboard.press(']')
+  await expect(page.locator('[data-system-title="circulation"]')).toBeVisible({ timeout: 15_000 })
+  await page.keyboard.press('[')
+  await page.keyboard.press('[')
+  await page.keyboard.press('[')
+  // Digestion, then round to the last row (skin, with the switch off).
+  await expect(page.locator('[data-system-title="skin"]')).toBeVisible({ timeout: 15_000 })
+})
+
+test('the picker and the panels pass axe; a phone’s picker sheet is modal (R120 #19)', async ({ page }) => {
+  await goto(page, '/sim?v=3&a=roti:1')
+  await page.locator('[data-stage]').waitFor()
+  await setSwitch(page, true)
+  const picker = await pickerRows(page)
+  if (test.info().project.name === 'phone') await expect(picker).toHaveAttribute('aria-modal', 'true')
+  else await expect(picker).not.toHaveAttribute('aria-modal', /.*/)
+  // Each group is named once, by its heading's words.
+  await expect(picker.getByRole('region', { name: 'Growing up', exact: true })).toBeVisible()
+  await checkAxe(page)
+  await picker.locator('[data-system-row="reproduction"]').click()
+  const card = page.locator('[data-card="reproduction"]')
+  await expect(card).toBeVisible()
+  await expect(card).toHaveAttribute('tabindex', '0')
+  await expect(card).toHaveAttribute('data-scroll', '')
+  await checkAxe(page)
+})
+
+test('a switch that takes the focused Whole body button away puts focus on the title (R120 #19)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'desktop', 'the 3D view, one project is enough')
+  await goto(page, '/sim?v=3&a=roti:1')
+  await page.locator('[data-stage]').waitFor()
+  const whole = page.getByRole('button', { name: 'Whole body' })
+  await expect(whole).toBeVisible({ timeout: 30_000 })
+  await whole.focus()
+  // [ from Digestion goes round to Skin, a flat-only row: the 3D view and its button go.
+  await page.keyboard.press('[')
+  await expect(page.locator('[data-system-title="skin"]')).toBeVisible({ timeout: 15_000 })
+  await expect(whole).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Body system: Skin & temperature' })).toBeFocused()
+})

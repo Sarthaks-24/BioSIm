@@ -168,3 +168,42 @@ test('in a run, the torso view’s organ labels keep off the arm in front (R89),
     await expect(page.locator('[data-body="flat"] [data-callout]').filter({ hasText: label })).toBeVisible()
   await shot(page, 'torso-run-projector')
 })
+
+test('sitting in class (light activity, R120 #9): a light-activity line, no sweat figure; a walk and a run say what they did', async ({
+  page,
+}) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  const headline = page.locator('[data-summary-headline]').filter({ visible: true })
+  const summary = page.locator('[data-summary]').filter({ visible: true })
+  await goto(page, '/sim?v=3&a=roti:1&act=sitClass.30.45&layer=skin&t=50')
+  await expect(headline).toHaveText(
+    'While sitting in class (light activity), there is only a little sweat from moving, much less than in a walk or a game.',
+  )
+  await expect(summary).not.toContainText(/\d+\s*mL/)
+  await goto(page, '/sim?v=3&a=roti:1&act=sitClass.30.45&layer=muscles&t=50')
+  await expect(headline).toHaveText('While sitting in class (light activity), muscles work only a little harder than at rest.')
+  await expect(summary).not.toContainText('×')
+  await goto(page, '/sim?v=3&a=roti:1&act=walk.30.20&layer=skin&t=40')
+  await expect(headline).toHaveText(/^Most sweat while walking: about \d+ mL an hour\.$/)
+  await goto(page, '/sim?v=3&a=roti:1&act=run.30.20&layer=muscles&t=40')
+  await expect(headline).toHaveText(/^While running, muscles use about \d+× their resting energy; most ends up as heat\.$/)
+})
+
+test('football is the cross-hatch whether the clock comes from rest or from a run (R120 #18)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'desktop', 'one project is enough')
+  await goto(page, '/sim?v=3&a=roti:1&act=run.0.30,football.60.60&layer=muscles&t=10')
+  await page.locator('[data-stage]').waitFor()
+  const layer = page.locator('[data-layer="muscles"]')
+  await expect(layer).toHaveAttribute('data-hatch', '3')
+  await page.locator('body').click({ position: { x: 5, y: 5 } })
+  // From the run (step 3) into football.
+  await page.keyboard.press('Shift+ArrowRight')
+  await expect(layer).toHaveAttribute('data-working', 'football')
+  await expect(layer).toHaveAttribute('data-hatch', '3')
+  // To rest after it (step 0), then back into football from below.
+  await page.keyboard.press('Shift+ArrowRight')
+  await expect(layer).toHaveAttribute('data-hatch', '0')
+  await page.keyboard.press('Shift+ArrowLeft')
+  await expect(layer).toHaveAttribute('data-working', 'football')
+  await expect(layer).toHaveAttribute('data-hatch', '3')
+})

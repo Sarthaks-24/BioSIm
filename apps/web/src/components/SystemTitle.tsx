@@ -53,8 +53,16 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const layer = useRunStore((s) => s.layer)
   const preview = useRunStore((s) => s.preview)
   const switching = useRunStore((s) => s.switching)
-  // The rows follow the teacher switch (pickerSystems reads it).
+  // The rows follow the teacher switch (pickerSystems reads it). Switched off, the graphs' live
+  // region says the system now shown, so its last words never name the row behind it (R120 #3).
   useTeacherSwitch((s) => s.on)
+  useEffect(
+    () =>
+      useTeacherSwitch.subscribe(({ on }) => {
+        if (!on) announce(t(`systems.${useRunStore.getState().layer}.name`))
+      }),
+    [t],
+  )
   const open = usePicker((s) => s.open)
   const button = useRef<HTMLButtonElement>(null)
   const [attempt, setAttempt] = useState(0)
