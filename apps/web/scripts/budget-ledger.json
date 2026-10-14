@@ -84,6 +84,15 @@
         "engineKB": 10.685,
         "simRatchetKB": 188.681,
         "simEngineRatchetKB": 199.466
+      },
+      {
+        "wp": "S-5 (engine)",
+        "at": "2026-10-14",
+        "on": "v3 d86eb96 + wp/s5-lymph-eng, merged: the lymph module, ninth and last in the order, in the engine chunk (its catalog rows lymph.fatFlowRate, blood.triglyceride, event.triglyceridePeak stay lazy, shipsIn v3.1, not public); /sim 188.481 -> 188.489 (+0.008), engine 10.685 -> 11.166 (+0.481)",
+        "simKB": 188.489,
+        "engineKB": 11.166,
+        "simRatchetKB": 188.689,
+        "simEngineRatchetKB": 199.955
       }
     ]
   },

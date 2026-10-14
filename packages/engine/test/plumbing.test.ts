@@ -90,7 +90,7 @@ describe('the run carries its clock', () => {
   it('the run’s params are PARAMS and PACK_PARAMS, with no key in both; the pack numbers are not in PARAMS', () => {
     const core = Object.keys(PARAMS)
     const pack = Object.keys(PACK_PARAMS)
-    expect(pack.sort()).toEqual(['circulation', 'effort', 'gas', 'kinetics', 'water'])
+    expect(pack.sort()).toEqual(['circulation', 'effort', 'gas', 'kinetics', 'lymph', 'water'])
     expect(core.filter((k) => pack.includes(k))).toEqual([])
     expect(HUMAN_MODEL.params).toEqual({ ...PARAMS, ...PACK_PARAMS })
     expect(Object.keys(HUMAN_MODEL.params).sort()).toEqual([...core, ...pack].sort())

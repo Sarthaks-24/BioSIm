@@ -114,5 +114,18 @@ export function gribokShake(kind: 'carb' | 'fat', gi = 70): Food {
   })
 }
 
-export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60, gribokShake('carb'), gribokShake('fat')]
+/**
+ * O'Doherty et al. 2018's oral fat tolerance drink (Table 1): 375 mL, 822.8 kcal, 75.4 g fat, 21.7 g
+ * carbohydrate, 13.7 g protein, 2.0 g fibre. The paper gives no GI or weight: GI 70 and 400 g (the
+ * rest water) are fixture choices.
+ */
+export const oftt75 = food({
+  id: 'oftt-75',
+  phase: 'liquid',
+  grams: 400,
+  nutrients: { energyKcal: 822.8, carbsG: 21.7, sugarsG: 0, fiberG: 2, proteinG: 13.7, fatG: 75.4, waterG: 287.2 },
+  glycemicIndex: { value: 70, reference: 'glucose' },
+})
+
+export const all = [glucose50, water, standardMeal, bread50, fattyMeal, glucose60, gribokShake('carb'), gribokShake('fat'), oftt75]
 export const lookup = (id: string) => all.find((f) => f.id === id)

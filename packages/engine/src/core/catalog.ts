@@ -9,8 +9,8 @@
  *     means the same quantity, unit and definition in every organism that provides it.
  *     New anatomy gets new segments (gut.rumen.*, leaf.*, cell.*, gill.*).
  *   - Derived views (% of meal, rise above fasting, per kg) are HELPERS (core/derive.ts), not IDs.
- *   - Rows with shipsIn 'v2.0' or 'v3.0' are produced by the engine. All other rows are RESERVED names: they
- *     exist so nobody invents a new name for the same thing. The engine must not emit them yet.
+ *   - Rows with shipsIn 'v2.0', 'v3.0' or 'v3.1' are produced by the engine. All other rows are RESERVED names:
+ *     they exist so nobody invents a new name for the same thing. The engine must not emit them yet.
  *   - This file is the IDs, types and helpers. The active rows are in each pack's file
  *     (catalog/<packId>.ts, W-1), which the stage's first download never carries; reserved rows and
  *     each row's `definition` and `retired` names are in catalog-docs.ts.
@@ -24,6 +24,7 @@ import type { BreathingSignalId } from './catalog/breathing.ts'
 import type { EffortSignalId } from './catalog/effort.ts'
 import type { KidneyEventId, KidneySignalId } from './catalog/kidneys.ts'
 import type { CirculationEventId, CirculationSignalId } from './catalog/circulation.ts'
+import type { LymphEventId, LymphSignalId } from './catalog/lymph.ts'
 
 // ─── Vocabulary ──────────────────────────────────────────────────────────────────────────────
 /** On screen: simulated → "Calculated from studies", assumption → "Model estimate", illustration → "Drawing only". */
@@ -50,7 +51,7 @@ export type Unit =
   | 'L/min'
 /** level = amount right now · runningTotal = only goes up · rate = per unit time · rhythm = real-clock loop. */
 export type SignalKind = 'level' | 'runningTotal' | 'rate' | 'rhythm'
-/** Which release produces the signal: 'v2.0' and 'v3.0' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
+/** Which release produces the signal: 'v2.0', 'v3.0' and 'v3.1' are active (model ACTIVATION_LOG). The others match ROADMAP bundles D, E, F. */
 export type ShipsIn = 'v2.0' | 'v3.0' | 'v3.1' | 'lookInside' | 'bloodSugar' | 'alwaysRunning'
 
 // ─── IDs ─────────────────────────────────────────────────────────────────────────────────────
@@ -109,15 +110,15 @@ export type ReservedSignalId = (typeof RESERVED_SIGNAL_IDS)[number]
  * pack (core/catalog/<pack>.ts), so the first download carries only their type. The run chunk
  * knows every row (core/catalog/rows.ts). lungs.breathRate left the reserved list for the
  * breathing pack (S-2, model ACTIVATION_LOG), kidney.filtrationRate for the kidneys pack (S-4),
- * heart.rate for the circulation pack (S-3), units kept.
+ * heart.rate for the circulation pack (S-3), units kept. The lymph pack's rows ship in v3.1 (S-5).
  */
-export type PackSignalId = BreathingSignalId | EffortSignalId | KidneySignalId | CirculationSignalId
+export type PackSignalId = BreathingSignalId | EffortSignalId | KidneySignalId | CirculationSignalId | LymphSignalId
 /** Every signal a run produces: the lean catalog's rows and the packs' rows. */
 export type RunSignalId = ActiveSignalId | PackSignalId
 export type SignalId = ActiveSignalId | ReservedSignalId | PackSignalId
 export type EventId = (typeof EVENT_IDS)[number]
-/** Lazy moments: a pack's events, rows in core/catalog/<pack>.ts like its signals (S-4's two bladder/water moments, S-3's gut-flow peak). */
-export type PackEventId = KidneyEventId | CirculationEventId
+/** Lazy moments: a pack's events, rows in core/catalog/<pack>.ts like its signals (S-4's two bladder/water moments, S-3's gut-flow peak, S-5's blood-fat peak). */
+export type PackEventId = KidneyEventId | CirculationEventId | LymphEventId
 /** Every moment a run can carry: the lean catalog's events and the packs'. */
 export type RunEventId = EventId | PackEventId
 export type CatalogId = SignalId | RunEventId

@@ -46,7 +46,8 @@ describe('Science: each system’s sources are its catalog rows’ (X-1, no new 
   const cited = (rows: Iterable<{ id: string; sourceIds?: readonly string[] }>) => [...new Set([...rows].flatMap((r) => r.sourceIds ?? []))]
   const all = Object.values({ ...run.RUN_SIGNALS, ...run.RUN_EVENTS }) as { id: string; sourceIds?: readonly string[] }[]
   const effort = Object.values(run.EFFORT_SIGNALS) as { id: string; sourceIds?: readonly string[] }[]
-  const packEvents = new Set([...Object.keys(run.CIRCULATION_EVENTS), ...Object.keys(run.KIDNEY_EVENTS)])
+  // The v3.1 lymph rows (S-5) are not public yet: Lymph & germ defence stays drawing only until they ship.
+  const packEvents = new Set([...Object.keys(run.CIRCULATION_EVENTS), ...Object.keys(run.KIDNEY_EVENTS), ...Object.keys(run.LYMPH_EVENTS)])
 
   it('each list is what its rows cite, in their order', () => {
     expect(SYSTEM_SOURCES.digestion).toEqual(

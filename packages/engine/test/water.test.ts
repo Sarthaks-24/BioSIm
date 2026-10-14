@@ -462,13 +462,15 @@ describe('the water balance and drift (model §5)', () => {
 })
 
 describe('insertion invariance (model D13 iii) and rest invariance (D13 iv)', () => {
-  const without = HUMAN_MODULES.filter((m) => m.id !== 'water')
+  // lymph comes after water, so both sides leave it out (its own insertion test is in lymph.test.ts).
+  const withWater = HUMAN_MODULES.filter((m) => m.id !== 'lymph')
+  const without = withWater.filter((m) => m.id !== 'water')
 
   it('adding water leaves every existing signal, internal array, row order and moment byte-identical', () => {
     for (const m of meals) {
       for (const plan of [[], [walk60, run60]] as ActivityBout[][]) {
         const before = runModules(without, setupOf(m, plan))
-        const after = runModules(HUMAN_MODULES, setupOf(m, plan))
+        const after = runModules(withWater, setupOf(m, plan))
         const changed = [...before.signals].filter(([id, w]) => firstDiff(w.values, after.signals.get(id)!.values) !== -1).map(([id]) => id)
         expect(changed, m).toEqual([])
         const tableBefore = buildSignalTable(mealOf(m), before.signals)

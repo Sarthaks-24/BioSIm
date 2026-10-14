@@ -34,6 +34,10 @@ import {
   KIDNEY_EVENT_IDS,
   KIDNEY_SIGNALS,
   KIDNEY_SIGNAL_IDS,
+  LYMPH_EVENTS,
+  LYMPH_EVENT_IDS,
+  LYMPH_SIGNALS,
+  LYMPH_SIGNAL_IDS,
   RUN_SIGNAL_IDS,
   RUN_SIGNALS,
 } from '../src/run.ts'
@@ -54,6 +58,7 @@ const allIds = [
   ...EFFORT_SIGNAL_IDS,
   ...KIDNEY_SIGNAL_IDS,
   ...CIRCULATION_SIGNAL_IDS,
+  ...LYMPH_SIGNAL_IDS,
   ...RESERVED_SIGNAL_IDS,
   ...RUN_EVENT_IDS,
 ] as string[]
@@ -147,6 +152,8 @@ describe('catalog IDs', () => {
     expect(Object.keys(KIDNEY_EVENTS).sort()).toEqual([...KIDNEY_EVENT_IDS].sort())
     expect(Object.keys(CIRCULATION_SIGNALS).sort()).toEqual([...CIRCULATION_SIGNAL_IDS].sort())
     expect(Object.keys(CIRCULATION_EVENTS).sort()).toEqual([...CIRCULATION_EVENT_IDS].sort())
+    expect(Object.keys(LYMPH_SIGNALS).sort()).toEqual([...LYMPH_SIGNAL_IDS].sort())
+    expect(Object.keys(LYMPH_EVENTS).sort()).toEqual([...LYMPH_EVENT_IDS].sort())
     expect(Object.keys(SIGNAL_DOCS).sort()).toEqual(
       [
         ...ACTIVE_SIGNAL_IDS,
@@ -154,6 +161,7 @@ describe('catalog IDs', () => {
         ...EFFORT_SIGNAL_IDS,
         ...KIDNEY_SIGNAL_IDS,
         ...CIRCULATION_SIGNAL_IDS,
+        ...LYMPH_SIGNAL_IDS,
         ...RESERVED_SIGNAL_IDS,
       ].sort(),
     )
@@ -251,6 +259,25 @@ describe('pack rows (architecture §1.3 lazy rows)', () => {
     ])
     expect(CIRCULATION_EVENTS['event.gutFlowPeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.flow.gut', shipsIn: 'v3.0' })
   })
+
+  it('S-5 adds the lymph rows and the blood-fat peak, lazily, as v3.1 Model estimates with no band (model §2.10)', () => {
+    expect(EVENT_IDS as readonly string[]).not.toContain('event.triglyceridePeak')
+    for (const id of LYMPH_SIGNAL_IDS) {
+      const row = LYMPH_SIGNALS[id]
+      expect(ACTIVE_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(row, id).toMatchObject({ status: 'assumption', clock: 'sim', shipsIn: 'v3.1', reactsToMeal: true })
+      expect(row.band, id).toBeUndefined()
+      expect(isChartable(row), id).toBe(true)
+      expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
+    }
+    expect(LYMPH_SIGNALS['lymph.fatFlowRate']).toMatchObject({ unit: 'g/min', kind: 'rate' })
+    expect(LYMPH_SIGNALS['blood.triglyceride']).toMatchObject({
+      unit: 'mg/dL',
+      kind: 'level',
+      validRange: { low: 60, high: 400, basis: 'guard' },
+    })
+    expect(LYMPH_EVENTS['event.triglyceridePeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.triglyceride', shipsIn: 'v3.1' })
+  })
 })
 
 describe('catalog rows', () => {
@@ -264,8 +291,9 @@ describe('catalog rows', () => {
   })
 
   // Model ACTIVATION_LOG: a reserved row activates with shipsIn 'v3.0' (or 'v3.1'), its unit kept.
-  it("every active row ships in 'v2.0' or 'v3.0', and every reserved row in neither", () => {
-    const active = ['v2.0', 'v3.0']
+  // S-5's lymph rows are new in v3.1 (model §2.10: signals only, D13 iii).
+  it("every active row ships in 'v2.0', 'v3.0' or 'v3.1', and every reserved row in none of them", () => {
+    const active = ['v2.0', 'v3.0', 'v3.1']
     for (const id of RUN_SIGNAL_IDS) expect(active, id).toContain(RUN_SIGNALS[id].shipsIn)
     for (const id of RESERVED_SIGNAL_IDS) expect(active, id).not.toContain(RESERVED_SIGNALS[id].shipsIn)
     for (const e of events) expect(active, e.id).toContain(e.shipsIn)
@@ -312,6 +340,7 @@ describe('catalog rows', () => {
     for (const e of Object.values(EVENTS)) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     for (const e of Object.values(KIDNEY_EVENTS)) expect(KIDNEY_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     for (const e of Object.values(CIRCULATION_EVENTS)) expect(CIRCULATION_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
+    for (const e of Object.values(LYMPH_EVENTS)) expect(LYMPH_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     expect([...HUMAN_PROVIDES].sort()).toEqual([...RUN_SIGNAL_IDS].sort())
   })
 })

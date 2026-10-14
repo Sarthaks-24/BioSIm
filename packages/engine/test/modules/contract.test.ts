@@ -23,7 +23,17 @@ describe('module order (DAG)', () => {
   })
 
   it('the human modules follow it, and every need is written by an earlier module', () => {
-    expect(HUMAN_MODULES.map((m) => m.id)).toEqual(['activity', 'gut', 'energy', 'bloodSugar', 'gas', 'effort', 'circulation', 'water'])
+    expect(HUMAN_MODULES.map((m) => m.id)).toEqual([
+      'activity',
+      'gut',
+      'energy',
+      'bloodSugar',
+      'gas',
+      'effort',
+      'circulation',
+      'water',
+      'lymph',
+    ])
     expect(moduleGraphErrors(HUMAN_MODULES)).toEqual([])
     expect(HUMAN_MODEL.modules).toBe(HUMAN_MODULES)
   })
@@ -155,7 +165,7 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
     ).toContain('event.glucosePeak: written by gas and lymph')
   })
 
-  it('a run of today’s modules has no rhythms; its moments are the five from events.ts, activity’s two, circulation’s one and water’s two', () => {
+  it('a run of today’s modules has no rhythms; its moments are the five from events.ts, activity’s two, circulation’s one, water’s two and lymph’s one', () => {
     const sim = simulate(meal, { particles: 0 })
     expect(sim.rhythms.size).toBe(0)
     expect(HUMAN_MODULES.flatMap((m) => m.rhythms ?? [])).toEqual([])
@@ -165,8 +175,9 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
       'event.gutFlowPeak',
       'event.bladderFirstUrge',
       'event.halfMealWaterPassed',
+      'event.triglyceridePeak',
     ])
-    expect(sim.moments.size).toBe(10)
+    expect(sim.moments.size).toBe(11)
     // Resting: the activity moments do not happen.
     expect(sim.moments.get('event.activityStart')?.atMin).toBeNull()
     expect(sim.moments.get('event.activityEnd')?.atMin).toBeNull()
@@ -183,6 +194,7 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
       'muscles',
       'circulation',
       'kidneys',
+      'lymph',
     ])
   })
 })
@@ -203,6 +215,7 @@ describe('no global PARAMS', () => {
       'gas.ts',
       'gut.ts',
       'index.ts',
+      'lymph.ts',
       'water.ts',
     ])
     for (const f of files) expect(readFileSync(join(modulesDir, f), 'utf8'), f).not.toMatch(/\bPARAMS\b/)

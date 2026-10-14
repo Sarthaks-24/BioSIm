@@ -622,6 +622,81 @@ export const SOURCES = {
     citation:
       'Calvi A, et al. Urinary hyaluronidase activity is closely related to vasopressinergic system following an oral water load in men. Front Endocrinol 2024;15:1346082.',
   },
+  // ── New in v3.1 (S-5: lymph fat and blood fat; V-5) ──
+  /**
+   * Checked 2026-10-14 (V-5, §18.1): "Adult males typically average about 5 to 6 liters of blood";
+   * plasma "for males, it is approximately 53 (or 100 minus 47)" percent. 5.5 L × 0.53 = 2.9 L = 29 dL.
+   */
+  'openstax-ap2e-18': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'plasma volume 29 dL (5–6 L of blood in men, 53 % plasma): the blood the meal fat mixes into',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/18-1-an-overview-of-blood',
+    citation: 'OpenStax. Anatomy and Physiology 2e, ch. 18 (§18.1 An Overview of Blood). Rice University.',
+  },
+  /**
+   * Checked 2026-10-14 (V-5, §21.1): "20 liters of plasma is released into the interstitial space …
+   * each day"; "17 liters is reabsorbed directly by the blood vessels"; "the remaining three liters"
+   * drain as lymph; "lacteals are critical for the transport of dietary lipids"; triglycerides "enter
+   * the lacteals to form a milky fluid called chyle", which "eventually" enters the bloodstream.
+   */
+  'openstax-ap2e-21': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'meal fat travels as chyle through the lacteals and lymph to the blood; about 3 L of lymph a day',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/21-1-anatomy-of-the-lymphatic-and-immune-systems',
+    citation: 'OpenStax. Anatomy and Physiology 2e, ch. 21 (§21.1 Anatomy of the Lymphatic and Immune Systems). Rice University.',
+  },
+  /**
+   * Checked 2026-10-14 (V-5, full text, PMC9623526): 1500 kcal test meal, 60 % of energy from fat;
+   * normal-fat-tolerance group (n = 98) TG at 0/2/4/6/8/10 h 0.91/1.64/1.63/1.63/1.53/0.98 mmol/L.
+   * 0.91 mmol/L × 88 (Nordestgaard 2016's factor) = 80 mg/dL. Chinese adults with normal glucose tolerance.
+   */
+  liu2022: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'fasting blood fat 80 mg/dL (0.91 mmol/L); a 1500 kcal, ~100 g fat meal keeps TG up 2–8 h, near fasting by 10 h',
+    url: 'https://doi.org/10.1111/jdi.13867',
+    citation:
+      'Liu L, et al. Oral fat tolerance testing identifies abnormal pancreatic β-cell function and insulin resistance in individuals with normal glucose tolerance. J Diabetes Investig 2022;13:1805–1813.',
+  },
+  /**
+   * Checked 2026-10-14 (V-5, abstract and full text, PMC4929379): "the maximal mean changes at 1-6 h
+   * after habitual meals are not clinically significant [+0.3 mmol/L (26 mg/dL) for triglycerides";
+   * Table 3: adults +18 to +26 mg/dL (×88 for triglycerides).
+   */
+  nordestgaard2016: {
+    kind: 'guideline',
+    check: 'checked',
+    usedFor: 'after everyday meals blood fat rises by at most about 18–26 mg/dL, highest at 1–6 h',
+    url: 'https://doi.org/10.1093/eurheartj/ehw152',
+    citation:
+      'Nordestgaard BG, et al. Fasting is not routinely required for determination of a lipid profile: a joint consensus statement from the European Atherosclerosis Society and European Federation of Clinical Chemistry and Laboratory Medicine. Eur Heart J 2016;37:1944–1958.',
+  },
+  /**
+   * Checked 2026-10-14 (V-5, full text, PMC5847029): "After oral fat consumption (>15 g), triglyceride
+   * (TAG) levels rise in the blood, typically peaking at 3–4 h and returning to baseline 6–8 h later"
+   * (citing Pirillo 2014, whose abstract gives no times); its 75.4 g fat drink peaked "at 3–4 h".
+   */
+  odoherty2018: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'a big fat load (75 g) peaks at 3–4 h and is back to baseline 6–8 h later',
+    url: 'https://doi.org/10.1007/s00394-016-1320-z',
+    citation:
+      "O'Doherty AF, et al. The repeatability of the abbreviated (4-h) Oral Fat Tolerance Test and influence of prior acute aerobic exercise. Eur J Nutr 2018;57:309–318.",
+  },
+  /**
+   * Checked 2026-10-14 (V-5, full text, PMC4016101, Table 3): fasting serum triglycerides, geometric
+   * mean, 116 mg/dL overall (urban 128, rural 111; n = 2042); 29.5 % at or above 150 mg/dL.
+   */
+  joshi2014: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: "Indian adults' fasting blood fat is often higher than the model's 80 mg/dL (ICMR-INDIAB: 116 mg/dL)",
+    url: 'https://doi.org/10.1371/journal.pone.0096808',
+    citation: 'Joshi SR, et al. Prevalence of dyslipidemia in urban and rural India: the ICMR–INDIAB study. PLoS One 2014;9:e96808.',
+  },
   // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
@@ -795,6 +870,16 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'water.bladderUrgeMl': { sources: ['openstax-ap2e-25'], basis: 'measured' },
   'water.bladderEmptyMl': { sources: ['openstax-ap2e-25'], basis: 'assumption' },
   'water.filtrationMlPerMin': { sources: ['openstax-ap2e-25'], basis: 'measured' },
+
+  // Lymph fat and blood fat (S-5, V-5). Plasma 29 dL = 5.5 L × 53 % (OpenStax §18.1); fasting 80
+  // mg/dL (Liu 2022's 0.91 mmol/L). τ_clear is calibrated so that everyday meals of 15–30 g fat rise
+  // by 15–40 mg/dL and peak at 1–6 h (Nordestgaard 2016); O'Doherty 2018 is the hold-out. τ_pack is
+  // hand-picked (no page gives it; the calibration hardly moves with it).
+  'lymph.packTauMin': { sources: ['openstax-ap2e-21'], basis: 'assumption' },
+  'lymph.clearTauMin': { sources: ['nordestgaard2016'], basis: 'calibrated' },
+  'lymph.plasmaDl': { sources: ['openstax-ap2e-18'], basis: 'measured' },
+  'lymph.fastingMgDl': { sources: ['liu2022'], basis: 'measured' },
+  'lymph.peakMinRiseMgDl': { sources: [], basis: 'display' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },

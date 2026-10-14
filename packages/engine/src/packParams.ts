@@ -1,6 +1,6 @@
 /**
  * Pack parameters (R75 (1), R77, R78; R71/R74 load on demand): the numbers only a system pack's
- * module uses (breathing, effort, water and kidneys, heart and blood; P-1 moved the first three here
+ * module uses (breathing, effort, water and kidneys, heart and blood, lymph; P-1 moved the first three here
  * from params.ts). The run chunk imports this file (simulate.ts adds it to the human run's params);
  * the main entry never does, so these numbers stay out of the first download (check-budget.mjs's
  * guard looks for a few of their names in /sim). Same rules as params.ts: every
@@ -148,6 +148,28 @@ export const PACK_PARAMS = {
     hrShareOfMealRise: 0.27,
     /** event.gutFlowPeak only when gut flow rises at least this much (mL/min): a display choice. */
     gutPeakMinRiseMlPerMin: 10,
+  },
+
+  /**
+   * Lymph fat and blood fat (model §2.10; S-5, sources read in V-5). The fat the gut absorbs is
+   * packed into chyle and carried by the lacteals and lymph to the blood (OpenStax §21.1, §23.7):
+   * a first-order lag, τ_pack. In the blood it is cleared with τ_clear, one lumped pool:
+   * dL/dt = (fatRate − L)/τ_pack, dP/dt = L − P/τ_clear, blood fat = 80 + P·1000/29 mg/dL. Plasma
+   * 29 dL = 5.5 L of blood × 53 % plasma (OpenStax §18.1, a man); 80 mg/dL fasting = Liu 2022's
+   * 0.91 mmol/L. τ_clear is calibrated (Model estimate) on the engine's own fat absorption so that
+   * everyday meals of 15–30 g fat (up to 500 kcal) raise blood fat by 15–40 mg/dL, highest at 1–6 h
+   * (Nordestgaard 2016: +18 to +26 mg/dL); 10 min puts them at about +18 to +33. τ_pack is
+   * hand-picked: no page read gives it, and the calibration hardly sees it (20 or 45 min move those
+   * rises by under 5 mg/dL and their peaks by under 0.5 h). A fat load of 50 g or more peaking at
+   * 2–5 h and back within 10 mg/dL by 14 h (O'Doherty 2018) is the hold-out.
+   */
+  lymph: {
+    packTauMin: 30,
+    clearTauMin: 10,
+    plasmaDl: 29,
+    fastingMgDl: 80,
+    /** event.triglyceridePeak only when blood fat rises at least this much (mg/dL): a display choice. */
+    peakMinRiseMgDl: 1,
   },
 } as const
 
