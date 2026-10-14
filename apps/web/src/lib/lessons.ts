@@ -3,13 +3,15 @@ import { pickerSystems, type SlotId, type SystemId, type SystemLesson } from '..
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
+import { HORMONES_LESSON } from '../systems/hormones/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { LESSONS, presetHref, type Lesson } from './presets.ts'
 import { LESSON_PACKS } from './offlineSave.ts'
 
 /**
  * Teach's lessons by NCERT chapter (X-1, R15): Class 10's Life Processes in its order (nutrition,
- * respiration, transportation, excretion), then moving and body heat (Classes 6 and 9). Each row is a
+ * respiration, transportation, excretion), then Class 10's Control and coordination (U-6: the insulin
+ * lesson, v3.1, R18), then moving and body heat (Classes 6 and 9). Each row is a
  * ready lesson with its classes (content-i18n §8.1) and its release (R18). A system's lessons show
  * once the system is public, or in a `?preview=1` session (R30): a lesson for a hidden system is
  * never listed, and needs no change to appear when the gate (H-1) makes its system public.
@@ -32,7 +34,7 @@ export interface TeachLesson {
 }
 
 export interface Chapter {
-  key: 'nutrition' | 'respiration' | 'transport' | 'excretion' | 'movement'
+  key: 'nutrition' | 'respiration' | 'transport' | 'excretion' | 'control' | 'movement'
   /** Part of Class 10's Life Processes. */
   c10: boolean
   lessons: readonly TeachLesson[]
@@ -73,6 +75,7 @@ export const CHAPTERS: readonly Chapter[] = [
   { key: 'respiration', c10: true, lessons: [fromSystem(BREATHING_LESSON, [6, 7, 10], 'breathing')] },
   { key: 'transport', c10: true, lessons: [fromSystem(CIRCULATION_LESSON, [7, 10], 'circulation')] },
   { key: 'excretion', c10: true, lessons: [fromSystem(KIDNEYS_LESSON, [10], 'kidneys')] },
+  { key: 'control', c10: false, lessons: [fromSystem(HORMONES_LESSON, [10], 'control')] },
   {
     key: 'movement',
     c10: false,

@@ -14,4 +14,7 @@ export const UNIT_KEYS: Partial<Record<Unit, string>> = {
   'L/min': 'units.LPerMin',
   // The kidneys pack's (U-4).
   'mL/h': 'units.mLPerH',
+  // The control pack's (U-6): insulin as × before eating (never µU/mL), the brain's sugar in g an hour.
+  xFasting: 'units.xFasting',
+  'g/h': 'units.gPerH',
 }

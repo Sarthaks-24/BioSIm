@@ -9,14 +9,14 @@ import { SYSTEM_SOURCES } from './systemSources.ts'
 import { REFERENCES } from './references.ts'
 
 describe('Teach by NCERT chapter (X-1, R15)', () => {
-  it('Class 10’s Life Processes in its order, then moving and body heat; every v2 lesson stays under Nutrition', () => {
-    expect(CHAPTERS.map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion', 'movement'])
+  it('Class 10’s Life Processes in its order, then Control and coordination (v3.1), then moving and body heat; every v2 lesson stays under Nutrition', () => {
+    expect(CHAPTERS.map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion', 'control', 'movement'])
     expect(CHAPTERS.filter((c) => c.c10).map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion'])
     expect(CHAPTERS[0]!.lessons.map((l) => l.key)).toEqual(LESSONS.map((l) => l.key))
   })
 
   it('a lesson shows only once its system is public, or in a preview: since H-1, every chapter (R18, R30)', () => {
-    expect(shownChapters(false).map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion', 'movement'])
+    expect(shownChapters(false).map((c) => c.key)).toEqual(['nutrition', 'respiration', 'transport', 'excretion', 'control', 'movement'])
     expect(shownChapters(false)).toEqual(shownChapters(true))
     for (const c of shownChapters(false)) for (const l of c.lessons) expect(systemOf(l.system)!.public, l.key).toBe(true)
     expect(shownChapters(true).flatMap((c) => c.lessons.map((l) => l.key))).toEqual(CHAPTERS.flatMap((c) => c.lessons.map((l) => l.key)))
@@ -25,7 +25,9 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
   it('every lesson has a release, classes, a title and its question (system lessons), and a link to its system and time', () => {
     for (const c of CHAPTERS)
       for (const l of c.lessons) {
-        expect(['v2', 'v3.0'], l.key).toContain(l.release)
+        expect(['v2', 'v3.0', 'v3.1'], l.key).toContain(l.release)
+        // The insulin lesson is v3.1, with `hormones` (R18).
+        if (l.system === 'hormones') expect(l.release, l.key).toBe('v3.1')
         expect(l.classes.length, l.key).toBeGreaterThan(0)
         expect((en.teach.lessons as Record<string, string>)[l.key], l.key).toBeTruthy()
         const url = new URL(l.href(true), 'https://example.org')
@@ -61,6 +63,7 @@ describe('Science: each system’s sources are its catalog rows’ (X-1, no new 
     expect(SYSTEM_SOURCES.breathing).toEqual(cited(Object.values(run.BREATHING_SIGNALS)))
     expect(SYSTEM_SOURCES.circulation).toEqual(cited([...Object.values(run.CIRCULATION_SIGNALS), ...Object.values(run.CIRCULATION_EVENTS)]))
     expect(SYSTEM_SOURCES.kidneys).toEqual(cited([...Object.values(run.KIDNEY_SIGNALS), ...Object.values(run.KIDNEY_EVENTS)]))
+    expect(SYSTEM_SOURCES.hormones).toEqual(cited([...Object.values(run.CONTROL_SIGNALS), ...Object.values(run.CONTROL_EVENTS)]))
     expect(SYSTEM_SOURCES.muscles).toEqual(cited(effort.filter((r) => r.id.startsWith('muscle.'))))
     expect(SYSTEM_SOURCES.skin).toEqual(cited(effort.filter((r) => r.id.startsWith('skin.'))))
     // Drawing only: no numbers, no sources.

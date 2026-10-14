@@ -10,7 +10,7 @@ import {
 } from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
 import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
-import { EFFORT_SIGNALS } from '@lifepeek/engine/run'
+import { CONTROL_EVENTS, CONTROL_SIGNALS, EFFORT_SIGNALS } from '@lifepeek/engine/run'
 import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
@@ -21,9 +21,13 @@ const PACK_ROWS: readonly SignalMeta[] = [
   ...Object.values(EFFORT_SIGNALS),
   ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
   ...KIDNEY_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+  // U-6: the control pack's (insulin, the brain's sugar).
+  ...Object.values(CONTROL_SIGNALS),
 ]
 /** Their moments (Heart & blood's gut-flow peak, the kidneys' first urge and half the meal's water): the dock names them (`signals.event.*.name`). */
-const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS].filter((r): r is EventMeta<RunEventId> => !('kind' in r))
+const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS, ...Object.values(CONTROL_EVENTS)].filter(
+  (r): r is EventMeta<RunEventId> => !('kind' in r),
+)
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -49,7 +53,8 @@ export function catalogKeys(): KeyUse {
     if (row.limitKey) required.add(row.limitKey)
   }
   for (const row of [...Object.values(EVENTS), ...PACK_EVENTS]) {
-    if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0') continue
+    // A built pack's moment is named whatever release ships it (U-6: the most insulin, v3.1).
+    if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0' && !PACK_EVENTS.includes(row)) continue
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }

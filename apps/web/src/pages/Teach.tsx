@@ -106,6 +106,8 @@ const flagshipPacks = (preview: boolean) => [
   'circulation',
   'kidneys',
   ...(preview || systemOf('skin')?.public ? ['effort'] : []),
+  // v3.1: the insulin pause (R38).
+  ...(preview || systemOf('hormones')?.public ? ['control'] : []),
 ]
 
 const SAVE_BUTTON = 'min-h-11 shrink-0 rounded-full border border-border px-4 font-semibold hover:bg-surface-sunk lg:min-h-9'

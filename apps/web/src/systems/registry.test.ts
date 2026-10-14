@@ -83,13 +83,11 @@ describe('systems registry (architecture §5.2)', () => {
         // A reserved name: no engine module provides it.
         { id: 'gut', signals: ['liver.glucoseOutput' as never], unit: 'mg/dL' },
         // A pack's graph names its tab from the pack's own words.
-        { id: 'insulin', tab: 'sys.control.strips.insulin', signals: ['gut.stomach.contentG'], unit: 'g' },
+        { id: 'insulin', tab: 'sys.control.strips.none', signals: ['gut.stomach.contentG'], unit: 'g' },
       ],
       organs: ['pituitary' as never],
     }
     expect(systemProblems(hormones, ctx)).toEqual([
-      'hormones: pack control has no PackDef (systems/packs.ts)',
-      'hormones: its name has no English text systems.hormones.name',
       "hormones: organ pituitary is not one of the organism's organs",
       'hormones: 5 graph slots: at most 3 (keys 1–3)',
       'hormones: two slots share an id',
@@ -99,7 +97,7 @@ describe('systems registry (architecture §5.2)', () => {
       "hormones: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
       'hormones: slot 4 (gut) signal liver.glucoseOutput is not provided by the engine (PROVIDES)',
       'hormones: slot 4 (gut) signal liver.glucoseOutput has no row registered by its pack',
-      "hormones: slot 5 (insulin)'s tab has no English text sys.control.strips.insulin",
+      "hormones: slot 5 (insulin)'s tab has no English text sys.control.strips.none",
     ])
   })
 
@@ -232,7 +230,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('nonsense', [], false)).toBe('digestion')
     expect(systemForLink(undefined, [], false)).toBe('digestion')
     // A SystemId with no row yet opens Digestion even with ?preview=1.
-    expect(systemForLink('hormones', [], true)).toBe('digestion')
+    expect(systemForLink('reproduction', [], true)).toBe('digestion')
   })
 
   it('every built row is public since the v3.0 release gate (H-1, R103): a plain link opens it, and the picker offers it', () => {
@@ -246,6 +244,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
       'circulation',
       'kidneys',
       'lymph',
+      'hormones',
       'muscles',
       'bones',
       'skin',
@@ -263,7 +262,8 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('breathing', true, 1)).toBe('circulation')
     expect(stepSystem('circulation', true, 1)).toBe('kidneys')
     expect(stepSystem('kidneys', true, 1)).toBe('lymph')
-    expect(stepSystem('lymph', true, 1)).toBe('muscles')
+    expect(stepSystem('lymph', true, 1)).toBe('hormones')
+    expect(stepSystem('hormones', true, 1)).toBe('muscles')
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     expect(stepSystem('digestion', true, -1)).toBe('skin')
     // Every row is public: a session without ?preview=1 steps the same way.

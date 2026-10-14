@@ -53,6 +53,9 @@ export const UNIT_KEY: Partial<Record<Unit, string>> = {
   // The effort pack's (U-1, R75): its texts load with that pack (systems/muscles/text.ts).
   // The kidneys pack's (U-4): its text loads with the pack too.
   'mL/h': 'mLPerH',
+  // The control pack's (U-6): its texts load with that pack (systems/hormones/text.ts).
+  xFasting: 'xFasting',
+  'g/h': 'gPerH',
 }
 
 /** "118 mg/dL", "340 g", "1,000 g": the rounded value with its unit, in the page language. */

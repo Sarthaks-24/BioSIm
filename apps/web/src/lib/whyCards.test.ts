@@ -31,6 +31,7 @@ const CARDS: Record<string, Card> = {
   'sys.circulation.why': en.sys.circulation.why,
   'sys.kidneys.why': en.sys.kidneys.why,
   'sys.effort.why': en.sys.effort.why,
+  'sys.control.why': en.sys.control.why,
 }
 const rowsOf = (card: Card) => Object.entries(card).filter((e): e is [string, Row] => typeof e[1] === 'object')
 
@@ -144,6 +145,18 @@ describe('Skin & temperature (NCERT Class 6, Curiosity, Ch 7, p. 128)', () => {
     const bout = SKIN_LESSON.activity[0]!
     expect(numbers(card.temperature.model)).toEqual([37, Math.round(most(run, 'skin.sweatTotal') / 10) * 10, bout.durMin])
     expect(numbers(card.temperature.book).slice(0, 1)).toEqual([37.0])
+  })
+})
+
+describe('Hormones: what insulin does (NCERT Class 10, Ch 6, p. 111, read for U-6)', () => {
+  it('the book’s feedback; the model says no number, and that its insulin does not pull blood sugar down (open loop, R91)', () => {
+    const card = en.sys.control.why
+    expect(card.feedback.book).toContain('a feedback mechanism')
+    expect(numbers(card.feedback.model)).toEqual([])
+    expect(card.feedback.model).toContain('does not pull blood sugar down')
+    // The same page, word for word where the stage quotes it (the insulin graph's book line, the lesson's pause and worksheet).
+    for (const line of [en.sys.control.book, en.flagship.pauses.insulin.book, en.sheet.lessons.insulinCola.book])
+      expect(line).toMatch(/pancreas makes more insulin/)
   })
 })
 

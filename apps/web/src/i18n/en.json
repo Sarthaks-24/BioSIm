@@ -185,7 +185,8 @@
       "heartWalk": "Where does the blood go after a meal, and in a walk?",
       "drinkWater": "Where does the water from a drink go?",
       "musclesRun": "How much harder do muscles work in a run?",
-      "sweatRun": "Where does the heat of a run go?"
+      "sweatRun": "Where does the heat of a run go?",
+      "insulinCola": "Who keeps blood sugar steady?"
     },
     "lessonNotes": {
       "colaFour": "What to see: both reach the same highest point, about 121 mg/dL, but after four colas blood sugar stays raised about 3 h 15 min longer."
@@ -215,7 +216,8 @@
       "heartWalk": "How much blood goes to the muscles during the walk, and at rest?",
       "drinkWater": "How much urine an hour at the most, with four glasses and with one?",
       "musclesRun": "How many times their resting energy do the muscles use during the run?",
-      "sweatRun": "How much sweat does the skin make in the run, and how much at rest?"
+      "sweatRun": "How much sweat does the skin make in the run, and how much at rest?",
+      "insulinCola": "How high does insulin go after a glass of cola, and after a glass of water?"
     },
     "flagship": {
       "title": "One roti, one walk: what does every system do?",
@@ -230,7 +232,8 @@
       "respiration": "Respiration",
       "transport": "Transportation",
       "excretion": "Excretion",
-      "movement": "Moving and body heat"
+      "movement": "Moving and body heat",
+      "control": "Control and coordination"
     },
     "classTag": "Class {{n}}",
     "opensAtTime": "opens at {{time}}",
@@ -519,6 +522,29 @@
           "q": "Where does the extra energy of running go, and how does the body get rid of it?",
           "m": "Most of it becomes heat; sweat carries the heat away."
         }
+      },
+      "insulinCola": {
+        "setup": "A glass of cola at 0 h. Kept to compare: a glass of water.",
+        "book": "NCERT Class 10 (Ch 6, p. 111): when blood sugar rises, the pancreas makes more insulin; as it falls, less.",
+        "y": "Insulin (× before eating)",
+        "tasks": [
+          {
+            "q": "Sketch insulin from 0 to 4 h, after the cola and after the water. When is it highest?",
+            "m": "About 25 min after the cola, at about 7.3× before eating; with the water it stays at 1×."
+          },
+          {
+            "q": "What is insulin’s job?",
+            "b": "NCERT Class 10 (Ch 6, pp. 110–111): it helps to regulate blood sugar; the pancreas makes more when blood sugar rises (feedback)."
+          },
+          {
+            "q": "Does the brain use more sugar after the cola?",
+            "k": "No: about 4.4 g an hour all day (Mergenthaler et al. 2013)."
+          }
+        ],
+        "exit": {
+          "q": "Does a walk lower blood sugar in this model?",
+          "m": "Not yet in this model: moving does not change blood sugar here."
+        }
       }
     }
   },
@@ -578,14 +604,18 @@
       "mLPerMin": "millilitres each minute",
       "beatsPerMin": "heartbeats in one minute",
       "LPerMin": "litres each minute",
-      "mLPerH": "millilitres each hour"
+      "mLPerH": "millilitres each hour",
+      "xFasting": "times the level before eating (1× is the level before eating)",
+      "gPerH": "grams each hour"
     },
     "breathsPerMin": "{{n}} breaths a minute",
     "mL": "{{n}} mL",
     "mLPerMin": "{{n}} mL a minute",
     "beatsPerMin": "{{n}} beats a minute",
     "LPerMin": "{{n}} L a minute",
-    "mLPerH": "{{n}} mL an hour"
+    "mLPerH": "{{n}} mL an hour",
+    "xFasting": "{{n}}× before eating",
+    "gPerH": "{{n}} g an hour"
   },
   "anatomy": {
     "liver": "Liver",
@@ -858,6 +888,14 @@
           "short": "Muscles",
           "desc": "The blood flowing to the muscles each minute. Walking and running send much more; a meal does not change it."
         }
+      },
+      "insulin": {
+        "name": "Insulin",
+        "short": "Insulin",
+        "desc": "Insulin from the pancreas in the blood of a typical healthy young adult, as times its level before eating (× before eating). Before eating it is 1×. It rises as sugar from food reaches the blood, then falls back.",
+        "band": {
+          "name": "How much people differ"
+        }
       }
     },
     "energy": {
@@ -930,6 +968,9 @@
       },
       "halfMealWaterPassed": {
         "name": "Half the meal’s water has left as urine"
+      },
+      "insulinPeak": {
+        "name": "Most insulin"
       }
     },
     "lungs": {
@@ -1025,6 +1066,13 @@
         "short": "Extra water",
         "desc": "Water from drinks and food that is in the body and has not yet left as urine. Below zero means sweat took more than you drank: the model assumes you drink it back over about 90 minutes."
       }
+    },
+    "brain": {
+      "glucoseUse": {
+        "name": "Sugar used by the brain",
+        "short": "Brain’s sugar",
+        "desc": "Sugar (glucose) the brain uses each hour, about the same all day. Between meals the liver keeps it supplied."
+      }
     }
   },
   "limits": {
@@ -1051,7 +1099,12 @@
     "waterSteadyDay": "We assume a steady day: about 1.5 L of urine a day from other food and drink. The body is always well watered, so sweat is drunk back over about 90 minutes.",
     "bladderEmpties": "At about 150 mL the bladder starts to feel full, and we can usually wait. Here it empties at 300 mL; a person chooses when.",
     "gfrFixed": "The kidneys filter about 125 mL a minute all day here (90–140 in grown men). This model does not sleep: urine is not slower at night.",
-    "waterSimple": "The model has no salt: milk and ORS, which the body holds on to a little longer, count the same as plain water. Any drink’s water counts the same. The numbers are for a typical grown man."
+    "waterSimple": "The model has no salt: milk and ORS, which the body holds on to a little longer, count the same as plain water. Any drink’s water counts the same. The numbers are for a typical grown man.",
+    "insulinOpenLoop": "Insulin here follows the sugar coming in from food; it does not pull blood sugar back down. Blood sugar is the same line as in Digestion, from studies of real meals, which already include what insulin does.",
+    "insulinHigh": "Two hours after a sugary drink the model’s insulin is higher than in studies (about 9× where young adults measured about 6×), and after a big solid meal it stays raised for hours, because the stomach empties slowly here.",
+    "insulinSugarOnly": "Only sugar and starch from food raise insulin in this model. In real life protein and fat raise it a little too; here an egg leaves it at 1×.",
+    "insulinHealthy": "This is a healthy body that makes its own insulin. In diabetes (madhumeh) the body makes too little insulin or its cells answer it less; this model does not show that, and a family glucometer’s numbers can’t be compared with it.",
+    "brainGlucoseConstant": "The brain uses about 4.4 g of sugar an hour here (about 106 g a day), the same all day: studies measured 100–145 g a day. Between meals the liver keeps it supplied, so no meal changes it."
   },
   "profiles": {
     "adult-ref": {
@@ -1094,6 +1147,10 @@
     "kidneys": {
       "name": "Kidneys & water",
       "what": "kidneys"
+    },
+    "hormones": {
+      "name": "Hormones",
+      "what": "pancreas"
     }
   },
   "lifeProcess": {
@@ -1728,6 +1785,82 @@
         },
         "ask": "The kidneys filter about 180 L a day, but only a litre or two leaves. Where does the rest go?"
       }
+    },
+    "control": {
+      "strips": {
+        "sugar": "Blood sugar",
+        "insulin": "Insulin (× before eating)"
+      },
+      "label": {
+        "pancreas": "Pancreas",
+        "liver": "Liver",
+        "stomach": "Stomach",
+        "vein": "Vein to the liver",
+        "thyroid": "Thyroid",
+        "pituitary": "Pituitary",
+        "adrenal": "Adrenal gland"
+      },
+      "now": {
+        "organ": "Pancreas",
+        "insulin": "insulin {{n}}× before eating",
+        "sugar": "blood sugar {{n}} mg/dL",
+        "kept": "Kept: insulin {{n}}× before eating"
+      },
+      "moves": "Moves with this meal.",
+      "notGuide": "This insulin is for a body that makes its own; it is not an injection guide.",
+      "brain": {
+        "value": "The brain uses about 4.4 g of sugar an hour, about the same all day.",
+        "back": "The liver supplies it even if you eat no sugar.",
+        "source": "Sources: Mergenthaler et al. 2013; Cahill and Owen 1968"
+      },
+      "book": "NCERT Class 10 says: when blood sugar rises the pancreas makes more insulin, and less as it falls",
+      "others": {
+        "open": "Other hormones ›",
+        "title": "Other hormones",
+        "adrenaline": {
+          "name": "Adrenaline (adrenal glands)",
+          "text": "Made in a fright or a race: the heart beats faster and more blood goes to the muscles.",
+          "source": "NCERT Class 10, Ch 6, p. 109"
+        },
+        "thyroxin": {
+          "name": "Thyroxin (thyroid)",
+          "text": "Needs iodine (from iodised salt); it helps the body use carbohydrate, protein and fat for growth.",
+          "source": "NCERT Class 10, Ch 6, p. 110"
+        },
+        "growth": {
+          "name": "Growth hormone (pituitary)",
+          "text": "Controls how the body grows and develops.",
+          "source": "NCERT Class 10, Ch 6, p. 110"
+        },
+        "hunger": {
+          "name": "Hunger signal (ghrelin, from the stomach)",
+          "text": "Rises before meals and helps make us feel hungry.",
+          "source": "OpenStax Anatomy and Physiology 2e, §23.4, Table 23.6"
+        }
+      },
+      "summary": {
+        "flat": "Insulin stays at its before-eating level, 1×: this meal has almost no sugar or starch.",
+        "flatReason": "In this model only sugar from food raises insulin.",
+        "peak": "Most insulin: about {{n}}× before eating, at {{time}}.",
+        "back": "It is back near the before-eating level by {{time}}.",
+        "still": "It is still above the before-eating level at {{time}}.",
+        "compare": "Most insulin: about {{run}}× before eating with this plan, {{kept}}× with the kept one.",
+        "same": "Insulin is about the same in both: at most about {{n}}× before eating.",
+        "why": "Insulin rises as sugar from the meal reaches the blood."
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
+      },
+      "why": {
+        "feedback": {
+          "what": "What insulin does",
+          "book": "when blood sugar rises the pancreas makes more insulin, and as it falls, less: a feedback mechanism (NCERT Class 10, Ch 6, p. 111)",
+          "model": "insulin rises as sugar from food comes in and falls back after, but it does not pull blood sugar down (model estimate)",
+          "why": "The blood sugar line comes from studies of real meals, which already include what insulin does. The model works insulin out from the sugar coming in and does not feed it back."
+        },
+        "ask": "Hours after a meal, blood sugar is back near 90 mg/dL. What brought it down?"
+      }
     }
   },
   "picker": {
@@ -1800,6 +1933,11 @@
         "question": "Where did the water go?",
         "book": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
         "model": "The kidneys send the extra water from the glass out as urine. Sweat took some water in the walk, so by now about 60 mL less has come out than without the walk."
+      },
+      "insulin": {
+        "question": "What does the pancreas do after the roti?",
+        "book": "NCERT Class 10 (Ch 6, p. 111): when blood sugar rises, the pancreas makes more insulin.",
+        "model": "Insulin rises as sugar from the roti reaches the blood: about 5 times its level before eating now. Then it falls back."
       }
     }
   },

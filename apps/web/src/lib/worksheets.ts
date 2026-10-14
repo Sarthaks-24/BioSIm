@@ -24,6 +24,7 @@ export const SHEETS = {
   breathRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=breathing&act=run.30.10', sketch: { task: 3, hours: 2 } },
   heartWalk: { link: '/sim?a=roti:1,dal:1&b=roti:1,dal:1&t=70&layer=circulation&act=walk.60.20', sketch: { task: 3, hours: 4 } },
   drinkWater: { link: '/sim?a=water:4&b=water:1&t=60&layer=kidneys', sketch: { task: 0, hours: 4 } },
+  insulinCola: { link: '/sim?a=cola:1&b=water:1&t=27&layer=hormones', sketch: { task: 0, hours: 4 } },
   musclesRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=muscles&act=run.30.10', sketch: { task: 3, hours: 2 } },
   sweatRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=skin&act=run.30.10', sketch: { task: 3, hours: 2 } },
 } as const satisfies Record<string, Sheet>

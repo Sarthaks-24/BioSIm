@@ -310,4 +310,25 @@ describe('framing lint: stems, scoped words and the activity rule (content-i18n 
     ])
     expect(activityKcal('test', planted)).toEqual(['test › activity.sheet.walk', 'test › sys.effort.now'])
   })
+
+  it('would catch the insulin and brain words (content-i18n §6, U-6); the hormones pack’s own lines pass', () => {
+    const planted: [string, string][] = [
+      ['a', 'Cola gives an insulin spike'],
+      ['b', 'Then comes the sugar crash'],
+      ['c', 'Insulin is the fat-storing hormone'],
+      ['d', 'This shows insulin resistance'],
+      ['e', 'Cola is sugar for the brain'],
+      ['sys.control.notGuide', en.sys.control.notGuide],
+      ['sys.control.summary.peak', en.sys.control.summary.peak],
+      ['sys.control.brain.value', en.sys.control.brain.value],
+      ['limits.insulinHealthy', en.limits.insulinHealthy],
+    ]
+    expect([...new Set(findBanned('test', planted, ALL).map((hit) => hit.split(':')[0]))]).toEqual([
+      'test › a',
+      'test › b',
+      'test › c',
+      'test › d',
+      'test › e',
+    ])
+  })
 })

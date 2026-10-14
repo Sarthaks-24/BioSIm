@@ -45,6 +45,8 @@ export const SYSTEM_SOURCES: { readonly [S in SystemId]?: readonly string[] } = 
   ],
   kidneys: ['openstax-ap2e-26', 'openstax-ap2e-25', 'iom2005', 'maughan2016', 'crowe1987', 'calvi2024', 'openstax-ap2e-23'],
   lymph: [],
+  // U-6: insulin (secretion, half-life, calibration and band, hold-out) and the brain's sugar; blood sugar is Digestion's.
+  hormones: ['dallaman2007', 'lebovitz2011', 'takahashi2018', 'polonsky1988', 'mergenthaler2013', 'cahill1968'],
   muscles: ['wang2012', 'janssen2000', 'herrmann2024', 'icmr-nin2020'],
   bones: [],
   skin: ['baker2019', 'bakerwolfe2020', 'openstax-ap2e-24', 'herrmann2024', 'icmr-nin2020'],

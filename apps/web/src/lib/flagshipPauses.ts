@@ -13,10 +13,12 @@ import type { SlotId, SystemId } from '../systems/registry.ts'
  *
  * Pause 4 is Skin & temperature (R34). While skin is not public (the `effort` pack, R36) it falls back
  * to Heart & blood's beats a minute in the walk (content-i18n §8.2). In v3.1 a blood-fat / insulin
- * pause replaces the Digestion one, never a sixth (R38).
+ * pause replaces the Digestion one, never a sixth (R38): once Hormones may be lit (public, or a
+ * preview), the lesson stops on its insulin graph at the most insulin after the roti
+ * (`insulinPeak`, 1 h 26 min) in place of the stomach at 0:30, so the pauses stay in clock order.
  */
 export interface Pause {
-  key: 'stomach' | 'blood' | 'breaths' | 'sweat' | 'heart' | 'water'
+  key: 'stomach' | 'blood' | 'breaths' | 'sweat' | 'heart' | 'water' | 'insulin'
   system: SystemId
   slot: SlotId
   /** Minutes on the meal clock. */
@@ -34,5 +36,14 @@ export const PAUSES: readonly Pause[] = [
 /** Pause 4 while skin is hidden (R34): the heart in the walk. */
 export const HEART_PAUSE: Pause = { key: 'heart', system: 'circulation', slot: 'beats', t: 75 }
 
-/** The pauses this session can show: skin's when it may be lit (public, or a preview), else the heart's. */
-export const pausesFor = (skin: boolean): readonly Pause[] => (skin ? PAUSES : PAUSES.map((p) => (p.key === 'sweat' ? HEART_PAUSE : p)))
+/** v3.1 (R38, U-6): Hormones at the most insulin after the roti, in place of the Digestion pause. */
+export const INSULIN_PAUSE: Pause = { key: 'insulin', system: 'hormones', slot: 'insulin', t: 86 }
+
+/**
+ * The pauses this session can show: skin's when it may be lit (public, or a preview), else the
+ * heart's; the insulin pause in place of the stomach's when Hormones may be lit, in clock order.
+ */
+export function pausesFor(skin: boolean, hormones = false): readonly Pause[] {
+  const pauses = skin ? PAUSES : PAUSES.map((p) => (p.key === 'sweat' ? HEART_PAUSE : p))
+  return hormones ? [...pauses.filter((p) => p.key !== 'stomach'), INSULIN_PAUSE].sort((a, b) => a.t - b.t) : pauses
+}

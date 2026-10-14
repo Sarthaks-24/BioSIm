@@ -11,6 +11,7 @@ import { SHEETS, type SheetKey } from './worksheets.ts'
 import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
+import { HORMONES_LESSON } from '../systems/hormones/lesson.ts'
 import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { FILTER_ML_PER_MIN } from '../systems/kidneys/water.ts'
 
@@ -185,6 +186,16 @@ describe('worksheets: the numbers the answers say are the model’s', () => {
     expect(numbers(tasks[1]!.m)).toEqual([round(a.v, 10), round(b.v, 10)])
     expect(numbers(tasks[2]!.k)[0]).toBe(FILTER_ML_PER_MIN)
     expect(numbers(exit.m)).toEqual([4, round(at(four, 'kidney.urineTotal', 240) - at(one, 'kidney.urineTotal', 240), 10)])
+  })
+
+  it('who keeps blood sugar steady: insulin after cola and after water (U-6)', () => {
+    const l = HORMONES_LESSON
+    const [cola, water] = [sim(l.meal), sim(l.kept)]
+    const { tasks } = text('insulinCola')
+    const most = peak(cola, 'blood.insulin')
+    expect(numbers(tasks[0]!.m)).toEqual([round(most.min, 5), Math.round(most.v * 10) / 10, round(peak(water, 'blood.insulin').v)])
+    expect(peak(water, 'blood.insulin').v).toBe(1)
+    expect(numbers(tasks[2]!.k)[0]).toBe(round(at(cola, 'brain.glucoseUse', l.t) * 10) / 10)
   })
 
   it('how much harder muscles work in a run, and where its heat goes', () => {
