@@ -55,7 +55,7 @@ test('a preview link lights Heart & blood: heart, chip, colour key, three graphs
   await expect(graphs.locator('[data-band-key]')).toContainText('Most children your age (12–15): 62–96')
   // "Why does the model differ from the book?" for the heart (R9, R82, R86).
   await graphs.getByRole('button', { name: 'Why different? ›' }).click()
-  const why = graphs.locator('[data-why="circulation"]')
+  const why = graphs.locator('[data-why="sys.circulation.why"]')
   await expect(why).toContainText('Why does the model differ from the book?')
   await expect(why.locator('[data-why-row]')).toHaveCount(3)
   await expect(why).toContainText('no slow after-exercise rise')

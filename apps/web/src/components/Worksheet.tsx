@@ -29,19 +29,6 @@ interface Answer {
 }
 const TAGS = ['b', 'k', 'm'] as const
 
-/**
- * "Why does the model differ from the book?" on the teacher copy (content-i18n §8.4): X-4 writes the
- * cards (`teach.<pack>.why.*`); a one-line version for paper at `teach.<pack>.why.sheet` shows here
- * once it exists. Until then nothing is printed.
- */
-const WHY_PACK: Partial<Record<SheetKey, string>> = {
-  breathRun: 'breathing',
-  heartWalk: 'circulation',
-  drinkWater: 'kidneys',
-  musclesRun: 'effort',
-  sweatRun: 'effort',
-}
-
 /** Empty axes to sketch on: time across (0 to `hours` h), the lesson's graph up the side. Black on white. */
 function Axes({ hours, y, x: across, label }: { hours: number; y: string; x: string; label: string }) {
   // The graph's name over the side axis, the time under the bottom one: both read across.
@@ -117,7 +104,6 @@ export default function Worksheet({
   const own = <T = string,>(part: string, objects = false) => t(`sheet.lessons.${lesson}.${part}`, { returnObjects: objects }) as T
   const tasks = own<Answer[]>('tasks', true)
   const exit = own<Answer>('exit', true)
-  const why = WHY_PACK[lesson] && `teach.${WHY_PACK[lesson]}.why.sheet`
   const link = SITE_URL + sheet.link
   // "Class 6 · Class 7 · Class 10 — NCERT Class 10, Life Processes: Respiration".
   const part = chapter && t(`teach.chapters.${chapter.key}`)
@@ -208,12 +194,9 @@ export default function Worksheet({
         <p className="ws-q">{exit.q}</p>
         {answer(exit, 2)}
 
-        {answers && (
-          <>
-            {why && i18n.exists(why) && <p className="ws-box">{t(why)}</p>}
-            <p className="ws-key">{t('sheet.tagKey')}</p>
-          </>
-        )}
+        {/* The "Why does the model differ from the book?" card (X-4) is not printed here: its rows are in the
+            packs' text sections (sys.<pack>.why), which Teach does not load. */}
+        {answers && <p className="ws-key">{t('sheet.tagKey')}</p>}
 
         <footer className="ws-foot">
           <span>{t('sheet.footer')}</span>

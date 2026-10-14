@@ -98,14 +98,22 @@ describe('Teach: "Numbers changed in this version" (E-3a)', () => {
     expect([n![0], n![2], n![4], n![6]]).toEqual([a.water, a.carbs, a.protein, a.fat].map((x) => Math.round(x * 100)))
   })
 
-  it('energy in is about 2 % higher and blood sugar peaks at most 1 mg/dL higher, on every reviewed meal', () => {
-    const [energyPct, peakMgDl] = n!.slice(-2)
+  it('energy in is about 2–3 % higher and blood sugar peaks at most 1 mg/dL higher, on every reviewed meal (R98)', () => {
+    const [low, high, peakMgDl] = n!.slice(-3)
+    let most = 0
     for (const [meal, b] of Object.entries(now.meals)) {
       const a = before.meals[meal]!
-      if (a.energyInKcal48h > 0) expect(Math.abs((b.energyInKcal48h / a.energyInKcal48h - 1) * 100 - energyPct!), meal).toBeLessThan(1)
+      const pct = (b.energyInKcal48h / a.energyInKcal48h - 1) * 100
+      if (a.energyInKcal48h > 0) {
+        expect(pct, meal).toBeGreaterThan(low! - 1)
+        expect(pct, meal).toBeLessThan(high! + 0.5)
+        most = Math.max(most, pct)
+      }
       if (a.glucosePeakRise !== null && b.glucosePeakRise !== null)
         expect(Math.abs(b.glucosePeakRise - a.glucosePeakRise), meal).toBeLessThanOrEqual(peakMgDl!)
     }
+    // The most is near the top of the range (preseal audit: at most +2.8 %).
+    expect(most).toBeGreaterThan(high! - 0.5)
   })
 
   it('the snapshot is the model today', () => {

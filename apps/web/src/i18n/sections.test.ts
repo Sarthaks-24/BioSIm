@@ -84,6 +84,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   count: ['components/CountYours.tsx'],
   flagship: ['components/LessonBar.tsx'],
   sheet: ['components/Worksheet.tsx'],
+  // The lesson bar names Digestion's card, which comes with the card's own file (X-4).
+  why: ['components/WhyCard.tsx', 'components/LessonBar.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

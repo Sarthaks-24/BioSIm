@@ -2,6 +2,7 @@ import { useCallback, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
 import { StatusTag } from '../../components/kit/index.ts'
+import WhyCard from '../../components/WhyCard.tsx'
 import { BONES_TONE } from '../../anatomy/tones/bones.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
@@ -190,12 +191,24 @@ function Thermometer() {
   )
 }
 
-/** The lines under a graph (ui-ux §6, R75): what moves it (only walking or running); under sweat, the thermometer card and what sweat is. */
+/** Skin's "Why does the model differ from the book?" card (X-4, components/WhyCard.tsx): its rows, in the pack's section. */
+const WHY = 'sys.effort.why'
+
+/**
+ * The lines under a graph (ui-ux §6, R75): what moves it (only walking or running); under sweat, the
+ * thermometer card, NCERT Class 6's 37.0 °C with "Why different? ›" (X-4) and what sweat is.
+ */
 function StripNote({ slot }: { slot: GraphSlotDef }) {
   const { t } = useTranslation()
   return (
     <div data-strip-note={slot.id} className="flex flex-col gap-0.5 text-caption text-ink-muted">
       {slot.id === 'sweat' && <Thermometer />}
+      {slot.id === 'sweat' && (
+        <div className="flex flex-wrap items-center gap-x-2 [@media(height<42.5rem)]:hidden">
+          <span data-book="">{t('sys.effort.skin.book')}</span>
+          <WhyCard text={WHY} className="-my-2 lg:my-0" />
+        </div>
+      )}
       <p data-moves="">{t('sys.effort.moves')}</p>
       {slot.id === 'sweat' && <p className="[@media(height<42.5rem)]:hidden">{t('sys.effort.skin.notFat')}</p>}
     </div>

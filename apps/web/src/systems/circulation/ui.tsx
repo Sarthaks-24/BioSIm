@@ -2,6 +2,7 @@ import { useCallback, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
 import CountYoursButton from '../../components/CountYoursButton.tsx'
+import WhyCard from '../../components/WhyCard.tsx'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
@@ -214,60 +215,8 @@ function RhythmChip({ run }: { run: RunResult }) {
   )
 }
 
-/** The rows of the heart's "Why does the model differ from the book?" card (ui-ux §8.4; R9, R82, R86). */
-export const WHY_ROWS = ['rest', 'run', 'after'] as const
-
-/**
- * "Why does the model differ from the book?" for the heart (ui-ux §8.4, content-i18n §8.5): opened
- * from "Why different? ›" by the book's line. One row per difference (the book's value, the
- * model's, why), then "In the exam, write the book's value." and a question to discuss.
- */
-function WhyCard() {
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const cardId = useId()
-  return (
-    <>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={open ? cardId : undefined}
-        onClick={() => setOpen((o) => !o)}
-        className="self-start font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink"
-      >
-        {t('sys.circulation.why.open')}
-      </button>
-      {open && (
-        <section
-          id={cardId}
-          data-why="circulation"
-          aria-label={t('sys.circulation.why.title')}
-          className="rounded-control bg-surface-sunk px-2 py-1.5 text-ink"
-        >
-          <h3 className="font-semibold">{t('sys.circulation.why.title')}</h3>
-          <dl className="mt-1 flex flex-col gap-1.5">
-            {WHY_ROWS.map((row) => (
-              <div key={row} data-why-row={row}>
-                <dt className="font-semibold">{t(`sys.circulation.why.${row}.what`)}</dt>
-                <dd>
-                  {t('sys.circulation.why.book')}: {t(`sys.circulation.why.${row}.book`)}
-                </dd>
-                <dd>
-                  {t('sys.circulation.why.model')}: {t(`sys.circulation.why.${row}.model`)}
-                </dd>
-                <dd className="text-ink-muted">
-                  {t('sys.circulation.why.reason')}: {t(`sys.circulation.why.${row}.why`)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-1 font-semibold">{t('sys.circulation.why.exam')}</p>
-          <p className="text-ink-muted">{t('sys.circulation.why.ask')}</p>
-        </section>
-      )}
-    </>
-  )
-}
+/** The heart's "Why does the model differ from the book?" card (X-4, components/WhyCard.tsx; R9, R82, R86): its rows, in its own section. */
+const WHY = 'sys.circulation.why'
 
 /**
  * Where blood goes, beside a kept plan: one flow at a time against its kept ghost (ui-ux §7),
@@ -318,11 +267,11 @@ function StripNote({ slot, pick, run }: { slot: GraphSlotDef; pick?: SlotPick; r
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.circulation.moves')}</p>
       {slot.reference && (
         <>
-          <p className="flex flex-wrap items-center gap-x-2">
+          <div className="flex flex-wrap items-center gap-x-2">
             <span data-book="">{t('sys.circulation.book')}</span>
+            <WhyCard text={WHY} className="-my-2 lg:my-0" />
             <CountYoursButton kind="pulse" lines={countLines} className="-my-2 lg:-my-1" />
-          </p>
-          <WhyCard />
+          </div>
           <p data-band-key="" className="flex items-center gap-1.5">
             <span
               aria-hidden="true"

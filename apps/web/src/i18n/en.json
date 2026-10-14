@@ -202,7 +202,7 @@
     "qrCaption": "Students scan this code with the phone camera: LifePeek opens with cola chosen, where questions 1 to 3 start. No login, nothing to install.",
     "qrAlt": "QR code for LifePeek with cola chosen",
     "changedTitle": "Numbers changed in this version",
-    "changed": "Model version {{version}} follows the textbook more closely on what the small intestine takes in: 90 % of the water (was 80 %), 97 % of the carbohydrate (was 95 %) and 95 % of the protein (was 90 %); fat stays at 95 %. Times in the stomach did not change. Energy coming in from a meal is about 2 % higher, and blood sugar peaks are at most 1 mg/dL higher. Links saved from an older version still open, with a note that some numbers may differ.",
+    "changed": "Model version {{version}} follows the textbook more closely on what the small intestine takes in: 90 % of the water (was 80 %), 97 % of the carbohydrate (was 95 %) and 95 % of the protein (was 90 %); fat stays at 95 %. Times in the stomach did not change. Energy coming in from a meal is about 2–3 % higher, and blood sugar peaks are at most 1 mg/dL higher. Links saved from an older version still open, with a note that some numbers may differ.",
     "answersTitle": "Answers for teachers",
     "answers": [
       "About 35 minutes (30 to 40 is right): the ring on the stomach graph, or its marker on the timeline.",
@@ -1035,8 +1035,8 @@
     "backToBase": "\"Back near the before-meal level\" means within 5 mg/dL of it.",
     "glucoseSameHighest": "More of the same food or drink does not raise the highest point here, only how long blood sugar stays up: the stomach lets food out at a steady rate (about 2 kcal a minute for a sugary drink), whatever the amount. The model leaves out anything else a bigger portion might do to the highest point in real people.",
     "steadyEmptying": "The model lets food out of the stomach at a steady rate until it is empty. So after a big meal the food in the stomach falls in a straight line, and blood sugar and energy coming in stay level for hours, then fall within about an hour. Real stomachs usually slow down near the end, so the fall is gentler. After 6 hours the time axis is squeezed (the hatched part on the right), which makes the fall look steeper still.",
-    "activityMet": "Each activity uses an average value from the 2024 Compendium of Physical Activities for a 65 kg adult. Real people differ with speed, fitness and size. The extra energy used after stopping is not shown.",
-    "foodEffect": "The share of energy used to digest each nutrient is a middle value from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals.",
+    "activityMet": "Each activity uses an average value from the 2024 Compendium of Physical Activities for a 65 kg adult. Real people differ with speed, fitness and size. The first 2–3 minutes of extra energy used after stopping are shown; the slower, longer part is not.",
+    "foodEffect": "The share of energy used to digest each nutrient is a value inside the ranges from studies (carbohydrate 7.5 %, protein 25 %, fat 2 %). It differs between people and meals.",
     "gasExchange": "Oxygen used and carbon dioxide made are worked out from the energy the body uses (Weir’s formula, without protein). The air in the lungs is taken to keep the same carbon dioxide, so the blood’s oxygen and carbon dioxide do not change here.",
     "breathSplit": "How the extra air is shared between faster and deeper breaths is a rule picked by hand (a model estimate): real people differ.",
     "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster.",
@@ -1448,6 +1448,27 @@
       "count": {
         "model": "This model: about {{rest}} a minute at rest, for one resting grown-up.",
         "modelActive": "This model: about {{rest}} a minute at rest, {{n}} a minute {{doing}}."
+      },
+      "why": {
+        "rest": {
+          "what": "Breathing at rest",
+          "book": "15–18 breaths a minute (older NCERT Class 7 book, 2024-25, Ch 6, p. 60)",
+          "model": "about 15 a minute (model estimate)",
+          "why": "They agree: the model uses one value, 15, for one resting grown-up, inside the book’s range."
+        },
+        "run": {
+          "what": "Breathing in a hard run",
+          "book": "up to 25 a minute in heavy exercise (same page)",
+          "model": "about 33 a minute in a 10-minute run, each breath about 1.4 L instead of 0.4 L (model estimate)",
+          "why": "The model follows studies of grown-ups exercising hard. At their hardest effort, adults average about 36 breaths a minute (Blackie 1991); trained runners in a marathon measured 47–56 (Bosch 1990). Both agree: faster and deeper."
+        },
+        "exhaled": {
+          "what": "Air breathed out",
+          "book": "16.4 % oxygen and 4.4 % carbon dioxide (older NCERT Class 7 book, 2024-25, Ch 6, p. 64)",
+          "model": "not shown",
+          "why": "Our model does not match the book yet, so only the book’s numbers are shown."
+        },
+        "ask": "Count your breaths at rest, then after running on the spot for a minute. Why might your numbers differ from the book’s and the model’s?"
       }
     },
     "circulation": {
@@ -1494,7 +1515,7 @@
       "bp": {
         "value": "Blood pressure 120/80: book value, held.",
         "held": "About the same all day in this model: it is not worked out here.",
-        "source": "Source: NCERT Class 10 Science, Life Processes."
+        "source": "Source: NCERT Class 10 Science, Ch 5 Life Processes, §5.4.1, p. 93."
       },
       "pick": {
         "label": "Show",
@@ -1502,16 +1523,11 @@
         "muscle": "Muscles"
       },
       "why": {
-        "open": "Why different? ›",
-        "title": "Why does the model differ from the book?",
-        "book": "The book says",
-        "model": "This model says",
-        "reason": "Why they differ",
         "rest": {
           "what": "Heart at rest",
-          "book": "72–80 beats a minute (older NCERT Class 7 book, 2024-25)",
+          "book": "72–80 beats a minute at rest (older NCERT Class 7 book, 2024-25, Ch 7, p. 71)",
           "model": "about 66 beats a minute (model estimate)",
-          "why": "Worked out from the oxygen one resting grown-up uses and the blood pushed out with each beat, not tuned to the book. Resting grown-ups differ (60–100); children’s hearts beat faster."
+          "why": "Worked out from the oxygen one resting grown-up uses and the blood pushed out with each beat, not tuned to the book. Resting grown-ups differ (60–100, OpenStax Anatomy and Physiology 2e, §19.4); children’s hearts beat faster."
         },
         "run": {
           "what": "Heart in a run",
@@ -1525,7 +1541,6 @@
           "model": "almost back to resting within a few minutes",
           "why": "Recovery is simplified here: real hearts slow quickly at first, then stay a little fast for longer (no slow after-exercise rise in this model)."
         },
-        "exam": "In the exam, write the book’s value.",
         "ask": "Count your pulse at rest, then after running on the spot for a minute. How long does it take to slow down again?"
       },
       "summary": {
@@ -1614,7 +1629,8 @@
           "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
           "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
           "same": "Sweat is about the same in both: about {{value}} in all."
-        }
+        },
+        "book": "NCERT Class 6 (Curiosity, 2026-27) says: normal body temperature 37.0 °C"
       },
       "bones": {
         "label": {
@@ -1632,6 +1648,15 @@
           "joints": "The hip is a ball-and-socket joint: the leg can move in many directions. The knee is a hinge joint: it bends only one way, like a door.",
           "tendons": "Muscles are joined to bones by tendons, and pull on them to move the body."
         }
+      },
+      "why": {
+        "temperature": {
+          "what": "Body temperature",
+          "book": "the normal temperature of a healthy human body is taken to be 37.0 °C (NCERT Class 6, Curiosity, Ch 7, p. 128)",
+          "model": "held near 37 °C, not worked out; the extra heat of moving leaves as sweat, about 170 mL in a 10-minute run (model estimate)",
+          "why": "The body keeps its temperature in a narrow range, so the model holds it steady and works out the sweat instead. The book says 37.0 °C is an average of many healthy people: a person’s normal can be a little different."
+        },
+        "ask": "Why do you sweat in a run, when your body temperature hardly changes?"
       }
     },
     "kidneys": {
@@ -1686,6 +1711,22 @@
         "flat": "{{name}}: about {{value}} all the way.",
         "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}.",
         "low": "{{name}}: {{start}} at the start, {{low}} at the least, at {{time}}."
+      },
+      "book": "NCERT Class 10 says: about 180 L filtered a day; only a litre or two leaves as urine",
+      "why": {
+        "filtered": {
+          "what": "Filtered a day",
+          "book": "about 180 L a day, and only a litre or two leaves as urine (NCERT Class 10, Ch 5, p. 97)",
+          "model": "125 mL a minute, so 180 L a day, the same all day; about 1.5 L of urine a day with the usual drinks (model estimate)",
+          "why": "They agree. The model uses textbook values for one grown-up (OpenStax Anatomy and Physiology 2e, §25.5 and §26.2)."
+        },
+        "drink": {
+          "what": "Water from a drink",
+          "book": "no time given",
+          "model": "after four glasses of water, half their water has left as urine by about 1 h 15 min (model estimate)",
+          "why": "The book does not say when. The model is fitted to a study of grown-ups drinking a litre of water (Maughan 2016); people differ a lot."
+        },
+        "ask": "The kidneys filter about 180 L a day, but only a litre or two leaves. Where does the rest go?"
       }
     }
   },
@@ -1732,7 +1773,7 @@
     "pauses": {
       "stomach": {
         "question": "Where is the roti now?",
-        "book": "NCERT Class 10: digested food is absorbed in the small intestine.",
+        "book": "NCERT Class 10 (Ch 5, p. 98): the digested food is absorbed in the small intestine.",
         "model": "The roti leaves the stomach a little at a time, and sugar from it starts to reach the blood."
       },
       "blood": {
@@ -1747,7 +1788,7 @@
       },
       "sweat": {
         "question": "Where does the extra heat go?",
-        "book": "NCERT Class 6: the body stays near 37 °C.",
+        "book": "NCERT Class 6 (Curiosity, Ch 7, p. 128): the normal temperature of a healthy human body is taken to be 37.0 °C.",
         "model": "The walking muscles turn the extra energy into heat; sweat carries it away, so the body stays near 37 °C."
       },
       "heart": {
@@ -1760,6 +1801,29 @@
         "book": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
         "model": "The kidneys send the extra water from the glass out as urine. Sweat took some water in the walk, so by now about 60 mL less has come out than without the walk."
       }
+    }
+  },
+  "why": {
+    "open": "Why different? ›",
+    "title": "Why does the model differ from the book?",
+    "book": "The book says",
+    "model": "This model says",
+    "reason": "Why they differ",
+    "exam": "In the exam, write the book’s value.",
+    "digestion": {
+      "where": {
+        "what": "Where food is taken in",
+        "book": "the digested food is absorbed in the small intestine (NCERT Class 10, Ch 5, p. 98)",
+        "model": "the small intestine takes in 97 % of the carbohydrate, 95 % of the protein and 95 % of the fat (textbook values)",
+        "why": "They agree on where. The book gives no amounts; the model’s shares come from a physiology textbook and food tables (OpenStax Anatomy and Physiology 2e, §23.7)."
+      },
+      "water": {
+        "what": "Water",
+        "book": "the wall of the large intestine absorbs more water from what is left (NCERT Class 10, Ch 5, p. 86)",
+        "model": "the small intestine takes in 90 % of a meal’s water; the large intestine takes in 90 % of what reaches it (model estimate)",
+        "why": "They agree. The small intestine’s 90 % is a textbook value; the large intestine’s share is this model’s own choice."
+      },
+      "ask": "The inside of the small intestine is covered in tiny finger-like villi. Why does that help it take in food?"
     }
   }
 }

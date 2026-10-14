@@ -121,6 +121,9 @@ export const PAGE_SECTIONS = {
   // X-3: the printable worksheets' words load with the worksheet (components/Worksheet.tsx, lazy);
   // Teach keeps its link's name.
   sheet: [],
+  // X-4: "Why different? ›" brings the cards' shared words and Digestion's card (components/WhyCard.tsx,
+  // in the chunk of the pack or lesson bar that shows it); each other card's rows are in its pack's section.
+  why: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

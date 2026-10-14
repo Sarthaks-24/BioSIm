@@ -2,6 +2,7 @@ import { useCallback, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { valueAt, type ActiveSignalId, type RunResult } from '@lifepeek/engine'
 import CountYoursButton from '../../components/CountYoursButton.tsx'
+import WhyCard from '../../components/WhyCard.tsx'
 import { formatDuration } from '../../lib/time.ts'
 import { useClock } from '../../state/clock.ts'
 import type { SystemParts } from '../load.ts'
@@ -162,10 +163,14 @@ function RhythmChip({ run }: { run: RunResult }) {
   )
 }
 
+/** Breathing's "Why does the model differ from the book?" card (X-4, components/WhyCard.tsx): its rows, in its own section. */
+const WHY = 'sys.breathing.why'
+
 /**
  * The lines under each breathing graph (ui-ux §6, R10, R29, R57): what moves it; under breaths a
- * minute also the older NCERT Class 7 book's 15–18 with "Count yours" beside it (X-2), and the key
- * to the children's band.
+ * minute also the older NCERT Class 7 book's 15–18 with "Why different? ›" (X-4: rest, a run, and
+ * the air breathed out, book values only, R54) and "Count yours" beside it (X-2), and the key to
+ * the children's band.
  */
 function StripNote({ slot, run }: { slot: GraphSlotDef; run: RunResult }) {
   const { t } = useTranslation()
@@ -185,10 +190,11 @@ function StripNote({ slot, run }: { slot: GraphSlotDef; run: RunResult }) {
       <p className="[@media(height<42.5rem)]:hidden">{t('sys.breathing.moves')}</p>
       {slot.reference && (
         <>
-          <p className="flex flex-wrap items-center gap-x-2">
+          <div className="flex flex-wrap items-center gap-x-2">
             <span data-book="">{t('sys.breathing.book')}</span>
+            <WhyCard text={WHY} className="-my-2 lg:my-0" />
             <CountYoursButton kind="breaths" lines={countLines} className="-my-2 lg:-my-1" />
-          </p>
+          </div>
           <p data-band-key="" className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
