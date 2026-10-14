@@ -91,6 +91,10 @@ export const LESSON_PACKS = {
       'src/components/SystemPicker.tsx',
       // X-2: "Count yours", the 15-second timer by Breathing's (and the heart's) book line.
       'src/components/CountYours.tsx',
+      // X-1: the guided lesson's bar (Home's and Teach's "One roti, one walk").
+      'src/components/LessonBar.tsx',
+      // X-1: Home's lesson card and systems list (loaded once a system besides Digestion is public).
+      'src/components/HomeLesson.tsx',
       // A bout poses the body (and Digestion's `full` framing shows the legs): R93 #6.
       LIMBS,
     ],

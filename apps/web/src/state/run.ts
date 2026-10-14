@@ -164,7 +164,11 @@ export const useRunStore = create<RunState>((set, get) => ({
     wanted = layer
     const light = () => {
       if (wanted !== layer) return
-      if (layer !== get().layer) useStripTab.setState({ tab: null })
+      if (layer !== get().layer) {
+        // Its first graph, or the one a lesson asked for (state/stripTab.ts `next`, X-1).
+        const next = useStripTab.getState().next
+        useStripTab.setState({ tab: next?.layer === layer ? next.slot : null, next: null })
+      }
       set({ layer, switching: null })
     }
     const loading = packFor(layer)

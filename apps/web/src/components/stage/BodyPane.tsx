@@ -15,11 +15,16 @@ import ParticleKey from './ParticleKey.tsx'
 import PlayPrompt, { useAtStart } from './PlayPrompt.tsx'
 import SummaryLine from './SummaryLine.tsx'
 import { useActivityBand } from '../../lib/bouts.ts'
+import { useLesson } from '../../state/lesson.ts'
+import { useStripTab } from '../../state/stripTab.ts'
+import { loadPack } from '../../systems/load.ts'
 import { BOUT_EMOJI, boutLabel, inSentence } from './boutText.ts'
 import { mealNames, shortFoodName } from './mealText.ts'
 
 /** The full stage text is downloaded when "More" is first opened (size budget). If it doesn't load, its panel says so. */
 const stageMore = lazyWithRetry(() => import('./StageMore.tsx'))
+/** The guided lesson's bar (X-1), in the Now line's place while a lesson runs: downloaded when one starts (R71, R74). */
+const lessonBar = lazyWithRetry(() => import('../LessonBar.tsx'))
 
 /**
  * "More" (StageMore): from 1024 px up a column at the pane's right, and the body moves left to make
@@ -29,6 +34,9 @@ const stageMore = lazyWithRetry(() => import('./StageMore.tsx'))
 const MORE_ROOM = 'lg:right-[min(25rem,46%)]'
 const MORE_FAILED =
   'absolute inset-x-0 bottom-0 z-20 border-t border-border bg-surface-raised p-4 lg:inset-y-0 lg:left-auto lg:w-[min(25rem,46%)] lg:border-t-0 lg:border-l'
+
+/** The Now line's row (or the lesson bar's): above the body on a phone, in the band under it from 1024 px up. */
+const NOW_ROW = 'max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5'
 
 /** Foods offered when the meal is empty: a drink, an Indian staple, a fruit. */
 const EXAMPLES = ['cola', 'roti', 'apple'] as const
@@ -90,6 +98,19 @@ export default function BodyPane({
   const open = more && hasMeal
   const atStart = useAtStart()
   const StageMore = stageMore.Component
+  const LessonBar = lessonBar.Component
+  const lesson = useLesson((s) => s.step)
+  const now = (
+    <NowLine
+      run={run}
+      kept={kept}
+      open={open}
+      onToggle={() => (open ? closeMore() : setMore(true))}
+      moreRef={moreButton}
+      panelId={panelId}
+      className={NOW_ROW}
+    />
+  )
 
   return (
     <section aria-labelledby="body-pane-title" className="relative flex flex-col lg:min-h-0">
@@ -217,15 +238,16 @@ export default function BodyPane({
         // From 1024 px up one band under the body. On a phone the band dissolves (`contents`): the
         // Now line is the pane's first row, above the body, and the summary its last.
         <div className="max-lg:contents lg:flex lg:flex-col lg:gap-1.5 lg:border-t lg:border-border lg:px-4 lg:py-2.5">
-          <NowLine
-            run={run}
-            kept={kept}
-            open={open}
-            onToggle={() => (open ? closeMore() : setMore(true))}
-            moreRef={moreButton}
-            panelId={panelId}
-            className="max-lg:order-first max-lg:px-3 max-lg:pt-1 max-lg:pb-0.5"
-          />
+          {lesson === null ? (
+            now
+          ) : (
+            // Until the bar is here, and if it can't come, the Now line stays (R71: never clear the screen).
+            <LoadBoundary onFail={lessonBar.reset} fallback={now}>
+              <Suspense fallback={now}>
+                <LessonBar lesson={useLesson} run={useRunStore} tabs={useStripTab} loadPack={loadPack} className={NOW_ROW} />
+              </Suspense>
+            </LoadBoundary>
+          )}
           {/* Not on a phone under 680 px tall: the stage shows it past the first screen (Simulator, FP-1).
               On a small projector window it goes under the graph (FP-2), so the body keeps its column's height. */}
           {summary &&

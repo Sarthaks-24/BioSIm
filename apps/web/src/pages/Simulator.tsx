@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { RunResult } from '@lifepeek/engine'
 import i18n from '../i18n/index.ts'
@@ -12,6 +13,8 @@ import { useClock, useMealClock } from '../state/clock.ts'
 import { useRunStore } from '../state/run.ts'
 import { useSheet } from '../state/sheet.ts'
 import { useStripTab } from '../state/stripTab.ts'
+import { useLesson } from '../state/lesson.ts'
+import type { LessonState } from '../lib/flagship.ts'
 import { systemOf, type GraphSlotDef } from '../systems/registry.ts'
 import { useSystemUi } from '../systems/ui.ts'
 import { Dock, IconButton, PlayButton, SettingsIcon } from '../components/kit/index.ts'
@@ -111,6 +114,9 @@ export default function Simulator() {
   const { run: kept } = useRun('kept')
   useMealClock()
   useLinkSync()
+  // The guided lesson (X-1) when Home or Teach started it (their link's `state`, lib/flagship.ts); otherwise none.
+  const { state } = useLocation()
+  useState(() => useLesson.setState({ step: (state as LessonState)?.lesson ? 0 : null }))
   const ui = useSystemUi()
   // The lit system's moments and each bout's start and end (E-3b-ui), for a run with a meal or bouts.
   const moments = useMemo(() => (r: RunResult) => (hasPlan(r) ? [...ui.moments(r), ...boutMoments(r)] : []), [ui.moments])
