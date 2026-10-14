@@ -14,6 +14,7 @@ import {
   isRegisteredSource,
   sourceById,
   type EventMeta,
+  type RunEventId,
   type SignalMeta,
 } from '../src/index.ts'
 import {
@@ -29,6 +30,10 @@ import {
   HUMAN_PROVIDES,
   RUN_EVENT_IDS,
   RUN_EVENTS,
+  KIDNEY_EVENTS,
+  KIDNEY_EVENT_IDS,
+  KIDNEY_SIGNALS,
+  KIDNEY_SIGNAL_IDS,
   RUN_SIGNAL_IDS,
   RUN_SIGNALS,
 } from '../src/run.ts'
@@ -41,16 +46,18 @@ import { ALL_SIGNALS, EVENT_DOCS, RESERVED_SIGNALS, SIGNAL_DOCS } from '../src/c
  */
 
 const signals: SignalMeta[] = Object.values(ALL_SIGNALS)
-const events: EventMeta[] = Object.values(RUN_EVENTS)
+/** The lean catalog's events and the packs' lazy ones (S-4's kidney moments, S-3's gut-flow peak). */
+const events: EventMeta<RunEventId>[] = Object.values(RUN_EVENTS)
 const allIds = [
   ...ACTIVE_SIGNAL_IDS,
   ...BREATHING_SIGNAL_IDS,
   ...EFFORT_SIGNAL_IDS,
+  ...KIDNEY_SIGNAL_IDS,
   ...CIRCULATION_SIGNAL_IDS,
   ...RESERVED_SIGNAL_IDS,
   ...RUN_EVENT_IDS,
 ] as string[]
-const allRows: (SignalMeta | EventMeta)[] = [...signals, ...events]
+const allRows: (SignalMeta | EventMeta<RunEventId>)[] = [...signals, ...events]
 
 /** Dotted, at least two segments, each camelCase starting with a lowercase letter. */
 const ID_RE = /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)+$/
@@ -99,6 +106,13 @@ const FROZEN: Record<string, string> = {
   'muscle.energyRate': 'kcal/h',
   'skin.sweatRate': 'mL/h',
   'skin.sweatTotal': 'mL',
+  // S-4, the kidneys pack (core/catalog/kidneys.ts); kidney.filtrationRate above, unit kept.
+  'kidney.urineRate': 'mL/h',
+  'kidney.urineTotal': 'mL',
+  'kidney.bladderMl': 'mL',
+  'water.mealExtraMl': 'mL',
+  'event.bladderFirstUrge': 'min',
+  'event.mostMealWaterPassed': 'min',
   // S-3, the circulation pack (core/catalog/circulation.ts). heart.rate keeps its reserved unit.
   'heart.output': 'L/min',
   'heart.strokeVolume': 'mL',
@@ -129,10 +143,19 @@ describe('catalog IDs', () => {
     expect(Object.keys(EVENTS).sort()).toEqual([...EVENT_IDS].sort())
     expect(Object.keys(BREATHING_SIGNALS).sort()).toEqual([...BREATHING_SIGNAL_IDS].sort())
     expect(Object.keys(EFFORT_SIGNALS).sort()).toEqual([...EFFORT_SIGNAL_IDS].sort())
+    expect(Object.keys(KIDNEY_SIGNALS).sort()).toEqual([...KIDNEY_SIGNAL_IDS].sort())
+    expect(Object.keys(KIDNEY_EVENTS).sort()).toEqual([...KIDNEY_EVENT_IDS].sort())
     expect(Object.keys(CIRCULATION_SIGNALS).sort()).toEqual([...CIRCULATION_SIGNAL_IDS].sort())
     expect(Object.keys(CIRCULATION_EVENTS).sort()).toEqual([...CIRCULATION_EVENT_IDS].sort())
     expect(Object.keys(SIGNAL_DOCS).sort()).toEqual(
-      [...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS, ...CIRCULATION_SIGNAL_IDS, ...RESERVED_SIGNAL_IDS].sort(),
+      [
+        ...ACTIVE_SIGNAL_IDS,
+        ...BREATHING_SIGNAL_IDS,
+        ...EFFORT_SIGNAL_IDS,
+        ...KIDNEY_SIGNAL_IDS,
+        ...CIRCULATION_SIGNAL_IDS,
+        ...RESERVED_SIGNAL_IDS,
+      ].sort(),
     )
     expect(Object.keys(EVENT_DOCS).sort()).toEqual([...RUN_EVENT_IDS].sort())
     for (const [key, row] of [...Object.entries(ALL_SIGNALS), ...Object.entries(RUN_EVENTS)]) expect(row.id).toBe(key)
@@ -185,6 +208,26 @@ describe('pack rows (architecture §1.3 lazy rows)', () => {
       expect(EFFORT_SIGNALS[id].validRange!.low, id).toBeLessThan(EFFORT_SIGNALS[id].validRange!.high)
     }
     expect(EFFORT_SIGNALS['skin.sweatRate'].validRange).toMatchObject({ low: 0, high: 3000, basis: 'cited' })
+  })
+
+  it('S-4 activates kidney.filtrationRate (unit kept) as a sim-clock constant and adds the kidney rows and moments, lazily', () => {
+    expect(RESERVED_SIGNAL_IDS as readonly string[]).not.toContain('kidney.filtrationRate')
+    for (const id of KIDNEY_SIGNAL_IDS) {
+      const row = KIDNEY_SIGNALS[id]
+      expect(ACTIVE_SIGNAL_IDS as readonly string[], id).not.toContain(id)
+      expect(row, id).toMatchObject({ status: 'assumption', clock: 'sim', shipsIn: 'v3.0' })
+      expect(isChartable(row), id).toBe(true)
+      expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
+    }
+    expect(KIDNEY_SIGNALS['kidney.filtrationRate']).toMatchObject({ unit: 'mL/min', kind: 'level', reactsToMeal: false })
+    expect(KIDNEY_SIGNALS['kidney.urineRate']).toMatchObject({ unit: 'mL/h', kind: 'rate', reactsToMeal: true })
+    expect(KIDNEY_SIGNALS['kidney.urineRate'].validRange).toMatchObject({ low: 21, high: 1000, basis: 'cited' })
+    expect(KIDNEY_SIGNALS['kidney.bladderMl'].validRange).toMatchObject({ low: 0, high: 600, basis: 'cited' })
+    // The lean events stay what the Digestion dock lists; the kidney moments are only in the run chunk.
+    for (const id of KIDNEY_EVENT_IDS) {
+      expect(EVENT_IDS as readonly string[], id).not.toContain(id)
+      expect(KIDNEY_EVENTS[id].status, id).toBe('assumption')
+    }
   })
 
   it('S-3 activates heart.rate (unit kept) as a graphed sim-clock level and adds the circulation rows and event, lazily', () => {
@@ -265,7 +308,9 @@ describe('catalog rows', () => {
     // A 'Model estimate' signal must say what it does not know.
     for (const id of RUN_SIGNAL_IDS) if (RUN_SIGNALS[id].status === 'assumption') expect(RUN_SIGNALS[id].limitKey, id).toBeDefined()
     // Markers and the human organism only point at signals the engine produces.
-    for (const e of events) expect(RUN_SIGNAL_IDS, e.id).toContain(e.foundOn)
+    for (const e of Object.values(EVENTS)) expect(ACTIVE_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
+    for (const e of Object.values(KIDNEY_EVENTS)) expect(KIDNEY_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
+    for (const e of Object.values(CIRCULATION_EVENTS)) expect(CIRCULATION_SIGNAL_IDS as readonly string[], e.id).toContain(e.foundOn)
     expect([...HUMAN_PROVIDES].sort()).toEqual([...RUN_SIGNAL_IDS].sort())
   })
 })

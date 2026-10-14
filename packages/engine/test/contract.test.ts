@@ -23,7 +23,7 @@ const report = goldenCoverage(calls)
  * Ratchet: the number of calls never goes down, so unwrapping a test (golden → plain it) fails here
  * even when other tests still cover its IDs. Raise these when you add tests.
  */
-const AT_LEAST = { golden: 51, fails: 6, pinned: 37 }
+const AT_LEAST = { golden: 65, fails: 6, pinned: 45 }
 
 describe('golden coverage', () => {
   it('the scan finds the wrapped physiology tests', () => {
@@ -64,7 +64,7 @@ describe('what the engine produces', () => {
     for (const [id, s] of sim.signals) expect(s.values, id).toHaveLength(sim.length)
   })
 
-  it('moments = every event', () => {
+  it('moments = every event, the packs’ included (S-4)', () => {
     expect([...sim.moments.keys()].sort()).toEqual([...RUN_EVENT_IDS].sort())
   })
 

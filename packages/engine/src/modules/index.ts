@@ -1,6 +1,6 @@
 /**
  * The human model's modules, in the frozen run order (core/module.ts MODULE_ORDER). Only the
- * modules that exist today; water and lymph join in v3 (S-4, S-5).
+ * modules that exist today; lymph joins in v3 (S-5).
  */
 import type { RunSignalId } from '../core/catalog.ts'
 import type { ModelModule } from '../core/module.ts'
@@ -12,8 +12,9 @@ import { bloodSugarModule } from './bloodSugar.ts'
 import { gasModule } from './gas.ts'
 import { effortModule } from './effort.ts'
 import { circulationModule } from './circulation.ts'
+import { waterModule } from './water.ts'
 
-export { activityModule, gutModule, energyModule, bloodSugarModule, gasModule, effortModule, circulationModule }
+export { activityModule, gutModule, energyModule, bloodSugarModule, gasModule, effortModule, circulationModule, waterModule }
 
 export const HUMAN_MODULES: readonly ModelModule[] = [
   activityModule,
@@ -23,6 +24,7 @@ export const HUMAN_MODULES: readonly ModelModule[] = [
   gasModule,
   effortModule,
   circulationModule,
+  waterModule,
 ]
 
 /** What each organism produces: every signal its modules provide. The contract test requires goldens per organism for these. */

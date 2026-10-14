@@ -9,7 +9,7 @@
  * (apps/web/src/systems/registry.ts); core/catalog.ts joins them into SIGNALS and EVENTS for the engine.
  * The IDs, types and helpers stay in core/catalog.ts (the frozen glossary).
  */
-import type { ActiveSignalId, EventMeta, LeanEventId, SignalMeta } from '../catalog.ts'
+import type { ActiveSignalId, EventId, EventMeta, SignalMeta } from '../catalog.ts'
 
 // ─── The frozen rows ─────────────────────────────────────────────────────────────────────────
 const k = (id: string) => `signals.${id}`
@@ -292,7 +292,7 @@ export const CORE_SIGNALS: { readonly [Id in ActiveSignalId]: SignalMeta<Id> } =
   },
 }
 
-export const CORE_EVENTS: { readonly [Id in LeanEventId]: EventMeta<Id> } = {
+export const CORE_EVENTS: { readonly [Id in EventId]: EventMeta<Id> } = {
   'event.stomachHalfEmpty': {
     id: 'event.stomachHalfEmpty',
     unit: 'min',

@@ -7,7 +7,7 @@
  *   - every active 'assumption' signal needs a `golden()` or a `pinned()`, and a limitKey;
  *   - IDs and sources named in tests must exist.
  */
-import { isSignalId, type EventId, type RunSignalId } from './catalog.ts'
+import { isSignalId, type RunEventId, type RunSignalId } from './catalog.ts'
 import { RUN_EVENTS, RUN_EVENT_IDS, RUN_SIGNALS, isRunEvent, isRunSignal } from './catalog/rows.ts'
 import type { OrganismId } from './organism.ts'
 import { PROVIDES } from '../modules/index.ts'
@@ -26,7 +26,7 @@ export interface GoldenCall {
 
 export interface CoverageReport {
   /** Active simulated signals/events with no sourced `golden()` — contract test fails. */
-  missingSourced: (RunSignalId | EventId)[]
+  missingSourced: (RunSignalId | RunEventId)[]
   /** Active assumption signals with neither golden() nor pinned() — fails. */
   missingAny: RunSignalId[]
   /** Active assumption signals without limitKey — fails. */

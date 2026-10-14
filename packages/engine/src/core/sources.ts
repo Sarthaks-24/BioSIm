@@ -514,6 +514,68 @@ export const SOURCES = {
       'Betts JG, et al. Anatomy and Physiology 2e, ch. 20 The Cardiovascular System: Blood Vessels and Circulation (§20.4, Table 20.3). OpenStax, Houston TX, 2022.',
   },
   // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-25…) when they ship.
+  // ── New in model version 3 (S-4: water, kidneys; V-4) ──
+  /**
+   * Checked 2026-10-14 (V-4): §25.1 "minimum urine volume of about 500 mL/day"; §25.2 "When bladder
+   * volume reaches about 150 mL, an urge to void is sensed", "nearly zero to 500–600 mL"; §25.5
+   * "about 125 mL/min filtrate produced in males (range of 90 to 140 mL/min)"; §25.6 glucose "about
+   * 375 mg/min", "about 200 mg/dL".
+   */
+  'openstax-ap2e-25': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'least urine 500 mL/day; bladder urge at 150 mL, holds up to 500–600 mL; filtration 125 mL/min',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/25-1-physical-characteristics-of-urine',
+    citation: 'OpenStax. Anatomy and Physiology 2e, ch. 25 (§25.1, §25.2, §25.5, §25.6). Rice University.',
+  },
+  /** Checked 2026-10-14 (V-4, §26.2): "an average of 1.5 liters (1.6 quarts) of urine per day"; "about 230 mL … generated metabolically". */
+  'openstax-ap2e-26': {
+    kind: 'textbook',
+    check: 'checked',
+    usedFor: 'urine 1.5 L a day on an ordinary day; about 230 mL of water a day made by metabolism',
+    url: 'https://openstax.org/books/anatomy-and-physiology-2e/pages/26-2-water-balance',
+    citation: 'OpenStax. Anatomy and Physiology 2e, ch. 26 (§26.2 Water Balance). Rice University.',
+  },
+  /**
+   * Checked 2026-10-14 (V-4, ch. 4): p85 metabolic water "approximately 15, 10.5, and 11.1 g/100 kcal"
+   * (carbohydrate, protein, fat); p74 "maximal excretion rate of approximately 0.7 to 1.0 L/hour"; p83
+   * "600 to 1,000 mL/hour with water loading".
+   */
+  iom2005: {
+    kind: 'report',
+    check: 'checked',
+    usedFor: 'metabolic water 0.105–0.15 mL per kcal; the kidney sends out at most 0.7–1.0 L an hour',
+    url: 'https://www.nationalacademies.org/read/10925/chapter/6',
+    citation:
+      'Institute of Medicine. Dietary Reference Intakes for Water, Potassium, Sodium, Chloride, and Sulfate, ch. 4. National Academies Press, 2005.',
+  },
+  /** Checked 2026-10-14 (V-4, abstract, PMID 26702122): 1 L still water over 30 min; urine over 4 h "1337 ± 330 g". */
+  maughan2016: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: '1 L of water: 1337 ± 330 mL of urine in 4 h (drinks of equal water alike; milk and ORS less)',
+    url: 'https://doi.org/10.3945/ajcn.115.114769',
+    citation:
+      'Maughan RJ, et al. A randomized trial to assess the potential of different beverages to affect hydration status: development of a beverage hydration index. Am J Clin Nutr 2016;103:717–723.',
+  },
+  /** Checked 2026-10-14 (V-4, abstract, PMID 3687569): 20 mL/kg water; young men's peak diuresis 10.86 mL/kg per hourly sample; 100.7 % (70 % if short of water) out in 2 h. */
+  crowe1987: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'after a 20 mL/kg drink, urine peaks near 700 mL/h at 65 kg; 70–100 % is out in 2 h',
+    url: 'https://doi.org/10.1093/ageing/16.5.285',
+    citation: 'Crowe MJ, et al. Altered water excretion in healthy elderly men. Age Ageing 1987;16:285–293.',
+  },
+  /** Checked 2026-10-14 (V-4, full text, PMC11231081): vasopressin's "plasma half-life is only 5 to 20 min". */
+  calvi2024: {
+    kind: 'paper',
+    check: 'checked',
+    usedFor: 'ADH (vasopressin) half-life 5–20 min: how fast the kidney follows extra water',
+    url: 'https://doi.org/10.3389/fendo.2024.1346082',
+    citation:
+      'Calvi A, et al. Urinary hyaluronidase activity is closely related to vasopressinergic system following an oral water load in men. Front Endocrinol 2024;15:1346082.',
+  },
+  // Bundles D/E/F add theirs (ferrannini1985, taylor1996, cahill1968, fleming2011, openstax-ap2e-19/22/25…) when they ship.
 } as const satisfies Record<string, Omit<SourceEntry, 'id'>>
 
 export type RegisteredSourceId = keyof typeof SOURCES
@@ -662,6 +724,20 @@ export const PARAM_SOURCES: Readonly<Partial<Record<string, { sources: readonly 
   'circulation.gutRiseMaxLPerMin': { sources: ['sidery1994'], basis: 'assumption' },
   'circulation.gutHalfKcalPerMin': { sources: ['eriksen1994'], basis: 'calibrated' },
   'circulation.gutPeakMinRiseMlPerMin': { sources: [], basis: 'display' },
+  // Water (S-4, V-4). The steady background day (D17): urine 1.5 L a day (OpenStax §26.2), never
+  // below 500 mL a day (§25.1); the kidney's ceiling 0.7–1.0 L/h (IOM p74); metabolic water by fuel
+  // 0.105–0.15 mL/kcal (IOM p85). kx and the ADH lag are calibrated on Maughan 2016 inside the AVP
+  // half-life (Calvi 2024); Crowe 1987 is the hold-out. Urge at 150 mL (§25.2); emptying at 300 mL
+  // is hand-picked inside "300 to 400 mL"; filtration 125 mL/min (§25.5).
+  'water.metabolicMlPerKcal': { sources: ['iom2005'], basis: 'measured' },
+  'water.backgroundUrineMlPerDay': { sources: ['openstax-ap2e-26'], basis: 'assumption' },
+  'water.minUrineMlPerH': { sources: ['openstax-ap2e-25'], basis: 'measured' },
+  'water.maxUrineMlPerH': { sources: ['iom2005'], basis: 'measured' },
+  'water.adhTauMin': { sources: ['calvi2024', 'maughan2016'], basis: 'calibrated' },
+  'water.urinePerExtraMlPerMin': { sources: ['maughan2016'], basis: 'calibrated' },
+  'water.bladderUrgeMl': { sources: ['openstax-ap2e-25'], basis: 'measured' },
+  'water.bladderEmptyMl': { sources: ['openstax-ap2e-25'], basis: 'assumption' },
+  'water.filtrationMlPerMin': { sources: ['openstax-ap2e-25'], basis: 'measured' },
 
   // The run window and resolution (48 h, 1 min): presentation choices.
   horizonMin: { sources: [], basis: 'display' },
