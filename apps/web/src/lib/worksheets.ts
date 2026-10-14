@@ -14,9 +14,10 @@ export interface Sheet {
   link: string
   /**
    * The question (0-based) printed with empty axes, and the time they span: hours after eating, or
-   * (the nerve demo, v3.1: a reflex takes thousandths of a second) milliseconds after the touch.
+   * (the nerve demo, v3.1: a reflex takes thousandths of a second) milliseconds after the touch, or
+   * (the hormone panel, v3.2: its own clock) the days of one cycle, day 1 to `days`.
    */
-  sketch: { task: number; hours: number } | { task: number; ms: number }
+  sketch: { task: number; hours: number } | { task: number; ms: number } | { task: number; days: number }
 }
 
 export const SHEETS = {
@@ -32,6 +33,13 @@ export const SHEETS = {
   musclesRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=muscles&act=run.30.10', sketch: { task: 3, hours: 2 } },
   sweatRun: { link: '/sim?a=roti:1&b=roti:1&t=38&layer=skin&act=run.30.10', sketch: { task: 3, hours: 2 } },
   reflexHotPan: { link: '/sim?a=roti:1&layer=nerves', sketch: { task: 1, ms: 250 } },
+  // v3.2: the Games lesson, and the hormone panel (its link opens the panel only where a teacher has
+  // switched "Growing up" on: R117).
+  footballWalk: {
+    link: '/sim?a=roti:1&b=roti:1&t=45&layer=breathing&act=football.30.20&bact=walk.30.20',
+    sketch: { task: 3, hours: 2 },
+  },
+  cycleHormones: { link: '/sim?a=roti:1&layer=reproduction', sketch: { task: 1, days: 28 } },
 } as const satisfies Record<string, Sheet>
 
 export type SheetKey = keyof typeof SHEETS

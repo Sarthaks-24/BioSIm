@@ -8,7 +8,7 @@ import { FLAGSHIP, flagshipHref } from './flagship.ts'
 import { HEART_PAUSE, PAUSES } from './flagshipPauses.ts'
 import { LESSONS } from './presets.ts'
 import { SHEETS, type SheetKey } from './worksheets.ts'
-import { BREATHING_LESSON } from '../systems/breathing/lesson.ts'
+import { BREATHING_LESSON, FOOTBALL_LESSON } from '../systems/breathing/lesson.ts'
 import { CIRCULATION_LESSON } from '../systems/circulation/lesson.ts'
 import { KIDNEYS_LESSON } from '../systems/kidneys/lesson.ts'
 import { LYMPH_LESSON } from '../systems/lymph/lesson.ts'
@@ -17,6 +17,10 @@ import { MUSCLES_LESSON, SKIN_LESSON } from '../systems/muscles/lesson.ts'
 import { FILTER_ML_PER_MIN } from '../systems/kidneys/water.ts'
 import { NERVES_LESSON } from '../systems/nerves/lesson.ts'
 import { NERVE_PARAMS, brainRoute, reflexTime } from '@lifepeek/engine/demo'
+import { PARAMS } from '@lifepeek/engine'
+import { teacherSwitch } from '../systems/registry.ts'
+import { REPRODUCTION_LESSON } from '../systems/reproduction/lesson.ts'
+import { CYCLE_DAYS, CYCLE_RANGE, HORMONES, MENSTRUATION_DRAWN, OVULATION_DAY, makeCurve } from '../systems/reproduction/data.ts'
 
 // The app's i18n setup needs a browser; nothing here draws.
 vi.mock('../i18n/index.ts', () => ({ localized: () => '' }))
@@ -80,8 +84,10 @@ describe('worksheets: one per Teach lesson, its QR code opening the lesson', () 
       expect([setup, book, y, exit.q].every(Boolean), key).toBe(true)
       const sketch = SHEETS[key].sketch
       expect(tasks[sketch.task]?.q, key).toMatch(/^Sketch /)
-      // Hours after eating; the nerve demo's in milliseconds after the touch (v3.1).
-      expect(tasks[sketch.task]?.q, key).toContain('ms' in sketch ? `to ${sketch.ms} ms` : `to ${sketch.hours} h`)
+      // Hours after eating; the nerve demo's in milliseconds after the touch (v3.1); the hormone panel's in days of one cycle (v3.2).
+      expect(tasks[sketch.task]?.q, key).toContain(
+        'ms' in sketch ? `to ${sketch.ms} ms` : 'days' in sketch ? `from day 1 to day ${sketch.days}` : `to ${sketch.hours} h`,
+      )
       for (const a of [...tasks, exit]) expect(a.b || a.k || a.m, `${key}: ${a.q}`).toBeTruthy()
     }
   })
@@ -239,6 +245,71 @@ describe('worksheets: the numbers the answers say are the model’s', () => {
     expect(numbers(tasks[3]!.m)).toEqual([round(slow.totalMs), round(slow.totalMs / reflex.totalMs)])
     expect(numbers(exit.m)).toEqual([round(reflex.totalMs), NERVE_PARAMS.thinkingMs])
     expect(brain.thinkingMs).toBe(NERVE_PARAMS.thinkingMs)
+  })
+
+  it('football or a walk (v3.2 Games lesson): breaths and beats in each, air per breath, back to rest, and the oxygen; the Compendium’s values', () => {
+    const l = FOOTBALL_LESSON
+    expect(l.activity.map((b) => b.kind)).toEqual(['football'])
+    expect(l.keptActivity.map((b) => b.kind)).toEqual(['walk'])
+    // The same minutes: only the activity differs.
+    expect(l.keptActivity.map((b) => [b.startMin, b.durMin])).toEqual(l.activity.map((b) => [b.startMin, b.durMin]))
+    const [game, walk] = [sim(l.meal, l.activity), sim(l.kept, l.keptActivity)]
+    const [start, end] = [l.activity[0]!.startMin, l.activity[0]!.startMin + l.activity[0]!.durMin]
+    expect(start).toBeLessThan(l.t)
+    expect(l.t).toBeLessThan(end)
+    const { tasks, exit, book, setup } = text('footballWalk')
+    expect(book).toContain('Older NCERT Class 7 book (2024-25, Ch 6, p. 60)')
+    expect(numbers(setup).slice(0, 4)).toEqual([0, l.activity[0]!.durMin, start, l.keptActivity[0]!.durMin])
+    expect(numbers(tasks[0]!.m)).toEqual([round(at(walk, 'lungs.breathRate', 0))])
+    expect(numbers(tasks[1]!.q)).toEqual([l.t])
+    expect(numbers(tasks[1]!.m)).toEqual([
+      round(at(game, 'lungs.breathRate', l.t)),
+      round(at(game, 'heart.rate', l.t), 5),
+      round(at(walk, 'lungs.breathRate', l.t)),
+      round(at(walk, 'heart.rate', l.t), 5),
+    ])
+    const litres = (r: RunResult, min: number) => round(at(r, 'lungs.tidalVolume', min) / 100) / 10
+    expect(numbers(tasks[2]!.m)).toEqual([litres(game, l.t), litres(walk, l.t), litres(walk, 0)])
+    // Both lines rise at the start and fall at the end; within 5 minutes both are back near rest.
+    expect(numbers(tasks[3]!.m)).toEqual([start, end, round(at(game, 'lungs.breathRate', end + 5)), 5])
+    expect(round(at(walk, 'lungs.breathRate', end + 5))).toBe(round(at(game, 'lungs.breathRate', end + 5)))
+    for (let min = start + 1; min < end; min++)
+      expect(at(game, 'lungs.breathRate', min), String(min)).toBeGreaterThan(at(walk, 'lungs.breathRate', min))
+    const met = PARAMS.activity.met
+    expect(numbers(exit.k)).toEqual([met.football, met.walk, 2024])
+    expect(numbers(exit.m)).toEqual([round(at(game, 'gas.o2UseRate', l.t) / at(walk, 'gas.o2UseRate', l.t), 0.1)])
+  })
+
+  it('why the lining of the uterus builds up (R-1, v3.2): the book’s cycle and its egg day, each hormone’s highest day from the panel’s curves; no dates, no one’s own cycle', () => {
+    expect(REPRODUCTION_LESSON.key).toBe('cycleHormones')
+    const { tasks, exit, book, setup, footer, tagKey } = text('cycleHormones') as Text & { footer: string; tagKey: string }
+    expect(book).toContain('NCERT Class 10 (Ch 7, p. 124)')
+    expect(exit.b).toContain('NCERT Class 10 (Ch 7, p. 124)')
+    expect(SHEETS.cycleHormones.sketch).toEqual({ task: 1, days: CYCLE_DAYS })
+    expect(numbers(tasks[0]!.q)).toEqual([CYCLE_DAYS])
+    expect(numbers(tasks[0]!.b)).toEqual([9, 11, 221, ...CYCLE_RANGE, CYCLE_DAYS, OVULATION_DAY])
+    // Each hormone's highest day on the panel's own curves (a point every quarter day, as drawn).
+    const highest = (h: (typeof HORMONES)[number]) => {
+      const curve = makeCurve(h)
+      let best = { day: 1, v: -Infinity }
+      for (let day = 1; day <= CYCLE_DAYS; day += 0.25) if (curve(day) > best.v) best = { day, v: curve(day) }
+      return best.day
+    }
+    expect(numbers(tasks[1]!.q)).toEqual([1, CYCLE_DAYS])
+    expect(numbers(tasks[1]!.m)).toEqual([highest('lh'), round(highest('progesterone'))])
+    expect(highest('lh')).toBe(OVULATION_DAY)
+    expect(highest('progesterone')).toBeGreaterThan(OVULATION_DAY)
+    expect(numbers(tasks[2]!.b)).toEqual([9, 11, 221, CYCLE_DAYS, ...MENSTRUATION_DRAWN])
+    expect(numbers(tasks[2]!.q)).toEqual([OVULATION_DAY + 1, CYCLE_DAYS])
+    // The teacher switch is the gate: the sheet says so, and its link opens the row only where it is on (R117).
+    expect(setup).toContain('“Growing up”')
+    expect(SHEETS.cycleHormones.link).not.toMatch(/growing|switch/i)
+    expect(teacherSwitch.on).toBe(false)
+    // Nothing asks for, or about, anyone's own cycle; no dates (R-1, model §2.12).
+    const all = JSON.stringify(text('cycleHormones'))
+    expect(all).not.toMatch(/your|dates?|track|predict|calendar|fertil/i)
+    expect(footer).toContain('not anyone’s own')
+    expect(tagKey).toContain('85 women')
   })
 
   it('how fat reaches the blood (U-5): each meal’s highest blood fat, the burger’s for hours (R90), and the fat each brings', () => {

@@ -93,8 +93,9 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
   await installed(page)
   const lessons = page.locator('[data-lesson]')
   // Every chapter's lessons (all public since H-1), once the list is drawn.
-  // v3.1 Teach step: the hot-pan reflex lesson joins Control and coordination (R109).
-  await expect(lessons).toHaveCount(11)
+  // v3.1 Teach step: the hot-pan reflex lesson joins Control and coordination (R109). v3.2: the Games
+  // lesson joins Respiration; reproduction's is listed only with the teacher switch on (R117), off here.
+  await expect(lessons).toHaveCount(12)
   const count = await lessons.count()
   expect(count).toBeGreaterThan(0)
   await expect(lessons.getByText('Not saved for offline')).toHaveCount(count)
@@ -113,6 +114,51 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
     // Still saved after a reload, offline.
     await page.goto('/teach')
     await expect(lessons.getByText('Ready for class offline ✓')).toHaveCount(count)
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
+// The guided lesson's save list is built from its pauses (lib/lessons.ts flagshipPacks): its last
+// pause, Lymph's blood fat, works offline once the lesson alone was saved (audit fix, v3.2 Teach step).
+test('"Save for class offline" on the guided lesson: offline, every pause lights its system, the blood-fat pause (5) included', async ({
+  page,
+  context,
+}) => {
+  onlyIn('desktop')
+  // Waits for FIX-F1 (lp-lazy keeps 40 files, fewer than the guided lesson saves, so the service worker
+  // drops some at once and the lesson never reads "Ready"). Passes with a larger limit (checked with 400):
+  // remove this line when FIX-F1 lands.
+  test.fixme(true, 'needs FIX-F1: lp-lazy maxEntries 40 evicts the saved lesson')
+  test.setTimeout(90_000)
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/teach')
+  await installed(page)
+  // A later visit (the service worker now answers this page's requests), as in class the next day.
+  await page.reload()
+  const flagship = page.locator('[data-flagship]')
+  await expect(flagship.getByText('Not saved for offline')).toBeVisible()
+  await flagship.getByRole('button', { name: /^Save for class offline/ }).click()
+  await expect(flagship.getByText('Ready for class offline ✓')).toBeVisible({ timeout: 30_000 })
+  await context.setOffline(true)
+  try {
+    await flagship.getByRole('link', { name: 'Start the guided lesson' }).click()
+    const bar = page.locator('[data-lesson-bar]')
+    await expect(bar).toHaveAttribute('data-lesson-step', '1')
+    for (const [step, system] of [
+      [2, 'breathing'],
+      [3, 'skin'],
+      [4, 'kidneys'],
+      [5, 'lymph'],
+    ] as const) {
+      await bar.locator('[data-lesson-next]').click()
+      await expect(bar).toHaveAttribute('data-lesson-step', String(step))
+      await expect(page.locator(`[data-system-title="${system}"]`)).toBeAttached()
+    }
+    await expect(bar).toHaveAttribute('data-lesson-pause', 'fat')
+    await expect(page.locator('[data-layer="lymph"]')).toBeAttached({ timeout: 15_000 })
+    await expect(page.getByText(NEEDS_INTERNET)).toHaveCount(0)
+    await expect(page.getByText(/Couldn.t load the/)).toHaveCount(0)
   } finally {
     await context.setOffline(false)
   }

@@ -185,6 +185,7 @@
       "rotiDal": "Which raises blood sugar more gently?",
       "colaFour": "One cola or four: what happens to blood sugar?",
       "breathRun": "Why do you breathe faster when you run?",
+      "footballWalk": "Football or a walk: what do the heart and lungs do?",
       "heartWalk": "Where does the blood go after a meal, and in a walk?",
       "drinkWater": "Where does the water from a drink go?",
       "musclesRun": "How much harder do muscles work in a run?",
@@ -219,6 +220,7 @@
     ],
     "lessonQuestions": {
       "breathRun": "How many breaths a minute during the run, and at rest?",
+      "footballWalk": "How many breaths and heart beats a minute in a game of football, and in a walk?",
       "heartWalk": "How much blood goes to the muscles during the walk, and at rest?",
       "drinkWater": "How much urine an hour at the most, with four glasses and with one?",
       "musclesRun": "How many times their resting energy do the muscles use during the run?",
@@ -242,11 +244,13 @@
       "transport": "Transportation",
       "excretion": "Excretion",
       "movement": "Moving and body heat",
-      "control": "Control and coordination"
+      "control": "Control and coordination",
+      "reproduction": "Reproduction and growing up"
     },
     "classTag": "Class {{n}}",
     "opensAtTime": "opens at {{time}}",
     "opensDemo": "opens on the hot-pan demo",
+    "opensPanel": "opens on the hormone panel",
     "worksheet": "Worksheet to print",
     "worksheetFor": "Worksheet to print: {{lesson}}"
   },
@@ -272,6 +276,8 @@
     "axes": "Empty axes to sketch on: {{y}} against time, 0 to {{hours}} hours.",
     "timeMs": "Time (ms after the touch)",
     "axesMs": "Empty axes to sketch on: {{y}} against time, 0 to {{ms}} milliseconds.",
+    "timeDays": "Day of the cycle",
+    "axesDays": "Empty axes to sketch on: {{y}} against the days of one cycle, day 1 to day {{days}}.",
     "tags": {
       "b": "Book",
       "k": "Fixed value",
@@ -615,6 +621,64 @@
           "b": "NCERT Class 10 (Ch 6, p. 102): thinking it all through takes time, too long when we touch a hot object; a reflex arc is quicker.",
           "m": "The reflex turns round in the spinal cord and reaches the arm muscle in about 64 ms; thinking adds about 150 ms."
         }
+      },
+      "footballWalk": {
+        "setup": "Two rotis at 0 h, and 20 minutes of football from 30 min. Kept to compare (the dashed grey line): the same meal with a 20-minute walk at the same time. It opens in the game on the “Breaths a minute” graph; pick Heart & blood for the heart. The model plays the game at one steady effort; a real game comes in bursts.",
+        "book": "Older NCERT Class 7 book (2024-25, Ch 6, p. 60): 15–18 breaths a minute for a grown-up at rest, up to 25 a minute in heavy exercise.",
+        "y": "Breaths a minute",
+        "tasks": [
+          {
+            "q": "How many breaths a minute before the game, at rest?",
+            "b": "Older NCERT Class 7 book (2024-25): 15–18 a minute.",
+            "m": "About 15 a minute, for one resting grown-up."
+          },
+          {
+            "q": "At 45 min, how many breaths and heart beats a minute in the game, and in the walk?",
+            "m": "Football: about 30 breaths and 130 beats a minute. The walk: about 24 breaths and 95 beats."
+          },
+          {
+            "q": "How much air goes in with each breath in the game, and in the walk?",
+            "m": "About 1.2 L in the game, about 0.8 L in the walk (about 0.4 L at rest)."
+          },
+          {
+            "q": "Sketch breaths a minute from 0 to 2 h, for the game and for the walk. When does each line rise, and when does it fall back?",
+            "m": "Both rise at 30 min and fall at 50 min, back to about 16 a minute within 5 minutes; the game’s line is higher all through."
+          }
+        ],
+        "exit": {
+          "q": "Why do the heart and lungs work harder in football than in a walk?",
+          "k": "A casual game of football uses about 7.0 times the resting energy, a walk 3.8 (2024 Adult Compendium of Physical Activities).",
+          "m": "The muscles use about 1.8 times as much oxygen as in the walk: the lungs take in more air, and the heart pumps more blood to carry it."
+        }
+      },
+      "cycleHormones": {
+        "setup": "The Reproduction row: a teacher switches on “Growing up” in Settings first. It stays on in this tab only, so the QR code opens the panel only on a device where it is on. “Hormones over one cycle” shows the book’s typical 28-day cycle: estrogen, LH and progesterone, each from low to its own highest. Nothing about anyone’s own cycle.",
+        "book": "NCERT Class 10 (Ch 7, p. 124): since the ovary releases one egg every month, “the uterus also prepares itself every month”; its lining becomes thick and spongy.",
+        "y": "Level (low to its own highest)",
+        "tasks": [
+          {
+            "q": "How often does the cycle repeat, and on which day of the book’s 28-day diagram is an egg released?",
+            "b": "NCERT Class 9 Exploration (Ch 11, p. 221): typically every 21–35 days, often around 28; in the diagram, on day 14 (ovulation)."
+          },
+          {
+            "q": "Sketch LH and progesterone from day 1 to day 28 on the same axes. Mark the day each is highest.",
+            "m": "LH is highest on day 14, the day the egg is released; progesterone is highest around day 22, after it."
+          },
+          {
+            "q": "What happens to the lining of the uterus from day 15 to day 28, and when it is not needed?",
+            "b": "NCERT Class 9 Exploration (Ch 11, p. 221): it becomes thicker and rich with blood vessels; when it is not needed, it starts breaking down around day 28 and is shed (menstruation, days 1–5 in the diagram)."
+          },
+          {
+            "q": "Why is each line drawn against its own highest level, not all on one scale?",
+            "m": "The three are measured in different units: compare when each rises and falls, not how tall the lines are."
+          }
+        ],
+        "exit": {
+          "q": "Why does the lining of the uterus build up every month?",
+          "b": "NCERT Class 10 (Ch 7, p. 124): the ovary releases one egg every month, so the uterus prepares itself every month; its thick, spongy lining would nourish an embryo."
+        },
+        "tagKey": "Book: the NCERT book’s value; write this one in the exam. Model: what the panel shows, middle values from a study of 85 women moved onto the book’s 28-day cycle.",
+        "footer": "The panel shows the books’ typical cycle, not anyone’s own: cycles differ. Not medical advice."
       }
     }
   },
@@ -1681,6 +1745,12 @@
           "model": "about 33 a minute in a 10-minute run, each breath about 1.4 L instead of 0.4 L (model estimate)",
           "why": "The model follows studies of grown-ups exercising hard. At their hardest effort, adults average about 36 breaths a minute (Blackie 1991); trained runners in a marathon measured 47–56 (Bosch 1990). Both agree: faster and deeper."
         },
+        "games": {
+          "what": "Breathing in a game of football",
+          "book": "up to 25 a minute in heavy exercise (same page)",
+          "model": "about 30 a minute in 20 minutes of casual football, about 24 in a 20-minute walk (model estimate)",
+          "why": "The model follows studies of grown-ups exercising, as for the run. It plays football as a casual game at one steady effort (2024 Adult Compendium: 7.0 times the resting energy, a walk 3.8); a real game comes in bursts."
+        },
         "exhaled": {
           "what": "Air breathed out",
           "book": "16.4 % oxygen and 4.4 % carbon dioxide (older NCERT Class 7 book, 2024-25, Ch 6, p. 64)",
@@ -2149,7 +2219,22 @@
         "vary": "The book says these figures are only representative, and there may be individual variations."
       },
       "sourcesTitle": "Sources",
-      "book": "From the book"
+      "book": "From the book",
+      "why": {
+        "cycle": {
+          "what": "How long one cycle is",
+          "book": "typically every 21–35 days, often around 28 (NCERT Class 9 Exploration, Ch 11, p. 221)",
+          "model": "one cycle of 28 days, with the egg released on day 14 (model estimate)",
+          "why": "They agree: the panel draws the book’s typical cycle, not anyone’s own. Its hormone points come from a study whose standard cycle was 29 days, with the egg on day 15, moved onto the book’s 28 days (Anckaert 2021)."
+        },
+        "menstruation": {
+          "what": "How long menstruation lasts",
+          "book": "usually 3 to 7 days (NCERT Class 9 Exploration, Ch 11, p. 221); about two to eight days (NCERT Class 10, Ch 7, p. 124)",
+          "model": "days 1–5 shaded, as the Class 9 diagram draws them",
+          "why": "The two books give slightly different ranges, and people differ. The panel shades the days the Class 9 diagram shows (Fig. 11.21)."
+        },
+        "ask": "The Class 9 and Class 10 books give different lengths for menstruation. Why can both be right?"
+      }
     }
   },
   "picker": {
