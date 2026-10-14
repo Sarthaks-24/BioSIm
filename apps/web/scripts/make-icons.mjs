@@ -41,14 +41,20 @@ function distToSegment(px, py, [ax, ay], [bx, by]) {
   return Math.hypot(px - ax - t * dx, py - ay - t * dy)
 }
 
-function render(size) {
-  const s = size / 32
+/**
+ * One icon, `size` px square. `scale` < 1 draws the mark smaller in the middle of the same paper:
+ * the maskable icon's mark must sit inside the central circle (radius 40 % of the icon) that every
+ * Android mask keeps (web audit 2026-10-14: icon-512's mark reached the edge and was cropped).
+ */
+function render(size, scale = 1) {
+  const s = (size / 32) * scale
+  const offset = (32 - 32 / scale) / 2
   const raw = Buffer.alloc(size * (size * 4 + 1))
   for (let y = 0; y < size; y++) {
     raw[y * (size * 4 + 1)] = 0
     for (let x = 0; x < size; x++) {
-      const px = (x + 0.5) / s
-      const py = (y + 0.5) / s
+      const px = (x + 0.5) / s + offset
+      const py = (y + 0.5) / s + offset
       let d = Infinity
       for (let i = 1; i < pts.length; i++) d = Math.min(d, distToSegment(px, py, pts[i - 1], pts[i]))
       const dot = Math.hypot(px - 13, py - 20)
@@ -101,4 +107,7 @@ function png(size, raw) {
 
 const pub = fileURLToPath(new URL('../public/', import.meta.url))
 for (const size of [192, 512]) writeFileSync(`${pub}icon-${size}.png`, render(size))
+// The mark's farthest point (the top of the stroke) is 15.8 units from the centre: at 0.7 it is
+// 35 % of the icon from the centre, inside the 40 % safe zone.
+writeFileSync(`${pub}icon-maskable-512.png`, render(512, 0.7))
 console.log('icons written')

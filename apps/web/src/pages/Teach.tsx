@@ -140,7 +140,16 @@ export default function Teach() {
 
       <section aria-labelledby="teach-qr" className="mt-10 flex flex-col gap-6 border-t border-border pt-10 sm:flex-row sm:items-center">
         <figure className="shrink-0">
-          <img src={qrCode} alt={t('teach.qrAlt')} width={240} height={240} className="size-60 rounded-lg bg-white" />
+          <img
+            src={qrCode}
+            alt={t('teach.qrAlt')}
+            width={240}
+            height={240}
+            // At the end of the page: fetched when it is about to come into view (T12c).
+            loading="lazy"
+            decoding="async"
+            className="size-60 rounded-lg bg-white"
+          />
           {/* The address it opens (questions 1 to 3 start there), to type if a camera can't read the code. */}
           <figcaption className="tabular mt-2 text-center text-sm font-semibold" style={{ width: 240, overflowWrap: 'anywhere' }}>
             {SITE_URL.replace(/^https:\/\//, '') + QR_PATH}
