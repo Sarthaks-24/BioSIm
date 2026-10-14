@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // "Save for class offline" (lib/offlineSave.ts) against a fake Cache Storage: a lesson goes to
-// lp-saved, which the service worker reads first and never expires (R120 #1).
+// lp-saved, which the service worker reads first and never expires (R120 #1), and a save while a new
+// version waits saves the new version's files, then lets it take over (R120 #16).
 
 vi.mock('./webgl.ts', () => ({ hasWebGL: () => true }))
 
@@ -16,6 +17,7 @@ const version = (v: string): Manifest => ({
   ],
 })
 const OLD = version('OOOOOOOO')
+const NEW = version('NNNNNNNN')
 
 /** Cache Storage with named caches of paths; `added` logs each addAll. */
 function fakeCaches() {
@@ -116,5 +118,43 @@ describe('Save for class offline (R120 #1)', () => {
     const { isSaved } = await load()
     await isSaved(['stage'])
     expect([...fake.store.get('lp-saved')!]).toEqual(['/assets/Sheets-OOOOOOOO.js'])
+  })
+})
+
+describe('saving while a new version waits (R120 #16)', () => {
+  it('saves the new version’s files (from the server, not the old precached list), then lets it take over and reloads', async () => {
+    waiting = { postMessage: vi.fn() }
+    deployed = NEW
+    fake.store.set('lp-saved', new Set(['/assets/Sheets-PASTPAST.js']))
+    const { save } = await load()
+    const saving = save(['stage', '3d'])
+    await vi.waitFor(() => expect(waiting!.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' }))
+    expect(fake.added).toEqual([
+      { cache: 'lp-saved', urls: ['/assets/Sheets-NNNNNNNN.js', '/assets/shared-AAAAAAAA.js', '/assets/BodyCanvas-NNNNNNNN.js'] },
+    ])
+    const [url, init] = vi.mocked(fetch).mock.calls.at(-1)! as [string, RequestInit]
+    expect(url).toMatch(/^\/pack-manifest\.json\?deployed=\d+$/)
+    expect(init).toEqual({ cache: 'no-store' })
+    // A past version's file goes; the old version's (still running) and the new one's stay.
+    expect(fake.store.get('lp-saved')!.has('/assets/Sheets-PASTPAST.js')).toBe(false)
+    expect(reload).not.toHaveBeenCalled()
+    listeners.controllerchange!()
+    expect(await saving).toBe(true)
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('the status check of an old page leaves the waiting version’s saved files alone', async () => {
+    waiting = { postMessage: vi.fn() }
+    fake.store.set('lp-saved', new Set(['/assets/Sheets-NNNNNNNN.js']))
+    const { isSaved } = await load()
+    expect(await isSaved(['stage'])).toBe(false)
+    expect([...fake.store.get('lp-saved')!]).toEqual(['/assets/Sheets-NNNNNNNN.js'])
+  })
+
+  it('no new version waiting: no reload, no message', async () => {
+    const { save } = await load()
+    expect(await save(['stage'])).toBe(true)
+    expect(reload).not.toHaveBeenCalled()
+    expect(vi.mocked(fetch).mock.calls.map(([u]) => u)).toEqual(['/pack-manifest.json'])
   })
 })
