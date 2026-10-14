@@ -205,6 +205,8 @@ const BUDGETS = [
   // A-11a: the germ-defence card (anatomy plan §8: ≤ 5 KB gz), checked with all of the lymph pack's
   // code (its Now line and the map too: one chunk, systems/lymph/pack.ts), so the card is under it.
   { name: 'germ card + map', roots: ['src/systems/lymph/pack.ts'], minus: SIM_ROOTS, max: 5 * KB, mode: 'enforce' },
+  // U-2: the body-system picker (ui-ux §9, architecture §4: ≤ 6 KB gz, lazy), with the Overlay it opens in.
+  { name: 'picker (lazy)', roots: ['src/components/SystemPicker.tsx'], minus: SIM_ROOTS, max: 6 * KB, mode: 'enforce' },
 ]
 
 const manifestFile = path.join(dist, '.vite', 'manifest.json')

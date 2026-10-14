@@ -177,7 +177,7 @@ const LABEL_KEYS: readonly BreathingLabel[] = ['lungs', 'diaphragm', 'trachea', 
  * fps). Nothing changes colour. With motion reduced: one still frame, half breathed in, with arrows
  * for air in and out. A short picture (a phone's) names only the lungs and the diaphragm.
  */
-export function LungsLayer({ sim, view, width: w, height: h, reduced, projector, kit }: LayerProps) {
+function LungsLayer({ sim, view, width: w, height: h, reduced, projector, kit }: LayerProps) {
   const { t } = useTranslation()
   const back = useRef<HTMLCanvasElement>(null)
   const muscle = useRef<HTMLCanvasElement>(null)

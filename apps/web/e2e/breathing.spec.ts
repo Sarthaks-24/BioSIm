@@ -102,6 +102,9 @@ test('the title opens the picker; keys [ ] L; Esc closes it and the title keeps 
   await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
   await page.keyboard.press('l')
   await expect(picker).toBeVisible()
+  // Switched away in a preview, the hidden rows stay in the picker (R93 #4).
+  await expect(picker.locator('[data-system-row]')).toHaveCount(3)
+  await expect(picker.locator('[data-system-row="breathing"]')).toBeVisible()
   await page.keyboard.press('ArrowDown')
   await page.keyboard.press('Escape')
   await expect(picker).toBeHidden()
@@ -134,13 +137,19 @@ test('while the pack loads the lit system stays drawn and the title says so; a f
 }) => {
   test.skip(test.info().project.name !== 'desktop', 'one project is enough')
   await page.route('**/assets/pack-*.js', async (route) => {
-    await new Promise((r) => setTimeout(r, 1500))
+    await new Promise((r) => setTimeout(r, 2500))
     return route.continue()
   })
   await goto(page, REST)
   await page.locator('[data-stage]').waitFor()
   const status = page.locator('[data-system-title] [role=status]')
   await expect(status).toHaveText('Getting the lungs ready…')
+  // The link, and a copy of it made now, keep what was asked for (R93 #2).
+  expect(new URL(page.url()).searchParams.get('layer')).toBe('breathing')
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.getByRole('button', { name: 'Copy link' }).click()
+  const copied = await page.evaluate(() => navigator.clipboard.readText())
+  expect(new URL(copied).searchParams.get('layer')).toBe('breathing')
   // The screen is never cleared: Digestion stays drawn meanwhile.
   await expect(page.locator('[data-system-title=digestion]')).toBeVisible()
   await expect(page.locator('[data-body]').first()).toBeVisible()

@@ -30,7 +30,8 @@ export function stepLayer(dir: 1 | -1) {
   setLayer(stepSystem(layer, preview, dir))
 }
 
-/** How long a pack may load before the title adds that the connection is slow (R71). */
+/** How long a pack may load before the title says it is on its way (it usually arrives sooner), and before it adds that the connection is slow (R71). */
+const SAY_MS = 300
 const SLOW_MS = 6000
 
 /**
@@ -52,12 +53,13 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const open = usePicker((s) => s.open)
   const button = useRef<HTMLButtonElement>(null)
   const [attempt, setAttempt] = useState(0)
-  const [slow, setSlow] = useState(false)
+  // 0: nothing said yet, 1: "Getting the lungs ready…", 2: the connection is slow.
+  const [said, setSaid] = useState(0)
   useEffect(() => {
-    setSlow(false)
+    setSaid(0)
     if (!switching || switching.failed) return
-    const id = setTimeout(() => setSlow(true), SLOW_MS)
-    return () => clearTimeout(id)
+    const ids = [setTimeout(() => setSaid(1), SAY_MS), setTimeout(() => setSaid(2), SLOW_MS)]
+    return () => ids.forEach(clearTimeout)
   }, [switching])
   const rows = pickerSystems(preview)
   const many = rows.length > 1
@@ -97,14 +99,14 @@ export default function SystemTitle({ run }: { run: RunResult }) {
         </button>
         {step(1, t('stage.nextSystem'), '›')}
       </div>
-      {switching && (
+      {switching && (switching.failed || said > 0) && (
         <p
           role="status"
           className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-control bg-surface-raised/90 px-1.5 text-caption text-ink-muted"
         >
           {switching.failed
             ? t(navigator.onLine ? 'stage.packFailed' : 'sim.needsInternet', { what })
-            : slow
+            : said > 1
               ? t('sim.slow3d')
               : t('stage.packLoading', { what })}
           {switching.failed && (
