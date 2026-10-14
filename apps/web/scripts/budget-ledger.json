@@ -120,6 +120,15 @@
         "engineKB": 11.974,
         "simRatchetKB": 188.874,
         "simEngineRatchetKB": 200.948
+      },
+      {
+        "wp": "U-6",
+        "at": "2026-10-14",
+        "on": "v3 d6ed16f (/sim 188.681 measured) + U-6: Hormones' row in the clock chunk group (alone it was a 0.2 KB chunk of its own), its pack loader (control: one lazy module, 15.0 KB gz), its name in the core text, the × before eating and g-an-hour unit keys (lib/formatSignal.ts); /sim +0.149 (188.830), engine 11.974 unchanged",
+        "simKB": 188.83,
+        "engineKB": 11.974,
+        "simRatchetKB": 189.03,
+        "simEngineRatchetKB": 201.104
       }
     ]
   },
