@@ -90,25 +90,27 @@ const still: Side = { leg: { hip: 0, knee: 0, ankle: 0 }, arm: { shoulder: 0, el
 
 /**
  * The four still poses, mid-stride. The arms swing against the legs (the leg forward on one side,
- * the arm forward on the other). Front-on, a stride shows as a leg shortened by its bend and a
- * raised heel; the run lifts the front knee, kicks the back heel up (both feet off the ground) and
- * bends both elbows to about a right angle, forearms across the belly. Stride and bend grow with
- * the band, so the four read apart at a glance (anatomy plan §2.4; numbers are a drawing's, not
+ * the arm forward on the other). Front-on, a stride shows as a leg shortened by its bend, its
+ * kneecap forward and its foot raised, toes down; the run lifts the front knee, kicks the back heel
+ * up (both feet off the ground) and bends both elbows to about a right angle: the front fist comes
+ * up to the chest above the liver, the back hand to the waist, both at the torso's side so the
+ * organs inside stay clear (R88). Stride and bend grow with the band, so the four read apart at a
+ * glance (anatomy plan §2.4; numbers are a drawing's, not
  * measured: walking hip ≈ 20° each way, running knee ≈ 90°+ in swing, per the gait texts).
  */
 export const POSES: { readonly [B in ActivityBand]: LimbPose } = {
   rest: { right: still, left: still },
   walk: {
-    right: { leg: { hip: 24, knee: 50, ankle: 10 }, arm: { shoulder: -14, elbow: 12, inward: 0, out: 0 } },
+    right: { leg: { hip: 24, knee: 50, ankle: 22 }, arm: { shoulder: -14, elbow: 12, inward: 0, out: 0 } },
     left: { leg: { hip: 0, knee: 0, ankle: 0 }, arm: { shoulder: 16, elbow: 24, inward: 10, out: 0 } },
   },
   walkBrisk: {
-    right: { leg: { hip: 32, knee: 60, ankle: 10 }, arm: { shoulder: -22, elbow: 80, inward: 30, out: 8 } },
-    left: { leg: { hip: -2, knee: 0, ankle: 0 }, arm: { shoulder: 16, elbow: 80, inward: 62, out: 6 } },
+    right: { leg: { hip: 32, knee: 60, ankle: 24 }, arm: { shoulder: -22, elbow: 80, inward: 12, out: 6 } },
+    left: { leg: { hip: -2, knee: 0, ankle: 0 }, arm: { shoulder: 24, elbow: 78, inward: 42, out: 2 } },
   },
   run: {
-    right: { leg: { hip: 52, knee: 72, ankle: 12 }, arm: { shoulder: -30, elbow: 88, inward: 32, out: 10 } },
-    left: { leg: { hip: -20, knee: 44, ankle: 30 }, arm: { shoulder: 20, elbow: 86, inward: 64, out: 8 } },
+    right: { leg: { hip: 52, knee: 72, ankle: 26 }, arm: { shoulder: -30, elbow: 90, inward: 14, out: 8 } },
+    left: { leg: { hip: -20, knee: 44, ankle: 30 }, arm: { shoulder: 20, elbow: 85, inward: 45, out: 4 } },
   },
 }
 
@@ -202,38 +204,20 @@ export function legRadius(u: number): number {
   return r * cap
 }
 
-/**
- * One part of a posed arm: its curve, and the range of ARM's arc-length places it covers (so
- * armRadius fits it: `partRadius`). A gently bent arm is one part, shoulder to fingertips, rounded
- * at the elbow. A bent one (a brisk walk, a run) is two that overlap at a rounded elbow, like a
- * jointed mannequin's: the upper arm, then the forearm with the hand. (One outline cannot follow a
- * sharp bend: its inside edge would cross itself.)
- */
-export interface ArmPart {
-  curve: Spline3
-  range: readonly [number, number]
-  /** Which end is rounded (the elbow's), if any. */
-  caps: 'none' | 'end' | 'start'
-}
-
-/** armRadius along one part of a posed arm (u = 0…1 along the part). */
-export const partRadius =
-  ([from, to]: readonly [number, number]) =>
-  (u: number) =>
-    limbKit().armRadius(from + (to - from) * u)
-
-/** An elbow bent more than this (degrees) is drawn as two parts. */
+/** Samples of ARM along a posed arm. */
+const ARM_SAMPLES = 40
+/** An elbow bent more than this (degrees) is a sharp joint (a brisk walk, a run); less, a soft curve. */
 const JOINTED = 40
-/** Samples of ARM per part. */
-const ARM_SAMPLES = 32
 
 /**
- * The viewer's right arm (+x; mirror it with `side` −1) in a pose. The shoulder turn fades in over
- * the top of the arm (the root stays in the shoulder); the forearm is bent at the elbow, then
- * turned in last, about the upright through the elbow, so a back-swung arm's hand still points
- * forward and down, as a walker's does.
+ * The viewer's right arm (+x; mirror it with `side` −1) in a pose, as ONE curve from the shoulder
+ * to the fingertips (the flat body outlines it as one shape, so a bent arm is one silhouette with
+ * a pointed elbow, never a forearm floating on its own). The shoulder turn fades in over the top of
+ * the arm (the root stays in the shoulder); the forearm is bent at the elbow, then turned in last,
+ * about the upright through the elbow, so a back-swung arm's hand still points forward and down,
+ * as a walker's does.
  */
-export function armParts(a: ArmAngles, side: 1 | -1): ArmPart[] {
+export function armCurve(a: ArmAngles, side: 1 | -1): Spline3 {
   const { ARM, ELBOW_U, Spline3, Vec3 } = limbKit()
   const shoulder = ARM.getPointAt(0.1)
   const elbow = ARM.getPointAt(ELBOW_U)
@@ -241,42 +225,56 @@ export function armParts(a: ArmAngles, side: 1 | -1): ArmPart[] {
   const atShoulder = (q: XYZ, s: number) => add(shoulder, swing(lift(sub(q, shoulder), a.out * s, 1), a.shoulder * s), 1)
   const elbowNow = atShoulder(elbow, 1)
   const p = new Vec3()
-  // `bend`: how much of the elbow's turn a place gets (all of it past the elbow; faded across it in one part).
-  const part = (range: readonly [number, number], caps: ArmPart['caps'], bend: (u: number) => number): ArmPart => {
-    const [from, to] = range
-    const pts: XYZ[] = []
-    for (let i = 0; i <= ARM_SAMPLES; i++) {
-      const u = from + ((to - from) * i) / ARM_SAMPLES
-      ARM.getPointAt(u, p)
-      const e = bend(u)
-      let q: XYZ = v(p.x, p.y, p.z)
-      if (e > 0) q = add(elbow, swing(sub(q, elbow), a.elbow * e), 1)
-      q = atShoulder(q, smooth(0, 0.16, u))
-      if (e > 0) q = add(elbowNow, turnIn(sub(q, elbowNow), a.inward * e, 1), 1)
-      pts.push(v(q.x * side, q.y, q.z))
-    }
-    return { curve: new Spline3(pts, 0.5), range, caps }
+  // A sharp bend just round the elbow: the outline's outer edge rounds it, the inner edge creases.
+  const half = a.elbow > JOINTED ? 0.03 : 0.1
+  const pts: XYZ[] = []
+  for (let i = 0; i <= ARM_SAMPLES; i++) {
+    const u = i / ARM_SAMPLES
+    ARM.getPointAt(u, p)
+    const e = smooth(ELBOW_U - half, ELBOW_U + half, u)
+    let q: XYZ = v(p.x, p.y, p.z)
+    if (e > 0) q = add(elbow, swing(sub(q, elbow), a.elbow * e), 1)
+    q = atShoulder(q, smooth(0, 0.16, u))
+    if (e > 0) q = add(elbowNow, turnIn(sub(q, elbowNow), a.inward * e, 1), 1)
+    pts.push(v(q.x * side, q.y, q.z))
   }
-  if (a.elbow <= JOINTED) return [part([0, 1], 'none', (u) => smooth(ELBOW_U - 0.1, ELBOW_U + 0.1, u))]
-  return [part([0, ELBOW_U + 0.05], 'end', () => 0), part([ELBOW_U - 0.05, 1], 'start', () => 1)]
+  return new Spline3(pts, 0.5)
+}
+
+/**
+ * Leg radius along a posed leg: legRadius, reshaped by the pose. A bent knee comes towards the
+ * viewer, so the joint shows a little wider and the calf, now behind the shin, a little slimmer;
+ * a foot with its toes down shows its top, a rounded point instead of a flat sole.
+ */
+export function posedLegRadius(a: LegAngles): (u: number) => number {
+  const knee = smooth(10, 60, a.knee)
+  const toes = smooth(0, 25, a.ankle)
+  if (knee === 0 && toes === 0) return legRadius
+  const bump = (u: number, at: number, w: number) => Math.exp(-(((u - at) / w) ** 2))
+  return (u) => {
+    const r = legRadius(u) + 0.035 * knee * (bump(u, KNEE_U, 0.06) - bump(u, 0.63, 0.08))
+    if (u <= ANKLE_U || toes === 0) return r
+    // The foot from the ankle to the toes: a little wider, then rounded to its tip.
+    const k = (u - ANKLE_U) / (1 - ANKLE_U)
+    const tip = k > 0.55 ? Math.sqrt(Math.max(0, 1 - ((k - 0.55) / 0.45) ** 2)) : 1
+    return r + ((0.135 + 0.03 * smooth(0, 0.5, k)) * tip - r) * toes
+  }
 }
 
 /** The posed limbs of one band: each leg and arm as a curve, with which side it is on. */
 export interface PosedLimbs {
   band: ActivityBand
-  /** Each leg, and its knee when bent enough to face the viewer (the picture marks the kneecap). */
-  legs: { side: 1 | -1; curve: Spline3; kneecap: XYZ | null }[]
-  arms: { side: 1 | -1; parts: ArmPart[]; front: boolean }[]
+  /** Each leg: its curve and its radius along it (the kneecap and the foot follow the pose). */
+  legs: { side: 1 | -1; curve: Spline3; radius: (u: number) => number }[]
+  arms: { side: 1 | -1; curve: Spline3; front: boolean }[]
 }
-
-/** A knee bent this far (degrees) comes forward enough to show its kneecap front-on. */
-const KNEECAP_BEND = 30
 
 const cache = new Map<ActivityBand, PosedLimbs>()
 
 /**
- * The limbs for a band, built once per band. An arm is `front` when its hand is in front of the
- * belly (the picture draws it over the torso); otherwise it hangs beside the body, drawn under it.
+ * The limbs for a band, built once per band. An arm is `front` when its hand is well in front of
+ * the body (the picture draws it over the torso's edge); otherwise it hangs beside the body, drawn
+ * under it.
  */
 export function posedLimbs(band: ActivityBand): PosedLimbs {
   let limbs = cache.get(band)
@@ -291,11 +289,11 @@ export function posedLimbs(band: ActivityBand): PosedLimbs {
       legs: sides.map(([side, s]) => ({
         side,
         curve: legCurve(s.leg, side),
-        kneecap: s.leg.knee >= KNEECAP_BEND ? add(legJoints(s.leg, side).knee, swing(v(0, 0, 1), s.leg.hip - s.leg.knee / 2), 0.17) : null,
+        radius: posedLegRadius(s.leg),
       })),
       arms: sides.map(([side, s]) => {
-        const parts = armParts(s.arm, side)
-        return { side, parts, front: parts.at(-1)!.curve.getPointAt(0.9).z > 0.3 }
+        const curve = armCurve(s.arm, side)
+        return { side, curve, front: curve.getPointAt(0.9).z > 0.3 }
       }),
     }
     cache.set(band, limbs)

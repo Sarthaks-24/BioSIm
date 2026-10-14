@@ -1,5 +1,5 @@
 import type { ActivityBand } from '../anatomy/human/bands.ts'
-import { SOLE_Y, legRadius, limbKit, partRadius, posedLimbs, setLimbKit, type LimbKit } from '../anatomy/human/limbs.ts'
+import { SOLE_Y, legRadius, limbKit, posedLimbs, setLimbKit, type LimbKit } from '../anatomy/human/limbs.ts'
 import type { Spline3, XYZ } from '../anatomy/spline.ts'
 
 /**
@@ -9,8 +9,11 @@ import type { Spline3, XYZ } from '../anatomy/spline.ts'
  *
  * The torso and both legs are ONE outline, so the skin has no seam at the hips: down the torso's
  * side to the hip, down the outside of the leg, round the foot, up the inside to the groin (a soft
- * mannequin curve), and the same on the other side. An arm whose hand is in front of the belly (the
- * bent arms of a brisk walk or a run) is drawn over the torso; a hanging arm under it, as at rest.
+ * mannequin curve), and the same on the other side. Each arm is one outline too, shoulder to
+ * fingertips, however it bends (no separate forearm). An arm whose hand comes forward (the bent arms
+ * of a brisk walk or a run) is drawn over the torso's edge and hides the line behind it, as a
+ * line drawing would; a hanging arm is drawn under the torso, as at rest. The hands stay at the
+ * torso's sides, clear of the organs drawn inside it.
  *
  * Front-on, a stride is mostly depth, so the limbs get a weak perspective (only they move in depth;
  * the torso and organs sit at z ≈ 0, where it changes nothing): a foot or hand towards the viewer
@@ -52,21 +55,49 @@ function tubeOutline(curve: Spline3, radius: (u: number) => number, n: number): 
 }
 
 /**
- * The same with a round end at the elbow (a jointed mannequin's limb part): a half circle, so two
- * parts that overlap at a joint show a rounded joint, not a cut.
+ * A polyline with its loops cut out: where it crosses itself, it goes straight from the crossing
+ * on. The inside edge of a sharply bent limb doubles back past the joint; cut, it is a clean crease.
  */
-function cappedOutline(curve: Spline3, radius: (u: number) => number, n: number, end: 'start' | 'end'): Outline {
-  const [left, right] = tubeEdges(curve, radius, n)
-  const cap = (u: number, from: number): Outline => {
-    const c = curve.getPointAt(u)
-    const t = curve.getTangentAt(u)
-    const r = radius(u)
-    const a0 = Math.atan2(t.y, t.x) + from
-    const out: Outline = []
-    for (let k = 1; k < 12; k++) out.push([c.x + r * Math.cos(a0 - (k * Math.PI) / 12), c.y + r * Math.sin(a0 - (k * Math.PI) / 12)])
-    return out
-  }
-  return [...left, ...(end === 'end' ? cap(1, Math.PI / 2) : []), ...right.reverse(), ...(end === 'start' ? cap(0, -Math.PI / 2) : [])]
+function untangle(pts: Outline): Outline {
+  const out = [...pts]
+  for (let i = 0; i < out.length - 3; i++)
+    for (let j = out.length - 2; j > i + 1; j--) {
+      const [ax, ay] = out[i]!
+      const [bx, by] = out[i + 1]!
+      const [cx, cy] = out[j]!
+      const [dx, dy] = out[j + 1]!
+      const den = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx)
+      if (den === 0) continue
+      const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den
+      const k = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den
+      if (t > 0 && t < 1 && k > 0 && k < 1) {
+        out.splice(i + 1, j - i, [ax + (bx - ax) * t, ay + (by - ay) * t])
+        break
+      }
+    }
+  return out
+}
+
+/**
+ * The two edges of a posed limb in the picture, untangled at the joints. It is sampled along the
+ * limb itself and each sample projected (a nearer one drawn larger), so the knee, the calf and the
+ * wrist stay where they are on the limb however much a bone is foreshortened.
+ */
+function posedEdges(curve: Spline3, radius: (u: number) => number, n: number): [Outline, Outline] {
+  const pts = Array.from({ length: n + 1 }, (_, i) => project(curve.getPointAt(i / n)))
+  const left: Outline = []
+  const right: Outline = []
+  pts.forEach((p, i) => {
+    const a = pts[Math.max(0, i - 1)]!
+    const b = pts[Math.min(n, i + 1)]!
+    const tx = b.x - a.x
+    const ty = b.y - a.y
+    const len = Math.hypot(tx, ty) || 1
+    const r = radius(i / n) * p.s
+    left.push([p.x - (ty / len) * r, p.y + (tx / len) * r])
+    right.push([p.x + (ty / len) * r, p.y - (tx / len) * r])
+  })
+  return [untangle(left), untangle(right)]
 }
 
 /** Where the torso's side hands over to the leg: its widest point at the hips. */
@@ -99,8 +130,6 @@ export interface Figure {
   under: Outline[]
   body: Outline
   over: Outline[]
-  /** Kneecaps of the bent knees: where they are drawn, and their size (scene units). */
-  kneecaps: { x: number; y: number; r: number }[]
   /** The ground shadow under the feet: centre x, y and half-width (only where the feet stand). */
   ground: { x: number; y: number; rx: number }
 }
@@ -113,17 +142,17 @@ export function figure(band: ActivityBand): Figure {
   if (f) return f
   const limbs = posedLimbs(band)
   const { ARM, TORSO_PROFILE, armRadius } = limbKit()
-  // At rest the arms are ARM itself, as the outline without legs draws them.
-  // Posed, each arm is its upper arm and its forearm, overlapping at a rounded elbow.
-  const arm = ({ side, parts }: (typeof limbs.arms)[number]): Outline[] => {
-    if (band === 'rest') return [tubeOutline(ARM, armRadius, 48).map(([x, y]) => [x * side, y])]
-    return parts.map(({ curve, range, caps }) => {
-      const d = drawn(curve, partRadius(range))
-      return caps === 'none' ? tubeOutline(d.curve, d.radius, 48) : cappedOutline(d.curve, d.radius, 32, caps)
-    })
+  const rest = band === 'rest'
+  // At rest the arms are ARM itself, as the outline without legs draws them. Posed, one outline each.
+  const arm = ({ side, curve }: (typeof limbs.arms)[number]): Outline => {
+    if (rest) return tubeOutline(ARM, armRadius, 48).map(([x, y]) => [x * side, y])
+    const [left, right] = posedEdges(curve, armRadius, 64)
+    return [...left, ...right.reverse()]
   }
-  const edges = (side: 1 | -1) => {
-    const d = drawn(limbs.legs.find((l) => l.side === side)!.curve, legRadius)
+  const edges = (side: 1 | -1): [Outline, Outline] => {
+    const leg = limbs.legs.find((l) => l.side === side)!
+    if (!rest) return posedEdges(leg.curve, leg.radius, 80)
+    const d = drawn(leg.curve, legRadius)
     return tubeEdges(d.curve, d.radius, 80)
   }
   const [rOuter, rInner] = edges(1)
@@ -141,14 +170,9 @@ export function figure(band: ActivityBand): Figure {
     ...[...torso].reverse().map(([x, y]) => [-x, y] as [number, number]),
   ]
   f = {
-    under: limbs.arms.filter((a) => !a.front).flatMap(arm),
+    under: limbs.arms.filter((a) => !a.front).map(arm),
     body,
-    over: limbs.arms.filter((a) => a.front).flatMap(arm),
-    kneecaps: limbs.legs.flatMap(({ kneecap }) => {
-      if (!kneecap) return []
-      const p = project(kneecap)
-      return [{ x: p.x, y: p.y, r: 0.12 * p.s }]
-    }),
+    over: limbs.arms.filter((a) => a.front).map(arm),
     ground: { x: 0, y: project({ x: 0, y: SOLE_Y, z: 0 }).y, rx: 0.95 },
   }
   figures.set(band, f)
@@ -171,20 +195,26 @@ export function paintFigure(
   ctx.beginPath()
   ctx.ellipse(X(f.ground.x), Y(f.ground.y), f.ground.rx * scale, 0.09 * scale, 0, 0, Math.PI * 2)
   ctx.fill()
-  const shape = (pts: Outline) => {
+  const trace = (pts: Outline) => {
     ctx.beginPath()
     pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))))
     ctx.closePath()
+  }
+  const shape = (pts: Outline) => {
+    trace(pts)
     ctx.fill()
     ctx.stroke()
   }
   f.under.forEach(shape)
   shape(f.body)
-  // A bent knee faces the viewer: its kneecap, a small oval in the skin's line, tells it from a straight leg.
-  for (const k of f.kneecaps) {
-    ctx.beginPath()
-    ctx.ellipse(X(k.x), Y(k.y), k.r * scale, k.r * 0.85 * scale, 0, 0, Math.PI * 2)
-    ctx.stroke()
+  // An arm in front hides the body's line behind it: clear its shape first, then draw it.
+  for (const pts of f.over) {
+    ctx.save()
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.fillStyle = '#000'
+    trace(pts)
+    ctx.fill()
+    ctx.restore()
+    shape(pts)
   }
-  f.over.forEach(shape)
 }
