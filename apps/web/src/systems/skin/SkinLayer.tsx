@@ -9,7 +9,6 @@ import type { LayerProps } from '../../registry/types.ts'
 import { dropCount, seriesOf, useSteady, vesselsWide } from '../muscles/effort.ts'
 import {
   LOOK,
-  armsInFront,
   crossFade,
   frameOf,
   inkOf,
@@ -162,7 +161,7 @@ export default function SkinLayer({ sim, view, band, width: w, height: h, reduce
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, { vessels: { limb: 'arm', side: -1, u: 0.68 } }) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, armsInFront(posed, m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 

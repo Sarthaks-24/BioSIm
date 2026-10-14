@@ -62,6 +62,7 @@ const posedFor = (band: ActivityBand): Posed => ({
   base: limbs.limbKit(),
   legRadius: limbs.legRadius,
   figure: limbs.figure(band),
+  blocker: (f) => limbs.armBlocker(band, f),
 })
 
 describe('muscles and skin move only with walking or running (R75)', () => {
@@ -157,7 +158,8 @@ describe('the pack shares no code with the stage: what it writes out matches the
         const [a, b] = [frameOf(w, h, view), frame(w, h, view)]
         expect([a.scale, a.X(0.4), a.Y(1.2)]).toEqual([b.scale, b.X(0.4), b.Y(1.2)])
       }
-    for (const look of ['normal', 'projector'] as const) expect({ ink: LOOK[look].ink, line: LOOK[look].line }).toEqual({ ink: FLAT_LOOK[look].ink, line: FLAT_LOOK[look].line })
+    for (const look of ['normal', 'projector'] as const)
+      expect({ ink: LOOK[look].ink, line: LOOK[look].line }).toEqual({ ink: FLAT_LOOK[look].ink, line: FLAT_LOOK[look].line })
     expect(LOOK.projector.pale).toBe(3)
     const limbsSource = readFileSync(new URL('../../flat/limbs.ts', import.meta.url), 'utf8')
     expect(limbsSource).toMatch(/const DEPTH = 30\b/)
@@ -176,14 +178,16 @@ describe('the pack shares no code with the stage: what it writes out matches the
     const r = run([bout('run', 10)])
     for (const id of ['muscle.energyRate', 'skin.sweatRate', 'skin.sweatTotal']) {
       const s = seriesOf(r, id)!
-      for (const v of [s.values[0]!, peakOf(s, r.stepMin).value, 0]) expect(valueText(v, s.meta, t, 'en')).toBe(formatSignal(v, s.meta, t, 'en'))
+      for (const v of [s.values[0]!, peakOf(s, r.stepMin).value, 0])
+        expect(valueText(v, s.meta, t, 'en')).toBe(formatSignal(v, s.meta, t, 'en'))
     }
     expect(formatSignal(330, seriesOf(r, 'skin.sweatRate')!.meta, t, 'en')).toBe('330 mL an hour')
   })
 })
 
 describe('the pictures follow the pose (R32, U-1a)', () => {
-  const inFull = ([x, y]: readonly [number, number]) => x >= FRAMINGS.full.minX - 0.3 && x <= FRAMINGS.full.maxX + 0.3 && y >= FRAMINGS.full.minY && y <= FRAMINGS.full.maxY
+  const inFull = ([x, y]: readonly [number, number]) =>
+    x >= FRAMINGS.full.minX - 0.3 && x <= FRAMINGS.full.maxX + 0.3 && y >= FRAMINGS.full.minY && y <= FRAMINGS.full.maxY
 
   it('about twelve muscle groups on both sides in every pose, inside the full framing; the limbs’ move with the band', () => {
     const groups = new Set(muscleShapes(posedFor('rest')).flatMap((s) => (s.kind === 'muscle' ? [s.group] : [])))
@@ -232,12 +236,24 @@ describe('labels avoid posed arms (R89)', () => {
   function torsoLabels(band: ActivityBand, avoidArms: boolean) {
     const [w, h] = [720, 560]
     const { X, Y } = frame(w, h, FRAMINGS.torso)
-    const items: CalloutInput[] = (['esophagus', 'stomach', 'smallIntestine', 'largeIntestine', 'liver', 'pancreas'] as const).map((key, i) => {
-      const c = CALLOUTS[key]
-      return { key, ax: X(c.anchor.x), ay: Y(c.anchor.y), lx: X(c.at.x), ly: Y(c.at.y), side: c.side, w: 70 + 6 * i, h: 24, priority: key === 'stomach' ? 3 : 2 }
-    })
+    const items: CalloutInput[] = (['esophagus', 'stomach', 'smallIntestine', 'largeIntestine', 'liver', 'pancreas'] as const).map(
+      (key, i) => {
+        const c = CALLOUTS[key]
+        return {
+          key,
+          ax: X(c.anchor.x),
+          ay: Y(c.anchor.y),
+          lx: X(c.at.x),
+          ly: Y(c.at.y),
+          side: c.side,
+          w: 70 + 6 * i,
+          h: 24,
+          priority: key === 'stomach' ? 3 : 2,
+        }
+      },
+    )
     const arms = limbs.figure(band).over.map((pts) => pts.map(([x, y]) => [X(x), Y(y)] as const))
-    return { arms, layout: layoutCallouts(items, w, h, avoidArms ? arms : []) }
+    return { arms, layout: layoutCallouts(items, w, h, avoidArms ? limbs.armBlocker(band, { X, Y }) : undefined) }
   }
   const inside = (px: number, py: number, poly: readonly (readonly [number, number])[]) => {
     let hit = false
@@ -277,7 +293,9 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
     expect(k).toBeGreaterThan(30)
     expect(s.headline).toBe(`During the run, muscles use about ${k}× their resting energy; most ends up as heat.`)
     expect(s.headline).not.toMatch(/kcal/)
-    expect(musclesSummary(r, run(), t, 'en')!.headline).toBe(`At the most, muscles use about ${k}× their resting energy with this plan, 1× with the kept one.`)
+    expect(musclesSummary(r, run(), t, 'en')!.headline).toBe(
+      `At the most, muscles use about ${k}× their resting energy with this plan, 1× with the kept one.`,
+    )
     expect(musclesSummary(r, r, t, 'en')!.headline).toBe('Muscles work about the same in both plans.')
   })
 
@@ -290,7 +308,9 @@ describe('the sentences are true (ui-ux §6, §7)', () => {
   })
 
   it('each graph’s sentence: flat at rest, or its start, its highest and when', () => {
-    expect(effortStripSummary('skin.sweatRate' as never, run(), t, 'en')).toBe('Sweat made: about 0 mL an hour all the way, with no walk or run.')
+    expect(effortStripSummary('skin.sweatRate' as never, run(), t, 'en')).toBe(
+      'Sweat made: about 0 mL an hour all the way, with no walk or run.',
+    )
     expect(effortStripSummary('muscle.energyRate' as never, run([bout('walk')]), t, 'en')).toMatch(
       /^Energy used by muscles: 14 kcal\/h at the start, \d+ kcal\/h at the most, at \d+ min\.$/,
     )

@@ -17,7 +17,6 @@ import type { CalloutSpec } from '../../anatomy/CalloutOverlay.tsx'
 import type { LayerProps } from '../../registry/types.ts'
 import {
   LOOK,
-  armsInFront,
   crossFade,
   frameOf,
   inkOf,
@@ -144,15 +143,7 @@ export function paintBones(ctx: CanvasRenderingContext2D, posed: Posed, look: Lo
           : [[s * 0.08, y - 0.02], [s * cage * 0.86, y - 0.14], front],
         0.045,
       )
-      if (i < 10)
-        band(
-          [
-            front,
-            [s * 0.07, i < 7 ? Math.min(1.9, Math.max(1.0, y - 0.42)) : 0.98],
-          ],
-          0.03,
-          cartilage,
-        )
+      if (i < 10) band([front, [s * 0.07, i < 7 ? Math.min(1.9, Math.max(1.0, y - 0.42)) : 0.98]], 0.03, cartilage)
     })
   polyPath(ctx, STERNUM, m)
   fill()
@@ -229,11 +220,12 @@ export default function BonesLayer({ view, band, width: w, height: h, reduced, p
 
   const roomy = w >= 460
   const specs = useMemo<CalloutSpec<BonesLabel>[]>(
-    () => LABEL_KEYS.map((key) => ({ key, text: t(`sys.effort.bones.label.${key}`), tone: 'stage', hidden: !roomy && !NARROW.includes(key) })),
+    () =>
+      LABEL_KEYS.map((key) => ({ key, text: t(`sys.effort.bones.label.${key}`), tone: 'stage', hidden: !roomy && !NARROW.includes(key) })),
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, { hinge: { limb: 'leg', side: 1, u: KNEE_U } }) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, armsInFront(posed, m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 

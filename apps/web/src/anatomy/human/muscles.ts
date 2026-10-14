@@ -22,18 +22,7 @@ export type Outline = readonly (readonly [number, number])[]
 
 /** The muscle groups drawn (≈ 12, anatomy plan §2.4). */
 export type MuscleGroup =
-  | 'neck'
-  | 'chest'
-  | 'belly'
-  | 'sideBelly'
-  | 'hip'
-  | 'shoulder'
-  | 'upperArm'
-  | 'forearm'
-  | 'thighFront'
-  | 'thighInner'
-  | 'shin'
-  | 'calf'
+  'neck' | 'chest' | 'belly' | 'sideBelly' | 'hip' | 'shoulder' | 'upperArm' | 'forearm' | 'thighFront' | 'thighInner' | 'shin' | 'calf'
 
 /** The trunk's groups, the viewer's right side (+x); each is drawn on both sides. */
 export const TRUNK_MUSCLES: readonly { group: MuscleGroup; outline: Outline }[] = [

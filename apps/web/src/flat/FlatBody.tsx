@@ -90,8 +90,10 @@ export default function FlatBody({
   const specs = useCalloutSpecs(stage, w)
   // Another system's layer places its own labels.
   const { overlay, place } = useCallouts(organs ? specs : [], () => placeLabels())
+  // In a brisk walk or a run no organ label may cover an arm in front of the torso (U-1, R89).
   const placeLabels = () => {
-    if (w > 0 && h > 0) place(flatProjection(w, h, view), w, h, armsInFront(limbs, band, w, h, view))
+    if (w > 0 && h > 0)
+      place(flatProjection(w, h, view), w, h, limbs && band !== 'rest' ? limbs.armBlocker(band, frame(w, h, view)) : undefined)
   }
 
   // Labels move only when the picture's size or the active organ changes.
@@ -185,16 +187,6 @@ export function frame(w: number, h: number, view: View = VIEW) {
   const ox = w / 2
   const oy = h / 2 + ((view.maxY + view.minY) / 2) * scale
   return { scale, X: (x: number) => ox + x * scale, Y: (y: number) => oy - y * scale }
-}
-
-/**
- * The pose's arms that come in front of the torso (a brisk walk's, a run's), in CSS px: no organ
- * label may cover one (U-1, R89: "Liver" sat on the forearm in the torso view). None at rest.
- */
-function armsInFront(limbs: Awaited<ReturnType<typeof loadLimbs>> | null, band: ActivityBand, w: number, h: number, view: View) {
-  if (!limbs || band === 'rest') return undefined
-  const { X, Y } = frame(w, h, view)
-  return limbs.figure(band).over.map((pts) => pts.map(([x, y]) => [X(x), Y(y)] as const))
 }
 
 const flatProjection = (w: number, h: number, view: View): Project => {

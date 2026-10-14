@@ -225,3 +225,37 @@ export function paintFigure(
     shape(pts)
   }
 }
+
+/** The point is inside the polygon (even-odd). */
+function within(px: number, py: number, poly: readonly (readonly [number, number])[]): boolean {
+  let inside = false
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i]!
+    const [xj, yj] = poly[j]!
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside
+  }
+  return inside
+}
+
+/**
+ * Whether a label's box (CSS px) would cover an arm in front of the torso in this pose (U-1, R89:
+ * "Liver" sat on a run's forearm in the torso view): one of the arm's outline points is in the box
+ * (with 4 px round it), or one of the box's corners or its middle is in the arm. The outline is
+ * sampled densely, so this is enough for a label against an arm. Here, in the legs' chunk, so the
+ * first download carries none of it (anatomy/callouts.ts `layoutCallouts` takes it as `blocked`).
+ */
+export function armBlocker(band: ActivityBand, { X, Y }: { X: (x: number) => number; Y: (y: number) => number }) {
+  const arms = figure(band).over.map((pts) => pts.map(([x, y]) => [X(x), Y(y)] as const))
+  return (b: { x: number; y: number; w: number; h: number }) =>
+    arms.some(
+      (poly) =>
+        poly.some(([x, y]) => x > b.x - 4 && x < b.x + b.w + 4 && y > b.y - 4 && y < b.y + b.h + 4) ||
+        [
+          [b.x, b.y],
+          [b.x + b.w, b.y],
+          [b.x, b.y + b.h],
+          [b.x + b.w, b.y + b.h],
+          [b.x + b.w / 2, b.y + b.h / 2],
+        ].some(([x, y]) => within(x!, y!, poly)),
+    )
+}

@@ -50,7 +50,10 @@ export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunct
   if (kind === 'rest' || now.flat || now.k < 2)
     return { headline: t('sys.effort.muscles.summary.rest'), reason: t('sys.effort.muscles.summary.restReason') }
   const text = whole(now.k, lang)
-  return { headline: t('sys.effort.muscles.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), k: text }), key: { text, line: 'run' } }
+  return {
+    headline: t('sys.effort.muscles.summary.peak', { doing: lower(t(`activity.kinds.${kind}`)), k: text }),
+    key: { text, line: 'run' },
+  }
 }
 
 /**
@@ -70,7 +73,10 @@ export function skinSummary(run: RunResult, kept: RunResult | null, t: TFunction
   if (keptTotal) {
     const mine = all(run)
     if (mine.text === keptTotal.text) return { headline: t('sys.effort.skin.summary.same', { value: mine.text }) }
-    return { headline: t('sys.effort.skin.summary.compare', { run: mine.text, kept: keptTotal.text }), key: { text: mine.text, line: 'run' } }
+    return {
+      headline: t('sys.effort.skin.summary.compare', { run: mine.text, kept: keptTotal.text }),
+      key: { text: mine.text, line: 'run' },
+    }
   }
   const peak = peakOf(rate, run.stepMin)
   const kind = boutAt(run, peak.atMin)

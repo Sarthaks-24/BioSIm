@@ -208,7 +208,13 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
 
   it('hidden until H-1; bones is Drawing only (no inputs, no graphs), all three in the full framing', () => {
     for (const id of ['muscles', 'skin', 'bones'] as const)
-      expect(systemOf(id), id).toMatchObject({ public: false, pack: 'effort', draw: 'layer', camera: { framing: 'full' }, lifeProcess: 'movement' })
+      expect(systemOf(id), id).toMatchObject({
+        public: false,
+        pack: 'effort',
+        draw: 'layer',
+        camera: { framing: 'full' },
+        lifeProcess: 'movement',
+      })
     expect(systemOf('bones')).toMatchObject({ inputs: [], slots: [] })
     expect(systemForLink('muscles', [], false)).toBe('digestion')
     expect(systemForLink('skin', [], true)).toBe('skin')

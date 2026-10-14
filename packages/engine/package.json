@@ -10,8 +10,7 @@
     ".": "./src/index.ts",
     "./run": "./src/run.ts",
     "./catalog/core": "./src/core/catalog/core.ts",
-    "./catalog/breathing": "./src/core/catalog/breathing.ts",
-    "./catalog/effort": "./src/core/catalog/effort.ts"
+    "./catalog/breathing": "./src/core/catalog/breathing.ts"
   },
   "scripts": {
     "test": "vitest run",

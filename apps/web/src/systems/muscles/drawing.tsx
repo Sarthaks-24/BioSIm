@@ -21,7 +21,6 @@ import BonesLayer from '../bones/BonesLayer.tsx'
 import { hatchStep, lastKindAt, seriesOf, useSteady } from './effort.ts'
 import {
   LOOK,
-  armsInFront,
   crossFade,
   frameOf,
   inkOf,
@@ -145,7 +144,14 @@ const HATCH_GAP = 9
  * lightness step (3 % towards white: under 10 % relative luminance) and draws sparse lines; step 2
  * adds lines between them; step 3 crosses them. Each step is its own canvas, faded in and out (300 ms).
  */
-function paintHatch(ctx: CanvasRenderingContext2D, shapes: Shape[], working: readonly MuscleGroup[], step: 1 | 2 | 3, look: Look, m: Frame) {
+function paintHatch(
+  ctx: CanvasRenderingContext2D,
+  shapes: Shape[],
+  working: readonly MuscleGroup[],
+  step: 1 | 2 | 3,
+  look: Look,
+  m: Frame,
+) {
   const shift = step === 2 ? HATCH_GAP / 2 : 0
   for (const s of shapes) {
     smoothPath(ctx, s.pts, m)
@@ -259,7 +265,7 @@ function MusclesLayer({ sim, view, band, width: w, height: h, reduced, projector
     [t, roomy],
   )
   const table = useMemo(() => (posed ? posedLabels(LABELS, posed, LIMB_LABELS) : LABELS), [posed])
-  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, armsInFront(posed, m))
+  const placeLabels = () => w > 0 && h > 0 && place((p) => [m.X(p.x), m.Y(p.y)], w, h, posed?.blocker(m))
   const { overlay, place } = kit.useCallouts(specs, () => placeLabels(), table)
   useEffect(() => void placeLabels())
 

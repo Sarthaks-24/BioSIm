@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { XYZ } from './spline.ts'
 import type { StageId } from '@lifepeek/engine'
-import { CALLOUTS, layoutCallouts, type Callout, type CalloutId, type CalloutInput, type Obstacle } from './callouts.ts'
+import { CALLOUTS, layoutCallouts, type Callout, type CalloutId, type CalloutInput, type LabelBox } from './callouts.ts'
 
 /**
  * The organ labels over a body picture, as plain DOM (crisp, translatable, no WebGL text): a pill
@@ -49,9 +49,9 @@ export interface Callouts {
   overlay: ReactNode
   /**
    * Lays the labels out for the current view and moves the DOM. Cheap: call it per drawn frame.
-   * `avoid`: shapes (CSS px) no label may cover, a posed arm in front of the body (R89).
+   * `blocked`: boxes no label may take (CSS px): one over a posed arm in front of the body (R89).
    */
-  place: (project: Project, width: number, height: number, avoid?: readonly Obstacle[]) => void
+  place: (project: Project, width: number, height: number, blocked?: (box: LabelBox) => boolean) => void
 }
 
 /**
@@ -86,10 +86,10 @@ export function useCallouts<K extends string = CalloutId>(
   }, [texts])
 
   // The view the labels were last placed for, so new texts can be placed before the browser paints.
-  const view = useRef<{ project: Project; width: number; height: number; avoid?: readonly Obstacle[] } | null>(null)
+  const view = useRef<{ project: Project; width: number; height: number; blocked?: (box: LabelBox) => boolean } | null>(null)
 
-  const place = (project: Project, width: number, height: number, avoid?: readonly Obstacle[]) => {
-    view.current = { project, width, height, avoid }
+  const place = (project: Project, width: number, height: number, blocked?: (box: LabelBox) => boolean) => {
+    view.current = { project, width, height, blocked }
     const items: CalloutInput[] = []
     for (const spec of specs) {
       const box = sizes.current.get(spec.key)
@@ -102,7 +102,7 @@ export function useCallouts<K extends string = CalloutId>(
       if (!a || !l) continue
       items.push({ key: spec.key, ax: a[0], ay: a[1], lx: l[0], ly: l[1], side: c.side, w: box.w, h: box.h, priority: PRIORITY[spec.tone] })
     }
-    const placed = new Map(layoutCallouts(items, width, height, avoid).shown.map((b) => [b.key, b]))
+    const placed = new Map(layoutCallouts(items, width, height, blocked).shown.map((b) => [b.key, b]))
     for (const spec of specs) {
       const box = placed.get(spec.key)
       const l = box?.leader
@@ -135,7 +135,7 @@ export function useCallouts<K extends string = CalloutId>(
     for (const el of Object.values(labels.current))
       if (el) sizes.current.set(el.dataset.callout!, { w: el.offsetWidth, h: el.offsetHeight })
     const v = view.current
-    if (v) place(v.project, v.width, v.height, v.avoid)
+    if (v) place(v.project, v.width, v.height, v.blocked)
   }, [texts]) // eslint-disable-line react-hooks/exhaustive-deps -- runs for new texts only
 
   const overlay = (

@@ -124,4 +124,5 @@ export function peakOf(series: Series, stepMin: number): { value: number; atMin:
 }
 
 /** Within 1 % of the first value all the way: the graph is flat. */
-export const isFlat = (series: Series) => series.values.every((v) => Math.abs(v - series.values[0]!) <= 0.01 * Math.abs(series.values[0]!) + 1e-9)
+export const isFlat = (series: Series) =>
+  series.values.every((v) => Math.abs(v - series.values[0]!) <= 0.01 * Math.abs(series.values[0]!) + 1e-9)

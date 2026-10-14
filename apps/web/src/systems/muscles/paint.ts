@@ -34,7 +34,8 @@ export const LOOK = { normal: { ink: 0.42, line: 1.25, pale: 1.25 }, projector: 
 export type Look = (typeof LOOK)[keyof typeof LOOK]
 
 /** A tone's outline: the tone, shaded (flat/look.ts outlineOf). */
-export const inkOf = (hex: string, look: Look) => `rgb(${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * look.ink)).join(',')})`
+export const inkOf = (hex: string, look: Look) =>
+  `rgb(${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * look.ink)).join(',')})`
 
 /** A tone moved `k` of the way to white: the working muscles' one lightness step. */
 export const lighter = (hex: string, k: number) =>
@@ -145,6 +146,8 @@ export interface Posed {
   legRadius: (u: number) => number
   /** The posed skin: arms under the torso, the torso with both legs, arms over it (scene units). */
   figure: { under: Pt[][]; body: Pt[]; over: Pt[][] }
+  /** Boxes no label may take in a picture: those over an arm in front of the torso (R89; flat/limbs.ts armBlocker). */
+  blocker: (frame: Frame) => (box: { x: number; y: number; w: number; h: number }) => boolean
 }
 
 /**
@@ -153,16 +156,28 @@ export interface Posed {
  */
 export function usePosed(band: ActivityBand, kit: LayerKit): Posed | null {
   const [posed, setPosed] = useState<Posed | null>(null)
+  // The legs' chunk is saved with the pack (cache-tiers.mjs DRAWING_DEPS); if it still can't arrive, it is asked for again when the internet is back.
+  const [tries, setTries] = useState(0)
   useEffect(() => {
     let live = true
+    const again = () => setTries((n) => n + 1)
     kit.loadLimbs().then(
-      (m) => live && setPosed({ limbs: m.posedLimbs(band), base: m.limbKit(), legRadius: m.legRadius, figure: m.figure(band) }),
-      () => {},
+      (m) =>
+        live &&
+        setPosed({
+          limbs: m.posedLimbs(band),
+          base: m.limbKit(),
+          legRadius: m.legRadius,
+          figure: m.figure(band),
+          blocker: (f) => m.armBlocker(band, f),
+        }),
+      () => live && window.addEventListener('online', again, { once: true }),
     )
     return () => {
       live = false
+      window.removeEventListener('online', again)
     }
-  }, [band, kit])
+  }, [band, kit, tries])
   return posed?.limbs.band === band ? posed : null
 }
 
@@ -213,6 +228,3 @@ export function crossFade(from: HTMLCanvasElement, ghost: HTMLCanvasElement, red
     ghost.style.opacity = '0'
   })
 }
-
-/** The pose's arms in front of the torso, in CSS px: no label may cover one (R89, anatomy/callouts.ts `avoid`). */
-export const armsInFront = (posed: Posed | null, { X, Y }: Frame) => posed?.figure.over.map((pts) => pts.map(([x, y]) => [X(x), Y(y)] as const))

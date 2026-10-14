@@ -65,7 +65,21 @@ const PILL =
   'inline-flex items-center gap-1.5 rounded-full bg-ink py-0.5 pr-2 pl-2.5 align-baseline font-semibold whitespace-nowrap text-white shadow-[0_1px_2px_rgb(20_33_61/0.3)]'
 
 /** A Now line: "[Muscles] about 15× their resting energy · walking", and the kept plan's at the same minute. */
-function Now({ system, organ, text, kept, run, className = '' }: { system: string; organ: string; text: string; kept: string | null; run: RunResult; className?: string }) {
+function Now({
+  system,
+  organ,
+  text,
+  kept,
+  run,
+  className = '',
+}: {
+  system: string
+  organ: string
+  text: string
+  kept: string | null
+  run: RunResult
+  className?: string
+}) {
   const { t } = useTranslation()
   const band = useDoing(run)
   return (
@@ -125,7 +139,11 @@ function SkinNow({ run, kept, className }: NowProps) {
       organ={t('sys.effort.skin.now.organ')}
       text={ml ? t('sys.effort.skin.now.rate', { value: value(ml) }) : t('sys.effort.skin.now.none')}
       kept={
-        kept && keptMl != null ? (keptMl ? t('sys.effort.skin.now.kept', { value: value(keptMl) }) : t('sys.effort.skin.now.keptNone')) : null
+        kept && keptMl != null
+          ? keptMl
+            ? t('sys.effort.skin.now.kept', { value: value(keptMl) })
+            : t('sys.effort.skin.now.keptNone')
+          : null
       }
       className={className}
     />
@@ -220,7 +238,13 @@ function BonesCard() {
       <p data-bones-text="" className="text-control font-semibold">
         {t('sys.effort.bones.card.text')}
       </p>
-      <svg viewBox="0 0 240 90" aria-hidden="true" focusable="false" className="w-full text-ink" style={{ flex: '0 1 9rem', minHeight: '3rem' }}>
+      <svg
+        viewBox="0 0 240 90"
+        aria-hidden="true"
+        focusable="false"
+        className="w-full text-ink"
+        style={{ flex: '0 1 9rem', minHeight: '3rem' }}
+      >
         {/* Ball-and-socket: the thigh bone's round head in the hip's cup. */}
         <g stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
           <path d="M20 22c14-14 50-14 64 0l-8 8c-10-9-38-9-48 0z" fill={bone} />
