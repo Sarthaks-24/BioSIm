@@ -228,7 +228,7 @@ export const useRunStore = create<RunState>((set, get) => ({
  * own `who` yet (the kept run's person is the link's person; `bo` and friends are reserved).
  */
 export function linkQuery(
-  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'> & { preview?: boolean },
+  run: Pick<RunState, 'meal' | 'kept' | 'profile' | 'layer' | 'activity'> & { preview?: boolean; switching?: RunState['switching'] },
   simMin: number,
   lang?: string,
 ): string {
@@ -237,7 +237,8 @@ export function linkQuery(
     b: run.kept?.items ?? [],
     t: simMin,
     ...(run.profile !== DEFAULT_RUN_PROFILE ? { who: run.profile } : {}),
-    ...(run.layer !== defaultSystemFor(run.activity) ? { layer: run.layer } : {}),
+    // The system asked for, while its pack loads or after it failed to (a reload asks for it again).
+    ...((run.switching?.to ?? run.layer) !== defaultSystemFor(run.activity) ? { layer: run.switching?.to ?? run.layer } : {}),
     ...(lang === 'en' || lang === 'hi' ? { lang } : {}),
     act: run.activity,
     bact: run.kept?.activity ?? [],

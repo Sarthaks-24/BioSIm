@@ -936,7 +936,7 @@
       "strips": {
         "breaths": "Breaths a minute",
         "depth": "Air per breath",
-        "gas": "Oxygen and carbon dioxide"
+        "gas": "O₂ and CO₂"
       },
       "label": {
         "nasal": "Nasal passage",

@@ -110,9 +110,10 @@ function NowLine({ run, kept, className = '' }: NowProps) {
 /**
  * The rhythm chip over the body (ui-ux §4): "≋ 15 a minute · typical adult, resting · shown at its
  * true speed ⓘ". The number is the model's at the clock's minute (the breath is drawn at that rate,
- * at most 0.8 a second; faster says "animation slowed", the number stays true). ⓘ says why the
- * breath moves while the clock runs hours in seconds. On a phone only "≋ 15 a minute" and ⓘ (the body
- * keeps its room); under 680 px tall only the number.
+ * at most 0.8 a second; faster says "animation slowed", everywhere, and the number stays true). ⓘ
+ * opens the rest: who and what, and why the breath moves while the clock runs hours in seconds.
+ * The body's room comes first (its gate: ≤ 10 % covered): a phone shows "≋ 15 ⓘ", a laptop "≋ 15 a
+ * minute ⓘ" and the words only where the picture is big (from 1024 px up, not on the projector).
  */
 function RhythmChip({ run }: { run: RunResult }) {
   const { t } = useTranslation()
@@ -122,27 +123,22 @@ function RhythmChip({ run }: { run: RunResult }) {
   const minute = useClock((s) => (open ? Math.round(s.simMin) : 0))
   const whyId = useId()
   if (n == null) return null
-  const slowed = breathRate(n).slowed
+  const who = t('sys.breathing.chip.who', { doing: t(`sys.breathing.doing.${band}`) })
   return (
     <div
       data-rhythm-chip={n}
       style={{ maxWidth: 'min(26rem, 90%)' }}
-      className="pointer-events-auto flex flex-wrap items-center gap-x-1.5 rounded-control bg-surface-raised/90 px-2 py-0.5 text-caption text-ink-muted lg:text-control"
+      className="pointer-events-auto flex flex-wrap items-center gap-x-1.5 rounded-control bg-surface-raised/90 px-1.5 text-caption text-ink-muted lg:text-control"
     >
-      <span aria-hidden="true" className="text-ink">
-        ≋
-      </span>
       <strong className="font-semibold whitespace-nowrap text-ink">
-        {t('sys.breathing.now.rate', { n })}
-        <span className="[@media(height<42.5rem)]:hidden">
-          {' · '}
-          {t('sys.breathing.chip.who', { doing: t(`sys.breathing.doing.${band}`) })}
-        </span>
+        <span aria-hidden="true">≋ </span>
+        <span className="lg:hidden">{n}</span>
+        <span className="max-lg:hidden">{t('sys.breathing.now.rate', { n })}</span>
       </strong>
-      <span className="max-lg:hidden">
-        · {t('sys.breathing.chip.speed')}
-        {slowed && ` · ${t('sys.breathing.chip.slowed')}`}
+      <span className="max-lg:hidden in-data-[contrast=high]:hidden">
+        · {who} · {t('sys.breathing.chip.speed')}
       </span>
+      {breathRate(n).slowed && <span>· {t('sys.breathing.chip.slowed')}</span>}
       <button
         type="button"
         aria-expanded={open}
@@ -158,6 +154,7 @@ function RhythmChip({ run }: { run: RunResult }) {
       </button>
       {open && (
         <p id={whyId} className="basis-full text-ink">
+          {t('sys.breathing.now.rate', { n })} · {who} · {t('sys.breathing.chip.speed')}.{' '}
           {t('sys.breathing.chip.why', { time: formatDuration(minute, t) })}
         </p>
       )}

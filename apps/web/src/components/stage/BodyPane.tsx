@@ -124,7 +124,7 @@ export default function BodyPane({
            */}
           {hasMeal && (
             <div className="pointer-events-none absolute inset-x-4 bottom-1.5 grid items-end justify-items-start max-lg:hidden [&>*]:col-start-1 [&>*]:row-start-1">
-              {pieces && <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />}
+              {pieces && !summaryTo && <ParticleKey run={run} className={`max-w-[70%] flex-wrap ${atStart && !open ? 'invisible' : ''}`} />}
               {!open && (
                 <PlayPrompt
                   meal={meal}
@@ -230,6 +230,8 @@ export default function BodyPane({
           {summary &&
             summaryTo &&
             createPortal(<SummaryLine run={run} kept={kept} className="border-t border-border px-4 py-2" />, summaryTo)}
+          {/* There too the food pieces' key, off the small projector's body (R85: it covered 12 % of it). */}
+          {pieces && summaryTo && createPortal(<ParticleKey run={run} className="flex-wrap px-4 pb-2" />, summaryTo)}
           {summary && !summaryTo && (
             <SummaryLine run={run} kept={kept} className="max-lg:border-t max-lg:border-border max-lg:px-3 max-lg:py-1" />
           )}

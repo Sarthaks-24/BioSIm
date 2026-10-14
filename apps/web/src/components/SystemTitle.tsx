@@ -90,7 +90,7 @@ export default function SystemTitle({ run }: { run: RunResult }) {
           onFocus={prefetch}
           onClick={openPicker}
           data-hit=""
-          className="relative flex items-center gap-1 rounded-control px-1.5 text-title font-extrabold text-ink hover:bg-surface-sunk"
+          className="relative flex items-center gap-1 rounded-control px-1.5 text-control font-extrabold text-ink hover:bg-surface-sunk lg:text-title"
         >
           {name}
           <ChevronDownIcon />

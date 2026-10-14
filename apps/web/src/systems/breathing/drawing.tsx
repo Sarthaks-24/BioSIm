@@ -264,7 +264,12 @@ export function LungsLayer({ sim, view, width: w, height: h, reduced, projector,
     return `M${cx} ${cy - s}V${cy + s}M${cx - s * 0.6} ${wing}L${cx} ${tip}L${cx + s * 0.6} ${wing}`
   }
   return (
-    <div ref={root} data-layer="breathing" data-breath={reduced ? 'still' : 'moving'} className="pointer-events-none absolute inset-0">
+    <div
+      ref={root}
+      data-layer="breathing"
+      data-breath={reduced ? 'still' : 'moving'}
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
       <canvas ref={back} aria-hidden="true" className="absolute top-0 left-0" />
       <canvas ref={muscle} aria-hidden="true" className="absolute top-0 left-0" />
       <canvas ref={lungs} aria-hidden="true" className="absolute top-0 left-0" />

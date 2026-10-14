@@ -41,6 +41,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'activity.spec.ts',
       'screen-reader.spec.ts',
       'lymph.spec.ts',
+      'breathing.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -57,6 +58,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'a11y.spec.ts',
       'teach.spec.ts',
       'overlays.spec.ts',
+      'breathing.spec.ts',
     ],
     use: {
       viewport: { width: 1280, height: 800 },
@@ -79,12 +81,13 @@ const projects: PlaywrightTestConfig['projects'] = [
       'overlays.spec.ts',
       'activity.spec.ts',
       'lymph.spec.ts',
+      'breathing.spec.ts',
     ],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },
   {
     name: 'reduced',
-    testMatch: ['motion.spec.ts', 'stage.spec.ts'],
+    testMatch: ['motion.spec.ts', 'stage.spec.ts', 'breathing.spec.ts'],
     use: { viewport: desktop, reducedMotion: 'reduce', launchOptions: webgl },
   },
   {
