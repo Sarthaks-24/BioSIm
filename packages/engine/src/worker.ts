@@ -6,9 +6,11 @@
  *   - `serve`: the one engine file's start (apps/web/src/engine-worker.ts, a classic iife script).
  *     In a worker it answers messages; as a page script it hands `handle` to the page instead;
  *   - `connectWorker`: the page's side (in the run chunk, beside `simulate`). It sends a run only
- *     once the worker has said it is ready, and gives up on the worker for the session on an error
- *     event, an exception while making it, or no answer within 3 s. A run it cannot send, or that
- *     the worker fails on, is made on the page instead, as without workers.
+ *     once the worker has said it is ready, one at a time (newest of each lane first: a run asked
+ *     again before its turn is dropped), and gives up on the worker for the session on an error
+ *     event, an exception while making it, or no answer within 3 s of sending a run. A run it
+ *     cannot send, or that the worker fails on, is made on the page instead, as without workers;
+ *     a run superseded meanwhile is not made at all.
  * The transport is injected, so the tests need no browser. The worker's file imports `serve` from
  * `@lifepeek/engine/worker`; the run chunk exports only `connectWorker` (and `fromWire` through it),
  * so the page never downloads the worker's half.
@@ -78,13 +80,26 @@ export interface WorkerRunner {
   ready(): boolean
   /**
    * `simulate(input, opts)`, worked out by the worker when it is ready; otherwise, or when it fails
-   * or does not answer in time (it is then given up), on the page. Rejects only if the run itself does.
+   * or does not answer in time (it is then given up), on the page. Rejects if the run itself does,
+   * or with SUPERSEDED once a newer run of the same `lane` is asked (its result is never made or used).
    */
-  run(input: RunInput, opts: SimOptions & { lookup: FoodLookup }): Promise<RunResult>
+  run(input: RunInput, opts: SimOptions & { lookup: FoodLookup; lane?: string }): Promise<RunResult>
 }
 
-/** How long a run may take in the worker before the page gives up on it (architecture §3.2). */
+/** How long a run may take in the worker, from being sent, before the page gives up on it (architecture §3.2). */
 export const WORKER_TIMEOUT_MS = 3000
+
+/** A run's rejection when a newer run of its lane was asked before it was done (R120 #7). */
+export const SUPERSEDED = new Error('superseded by a newer run')
+
+/** A run asked of the worker, not answered yet. */
+interface Job {
+  id: number
+  lane?: string
+  request: RunRequest
+  resolve: (w: WireResult) => void
+  reject: (e: Error) => void
+}
 
 /**
  * Opens the worker (`open`, e.g. `() => new Worker(url)`) and talks to it. Never throws: a worker
@@ -94,20 +109,35 @@ export function connectWorker(open: () => WorkerPort, timeoutMs = WORKER_TIMEOUT
   let state: 'starting' | 'ready' | 'dead' = 'starting'
   let port: WorkerPort | null = null
   let next = 0
-  const waiting = new Map<number, { resolve: (w: WireResult) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }>()
+  // At most one run in the worker (R120 #7): queued runs never time out while a slow phone works
+  // through the ones before them. `newest`: each lane's latest run; an older one is superseded.
+  let sent: Job | null = null
+  const queue: Job[] = []
+  const newest = new Map<string, number>()
+  // One watchdog, for the run in the worker: started when it is sent, so restarted after each reply.
+  let watchdog: ReturnType<typeof setTimeout> | undefined
+  const send = () => {
+    if (sent || state !== 'ready' || !queue.length) return
+    sent = queue.shift()!
+    watchdog = setTimeout(die, timeoutMs)
+    try {
+      port!.postMessage(sent.request)
+    } catch {
+      die()
+    }
+  }
   const die = () => {
     if (state === 'dead') return
     state = 'dead'
+    clearTimeout(watchdog)
     try {
       port?.terminate()
     } catch {
       // Gone already.
     }
-    for (const w of waiting.values()) {
-      clearTimeout(w.timer)
-      w.reject(new Error('engine worker failed'))
-    }
-    waiting.clear()
+    // Made on the page instead, each unless superseded (`run`'s fallback).
+    for (const job of [sent, ...queue.splice(0)]) job?.reject(new Error('engine worker failed'))
+    sent = null
   }
   try {
     port = open()
@@ -118,12 +148,13 @@ export function connectWorker(open: () => WorkerPort, timeoutMs = WORKER_TIMEOUT
         if (state === 'starting') state = 'ready'
         return
       }
-      const w = reply && waiting.get(reply.id)
-      if (!w) return
-      waiting.delete(reply.id)
-      clearTimeout(w.timer)
-      if (reply.type === 'result') w.resolve(reply.result)
-      else w.reject(new Error(reply.error))
+      const job = sent
+      if (!job || reply?.id !== job.id) return
+      clearTimeout(watchdog)
+      sent = null
+      if (reply.type === 'result') job.resolve(reply.result)
+      else job.reject(new Error(reply.error))
+      send()
     }
   } catch {
     die()
@@ -131,18 +162,30 @@ export function connectWorker(open: () => WorkerPort, timeoutMs = WORKER_TIMEOUT
   return {
     ready: () => state === 'ready',
     run(input, opts) {
-      const here = () => simulate(input, opts)
-      if (state !== 'ready') return Promise.resolve().then(here)
+      const { lane } = opts
       const id = ++next
+      if (lane) newest.set(lane, id)
+      const stale = () => !!lane && newest.get(lane) !== id
+      const here = () => {
+        if (stale()) throw SUPERSEDED
+        return simulate(input, opts)
+      }
+      if (state !== 'ready') return Promise.resolve().then(here)
       const foods = input.items.flatMap((i) => opts.lookup(i.foodId) ?? [])
       return new Promise<WireResult>((resolve, reject) => {
-        waiting.set(id, { resolve, reject, timer: setTimeout(die, timeoutMs) })
-        try {
-          port!.postMessage({ type: 'run', id, input, foods, particles: opts.particles } satisfies RunRequest)
-        } catch {
-          die()
-        }
-      }).then((wire) => fromWire(wire, opts.lookup), here)
+        // Newest wins: this lane's run still waiting its turn is dropped (one in the worker is left
+        // to finish, and its result is not used).
+        const older = lane ? queue.findIndex((j) => j.lane === lane) : -1
+        if (older >= 0) queue.splice(older, 1)[0]!.reject(SUPERSEDED)
+        queue.push({ id, lane, request: { type: 'run', id, input, foods, particles: opts.particles }, resolve, reject })
+        send()
+      }).then(
+        (wire) => {
+          if (stale()) throw SUPERSEDED
+          return fromWire(wire, opts.lookup)
+        },
+        (e: unknown) => (e === SUPERSEDED ? Promise.reject(e) : here()),
+      )
     },
   }
 }

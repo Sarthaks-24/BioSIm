@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { goto, onlyIn, returningVisitor } from './helpers/gate.ts'
+import { goto, onlyIn, returningVisitor, tapServings } from './helpers/gate.ts'
 
 // The engine worker (W-2, architecture §3.2): after the page's first run, runs are worked out in a
 // worker, so the page stays quick to answer on a slow phone. Its file is lazy (R71: never in the
@@ -143,4 +143,40 @@ test('a cold start offline, the worker file never saved: the page runs every run
   } finally {
     await context.setOffline(false)
   }
+})
+
+// R120 #7: each run had its own 3 s timer from the moment it was asked, so taps queued behind a
+// slow run on a slow phone timed out while they waited, the worker was given up for the session,
+// and every queued run was then made on the page. Now one run is in the worker at a time, only the
+// newest waiting one goes next, and the 3 s count from its sending.
+test('a slow worker and rapid taps: the worker stays, gets only the newest run next, and the last tap shows', async ({ page }) => {
+  onlyIn('desktop')
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(String(e)))
+  const worker = await engineWorker(page, '/sim?v=3&a=cola:1')
+  // A slow phone: each run takes 1.8 s in the worker, which works through them one by one.
+  await worker.evaluate(() => {
+    const scope = self as unknown as { onmessage: (e: MessageEvent) => void; runs: number }
+    const answer = scope.onmessage
+    scope.runs = 0
+    scope.onmessage = (e) => {
+      scope.runs++
+      const end = Date.now() + 1800
+      while (Date.now() < end);
+      answer(e)
+    }
+  })
+  // Five taps 60 ms apart, each a new current run (the meal store's own setter, as the servings
+  // buttons call it): 9 s of work if all were made, and the third would wait past 3 s.
+  await tapServings(page, 'cola', [2, 3, 4, 3, 2], 60)
+  await page.waitForTimeout(5000)
+  await expect(page.locator('[data-working]')).toHaveCount(0, { timeout: 10_000 })
+  // The first tap's run, then the newest (the last tap's): two runs, and the worker is still there.
+  expect(await worker.evaluate(() => (self as unknown as { runs: number }).runs)).toBe(2)
+  expect(page.workers()).toHaveLength(1)
+  await expect(page.getByRole('button', { name: /^Cola, Servings 2$/ }).first()).toBeVisible()
+  // The next run goes to the same worker.
+  await keep(page)
+  expect(await worker.evaluate(() => (self as unknown as { runs: number }).runs)).toBe(3)
+  expect(errors).toEqual([])
 })

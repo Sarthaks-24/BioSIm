@@ -125,8 +125,9 @@ export function resetEngineForTests() {
  * place the stage runs the model. `run` is null until the engine has loaded (and the kept run is
  * null when nothing is kept); `pending` is true while the engine is still on its way.
  *
- * Each run goes to the engine worker (W-2) once it is ready; until then, and for the session once
- * it fails or does not answer within 3 s, it is made here on the page (connectWorker). The last
+ * Each run goes to the engine worker (W-2) once it is ready, one at a time and only the newest of
+ * each lane waiting (R120 #7); until then, and for the session once it fails or does not answer
+ * within 3 s of a run being sent, it is made here on the page (connectWorker). The last
  * run stays on show until the next one comes (`working`), and only the latest inputs' run is shown.
  */
 export function useRun(which: 'current' | 'kept'): { run: RunResult | null; pending: boolean; working: boolean } {
@@ -142,7 +143,9 @@ export function useRun(which: 'current' | 'kept'): { run: RunResult | null; pend
     if (!key) return setShown((s) => (s.run ? {} : s))
     if (!engine) return
     let latest = true
-    runner!.run({ items: items!, profile, activity }, optsFor(which)).then(
+    // Its lane (current or kept): a newer run of the same one supersedes it, which then is never
+    // made or shown (connectWorker, R120 #7); `latest` is false for it by then.
+    runner!.run({ items: items!, profile, activity }, { ...optsFor(which), lane: which }).then(
       (run) => latest && setShown({ key, run: ran(run) }),
       // A run the engine refuses throws while the stage renders, as a run made at once would.
       (error: unknown) =>
