@@ -233,7 +233,294 @@
       "movement": "Moving and body heat"
     },
     "classTag": "Class {{n}}",
-    "opensAtTime": "opens at {{time}}"
+    "opensAtTime": "opens at {{time}}",
+    "worksheet": "Worksheet to print",
+    "worksheetFor": "Worksheet to print: {{lesson}}"
+  },
+  "sheet": {
+    "brand": "LifePeek · Worksheet",
+    "teacherCopy": "Teacher copy, with answers",
+    "back": "All lessons",
+    "print": "Print",
+    "withAnswers": "Print with answers",
+    "hint": "One A4 page. The students’ copy has lines to write on; with answers, it is the teacher’s copy.",
+    "name": "Name",
+    "class": "Class",
+    "date": "Date",
+    "scan": "Scan to open this lesson",
+    "type": "Or type:",
+    "c10": "NCERT Class 10, Life Processes",
+    "qrAlt": "QR code that opens this lesson in LifePeek",
+    "setup": "On the screen",
+    "book": "The book says",
+    "tasks": "Questions",
+    "exit": "Exit question",
+    "time": "Time (hours after eating)",
+    "axes": "Empty axes to sketch on: {{y}} against time, 0 to {{hours}} hours.",
+    "tags": {
+      "b": "Book",
+      "k": "Fixed value",
+      "m": "Model"
+    },
+    "tagKey": "Book: the NCERT book’s value; write this one in the exam. Fixed value: from a textbook source. Model: what LifePeek works out for one resting grown-up.",
+    "footer": "Numbers are for one resting grown-up (65 kg) in this model; people differ. Not medical advice.",
+    "version": "Model version {{version}} · printed {{date}}",
+    "lessons": {
+      "flagship": {
+        "setup": "Two rotis with a glass of water at 0 h, and a 20-minute walk from 1 h. Kept to compare: the same meal, resting.",
+        "book": "NCERT Class 10: digested food is absorbed in the small intestine, and blood carries it around the body.",
+        "y": "Breaths a minute",
+        "tasks": [
+          {
+            "q": "At 30 min, where is the roti, and what has started to rise in the blood?",
+            "b": "NCERT Class 10: digested food is absorbed in the small intestine.",
+            "m": "The roti leaves the stomach a little at a time; blood sugar has started to rise."
+          },
+          {
+            "q": "Sketch breaths a minute from 0 to 3 h, with the walk and without. How many breaths a minute during the walk, and without it?",
+            "b": "Older NCERT Class 7 book (2024-25): 15–18 a minute at rest.",
+            "m": "About 24 a minute in the walk, about 16 without it."
+          },
+          {
+            "q": "How fast does the heart beat during the walk, and without it?",
+            "b": "Older NCERT Class 7 book (2024-25): 72–80 beats a minute at rest.",
+            "m": "About 94 a minute in the walk, about 67 without it."
+          },
+          {
+            "q": "Where does the water from the glass go? Does more or less come out after the walk?",
+            "b": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
+            "m": "It leaves as urine. By 1 h 51 min about 60 mL less has come out than without the walk: sweat took some water."
+          }
+        ],
+        "exit": {
+          "q": "Which system hardly changed after the roti, but changed a lot during the walk?",
+          "m": "Breathing: about 16 breaths a minute after the roti, about 24 during the walk."
+        }
+      },
+      "stomachRace": {
+        "setup": "One cola at 0 h. Kept to compare: a cheeseburger with fries.",
+        "book": "NCERT Class 10: a muscle at the end of the stomach lets food into the small intestine in small amounts.",
+        "y": "Food in the stomach (g)",
+        "tasks": [
+          {
+            "q": "When has half of the cola left the stomach?",
+            "m": "About 35 min (30 to 40 is right)."
+          },
+          {
+            "q": "Sketch the food in the stomach from 0 to 6 h for both meals. Mark where each line is half way down.",
+            "m": "The cola’s line falls at once and is half way down at about 35 min; the burger and fries fall slowly, half way at about 4 h 35 min."
+          },
+          {
+            "q": "Which leaves the stomach faster, and why?",
+            "m": "The cola, about 8 times faster: a drink starts leaving straight away, and it has fewer calories than a burger with fries."
+          },
+          {
+            "q": "What is blood sugar 1 hour after the cola?",
+            "m": "About 111 mg/dL (105 to 115). Its highest, about 121, was at 35 min."
+          }
+        ],
+        "exit": {
+          "q": "In which part of the gut is most digested food absorbed?",
+          "b": "The small intestine (NCERT Class 10)."
+        }
+      },
+      "rotiDal": {
+        "setup": "Roti with dal at 0 h. Kept to compare: white rice.",
+        "book": "NCERT Class 10: digested food is absorbed in the small intestine, and blood carries it around the body.",
+        "y": "Blood sugar (mg/dL)",
+        "tasks": [
+          {
+            "q": "What is the highest blood sugar after roti and dal, and when?",
+            "m": "About 110 mg/dL, at about 1 h 6 min."
+          },
+          {
+            "q": "What is the highest blood sugar after white rice, and when?",
+            "m": "About 124 mg/dL, at about 57 min."
+          },
+          {
+            "q": "Sketch blood sugar from 0 to 4 h for both meals. Which line rises more gently?",
+            "m": "Roti and dal: its highest point is lower, and it comes later."
+          },
+          {
+            "q": "Before eating, blood sugar is about 90 mg/dL. How far above that does each meal take it at most?",
+            "m": "Roti and dal about 20 mg/dL above it, white rice about 34 mg/dL above it."
+          }
+        ],
+        "exit": {
+          "q": "Which meal gives the slower, gentler rise in blood sugar, and how can you tell from the graph?",
+          "m": "Roti and dal: its line rises more slowly, and its highest point is lower."
+        }
+      },
+      "colaFour": {
+        "setup": "One cola at 0 h. Kept to compare: four colas at once.",
+        "book": "NCERT Class 10: digested food is absorbed in the small intestine, and blood carries it around the body.",
+        "y": "Blood sugar (mg/dL)",
+        "tasks": [
+          {
+            "q": "What is the highest blood sugar after one cola, and after four?",
+            "m": "About 121 mg/dL for both, at about 35 min."
+          },
+          {
+            "q": "At 2 h, what is blood sugar after one cola, and after four?",
+            "m": "About 91 mg/dL after one, about 103 mg/dL after four."
+          },
+          {
+            "q": "Sketch blood sugar from 0 to 6 h for one cola and for four. Which line stays raised longer?",
+            "m": "Four colas: blood sugar stays raised about 3 h 15 min longer."
+          },
+          {
+            "q": "When has half of the drink left the stomach: one cola, and four?",
+            "m": "About 35 min for one, about 2 h 15 min for four."
+          }
+        ],
+        "exit": {
+          "q": "Four colas did not take blood sugar higher than one. What did they change?",
+          "m": "How long it stays raised: about 3 h 15 min longer."
+        }
+      },
+      "breathRun": {
+        "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
+        "book": "Older NCERT Class 7 book (2024-25): 15–18 breaths a minute for a grown-up at rest, up to 25 a minute in hard exercise.",
+        "y": "Breaths a minute",
+        "tasks": [
+          {
+            "q": "How many breaths a minute at rest?",
+            "b": "Older NCERT Class 7 book (2024-25): 15–18 a minute.",
+            "m": "15 a minute, for one resting grown-up."
+          },
+          {
+            "q": "How many breaths a minute at the end of the run?",
+            "b": "Older NCERT Class 7 book: up to 25 a minute in hard exercise.",
+            "m": "About 33 a minute: the model follows grown-ups running hard."
+          },
+          {
+            "q": "How much air goes in with each breath at rest, and in the run?",
+            "m": "About 0.4 L at rest, about 1.4 L in the run."
+          },
+          {
+            "q": "Sketch breaths a minute from 0 to 2 h, running and resting. When is the line highest?",
+            "m": "At the end of the run (40 min), about 33 a minute; soon after, back near 15."
+          }
+        ],
+        "exit": {
+          "q": "Why do you breathe faster and deeper when you run?",
+          "b": "NCERT Class 10: working cells use more oxygen and make more carbon dioxide.",
+          "m": "Breathing brings the oxygen in and carries the carbon dioxide away: in the run the body uses about 10 times as much oxygen as at rest."
+        }
+      },
+      "heartWalk": {
+        "setup": "Roti with dal at 0 h, and a 20-minute walk from 1 h. Kept to compare: the same meal, resting.",
+        "book": "NCERT Class 10: blood carries digested food and oxygen around the body, and it goes through the heart twice in each round.",
+        "y": "Blood to the gut (mL a minute)",
+        "tasks": [
+          {
+            "q": "How many times a minute does the heart beat at rest?",
+            "b": "Older NCERT Class 7 book (2024-25): 72–80 beats a minute.",
+            "m": "About 66 a minute, for one resting grown-up."
+          },
+          {
+            "q": "How many times a minute does it beat in the walk?",
+            "m": "About 93 a minute at 1 h 10 min."
+          },
+          {
+            "q": "How much blood goes to the muscles each minute at rest, and in the walk?",
+            "m": "About 0.9 L at rest, about 4.3 L in the walk."
+          },
+          {
+            "q": "Sketch the blood going to the gut from 0 to 4 h, resting. When does the most blood go to the gut?",
+            "m": "About 1 h after eating, while the small intestine takes in the food."
+          }
+        ],
+        "exit": {
+          "q": "In one round of the body, how many times does blood go through the heart?",
+          "b": "Twice (NCERT Class 10)."
+        }
+      },
+      "drinkWater": {
+        "setup": "Four glasses of water at 0 h. Kept to compare: one glass.",
+        "book": "NCERT Class 10: the kidneys filter about 180 L a day, and only a litre or two leaves as urine.",
+        "y": "Urine made (mL an hour)",
+        "tasks": [
+          {
+            "q": "Sketch the urine made per hour from 0 to 4 h, for four glasses and for one. When is it fastest?",
+            "m": "About 1 h after drinking, for both."
+          },
+          {
+            "q": "At the most, how much urine is made in an hour after four glasses, and after one?",
+            "m": "About 700 mL an hour after four, about 220 mL an hour after one."
+          },
+          {
+            "q": "How much do the kidneys filter, and how much of it leaves?",
+            "b": "NCERT Class 10: about 180 L a day; only a litre or two leaves as urine.",
+            "k": "About 125 mL a minute (OpenStax Anatomy and Physiology 2e)."
+          },
+          {
+            "q": "Is there glucose in the urine?",
+            "k": "None: the kidneys take all of it back."
+          }
+        ],
+        "exit": {
+          "q": "What happens to the water from the three extra glasses?",
+          "b": "NCERT Class 10: with more water in the body, less is taken back, so more urine is made.",
+          "m": "By 4 h about 670 mL more urine has come out than after one glass."
+        }
+      },
+      "musclesRun": {
+        "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
+        "book": "NCERT Class 10: cells break down food using oxygen to release energy.",
+        "y": "Muscles’ energy (times resting)",
+        "tasks": [
+          {
+            "q": "How many times their resting energy do the muscles use in the run?",
+            "m": "About 43 times."
+          },
+          {
+            "q": "Where does most of that extra energy end up?",
+            "m": "As heat; sweat carries it away."
+          },
+          {
+            "q": "How fast does the heart beat in the run, and how many breaths a minute?",
+            "m": "About 160 beats and about 33 breaths a minute."
+          },
+          {
+            "q": "Sketch the muscles’ energy from 0 to 2 h, running and resting. When is it highest?",
+            "m": "In the run (30 to 40 min); before and after, it stays at the resting level."
+          }
+        ],
+        "exit": {
+          "q": "Which other body systems change when the muscles work harder?",
+          "m": "Breathing, the heart and the skin: faster breaths, a faster heart, and sweat."
+        }
+      },
+      "sweatRun": {
+        "setup": "Two rotis at 0 h, and a 10-minute run from 30 min. Kept to compare: the same meal, resting.",
+        "book": "NCERT Class 6: the body stays near 37 °C.",
+        "y": "Sweat made (mL an hour)",
+        "tasks": [
+          {
+            "q": "How much sweat is made in the run, and resting?",
+            "m": "About 170 mL in all; none from moving when resting."
+          },
+          {
+            "q": "What happens to body temperature?",
+            "b": "NCERT Class 6: it stays near 37 °C.",
+            "m": "Held at 37 °C: the model does not work it out. Sweat takes the extra heat away."
+          },
+          {
+            "q": "Is sweat fat leaving the body?",
+            "m": "No: sweat is water and salt, not fat leaving."
+          },
+          {
+            "q": "Sketch the sweat made per hour from 0 to 2 h, running and resting. When is it highest?",
+            "m": "At the end of the run (40 min), about 980 mL an hour; none at rest."
+          }
+        ],
+        "exit": {
+          "q": "Where does the extra energy of running go, and how does the body get rid of it?",
+          "m": "Most of it becomes heat; sweat carries the heat away."
+        }
+      }
+    }
   },
   "science": {
     "title": "Science and sources",

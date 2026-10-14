@@ -118,6 +118,9 @@ export const PAGE_SECTIONS = {
   // X-1: the guided lesson's bar brings its own words (components/LessonBar.tsx, lazy); Home and
   // Teach name the lesson in their own sections.
   flagship: [],
+  // X-3: the printable worksheets' words load with the worksheet (components/Worksheet.tsx, lazy);
+  // Teach keeps its link's name.
+  sheet: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

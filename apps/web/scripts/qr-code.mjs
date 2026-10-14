@@ -14,9 +14,22 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import QRCode from 'qrcode'
 import { QR_PATH } from '../src/lib/qrPath.ts'
+import { SHEETS } from '../src/lib/worksheets.ts'
 
 /** Where the picture is written; pages/Teach.tsx imports it. */
 export const QR_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'assets', 'lifepeek-qr.svg')
+
+/**
+ * Where each Teach lesson's worksheet QR code is written (X-3): `<key>.svg`, one per lesson of
+ * src/lib/worksheets.ts, opening that lesson's link on this site. components/Worksheet.tsx imports
+ * them as files of their own (never inlined); not committed (.gitignore).
+ */
+export const SHEET_QR_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'assets', 'qr')
+
+/** The QR code of every worksheet, for a site at `site`: each written only when it changes. */
+export async function writeSheetQrs(site, dir = SHEET_QR_DIR) {
+  for (const [key, sheet] of Object.entries(SHEETS)) await writeQr(site + sheet.link, path.join(dir, `${key}.svg`))
+}
 
 /** The address the QR code opens on a site at `site` (no trailing slash). */
 export const qrAddress = (site) => site + QR_PATH
@@ -40,12 +53,13 @@ export async function writeQr(address, file = QR_FILE) {
   return true
 }
 
-/** The Vite plugin: the QR code of this build's site address, before any module is read. */
+/** The Vite plugin: the QR codes of this build's site address (Teach's, and each worksheet's), before any module is read. */
 export default function qrCode({ site }) {
   return {
     name: 'lifepeek-qr-code',
     async buildStart() {
       await writeQr(qrAddress(site))
+      await writeSheetQrs(site)
     },
   }
 }

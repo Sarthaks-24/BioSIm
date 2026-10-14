@@ -31,6 +31,8 @@ const ALLOWED: Record<string, readonly string[]> = {
     'systems/circulation/lesson.ts',
     'systems/kidneys/lesson.ts',
     'systems/muscles/lesson.ts',
+    // The worksheet shows only on Teach (`/teach?sheet=<lesson>`), so Teach's words are there.
+    'components/Worksheet.tsx',
   ],
   science: ['pages/Science.tsx'],
   stats: ['pages/Stats.tsx'],
@@ -81,6 +83,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   lifeProcess: ['components/SystemPicker.tsx', 'registry/i18nKeys.ts'],
   count: ['components/CountYours.tsx'],
   flagship: ['components/LessonBar.tsx'],
+  sheet: ['components/Worksheet.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

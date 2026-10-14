@@ -47,6 +47,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'count.spec.ts',
       'kidneys.spec.ts',
       'flagship.spec.ts',
+      'worksheet.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },

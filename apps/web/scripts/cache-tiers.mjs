@@ -95,6 +95,8 @@ export const LESSON_PACKS = {
       'src/components/LessonBar.tsx',
       // X-1: Home's lesson card and systems list (loaded once a system besides Digestion is public).
       'src/components/HomeLesson.tsx',
+      // X-3: a lesson's printable worksheet, with its QR codes, to print without internet too.
+      'src/components/Worksheet.tsx',
       // A bout poses the body (and Digestion's `full` framing shows the legs): R93 #6.
       LIMBS,
     ],

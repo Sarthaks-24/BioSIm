@@ -1,0 +1,227 @@
+/* The printable worksheet (X-3; ui-ux §8.3): one A4 page, black on white, tags as words (never
+   colour). Loaded with components/Worksheet.tsx only (a lazy part): no page's own CSS grows. On the
+   screen it is a preview of the paper; printed, only the sheet is on the page (the site's header and
+   footer are .no-print, styles.css). Sizes are in mm and pt, as on paper. */
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+.ws {
+  box-sizing: border-box;
+  max-width: 210mm;
+  margin: 0 auto 2.5rem;
+  padding: 12mm;
+  background: #fff;
+  color: #000;
+  border: 1px solid #c8c8c8;
+  font-size: 11pt;
+  line-height: 1.35;
+}
+.ws *,
+.ws *::before,
+.ws *::after {
+  box-sizing: border-box;
+}
+
+.ws-head {
+  display: flex;
+  gap: 6mm;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.ws-titles {
+  min-width: 0;
+  flex: 1;
+}
+.ws-brand {
+  font-size: 9.5pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.ws h1 {
+  margin-top: 1mm;
+  font-size: 17pt;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.ws-tags {
+  margin-top: 1mm;
+  font-size: 10pt;
+  font-weight: 600;
+}
+.ws-fields {
+  display: flex;
+  gap: 4mm;
+  margin-top: 5mm;
+  font-size: 10pt;
+}
+.ws-fields span {
+  flex: 1;
+  padding-bottom: 1mm;
+  border-bottom: 0.3mm solid #000;
+}
+.ws-fields span:first-child {
+  flex: 2;
+}
+
+/* The QR code: 30 mm (at least 25 mm, content-i18n §8.4), with the address to type under it. */
+.ws-qr {
+  flex: none;
+  width: 32mm;
+  text-align: center;
+  font-size: 8pt;
+  line-height: 1.25;
+}
+.ws-qr img {
+  display: block;
+  width: 30mm;
+  height: 30mm;
+  margin: 0 auto 1mm;
+}
+/* The lesson's link, to type if a camera can't read the code. */
+.ws-url {
+  margin-top: 2.5mm;
+  font-size: 9pt;
+}
+.ws-url span {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.ws-box {
+  margin-top: 3mm;
+  padding: 2mm 3mm;
+  border: 0.3mm solid #000;
+  border-radius: 1.5mm;
+}
+.ws-book {
+  border-width: 0.6mm;
+}
+
+.ws h2 {
+  margin-top: 4mm;
+  font-size: 12pt;
+  font-weight: 800;
+}
+.ws-tasks {
+  margin-top: 1mm;
+  padding-left: 6mm;
+  list-style: decimal;
+}
+.ws-tasks li {
+  margin-top: 2mm;
+  break-inside: avoid;
+}
+.ws-q {
+  display: block;
+  font-weight: 600;
+}
+/* The question with the axes: its answer lines or answer beside them, the next question below. */
+.ws-sketch::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+.ws-axes {
+  float: right;
+  width: 72mm;
+  margin: 1mm 0 1mm 4mm;
+}
+.ws-axes svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-size: 11px;
+}
+.ws-axes text {
+  fill: #000;
+}
+.ws-grid {
+  stroke: #b4b4b4;
+  stroke-width: 0.6;
+  stroke-dasharray: 2 2;
+}
+.ws-axis {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.4;
+}
+
+/* Lines to write on (the students' copy). */
+.ws-lines,
+.ws-answer {
+  display: flow-root;
+}
+.ws-lines span {
+  display: block;
+  height: 8mm;
+  border-bottom: 0.25mm solid #777;
+}
+
+/* The teacher's copy: the answers, each part named (Book, Fixed value, Model). */
+.ws-answer {
+  margin-top: 0.5mm;
+  font-size: 10pt;
+}
+.ws-part {
+  display: block;
+}
+.ws-key {
+  margin-top: 3mm;
+  font-size: 8.5pt;
+}
+
+.ws-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1mm 4mm;
+  justify-content: space-between;
+  margin-top: 4mm;
+  padding-top: 2mm;
+  border-top: 0.3mm solid #000;
+  font-size: 8pt;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  /* Only the sheet on paper: the page around it keeps no height, gutter or padding of its own. */
+  body:has(.ws) #root *:not(.ws, .ws *) {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+  }
+  .ws {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* A phone's preview: the same sheet, narrower (what prints is A4 whatever the screen). */
+@media screen and (max-width: 40rem) {
+  .ws {
+    padding: 5mm 4mm;
+  }
+  .ws-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ws-qr {
+    align-self: center;
+  }
+  .ws-axes {
+    float: none;
+    width: 100%;
+    margin: 2mm 0;
+  }
+}

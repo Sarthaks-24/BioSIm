@@ -4,9 +4,10 @@ import os from 'node:os'
 import path from 'node:path'
 import QRCode from 'qrcode'
 import { describe, expect, it } from 'vitest'
-import { qrAddress, qrSvg, writeQr } from './qr-code.mjs'
+import { qrAddress, qrSvg, writeQr, writeSheetQrs } from './qr-code.mjs'
 import { DEFAULT_SITE_URL } from './site-url.mjs'
 import { QR_PATH } from '../src/lib/qrPath.ts'
+import { SHEETS } from '../src/lib/worksheets.ts'
 
 /** The dark modules of an SVG made by qrcode (its one stroked path). */
 const modules = (svg) => /stroke="#000000" d="([^"]+)"/.exec(svg)?.[1] ?? ''
@@ -37,5 +38,17 @@ describe('Teach QR code at build time (T11, R79)', () => {
     expect(await writeQr('https://example.org/sim', file)).toBe(false)
     expect(await writeQr('https://example.org/teach', file)).toBe(true)
     expect(fs.readFileSync(file, 'utf8')).toBe(await qrSvg('https://example.org/teach'))
+  })
+
+  it('draws one worksheet code per lesson (X-3), each opening that lesson’s link on the site', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lp-sheet-qr-'))
+    await writeSheetQrs('https://example.org', dir)
+    expect(fs.readdirSync(dir).sort()).toEqual(
+      Object.keys(SHEETS)
+        .map((k) => `${k}.svg`)
+        .sort(),
+    )
+    for (const [key, sheet] of Object.entries(SHEETS))
+      expect(fs.readFileSync(path.join(dir, `${key}.svg`), 'utf8')).toBe(await qrSvg(`https://example.org${sheet.link}`))
   })
 })

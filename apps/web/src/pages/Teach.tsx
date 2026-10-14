@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { lazy, Suspense, useEffect, useState, type MouseEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
@@ -17,7 +17,11 @@ import { shortMealNames } from '../components/stage/mealText.ts'
 import qrCode from '../assets/lifepeek-qr.svg?no-inline'
 import teachText from 'virtual:lifepeek-en/teach'
 import PageShell from '../components/PageShell.tsx'
+import type { SheetKey } from '../lib/worksheets.ts'
 import { LESSON_PACKS, canSave, isSaved, save } from '../lib/offlineSave.ts'
+
+// A lesson's printable worksheet (X-3): its code, words, print CSS and QR codes load when one is opened.
+const Worksheet = lazy(() => import('../components/Worksheet.tsx'))
 
 // This page's English text comes with its code (size budget, scripts/i18n-sections.mjs).
 addEnglish(teachText)
@@ -110,7 +114,8 @@ const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-surface-sunk focus
 
 export default function Teach() {
   const { t, i18n } = useTranslation()
-  const preview = isPreview(useLocation().search)
+  const { search } = useLocation()
+  const preview = isPreview(search)
   const chapters = shownChapters(preview)
   const lessons = chapters.flatMap((c) => c.lessons)
   const flagship = flagshipShown(preview)
@@ -137,7 +142,7 @@ export default function Teach() {
     const state = offline.state[key]
     if (!saveable || !state || state === 'unknown') return null
     return (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-3 text-sm sm:px-3 sm:-mx-3">
+      <>
         <span role="status" className={state === 'saved' ? 'font-semibold text-ink' : 'text-ink-muted'}>
           {offlineText[state]}
         </span>
@@ -151,9 +156,42 @@ export default function Teach() {
             {t('teach.offline.save')}
           </button>
         )}
-      </div>
+      </>
     )
   }
+  /** A lesson's worksheet (X-3) and its offline state, under its row. */
+  const sheetHref = (key: string) => `/teach?sheet=${key}${preview ? '&preview=1' : ''}`
+  const below = (key: string, name: string) => (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pb-3 text-sm sm:px-3 sm:-mx-3">
+      <Link
+        to={sheetHref(key)}
+        aria-label={t('teach.worksheetFor', { lesson: name })}
+        className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2 lg:min-h-9"
+      >
+        {t('teach.worksheet')}
+      </Link>
+      {saveState(key, name)}
+    </div>
+  )
+
+  // `?sheet=<lesson>`: that lesson's worksheet in place of the page (a lesson this session lists).
+  const sheet = new URLSearchParams(search).get('sheet')
+  const sheetChapter = chapters.find((c) => c.lessons.some((l) => l.key === sheet))
+  const sheetLesson = sheetChapter?.lessons.find((l) => l.key === sheet)
+  const sheetFor =
+    sheetLesson && sheetChapter
+      ? { title: `teach.lessons.${sheetLesson.key}`, classes: sheetLesson.classes, chapter: sheetChapter }
+      : flagship && sheet === FLAGSHIP.key
+        ? { title: 'teach.flagship.title', classes: [7, 10] }
+        : null
+  if (sheetFor)
+    return (
+      <div className="py-8">
+        <Suspense fallback={<p className="p-10 text-center text-ink-muted">…</p>}>
+          <Worksheet lesson={sheet as SheetKey} {...sheetFor} back={preview ? '/teach?preview=1' : '/teach'} />
+        </Suspense>
+      </div>
+    )
   return (
     <PageShell>
       <h1 className="text-display font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
@@ -192,7 +230,7 @@ export default function Teach() {
             <summary className="cursor-pointer font-semibold">{t('teach.flagship.exit')}</summary>
             <p className="mt-1 text-ink-muted">{t('teach.flagship.exitAnswer')}</p>
           </details>
-          <div className="mt-2">{saveState(FLAGSHIP.key, t('teach.flagship.title'))}</div>
+          <div className="mt-2">{below(FLAGSHIP.key, t('teach.flagship.title'))}</div>
         </section>
       )}
 
@@ -243,7 +281,7 @@ export default function Teach() {
                   </span>
                   <Chevron />
                 </Link>
-                {saveState(l.key, t(`teach.lessons.${l.key}`))}
+                {below(l.key, t(`teach.lessons.${l.key}`))}
               </li>
             ))}
           </ul>
