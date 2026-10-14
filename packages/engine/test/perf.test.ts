@@ -19,14 +19,16 @@ import { HUMAN_MODEL, HUMAN_MODULES, runModules, simulate } from '../src/run.ts'
  *
  * How it measures (R110): CPU time, not the wall clock. A machine busy with other work (two browser
  * test runs beside `npm test`) stretches the wall time of every call while the CPU time a call
- * needs barely moves. Each gate is the CPU time of a batch of calls that used at least BATCH_CPU_MS
- * of it, over the number of calls (Windows counts CPU time in 15.6 ms ticks: a single call cannot be
- * timed so), and a gate over its limit is measured once more before it fails.
+ * needs moves far less. Each gate is the CPU time of a batch of calls that used at least
+ * BATCH_CPU_MS of it, over the number of calls (Windows counts CPU time in 15.6 ms ticks: a single
+ * call cannot be timed so), the least of three batches after a warm-up, and a gate over its limit
+ * is measured once more before it fails.
  *
  * Where it is strict: in CI's perf job, alone on its runner (ENGINE_PERF=strict, `npm run test:perf`).
  * Anywhere else (`npm test` on a laptop or in CI's check job, beside other work) the limits are
- * LOCAL_SLACK times wider: wide enough for a shared CPU, narrow enough to catch a real slowdown
- * (a step that becomes O(n²) is 10× or more). `npm test` runs this file alone, after the others.
+ * LOCAL_SLACK times wider: wide enough for a shared CPU (its cores slow down and share caches: a
+ * call's CPU time grew up to 3× beside browser test runs on a laptop), narrow enough to catch a real
+ * slowdown (a step that becomes O(n²) is 10× or more). `npm test` runs this file alone, after the others.
  */
 
 const dir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../content/foods')
@@ -37,7 +39,7 @@ const lookup = (id: string) => foods.find((f) => f.id === id)
 const meal = (m: string) => buildMeal(decodeMeal(m), lookup)
 
 const STRICT = process.env.ENGINE_PERF === 'strict'
-const LOCAL_SLACK = 2
+const LOCAL_SLACK = 3
 const SLACK = STRICT ? 1 : LOCAL_SLACK
 const MODULE_MAX_MS = 2 * SLACK
 const GUT_MAX_MS = 15 * SLACK
@@ -62,17 +64,18 @@ const CASES: [string, Meal, ActivityBout[]][] = [
   ['heaviest', meal('cheeseburger:5,fries:5,cola:5,roti:5,dal:5,milk:5'), HEAVY_PLAN],
 ]
 
-const WARM = 5
-/** CPU time a batch must use: 16 ms ticks are then ≤ 7 % of it. */
-const BATCH_CPU_MS = 250
+/** CPU time spent calling before the batches are timed: the JIT's optimising compiles (on threads this clock counts) are done by then. */
+const WARM_CPU_MS = 60
+/** CPU time each batch must use (16 ms ticks: ≤ 16 % of it), and the batches; the least is taken. */
+const BATCH_CPU_MS = 100
+const BATCHES = 3
 /** This process's CPU time so far (user + system), in ms. */
 const cpuMs = () => {
   const u = process.cpuUsage()
   return (u.user + u.system) / 1000
 }
-/** CPU ms per call of `call`: a batch's CPU time over its calls (after `WARM` untimed ones). */
-function cpuPerCall(call: () => void): number {
-  for (let i = 0; i < WARM; i++) call()
+/** Calls `call` until it has used `ms` of CPU time; returns the CPU ms per call. */
+function batch(call: () => void, ms: number): number {
   const start = cpuMs()
   let n = 0
   let used = 0
@@ -80,8 +83,13 @@ function cpuPerCall(call: () => void): number {
     call()
     n++
     used = cpuMs() - start
-  } while (used < BATCH_CPU_MS)
+  } while (used < ms)
   return used / n
+}
+/** CPU ms per call of `call`: the least of BATCHES batches' (each its CPU time over its calls), after a warm-up. */
+function cpuPerCall(call: () => void): number {
+  batch(call, WARM_CPU_MS)
+  return Math.min(...Array.from({ length: BATCHES }, () => batch(call, BATCH_CPU_MS)))
 }
 /** As cpuPerCall, measured once more if over `max` (one burst of other work must not fail a gate). */
 const gate = (call: () => void, max: number) => {
