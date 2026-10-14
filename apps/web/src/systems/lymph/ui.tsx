@@ -143,12 +143,16 @@ function NowLine({ run, kept, className = '' }: NowProps) {
         <span>
           <span className="sr-only">{t('now.label')}: </span>
           <span className={`${PILL} mr-2`}>{t('sys.lymph.now.organ')}</span>
-          {none ? (
-            <span data-fat-none="">{t('sys.lymph.now.none')}</span>
-          ) : (
-            <span data-road={road}>{t('sys.lymph.now.road', { n: road?.toFixed(2) })}</span>
-          )}
-          <span className="text-ink-muted"> · </span>
+          {/* Below 1024 px the graphs show one at a time (Fat's road is its tab): the line keeps blood
+              fat and "Germ defence ›" on one row, so the body keeps its height (FP-1). */}
+          <span className="max-lg:hidden">
+            {none ? (
+              <span data-fat-none="">{t('sys.lymph.now.none')}</span>
+            ) : (
+              <span data-road={road}>{t('sys.lymph.now.road', { n: road?.toFixed(2) })}</span>
+            )}
+            <span className="text-ink-muted"> · </span>
+          </span>
           <span data-blood-fat={fat} className="font-semibold">
             {t('sys.lymph.now.fat', { n: fat })}
           </span>
@@ -176,7 +180,8 @@ const WHY = 'sys.lymph.why'
  * other job of lymph (about 3 L of tissue fluid a day, OpenStax §21.1) and NCERT Class 10's line
  * with "Why different? ›" (X-4); under blood fat, what before eating means here (R90: the Indian
  * baseline is in "How we know", limits.bloodFatIndia). A short window keeps its plot, and a phone
- * its one graph: there both are in the graph's "How we know".
+ * its one graph: there only "Moves with this meal." shows (the book line is on the worksheet and in
+ * the guided lesson's bar; the limits in the graph's "How we know").
  */
 function StripNote({ slot }: { slot: GraphSlotDef }) {
   const { t } = useTranslation()
@@ -188,7 +193,8 @@ function StripNote({ slot }: { slot: GraphSlotDef }) {
           <p data-constant="tissueFluid" className="max-lg:hidden [@media(height<42.5rem)]:hidden">
             <span className="text-ink">{t('sys.lymph.fluid.value')}</span> <span data-source="">{t('sys.lymph.fluid.source')}</span>
           </p>
-          <div className="flex flex-wrap items-center gap-x-2 [@media(height<42.5rem)]:hidden">
+          {/* Not on a phone: there the one graph, with a kept line's legend, needs the room (U-5 shots). */}
+          <div className="flex flex-wrap items-center gap-x-2 max-lg:hidden [@media(height<42.5rem)]:hidden">
             <span data-book="">{t('sys.lymph.book')}</span>
             <WhyCard text={WHY} className="-my-2 lg:my-0" />
           </div>

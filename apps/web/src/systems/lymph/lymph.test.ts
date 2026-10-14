@@ -169,7 +169,8 @@ describe('the words are true of the run (ui-ux §6, R90)', () => {
     const fat = seriesOf(burger, BLOOD_FAT)!
     expect(upMin(fat, burger.stepMin)).toBeGreaterThanOrEqual(UP_MIN)
     // Not two rotis, an egg or a glass of milk: their blood fat is back down within a few hours.
-    for (const r of [roti, milk, run([{ foodId: 'boiled-egg', servings: 1 }])]) expect(upMin(seriesOf(r, BLOOD_FAT)!, r.stepMin)).toBeLessThan(UP_MIN)
+    for (const r of [roti, milk, run([{ foodId: 'boiled-egg', servings: 1 }])])
+      expect(upMin(seriesOf(r, BLOOD_FAT)!, r.stepMin)).toBeLessThan(UP_MIN)
     const s = lymphSummary(burger, null, t, 'en')!
     const top = Math.round(highestOf(fat, burger.stepMin).value)
     expect(s.headline).toBe(`Blood fat rises to about ${top} mg/dL and stays up for hours (80 mg/dL before eating).`)

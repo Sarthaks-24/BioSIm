@@ -73,7 +73,10 @@ export function lymphSummary(run: RunResult, kept: RunResult | null, t: TFunctio
   if (g < LITTLE_FAT_G) return { headline: t('sys.lymph.summary.none'), reason: t('sys.lymph.summary.noneReason', { base }) }
   const text = n(top.value)
   if (top.value - FASTING_MG_DL < FLAT_MG_DL)
-    return { headline: t('sys.lymph.summary.little', { n: text, base }), reason: t('sys.lymph.summary.littleReason', { g: grams(g, lang) }) }
+    return {
+      headline: t('sys.lymph.summary.little', { n: text, base }),
+      reason: t('sys.lymph.summary.littleReason', { g: grams(g, lang) }),
+    }
   const reason = t('sys.lymph.summary.road', { g: grams(g, lang) })
   if (upMin(fat, run.stepMin) >= UP_MIN)
     return { headline: t('sys.lymph.summary.hours', { n: text, base }), key: { text, line: 'run' }, reason }
