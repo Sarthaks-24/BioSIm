@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { bodySettled, goto, returningVisitor } from './helpers/gate.ts'
+import { anchorsOf, labelsOffWhileTurning } from './helpers/labels3d.ts'
+import KIDNEYS_3D from '../src/three/layers/kidneys.ts'
 
 // Kidneys & water (U-4): public since the v3.0 release gate (H-1, R103), so a plain link opens it.
 // Its pack loads when it is lit: the flat kidneys, ureters and bladder with its gauge, two graphs on
@@ -220,4 +222,11 @@ test('the 3D kidneys on a 2 GB phone: the light mesh, at most 60k triangles and 
   expect(held).toContain('low:kidneys')
   expect(gl.calls).toBeLessThanOrEqual(20)
   expect(gl.triangles).toBeLessThanOrEqual(60_000)
+})
+
+test('the 3D kidneys’ labels stay on their organs while the view is turned (R106)', async ({ page }, info) => {
+  test.skip(!['desktop', 'projector', 'phone'].includes(info.project.name), 'WebGL projects with motion')
+  await open(page, WATER)
+  await expect(page.locator('[data-body="3d"][data-layer="kidneys"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  expect(await labelsOffWhileTurning(page, anchorsOf(KIDNEYS_3D))).toEqual([])
 })

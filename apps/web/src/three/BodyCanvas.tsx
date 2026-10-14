@@ -515,10 +515,16 @@ function Swarm({
  * Moves the organ labels to where their organs are on screen, every frame the scene draws. The
  * camera and size are this frame's (the frame's state), not those of the last React render: when
  * the box changes, the frame that draws the new size places the labels for it too (B17).
+ *
+ * The camera's matrices are brought up to date first (R106). A drag's orbit (the controls' update)
+ * and a framing's ease (CameraRig) move and turn the camera in this frame, but its view matrix is
+ * only remade when the scene is drawn, after this: the labels were placed for the frame before, so
+ * all through a turn every dot trailed its organ (40–60 px in the e2e check's drag) and stopped off it.
  */
 function LabelProjector({ place, overlays }: { place: Callouts['place']; overlays: ReadonlySet<Place> }) {
   const p = useMemo(() => new Vector3(), [])
   useFrame(({ camera, size }) => {
+    camera.updateMatrixWorld()
     const project: Project = (v) => {
       p.copy(v).project(camera)
       return p.z > 1 ? null : [((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height]
