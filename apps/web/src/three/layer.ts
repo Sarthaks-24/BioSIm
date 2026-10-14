@@ -28,8 +28,9 @@ export interface Layer3d {
   /**
    * Writes this frame's per-organ state and fill from the run at meal-clock minute `t`. `phase`: its
    * rhythm's phase on the real clock (0…1; `rhythm.still` with motion reduced), 0 for a layer without one.
+   * `reduced`: motion is reduced (a size change is then a cut, not an ease: no frame follows to finish it).
    */
-  write(out: LayerState, sim: RunResult, t: number, phase: number): void
+  write(out: LayerState, sim: RunResult, t: number, phase: number, reduced?: boolean): void
   /** Its framing (anatomy plan §1): the 3D body eases its camera there (a cut with motion reduced). `torso` when absent. */
   framing?: Framing
   /** False: the meal's food particles are not drawn with it (they belong to Digestion's picture, as in the flat one). */
@@ -38,7 +39,7 @@ export interface Layer3d {
    * How `inflate` moves a vertex as its organ fills. Absent: out along its normal (the stomach). With
    * `grow`: away from its organ's point (`origins`, one per organ), by `inflate` × uFill[organ] of
    * the way there, so a part grows as a whole, the way the flat drawing scales it (lungs, bronchi,
-   * diaphragm from the lungs' top). uFill is then the extra size: 0.2 = 20 % bigger.
+   * diaphragm from the lungs' top). uFill is then the extra size: 0.2 = 20 % bigger, −0.5 = half the size.
    */
   grow?: { origins: readonly (readonly [number, number, number])[] }
   /**
@@ -46,9 +47,10 @@ export interface Layer3d {
    * holds a vertex's distance from its tube's start in scene units, and an organ whose
    * `LayerState.dash` is above 0 shows short pale dashes down the middle of its tubes, that many
    * times as dense as at 1, moved forward by its `LayerState.flow` (scene units). Absent: the shader
-   * has none (the other layers' programs are unchanged).
+   * has none (the other layers' programs are unchanged). A DashLook in place of `true` gives them
+   * their own colour and width (A-6: the urine's dark drops, as the flat drawing's).
    */
-  dashes?: boolean
+  dashes?: boolean | DashLook
   /** A rhythm drawn at its true speed on the real clock (a breath, a beat; anatomy plan §4). */
   rhythm?: Rhythm3d
   /** Its own labels in place of Digestion's (anatomy/human/<system>.ts LABELS). */
@@ -95,16 +97,30 @@ export interface OverlayProps {
   register(place: (project: Project, width: number, height: number) => void): () => void
 }
 
+/** A `dashes` layer's own dashes (Layer3d.dashes). The default is the blood's: pale (0.9 grey), `cover` 0.16. */
+export interface DashLook {
+  /** Their colour (sRGB hex). */
+  ink: string
+  /** How much of the tube's width they cover, as seen (0…1; from the middle out). */
+  cover: number
+}
+
 /** What a layer writes per frame, one number per organ (Layer3d.organs order). */
 export interface LayerState {
   /** −1 = empty, faded back; 0 = normal; 1 = the active one. */
   state: number[]
-  /** How full a stretching organ is, 0…1 (stomach, later bladder); with `Layer3d.grow`, its extra size (lungs). 0 elsewhere. */
+  /** How full a stretching organ is, 0…1 (stomach); with `Layer3d.grow`, its extra size (lungs, the bladder). 0 elsewhere. */
   fill: number[]
   /** With `Layer3d.dashes`: how dense an organ's dashes are (0 = none, 1 = the resting look). */
   dash: number[]
   /** With `Layer3d.dashes`: how far an organ's dashes have moved along its tubes (scene units). */
   flow: number[]
+  /**
+   * Set by a layer that wants one more frame in this many ms though nothing else may draw one (A-6:
+   * its scrub gate held a size change back, and with motion reduced no rhythm ticks). The 3D body
+   * draws it then and clears this. 0 or absent: none.
+   */
+  later?: number
 }
 
 /** Geometry tier (anatomy plan §9): a 2 GB phone builds lighter meshes. Part of the cache key. */

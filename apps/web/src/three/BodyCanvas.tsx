@@ -367,12 +367,20 @@ function LitLayer({
     },
     [body],
   )
+  // A frame the layer asked for later (LayerState.later: its scrub gate held a change back).
+  const later = useRef(0)
+  useEffect(() => () => window.clearTimeout(later.current), [])
   // Runs before the scene is drawn (priority -1), so the uniforms belong to this frame's time.
   useFrame(() => {
     const t = clock.now()
     const r = layer.rhythm
     if (r) rhythm.hz = reduced ? 0 : r.hz(sim, t)
-    layer.write(m.state, sim, t, r ? rhythm.phase : 0)
+    layer.write(m.state, sim, t, r ? rhythm.phase : 0, reduced)
+    if (m.state.later) {
+      window.clearTimeout(later.current)
+      later.current = window.setTimeout(redraw, m.state.later)
+      m.state.later = 0
+    }
     // The `data-*` read-out at most PROBE_HZ times a second: a DOM write per frame on the body's box
     // costs the main thread more than the whole layer's maths (measured, A-3).
     const now = performance.now()

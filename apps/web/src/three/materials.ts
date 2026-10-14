@@ -1,6 +1,7 @@
 import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
 import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones/base.ts'
 import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
+import type { DashLook } from './layer.ts'
 
 /**
  * Materials of the 3D body (plan-systems-3d §3.1, roadmap 3D-1):
@@ -81,24 +82,29 @@ export const DASH = { length: 0.03, gap: 0.09 } as const
 /**
  * The dashes (GLSL, after the rim light): pale, down the middle of the tube as seen (where it faces
  * the camera), each DASH.length long, the gap shrinking as the density grows; `fwidth` keeps their
- * ends soft at any distance. Only a layer with `dashes` gets it.
+ * ends soft at any distance. Only a layer with `dashes` gets it. `look`: their colour and width
+ * (Layer3d.dashes; by default the blood's pale streak, `cover` 0.16).
  */
-const DASHES = `
+const dashGlsl = (look?: DashLook) => {
+  const ink = look ? new Color(look.ink) : new Color(0.9, 0.9, 0.9)
+  const from = 1 - (look?.cover ?? 0.16)
+  return `
         float lpDensity = uDash[int(vOrgan + 0.5)];
         if (lpDensity > 0.0) {
           float lpPeriod = ${DASH.length.toFixed(3)} + ${DASH.gap.toFixed(3)} / lpDensity;
           float lpFrom = abs(fract((vAlong - uFlow[int(vOrgan + 0.5)]) / lpPeriod) - 0.5) * lpPeriod;
           float lpSoft = fwidth(vAlong);
           float lpOn = 1.0 - smoothstep(${(DASH.length / 2).toFixed(3)} - lpSoft, ${(DASH.length / 2).toFixed(3)} + lpSoft, lpFrom);
-          outgoingLight = mix(outgoingLight, vec3(0.9), 0.8 * lpOn * smoothstep(0.84, 0.94, facing));
+          outgoingLight = mix(outgoingLight, vec3(${[ink.r, ink.g, ink.b].map((c) => c.toFixed(4)).join(', ')}), 0.8 * lpOn * smoothstep(${from.toFixed(2)}, ${(from + 0.1).toFixed(2)}, facing));
         }`
+}
 
 /**
  * The lit tissue of one layer. `key` is the layer's id: its program is its own (the organ count is
  * baked into the shader), shared only by bodies showing the same layer. `grow`: see `stretch`;
- * `dashes`: see DASHES.
+ * `dashes`: see `dashGlsl`.
  */
-export function tissueMaterial(u: LayerUniforms, key: string, grow = false, dashes = false): MeshStandardMaterial {
+export function tissueMaterial(u: LayerUniforms, key: string, grow = false, dashes: boolean | DashLook = false): MeshStandardMaterial {
   const N = u.uState.value.length
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: FrontSide })
   m.onBeforeCompile = (shader) => {
@@ -166,7 +172,7 @@ export function tissueMaterial(u: LayerUniforms, key: string, grow = false, dash
         float rim = pow(1.0 - facing, 2.5);
         outgoingLight += mix(diffuseColor.rgb, vec3(1.0), 0.55) * rim * (0.32 + 0.25 * lpActive) * (1.0 - 0.6 * lpFaded);
         // The active organ glows a little from within, so it reads as "here" even in grey light.
-        outgoingLight += diffuseColor.rgb * lpActive * 0.16;${dashes ? DASHES : ''}
+        outgoingLight += diffuseColor.rgb * lpActive * 0.16;${dashes ? dashGlsl(dashes === true ? undefined : dashes) : ''}
         #include <opaque_fragment>`,
       )
   }
