@@ -16,7 +16,7 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { DEFAULT_SYSTEM, systemForLink, systemOf, useTeacherSwitch, type SystemId } from '../systems/registry.ts'
+import { DEFAULT_SYSTEM, behindSwitch, systemForLink, systemOf, useTeacherSwitch, type SystemId } from '../systems/registry.ts'
 import { loadPack } from '../systems/load.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
@@ -160,10 +160,14 @@ export const useRunStore = create<RunState>((set, get) => ({
   // A new system starts on its first graph (architecture §5.2). Its pack (rows, UI, words: I-1)
   // loads first, and the lit system stays drawn meanwhile (R71: never clear the screen; a failed
   // load keeps it too, and the title says so and offers Try again: components/SystemTitle.tsx).
-  setLayer: (layer) => {
+  // A row behind the teacher switch while it is off is never asked for, lit or loaded: Digestion
+  // instead (Try again after the switch went off, a late pack: R120 #3).
+  setLayer: (asked) => {
+    const layer = behindSwitch(asked) ? DEFAULT_SYSTEM : asked
     wanted = layer
     const light = () => {
       if (wanted !== layer) return
+      if (behindSwitch(layer)) return get().setLayer(DEFAULT_SYSTEM)
       if (layer !== get().layer) {
         // Its first graph, or the one a lesson asked for (state/stripTab.ts `next`, X-1).
         const next = useStripTab.getState().next
@@ -237,7 +241,8 @@ export function linkQuery(
   simMin: number,
   lang?: string,
 ): string {
-  const wanted = run.switching?.to ?? run.layer
+  // Never a row behind the teacher switch while it is off (R117, R120 #3).
+  const wanted = [run.switching?.to, run.layer].find((id) => id && !behindSwitch(id)) ?? DEFAULT_SYSTEM
   const query = encodeShareState({
     a: run.meal,
     b: run.kept?.items ?? [],
@@ -255,8 +260,9 @@ export function linkQuery(
   return query.toString()
 }
 
-// The teacher switch going off while its row is lit: back to Digestion (components/stage/KeysHelp.tsx).
+// The teacher switch going off while its row is lit, on its way or failed to arrive: back to
+// Digestion, and the pack that arrives later lights nothing (components/stage/KeysHelp.tsx; R120 #3).
 useTeacherSwitch.subscribe(({ on }) => {
-  const { layer, setLayer } = useRunStore.getState()
-  if (!on && systemOf(layer)?.teacherSwitch) setLayer(DEFAULT_SYSTEM)
+  const { layer, switching, setLayer } = useRunStore.getState()
+  if (!on && (behindSwitch(layer) || behindSwitch(switching?.to))) setLayer(DEFAULT_SYSTEM)
 })

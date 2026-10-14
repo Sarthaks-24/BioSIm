@@ -5,6 +5,7 @@ import i18n from '../i18n/index.ts'
 import { linkLanguage } from '../i18n/language.ts'
 import { linkQuery, useRunStore } from '../state/run.ts'
 import { useClock } from '../state/clock.ts'
+import { useTeacherSwitch } from '../systems/registry.ts'
 
 /** URL parameters that make a query a link to open (anything else is a bare page). */
 const LINK_PARAMS = ['v', 'a', 'b', 'o'] as const
@@ -138,6 +139,8 @@ export function useLinkSync() {
         writeUrl()
       }
     })
+    // The teacher switch going off: a link never keeps the row behind it (state/run.ts linkQuery; R120 #3).
+    const unsubSwitch = useTeacherSwitch.subscribe(() => writeUrl())
     const unsubClock = useClock.subscribe(
       (s) => (s.playing ? -1 : Math.round(s.simMin)),
       () => writeSoon(),
@@ -157,6 +160,7 @@ export function useLinkSync() {
     addEventListener('lifepeek:keeprun', keepRun)
     return () => {
       unsubRun()
+      unsubSwitch()
       unsubClock()
       i18n.off('languageChanged', onLanguage)
       removeEventListener('lifepeek:keeprun', keepRun)
