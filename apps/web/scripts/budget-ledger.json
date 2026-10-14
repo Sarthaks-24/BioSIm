@@ -147,6 +147,15 @@
         "engineKB": 12.47,
         "simRatchetKB": 189.382,
         "simEngineRatchetKB": 201.952
+      },
+      {
+        "wp": "R-1",
+        "at": "2026-10-14",
+        "on": "v3 a1e66ad + R-1 (with T31's R115 check-budget change cherry-picked): Reproduction's row in the clock chunk group (alone it was a 0.21 KB chunk of its own), the teacher switch's state (one sessionStorage read; its setter is in the lazy settings sheet), the row filter (picker, links, Home, Science), the reproduction pack's loader entry (its lazy file's name), the panels draw kind in BodyView, its name in the core text; the panels, their static data (Anckaert 2021 medians, NCERT height table), words and the lesson stub are the lazy reproduction pack (7.6 KB gz): /sim 189.182 -> 189.387 (+0.205), engine 12.470 -> 12.472 (unchanged code, chunk names)",
+        "simKB": 189.387,
+        "engineKB": 12.472,
+        "simRatchetKB": 189.587,
+        "simEngineRatchetKB": 202.159
       }
     ]
   },
