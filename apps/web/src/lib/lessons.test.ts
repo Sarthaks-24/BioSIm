@@ -7,6 +7,7 @@ import { CHAPTERS, shownChapters } from './lessons.ts'
 import { LESSONS } from './presets.ts'
 import { SYSTEM_SOURCES } from './systemSources.ts'
 import { REFERENCES } from './references.ts'
+import { SHEETS, type SheetKey } from './worksheets.ts'
 
 describe('Teach by NCERT chapter (X-1, R15)', () => {
   it('Class 10’s Life Processes in its order, then Control and coordination (v3.1), then moving and body heat; every v2 lesson stays under Nutrition', () => {
@@ -42,6 +43,38 @@ describe('Teach by NCERT chapter (X-1, R15)', () => {
         // Saving it for class saves its system's pack.
         expect(l.packs, l.key).toContain(systemOf(l.system)!.pack)
       }
+  })
+})
+
+describe('the v3.1 lessons (R109, R111, R112): each listed, with a worksheet, a "Why different?" card and Science sources', () => {
+  /** Each v3.1 lesson's card (its words' key, components/WhyCard.tsx `text`). */
+  const WHY: Record<string, string> = {
+    fatRoad: 'sys.lymph.why',
+    insulinCola: 'sys.control.why',
+    reflexHotPan: 'sys.control.nerves.why',
+  }
+  const v31 = CHAPTERS.flatMap((c) => c.lessons.map((l) => ({ ...l, chapter: c.key }))).filter((l) => l.release === 'v3.1')
+  const at = (key: string) => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], en)
+
+  it('lymph under Transportation; the reflex, then insulin, under Control and coordination', () => {
+    expect(v31.map((l) => [l.key, l.chapter])).toEqual([
+      ['fatRoad', 'transport'],
+      ['reflexHotPan', 'control'],
+      ['insulinCola', 'control'],
+    ])
+  })
+
+  it('each has its worksheet’s words, its card’s rows and its system’s sources on Science', () => {
+    for (const l of v31) {
+      expect(SHEETS[l.key as SheetKey], l.key).toBeTruthy()
+      expect((en.sheet.lessons as Record<string, unknown>)[l.key], l.key).toBeTruthy()
+      const card = at(WHY[l.key]!) as Record<string, unknown> | undefined
+      expect(
+        Object.values(card ?? {}).some((row) => typeof row === 'object'),
+        l.key,
+      ).toBe(true)
+      expect(SYSTEM_SOURCES[l.system]?.length, l.key).toBeGreaterThan(0)
+    }
   })
 })
 
