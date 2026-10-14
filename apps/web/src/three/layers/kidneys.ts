@@ -656,6 +656,8 @@ const KIDNEYS_3D: Layer3d = {
   // The flat kidneys' framing (U-4): the kidneys under the lowest ribs down to the bladder.
   framing: 'torso',
   food: false,
+  // The lower ribs and the backbone for a bearing, as the flat drawing has them (A-1a skeleton ghost).
+  landmarks: true,
   grow: { origins: ORIGINS },
   // The urine's drops: dark dots down the middle of the ureters, as the flat drawing's.
   dashes: { ink: URINE_INK, cover: 0.25 },

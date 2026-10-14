@@ -1,4 +1,17 @@
-import { BackSide, Color, FrontSide, MeshStandardMaterial, ShaderMaterial, Vector3, type IUniform } from 'three'
+import {
+  BackSide,
+  Color,
+  CustomBlending,
+  FrontSide,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
+  ShaderMaterial,
+  SrcAlphaFactor,
+  Vector3,
+  type IUniform,
+} from 'three'
 import { FADE_TONE, PARTICLE_EDGE } from '../anatomy/tones/base.ts'
 import { BODY_LOOK, linearRgb, type BodyLook } from './look.ts'
 import type { DashLook } from './layer.ts'
@@ -267,6 +280,67 @@ export const shellMaterial = () =>
         #include <colorspace_fragment>
       }`,
   })
+
+/**
+ * The shell's depth pre-pass (A-1a; anatomy plan §1, §10): the posed shell's parts overlap (an arm on
+ * the torso, a thigh in the hip, the joint caps), and the rim-lit skin would draw a rim for each. This
+ * draws the shell's nearest surface into the depth buffer only, a hair further back (polygon offset),
+ * just before the shell (renderOrder 11–19, the shell 20); the shell then draws only where it is the
+ * nearest skin: one outline round the whole body. Transparent, so it sorts with the shell, after the
+ * organs and the food.
+ */
+export const prepassMaterial = () =>
+  new MeshBasicMaterial({
+    colorWrite: false,
+    transparent: true,
+    depthWrite: true,
+    side: FrontSide,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
+  })
+
+/**
+ * The skeleton ghost (A-1a; anatomy plan §1 landmarks): faint bone, a little darker at its edges, so
+ * the ribs and the backbone give a bearing without competing with the organs. Drawn among the opaque
+ * parts right after the organs (renderOrder 2), with the depth test, so an organ in front hides it;
+ * blended (CustomBlending works outside the transparent list), and it writes no depth.
+ */
+export const ghostMaterial = (projector = false) =>
+  new ShaderMaterial({
+    transparent: false,
+    blending: CustomBlending,
+    blendSrc: SrcAlphaFactor,
+    blendDst: OneMinusSrcAlphaFactor,
+    // The canvas is see-through (premultiplied): its alpha adds up as the shell's does (three's NormalBlending).
+    blendSrcAlpha: OneFactor,
+    blendDstAlpha: OneMinusSrcAlphaFactor,
+    depthWrite: false,
+    side: FrontSide,
+    uniforms: { uColor: { value: new Color(GHOST.ink) }, uStrength: { value: projector ? GHOST.projector : GHOST.normal } },
+    vertexShader: /* glsl */ `
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vNormal = normalize(normalMatrix * normal);
+        vView = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uColor;
+      uniform float uStrength;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main() {
+        float edge = 1.0 - abs(dot(normalize(vNormal), normalize(vView)));
+        gl_FragColor = vec4(uColor, uStrength * (0.45 + 0.55 * edge));
+        #include <colorspace_fragment>
+      }`,
+  })
+
+/** The ghost's ink and how strong it is (alpha at its edges), normal and on the projector. */
+export const GHOST = { ink: '#6b6552', normal: 0.26, projector: 0.4 } as const
 
 /** PARTICLE_EDGE in linear RGB, as GLSL numbers. */
 const EDGE = linearRgb(PARTICLE_EDGE)

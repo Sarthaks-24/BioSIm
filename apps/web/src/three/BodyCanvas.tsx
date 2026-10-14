@@ -1,6 +1,16 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+  type ReactNode,
+  type RefObject,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BufferGeometry,
@@ -19,14 +29,31 @@ import { useBodyClock, type BodyClock } from '../hooks/useBodyClock.ts'
 import { particlePosition, tumble } from '../anatomy/human/digestion.ts'
 import { useCalloutSpecs, useCallouts, type CalloutSpec, type Callouts, type Project } from '../anatomy/CalloutOverlay.tsx'
 import type { Callout, LabelBox } from '../anatomy/callouts.ts'
-import type { Framing } from '../anatomy/human/base.ts'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
 import { useMotion } from '../state/motion.ts'
 import { useProjector } from '../hooks/useProjector.ts'
 import { NUTRIENT_COLOR } from '../lib/colors.ts'
-import { particleMaterial, setLook } from './materials.ts'
+import { GHOST, particleMaterial, setLook } from './materials.ts'
+import { bodyView, type CameraGoal } from './framing.ts'
 import { geometryTier, quality } from './quality.ts'
-import type { Layer3d, OverlayProps, Tier } from './layer.ts'
-import { mountBase, mountLayer, mountStats, pinBase, pinLayer, releaseBase, releaseLayer, type MountedBase } from './mount.ts'
+import type { Layer3d, Limbs3d, OverlayProps, Tier } from './layer.ts'
+import {
+  loadLimbs,
+  mountBase,
+  mountGhost,
+  mountLayer,
+  mountPosed,
+  mountStats,
+  pinBase,
+  pinGhost,
+  pinLayer,
+  pinPosed,
+  releaseBase,
+  releaseGhost,
+  releaseLayer,
+  releasePosed,
+  type MountedBase,
+} from './mount.ts'
 import { DIGESTION_3D } from './layers/digestion.ts'
 
 // three.js r183 deprecated THREE.Clock, which fiber still makes for every canvas: a console warning
@@ -46,6 +73,8 @@ interface Props {
   placeholder?: ReactNode
   /** The lit system's 3D layer (SystemDef.layer3d), loaded on first use; none = digestion's, in this chunk. */
   layer3d?: Loader<Layer3d>
+  /** The activity band at the clock's minute (lib/bouts.ts): the body's still pose, as the flat body's (R4, R32). */
+  band?: ActivityBand
 }
 
 /**
@@ -58,7 +87,7 @@ interface Props {
  * that then changed). Until it has drawn, the placeholder (the flat body) stays, so the body is
  * never blank. `data-ready` on the box says the 3D body is drawn (the e2e tests wait for it).
  */
-export default function BodyCanvas({ sim, label, onContextLost, placeholder, layer3d }: Props) {
+export default function BodyCanvas({ sim, label, onContextLost, placeholder, layer3d, band = 'rest' }: Props) {
   // Read outside <Canvas> and passed down, so the scene does not depend on context bridging.
   const clock = useBodyClock()
   const stage = useStage(sim, clock)
@@ -67,6 +96,18 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
   const tier = useMemo(() => geometryTier(), [])
   const layer = useLayer3d(layer3d)
   const [{ width, height }, setSize] = useState({ width: 0, height: 0 })
+  // The whole standing body, asked for with the switch over the body (A-1a); each system opens at its own framing.
+  const [whole, setWhole] = useState<string | null>(null)
+  // The view (three/framing.ts): the framing drawn and the camera's goal. The legs (A-1a) show as the
+  // flat body's do (flat/registry.ts limbsFor): in the `full` framing, and posed in a bout in any
+  // framing. Digestion at rest keeps today's shell and loads none of it.
+  const view = bodyView(layer?.framing ?? 'torso', band, !!layer && whole === layer.id, width)
+  const { framing, legs } = view
+  // The skeleton ghost: with a layer whose flat drawing has the ribs, and in the `full` framing; never on a 2 GB phone (plan §9).
+  const ghost = tier === 'high' && !!layer && (!!layer.landmarks || framing === 'full')
+  const limbs = useLimbs(legs || ghost)
+  // A pane too narrow for the switch's words beside the system's title (a small phone).
+  const narrow = width > 0 && width < NARROW_PX
   const invalidate = useRef<() => void>(() => {})
   // The lit layer's own labels (breathing's), else Digestion's.
   const { t } = useTranslation()
@@ -94,12 +135,22 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
     },
     [overlays],
   )
-  // The lit layer's overlay's box no label may take (OverlayProps.keepOut); null: none.
-  const keptOut = useRef<LabelBox | null>(null)
+  // Boxes no label may take: the lit layer's overlay's (OverlayProps.keepOut), then the whole-body switch's; null: none.
+  const keptOut = useRef<[LabelBox | null, LabelBox | null]>([null, null])
   const keepOut = useCallback((box: LabelBox | null) => {
-    keptOut.current = box
+    keptOut.current[0] = box
     invalidate.current()
   }, [])
+  const wholeButton = useRef<HTMLButtonElement>(null)
+  // The switch's box, measured after each render (its words and the pane's size move it): the labels keep off it.
+  useLayoutEffect(() => {
+    const b = wholeButton.current
+    const box = b ? { x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight } : null
+    const was = keptOut.current[1]
+    if (box?.x === was?.x && box?.y === was?.y && box?.w === was?.w && box?.h === was?.h) return
+    keptOut.current[1] = box
+    invalidate.current()
+  })
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const settled = useSettled(wrapper)
   const [drawn, setDrawn] = useState(false)
@@ -128,7 +179,9 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
       data-ready={drawn ? '' : undefined}
       data-particles={reduced ? 'still' : 'tumbling'}
       data-layer={layer?.id}
-      data-framing={layer?.framing ?? 'torso'}
+      data-framing={framing}
+      data-pose={legs && limbs ? band : undefined}
+      data-ghost={ghost && limbs ? '' : undefined}
     >
       {settled && (
         <Canvas
@@ -141,7 +194,7 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
           gl={{ antialias: q.antialias, alpha: true, powerPreference: 'low-power' }}
           aria-label={label}
           role="img"
-          onCreated={({ gl, camera, invalidate: redraw }) => {
+          onCreated={({ gl, camera, scene, invalidate: redraw }) => {
             invalidate.current = () => redraw()
             const listener = (e: Event) => {
               e.preventDefault()
@@ -152,7 +205,14 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
             // The ?debug=fps overlay (BodyView) reads draw calls and triangles from here; the e2e
             // label check projects the organs itself, with the camera.
             // __lifepeek3d: what three/mount.ts holds (the e2e leak check after switching systems).
-            Object.assign(window, { __lifepeekGl: gl.info, __lifepeekCamera: camera, __lifepeek3d: mountStats })
+            // __lifepeekScene and __lifepeekSnap (draw now, as a PNG): the e2e double-rim check draws the skin alone (A-1a).
+            Object.assign(window, {
+              __lifepeekGl: gl.info,
+              __lifepeekCamera: camera,
+              __lifepeek3d: mountStats,
+              __lifepeekScene: scene,
+              __lifepeekSnap: () => (gl.render(scene, camera), gl.domElement.toDataURL()),
+            })
           }}
         >
           <Lighting />
@@ -161,17 +221,19 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
             <LitLayer key={layer.id} layer={layer} tier={tier} sim={sim} clock={clock} reduced={reduced} rhythm={rhythm} body={wrapper} />
           )}
           <Base tier={tier} sim={sim} clock={clock} reduced={reduced} food={layer?.food !== false} />
+          {legs && limbs ? <PosedShell key={`shell:${band}`} limbs={limbs} tier={tier} band={band} /> : <RestShell tier={tier} />}
+          {ghost && limbs && <Ghost key={`ghost:${band}`} limbs={limbs} band={band} />}
           <OrbitControls
             ref={controls}
             makeDefault
             enablePan={false}
             minDistance={3.5}
-            maxDistance={11}
+            maxDistance={view.maxDistance}
             target={[0, 0.8, 0]}
             minPolarAngle={Math.PI * 0.2}
             maxPolarAngle={Math.PI * 0.8}
           />
-          <CameraRig framing={layer?.framing ?? 'torso'} reduced={reduced} controls={controls} />
+          <CameraRig goal={view.goal} reduced={reduced} controls={controls} />
           <LabelProjector place={place} overlays={overlays} keptOut={keptOut} />
           <Invalidator sim={sim} clock={clock} reduced={reduced} />
           {layer && <FirstFrame onDrawn={() => setDrawn(true)} />}
@@ -184,8 +246,54 @@ export default function BodyCanvas({ sim, label, onContextLost, placeholder, lay
         )}
         {overlay}
       </div>
+      {/*
+       * The whole-body switch (A-1a; anatomy plan §1): the camera eases out to the whole standing body,
+       * its legs in the band's pose; pressed again, back to the system's own framing. In the `full`
+       * framing on a phone the picture starts close up on the working region, and this shows the rest.
+       */}
+      {drawn && layer && view.offerWhole && (
+        <button
+          ref={wholeButton}
+          type="button"
+          aria-pressed={whole === layer.id}
+          // On a narrow pane only its icon, beside the system's title (its name stays the button's).
+          aria-label={narrow ? t('stage.wholeBody') : undefined}
+          title={narrow ? t('stage.wholeBody') : undefined}
+          onClick={() => setWhole((w) => (w === layer.id ? null : layer.id))}
+          className={`absolute top-2 right-3 z-10 inline-flex items-center rounded-control bg-surface-raised/90 text-control font-semibold whitespace-nowrap text-ink shadow-[0_1px_3px_rgb(20_33_61/0.18)] hover:bg-surface-sunk aria-pressed:bg-ink aria-pressed:text-white aria-pressed:hover:bg-ink lg:top-3 lg:right-4 ${narrow ? 'size-11 justify-center lg:size-9' : 'min-h-11 gap-1.5 pr-3 pl-2.5 lg:min-h-9'}`}
+        >
+          <WholeIcon />
+          {!narrow && t('stage.wholeBody')}
+        </button>
+      )}
       {!drawn && placeholder && <div className="absolute inset-0">{placeholder}</div>}
     </div>
+  )
+}
+
+/** Narrower than this (CSS px), the whole-body switch shows only its icon. */
+const NARROW_PX = 460
+
+/** The whole-body switch's icon: a standing figure in a frame's corners (the kit's grid and stroke, components/kit/icons.tsx). */
+function WholeIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      className="shrink-0"
+    >
+      <path d="M3 6.5V3h3.5M13.5 3H17v3.5M17 13.5V17h-3.5M6.5 17H3v-3.5" />
+      <circle cx="10" cy="6.4" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M10 9v3.2m-2 2.8 2-2.8 2 2.8" strokeWidth="1.6" />
+    </svg>
   )
 }
 
@@ -280,6 +388,27 @@ function useLayer3d(load: Loader<Layer3d> | undefined): Layer3d | null {
     }
   }, [load])
   return layer
+}
+
+/**
+ * The 3D legs (three/limbs.ts) once a picture needs them, loaded then and kept; null until they are
+ * here (the shell stands at rest meanwhile: never a blank body). A chunk that does not arrive leaves
+ * the resting shell, and is asked for again the next time legs are needed.
+ */
+function useLimbs(needed: boolean): Limbs3d | null {
+  const [limbs, setLimbs] = useState<Limbs3d | null>(null)
+  useEffect(() => {
+    if (!needed || limbs) return
+    let live = true
+    loadLimbs().then(
+      (l) => live && setLimbs(l),
+      () => {},
+    )
+    return () => {
+      live = false
+    }
+  }, [needed, limbs])
+  return limbs
 }
 
 /**
@@ -414,7 +543,7 @@ function LitLayer({
   )
 }
 
-/** The base every layer shares: the skin shell and the food particles. */
+/** The base every layer shares: the food particles (the resting shell is RestShell's). */
 function Base({ tier, sim, clock, reduced, food }: { tier: Tier; sim: RunResult; clock: BodyClock; reduced: boolean; food: boolean }) {
   const b = useMemo(() => mountBase(tier), [tier])
   useEffect(() => {
@@ -423,13 +552,60 @@ function Base({ tier, sim, clock, reduced, food }: { tier: Tier; sim: RunResult;
   }, [b])
   return (
     <>
-      <mesh geometry={b.shell} material={b.shellMaterial} renderOrder={20} dispose={null} />
       {/* Kept mounted (no shader is rebuilt on a switch back), hidden when the lit layer draws no food. */}
       <group visible={food}>
         <Swarm particles={b.particles} sim={sim} clock={clock} reduced={reduced} hidden={!food} />
       </group>
     </>
   )
+}
+
+/** The skin shell standing at rest, its arms hanging (three/geometry.ts buildShell): today's body, with no legs. */
+function RestShell({ tier }: { tier: Tier }) {
+  const b = useMemo(() => mountBase(tier), [tier])
+  useEffect(() => {
+    pinBase(b)
+    return () => releaseBase(b)
+  }, [b])
+  return <mesh geometry={b.shell} material={b.shellMaterial} renderOrder={20} dispose={null} />
+}
+
+/**
+ * The skin shell in the band's still pose, with legs (A-1a). Its nearest surface is drawn into the
+ * depth buffer first (the pre-pass, renderOrder 15), so the rim-lit skin draws one outline where its
+ * parts overlap (an arm on the torso, a thigh in the hip, the joint caps), never two (plan §1, §10).
+ */
+function PosedShell({ limbs, tier, band }: { limbs: Limbs3d; tier: Tier; band: ActivityBand }) {
+  const p = useMemo(() => mountPosed(limbs, tier, band), [limbs, tier, band])
+  useEffect(() => {
+    pinPosed(p)
+    return () => releasePosed(p)
+  }, [p])
+  return (
+    <>
+      {p.prepass && <mesh geometry={p.shell} material={p.prepass} renderOrder={15} dispose={null} />}
+      <mesh geometry={p.shell} material={p.shellMaterial} renderOrder={20} dispose={null} />
+    </>
+  )
+}
+
+/**
+ * The skeleton ghost (A-1a; plan §1 landmarks): the backbone, ribs, breastbone, hip bones and the long
+ * bones in the band's pose, one faint draw just after the organs (an organ in front hides it).
+ */
+function Ghost({ limbs, band }: { limbs: Limbs3d; band: ActivityBand }) {
+  const projector = useProjector()
+  const g = useMemo(() => mountGhost(limbs, band, false), [limbs, band])
+  useEffect(() => {
+    pinGhost(g)
+    return () => releaseGhost(g)
+  }, [g])
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    g.material.uniforms.uStrength!.value = projector ? GHOST.projector : GHOST.normal
+    invalidate()
+  }, [g, projector, invalidate])
+  return <mesh geometry={g.geometry} material={g.material} renderOrder={2} dispose={null} />
 }
 
 const tmpPos = new Vector3()
@@ -536,7 +712,7 @@ function LabelProjector({
 }: {
   place: Callouts['place']
   overlays: ReadonlySet<Place>
-  keptOut: RefObject<LabelBox | null>
+  keptOut: RefObject<readonly (LabelBox | null)[]>
 }) {
   const p = useMemo(() => new Vector3(), [])
   useFrame(({ camera, size }) => {
@@ -545,8 +721,13 @@ function LabelProjector({
       p.copy(v).project(camera)
       return p.z > 1 ? null : [((p.x + 1) / 2) * size.width, ((1 - p.y) / 2) * size.height]
     }
-    const k = keptOut.current
-    place(project, size.width, size.height, k ? (b) => b.x < k.x + k.w && b.x + b.w > k.x && b.y < k.y + k.h && b.y + b.h > k.y : undefined)
+    const boxes = keptOut.current.filter((k): k is LabelBox => !!k)
+    place(
+      project,
+      size.width,
+      size.height,
+      boxes.length ? (b) => boxes.some((k) => b.x < k.x + k.w && b.x + b.w > k.x && b.y < k.y + k.h && b.y + b.h > k.y) : undefined,
+    )
     for (const fn of overlays) fn(project, size.width, size.height)
   })
   return null
@@ -574,47 +755,42 @@ function LayerOverlay({ layer, ...props }: OverlayProps & { layer: Layer3d }) {
   return <div ref={host} className="pointer-events-none absolute inset-0" />
 }
 
-/**
- * Where the camera looks for each framing (anatomy plan §1): torso is Digestion's view (scene y -1.9 to
- * 3.45, with room over the head); chest (-0.6 to 3.5) is the same fit, closer. A framing with no 3D
- * preset yet is framed as torso.
- */
-const CAMERA: Partial<Record<Framing, { y: number; distance: number }>> = {
-  torso: { y: 0.8, distance: 9.4 },
-  chest: { y: 1.45, distance: 7.3 },
-}
 /** How long the camera takes to a new framing (anatomy plan §1; a cut with motion reduced). */
 const EASE_MS = 600
 
 /**
- * Moves the camera to the lit layer's framing: at once for the first layer (and with motion
- * reduced), else eased over EASE_MS. The way the camera faces (a drag's orbit) is kept; only where it
- * looks and how far away it is change. Runs before the controls' own update (priority -2).
+ * Moves the camera to the view's goal (three/framing.ts: the lit layer's framing, the phone's close-up
+ * or the whole body): at once for the first view (and with motion reduced), else eased over EASE_MS.
+ * The way the camera faces (a drag's orbit) is kept; only where it looks and how far away it is
+ * change. Runs before the controls' own update (priority -2).
  */
 function CameraRig({
-  framing,
+  goal,
   reduced,
   controls,
 }: {
-  framing: Framing
+  goal: CameraGoal
   reduced: boolean
   controls: RefObject<ComponentRef<typeof OrbitControls> | null>
 }) {
-  const shown = useRef<Framing | null>(null)
+  const key = `${goal.y}:${goal.distance}`
+  const shown = useRef<string | null>(null)
   const ease = useRef<{ y: number; distance: number; start: number } | null>(null)
   const dir = useMemo(() => new Vector3(), [])
+  // A new goal draws a frame (the scene may not change with it: the whole-body switch at rest in `full`).
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => invalidate(), [key, invalidate])
   useFrame(({ camera, invalidate }) => {
     const c = controls.current
     if (!c) return
-    const goal = CAMERA[framing] ?? CAMERA.torso!
     const put = (y: number, distance: number) => {
       dir.subVectors(camera.position, c.target).normalize()
       c.target.set(0, y, 0)
       camera.position.copy(c.target).addScaledVector(dir, distance)
     }
-    if (shown.current !== framing) {
+    if (shown.current !== key) {
       const first = shown.current === null
-      shown.current = framing
+      shown.current = key
       ease.current = null
       if (first || reduced) {
         put(goal.y, goal.distance)

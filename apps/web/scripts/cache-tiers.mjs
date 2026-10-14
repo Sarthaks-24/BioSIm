@@ -113,8 +113,11 @@ export const LESSON_PACKS = {
 /**
  * The 3D layers of the other systems (src/three/layers/<system>, SystemDef.layer3d; A-3 on): lazy
  * chunks of a few KB each, saved with the 3D body, since a lesson on a system draws its layer in 3D.
+ * The 3D legs (src/three/limbs.ts, A-1a) go with them: a bout or the whole-body switch poses the body.
  */
-const layers3d = (manifest) => Object.keys(manifest).filter((k) => manifest[k].isDynamicEntry && k.startsWith('src/three/layers/'))
+export const LIMBS_3D = 'src/three/limbs.ts'
+const layers3d = (manifest) =>
+  Object.keys(manifest).filter((k) => manifest[k].isDynamicEntry && (k.startsWith('src/three/layers/') || k === LIMBS_3D))
 
 /** The runtime cache for lazy files (scripts/cache-policy.mjs, lib/offlineSave.ts through pack-manifest.json). */
 export const LAZY_CACHE = 'lp-lazy'

@@ -162,6 +162,8 @@ for (const view of SHOTS_3D) {
       const body = page.locator('[data-body="3d"][data-ready]')
       await expect(body).toBeVisible({ timeout: 30_000 })
       await settle(page)
+      // The whole-body switch (A-1a) lies over the canvas's corner: the shot is the 3D picture's.
+      await page.addStyleTag({ content: '[data-body="3d"] > button { visibility: hidden !important; }' })
       await expect(body.locator('canvas')).toHaveScreenshot(`body-3d-${view.name}-${t}.png`, {
         animations: 'disabled',
         ...(ZERO ? { maxDiffPixels: 0, threshold: 0 } : { maxDiffPixelRatio: 0.05 }),

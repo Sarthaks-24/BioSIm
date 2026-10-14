@@ -1,9 +1,20 @@
 import type { BufferGeometry, MeshStandardMaterial, ShaderMaterial } from 'three'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { NutrientKind } from '@lifepeek/engine'
-import { buildParticles, buildShell } from './geometry.ts'
-import type { Layer3d, LayerState, Tier } from './layer.ts'
+import type { ActivityBand } from '../anatomy/human/bands.ts'
+import { LIMB_KIT } from '../anatomy/human/kit.ts'
+import { buildParticles, buildShell, shellTrunk } from './geometry.ts'
+import type { Layer3d, LayerState, Limbs3d, Tier } from './layer.ts'
 import { KIT_3D } from './kit.ts'
-import { layerUniforms, outlineMaterial, shellMaterial, tissueMaterial, type LayerUniforms } from './materials.ts'
+import {
+  ghostMaterial,
+  layerUniforms,
+  outlineMaterial,
+  prepassMaterial,
+  shellMaterial,
+  tissueMaterial,
+  type LayerUniforms,
+} from './materials.ts'
 
 /**
  * Mount and dispose of the 3D body's parts (A-0 3D half; anatomy plan D5, §10).
@@ -190,6 +201,84 @@ export function releaseBase(m: MountedBase) {
   for (const g of Object.values(b.particles)) g.dispose()
 }
 
+/** The 3D legs (three/limbs.ts), a lazy chunk: loaded once, the first time a picture shows legs. */
+let limbsChunk: Promise<Limbs3d> | null = null
+
+/** Loads the 3D legs and hands them the body base; a failed load is asked for again next time. */
+export function loadLimbs(): Promise<Limbs3d> {
+  if (!limbsChunk) {
+    limbsChunk = import('./limbs.ts').then((m) => (m.default.takeKit(LIMB_KIT), m.default))
+    limbsChunk.catch(() => (limbsChunk = null))
+  }
+  return limbsChunk
+}
+
+/** A posed shell or a ghost: its mesh (built once, kept for the visit) and the bodies showing it. */
+interface Held {
+  geo: BufferGeometry
+  pins: number
+}
+
+/** The posed shells (A-1a) by tier and band, and the skeleton ghosts by band (high tier only). */
+const posedShells = new Map<string, Held>()
+const ghosts = new Map<ActivityBand, Held>()
+
+/**
+ * The shell with its limbs in a band's still pose (A-1a): the torso with flattened hips, the head,
+ * and three/limbs.ts's posed arms, legs and joint caps, one mesh (≈ 0.3–0.5 MB of arrays a band,
+ * kept for the visit: four bands at most).
+ */
+function posedShell(limbs: Limbs3d, tier: Tier, band: ActivityBand): Held {
+  const key = `${tier}:${band}`
+  let h = posedShells.get(key)
+  if (!h) posedShells.set(key, (h = { geo: mergeGeometries([...shellTrunk(tier, true), ...limbs.skin(band, tier, KIT_3D)])!, pins: 0 }))
+  return h
+}
+
+/**
+ * The shell in a band's pose, drawn with its depth pre-pass (three/materials.ts prepassMaterial):
+ * the pre-pass is off on a 2 GB phone (anatomy plan §9), where the skin's overlaps show.
+ */
+export function mountPosed(limbs: Limbs3d, tier: Tier, band: ActivityBand) {
+  const h = posedShell(limbs, tier, band)
+  return { tier, band, shell: h.geo, shellMaterial: shellMaterial(), prepass: tier === 'high' ? prepassMaterial() : null }
+}
+export type MountedPosed = ReturnType<typeof mountPosed>
+
+export function pinPosed(m: MountedPosed) {
+  const h = posedShells.get(`${m.tier}:${m.band}`)
+  if (h) h.pins++
+}
+
+/** Frees a posed shell's GPU side when no body shows it (its arrays stay for the next time). */
+export function releasePosed(m: MountedPosed) {
+  m.shellMaterial.dispose()
+  m.prepass?.dispose()
+  const h = posedShells.get(`${m.tier}:${m.band}`)
+  if (h) h.pins = Math.max(0, h.pins - 1)
+  if (!h || h.pins === 0) m.shell.dispose()
+}
+
+/** The skeleton ghost in a band's pose (A-1a): one merged mesh, one draw, never on a 2 GB phone (plan §9). */
+export function mountGhost(limbs: Limbs3d, band: ActivityBand, projector: boolean) {
+  let h = ghosts.get(band)
+  if (!h) ghosts.set(band, (h = { geo: mergeGeometries(limbs.ghost(band, KIT_3D))!, pins: 0 }))
+  return { band, geometry: h.geo, material: ghostMaterial(projector) }
+}
+export type MountedGhost = ReturnType<typeof mountGhost>
+
+export function pinGhost(m: MountedGhost) {
+  const h = ghosts.get(m.band)
+  if (h) h.pins++
+}
+
+export function releaseGhost(m: MountedGhost) {
+  m.material.dispose()
+  const h = ghosts.get(m.band)
+  if (h) h.pins = Math.max(0, h.pins - 1)
+  if (!h || h.pins === 0) m.geometry.dispose()
+}
+
 /**
  * What the leak probe reads (e2e, ?debug=fps): the cached layers, their bytes, and how many of the
  * geometries this file owns are still known to a renderer (three adds a `dispose` listener to each
@@ -197,7 +286,11 @@ export function releaseBase(m: MountedBase) {
  * must be 0, or an old renderer (and its context) is kept alive by our cache.
  */
 export function mountStats() {
-  const owned = [...layers.geometries(), ...[...bases.values()].flatMap((b) => [b.shell, ...Object.values(b.particles)])]
+  const owned = [
+    ...layers.geometries(),
+    ...[...bases.values()].flatMap((b) => [b.shell, ...Object.values(b.particles)]),
+    ...[...posedShells.values(), ...ghosts.values()].map((h) => h.geo),
+  ]
   const listened = owned.filter((g) => {
     const listeners = (g as unknown as { _listeners?: Record<string, unknown[]> })._listeners
     return (listeners?.dispose?.length ?? 0) > 0
