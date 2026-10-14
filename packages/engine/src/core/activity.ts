@@ -5,9 +5,9 @@
  * exactly the run without this file.
  *
  * The codec (share.ts, `act` and `bact`) knows all seven kinds, so a later kind never needs a link
- * change. Only the `public` ones (the three whose Compendium rows were read, V-0 / V-0b) are
- * offered or opened from a link; the others stay hidden until their rows are checked (v3.2+).
- * Each kind's MET is in PARAMS.activity.met (params.ts); its Compendium code in modules/activity.ts.
+ * change. Only the `public` ones (those whose Compendium rows were read, V-0 / V-0b) are offered
+ * or opened from a link: since v3.2 (R114) that is all seven. Each kind's MET is in
+ * PARAMS.activity.met (params.ts); its Compendium code in modules/activity.ts.
  */
 
 /** The seven kinds (frozen, architecture §2). The order is the codec's and the UI's. */
@@ -15,11 +15,13 @@ export const ACTIVITY_KINDS = ['walk', 'walkBrisk', 'run', 'sitClass', 'football
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number]
 
 /**
- * The kinds offered in the app and opened from links: the three whose 2024 Compendium rows were
- * read (V-0 item 1, V-0b item 1: none is an estimated MET). The other four stay hidden until their
- * rows are checked (v3.2+). The Compendium codes are in modules/activity.ts (the run's chunk).
+ * The kinds offered in the app and opened from links: those whose 2024 Compendium rows were read
+ * and are not estimated (shown in red) METs. Walk, brisk walk and run since v3.0 (V-0 item 1, V-0b
+ * item 1); sitting in class, football, cricket and badminton since v3.2 (V-0 item 9, R114; rows
+ * re-read on pacompendium.com 2026-10-14, none red). Making a kind public changes no run: the model
+ * always knew all seven (the seal's grid has them). The codes are in modules/activity.ts.
  */
-export const PUBLIC_ACTIVITY_KINDS: readonly ActivityKind[] = ['walk', 'walkBrisk', 'run']
+export const PUBLIC_ACTIVITY_KINDS: readonly ActivityKind[] = ACTIVITY_KINDS
 
 export const isActivityKind = (k: string): k is ActivityKind => (ACTIVITY_KINDS as readonly string[]).includes(k)
 export const isPublicActivityKind = (k: string): k is ActivityKind => (PUBLIC_ACTIVITY_KINDS as readonly string[]).includes(k)
@@ -73,10 +75,10 @@ const MAX_ASKED = 40
 /**
  * Reads a link's `act` or `bact` ("walk.30.20,run.240.10"; architecture §2). Every bout that is
  * dropped goes into `changes` with the link's own text, so the stage can name it (R21, bug B21):
- * a part that can't be read, a kind this version does not know or does not show yet (the hidden
- * four), a bout outside the limits (one that ends after minute 2880 too, R84), one that overlaps an earlier bout, and any past the eighth.
- * The plan comes back in start order. Only public kinds are read: a hidden kind's MET is not yet
- * verified, so it would fail the release gate.
+ * a part that can't be read, a kind this version does not know or does not show (none of the seven
+ * is hidden since v3.2), a bout outside the limits (one that ends after minute 2880 too, R84), one
+ * that overlaps an earlier bout, and any past the eighth. The plan comes back in start order. Only
+ * public kinds are read: a hidden kind's MET would not be verified, so it would fail the release gate.
  */
 export function decodeActivity(raw: string | null | undefined, param = 'act', changes: ActivityLinkChange[] = []): ActivityBout[] {
   if (!raw) return []
