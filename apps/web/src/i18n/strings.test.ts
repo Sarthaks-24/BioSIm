@@ -85,3 +85,21 @@ describe('never "your book" on screen (R9)', () => {
     expect(YOUR_BOOK.test('Older NCERT Class 7 book (2024-25) says')).toBe(false)
   })
 })
+
+/**
+ * R120 #13, #14, #20: the app shows a model of a typical healthy body, never the reader's own ("your
+ * body", "your age"), and not every number is cited: some are the model's estimates, marked so.
+ */
+describe('a model, not yours (R120 #13, #14, #20)', () => {
+  const YOURS = /your body/i
+
+  it('no English string says "your body"; About says the body is a model, not yours', () => {
+    expect(strings(en).filter((s) => YOURS.test(s))).toEqual([])
+    expect(en.about.lead).toContain('inside a typical healthy body (a model, not yours)')
+  })
+
+  it('no page description says it either (the built pages’ meta, lib/routeMeta.ts)', async () => {
+    const { ROUTE_DESCRIPTIONS } = await import('../lib/routeMeta.ts')
+    expect(Object.values(ROUTE_DESCRIPTIONS).filter((s) => YOURS.test(s))).toEqual([])
+  })
+})
