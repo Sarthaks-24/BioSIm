@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   ACTIVE_SIGNAL_IDS,
-  EVENT_IDS,
   PARAMS,
   PROFILES,
   buildMeal,
@@ -21,7 +20,18 @@ import {
   windowOf,
   type RunResult,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, EFFORT_SIGNAL_IDS, HUMAN_MODULES, energySignals, runModules, simulate } from '../src/run.ts'
+import {
+  BREATHING_SIGNAL_IDS,
+  CIRCULATION_SIGNAL_IDS,
+  EFFORT_SIGNAL_IDS,
+  HUMAN_MODEL,
+  HUMAN_MODULES,
+  KIDNEY_SIGNAL_IDS,
+  RUN_EVENT_IDS,
+  energySignals,
+  runModules,
+  simulate,
+} from '../src/run.ts'
 
 /**
  * The signal table (core/table.ts) is a COPY of the modules' arrays under catalog IDs: no new
@@ -39,7 +49,7 @@ const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 const modulesOf = (sim: RunResult) =>
   runModules(HUMAN_MODULES, {
     input: { meal: sim.meal, activity: sim.activity },
-    params: PARAMS,
+    params: HUMAN_MODEL.params,
     profile: PROFILES[sim.profile],
     n: sim.length,
     stepMin: sim.stepMin,
@@ -67,7 +77,13 @@ describe('signal table', () => {
   it('every series is a Float32 copy of the array its module wrote, and its band of the band', () => {
     const sim = run('cheeseburger:1,fries:1,cola:1')
     const out = modulesOf(sim)
-    expect([...sim.signals.keys()]).toEqual([...ACTIVE_SIGNAL_IDS, ...BREATHING_SIGNAL_IDS, ...EFFORT_SIGNAL_IDS])
+    expect([...sim.signals.keys()]).toEqual([
+      ...ACTIVE_SIGNAL_IDS,
+      ...BREATHING_SIGNAL_IDS,
+      ...EFFORT_SIGNAL_IDS,
+      ...KIDNEY_SIGNAL_IDS,
+      ...CIRCULATION_SIGNAL_IDS,
+    ])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!
       expect(s.meta.id).toBe(id)
@@ -112,7 +128,7 @@ describe('signal table', () => {
 describe('moments', () => {
   it('every catalog event is present, with today’s event values', () => {
     const sim = run('cheeseburger:1,fries:1')
-    expect([...sim.moments.keys()].sort()).toEqual([...EVENT_IDS].sort())
+    expect([...sim.moments.keys()].sort()).toEqual([...RUN_EVENT_IDS].sort())
     const e = sim.events
     expect(sim.moments.get('event.stomachHalfEmpty')!.atMin).toBe(e.stomachHalfEmptyMin)
     expect(sim.moments.get('event.glucosePeak')!.atMin).toBe(e.glucosePeak!.timeMin)

@@ -17,7 +17,7 @@ import {
   type RunSignalId,
   type SignalStatus,
 } from '../src/index.ts'
-import { BREATHING_SIGNAL_IDS, ENERGY_TOTAL, HUMAN_MODULES, RUN_SIGNALS, gasModule, runModules, simulate } from '../src/run.ts'
+import { BREATHING_SIGNAL_IDS, ENERGY_TOTAL, HUMAN_MODEL, HUMAN_MODULES, RUN_SIGNALS, gasModule, runModules, simulate } from '../src/run.ts'
 import { FULL, firstDiff, gribokShake, lookup as fixtureLookup } from './fixtures.ts'
 import { golden, pinned } from './golden.ts'
 
@@ -42,7 +42,7 @@ const runFood = (food: Food) =>
 const values = (sim: RunResult, id: RunSignalId) => sim.signals.get(id)!.values
 const setup = (m: string, activity: ActivityBout[] = []) => ({
   input: { meal: mealOf(m), activity },
-  params: PARAMS,
+  params: HUMAN_MODEL.params,
   profile: PROFILES['adult-ref'],
   n: 2881,
   stepMin: 1,
@@ -285,12 +285,14 @@ describe('insertion and rest invariance (model D13 iii, iv)', () => {
   const plans: ActivityBout[][] = [[], [walk, { kind: 'run', startMin: 600, durMin: 30 }]]
 
   it('(iii) adding gas leaves every signal, internal array and moment that existed before it byte-identical', () => {
-    const without = HUMAN_MODULES.filter((m) => m.id !== 'gas')
-    expect(without).toHaveLength(HUMAN_MODULES.length - 1)
+    // circulation reads gas, so both sides leave it out (its own insertion test is in circulation.test.ts).
+    const withGas = HUMAN_MODULES.filter((m) => m.id !== 'circulation')
+    const without = withGas.filter((m) => m.id !== 'gas')
+    expect(without).toHaveLength(HUMAN_MODULES.length - 2)
     for (const m of FULL ? meals : meals.slice(0, 3))
       for (const plan of plans) {
         const before = runModules(without, setup(m, plan))
-        const after = runModules(HUMAN_MODULES, setup(m, plan))
+        const after = runModules(withGas, setup(m, plan))
         for (const [id, w] of before.signals) {
           const a = after.signals.get(id)!
           expect(firstDiff(w.values, a.values), `${m} ${id}`).toBe(-1)
@@ -368,7 +370,7 @@ describe('contract: status, ranges, speed', () => {
 
   it('gas runs in ≤ 2 ms (median of 21 runs, 48 h at 1 min)', () => {
     const out = runModules(
-      HUMAN_MODULES.filter((m) => m.id !== 'gas'),
+      HUMAN_MODULES.filter((m) => m.id !== 'gas' && m.id !== 'circulation'),
       setup('cheeseburger:1,fries:1,cola:1', [walk]),
     )
     const store = out.signals
