@@ -210,6 +210,9 @@
 //   K-1 (2026-10-14, branch wp/k1-kinds from v3 a1e66ad; v3.2, R114): four more activity kinds shown.
 //   /sim takes their chip names and pictures and the pose each is drawn in: 189.182 -> 189.298 KB
 //   (+0.116). Ledger row K-1.
+//   FIX-F2 (2026-10-14, branch wp/fix-f2 from v3 7fd594c; R120): the teacher switch's store and
+//   its going off mid-load, [ ] during a load, Try again's and a system switch's focus: /sim
+//   189.563 -> 189.899 KB (+0.336). Ledger row FIX-F2.
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'

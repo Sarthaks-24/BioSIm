@@ -165,6 +165,15 @@
         "engineKB": 12.471,
         "simRatchetKB": 189.69,
         "simEngineRatchetKB": 202.261
+      },
+      {
+        "wp": "FIX-F2",
+        "at": "2026-10-14",
+        "on": "v3 7fd594c (/sim 189.563 measured) + FIX-F2 (R120 #3, #6, #12, #19, #20): the teacher switch as a tiny store with listeners (state/run.ts drops a lit, loading or failed row behind it when it goes off; setLayer and linkQuery never ask for or write it; the link is rewritten), [ ] stepping from the row on its way, Try again moving focus to the title and keeping its status, focus to the title when a system switch takes the focused control away, and the live region naming the shown system when the switch goes off: /sim 189.563 -> 189.899 (+0.336: Simulator chunk +0.249, clock chunk group +0.087; zustand in the registry measured 190.054, kept out), engine 12.471 unchanged. The link note, picker, panels, sheet and the summaries' words are lazy.",
+        "simKB": 189.899,
+        "engineKB": 12.471,
+        "simRatchetKB": 190.099,
+        "simEngineRatchetKB": 202.67
       }
     ]
   },
