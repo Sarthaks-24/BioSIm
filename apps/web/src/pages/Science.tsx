@@ -5,6 +5,8 @@ import { MODEL_VERSION } from '@lifepeek/engine'
 import { FOODS } from '../data/foods.ts'
 import { addEnglish, localized } from '../i18n/index.ts'
 import { REFERENCES } from '../lib/references.ts'
+import { SYSTEM_SOURCES } from '../lib/systemSources.ts'
+import { pickerSystems } from '../systems/registry.ts'
 import scienceText from 'virtual:lifepeek-en/science'
 import lessonText from 'virtual:lifepeek-en/lesson'
 import disclaimerText from 'virtual:lifepeek-en/disclaimer'
@@ -16,7 +18,10 @@ addEnglish(scienceText, lessonText, disclaimerText)
 export default function Science() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
-  const { hash } = useLocation()
+  const { hash, search } = useLocation()
+  // One section per body system there is (public, or every built one in a `?preview=1` session; X-1).
+  const systems = pickerSystems(new URLSearchParams(search).get('preview') === '1').map((s) => s.id)
+  const citation = (id: string) => REFERENCES.find((r) => r.id === id)?.citation ?? id
   const target = decodeURIComponent(hash.slice(1))
 
   // The graphs' "How we know" links point at one reference or food (#freckmann2007, #food:cola).
@@ -52,6 +57,30 @@ export default function Science() {
           <li key={l}>{l}</li>
         ))}
       </ul>
+
+      {/* Per body system, the references its graphs rest on (from the catalog: lib/systemSources.ts). */}
+      <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('science.systems.title')}</h2>
+      <p className="mb-2 text-ink-muted">{t('science.systems.lead')}</p>
+      {systems.map((id) => (
+        <section key={id} aria-labelledby={`system-${id}`} data-system={id} className="border-t border-border py-3">
+          <h3 id={`system-${id}`} className="text-lg font-extrabold">
+            {t(`systems.${id}.name`)}
+          </h3>
+          {SYSTEM_SOURCES[id]?.length ? (
+            <ul className="mt-1 list-disc space-y-1 pl-6 text-sm">
+              {SYSTEM_SOURCES[id]!.map((ref) => (
+                <li key={ref}>
+                  <a href={`#${ref}`} className="underline underline-offset-2">
+                    {citation(ref)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-ink-muted">{t('science.systems.none')}</p>
+          )}
+        </section>
+      ))}
 
       <h2 className="mt-10 mb-4 text-h2 font-extrabold">{t('science.foodsTitle')}</h2>
       <div className="overflow-x-auto">

@@ -15,15 +15,25 @@ const MORE = 'rounded-full border border-border px-5 py-3 text-lg font-semibold 
  * Home (FP-8, R15): what LifePeek shows, in one line, beside the body it shows it in (the stage's
  * flat body, resting); then the race that proves it; then how it is built and examples to open.
  * Sections are divided by rules, not boxed in cards, like the stage.
+ *
+ * v3.0 (X-1, R15): its parts load after the first paint (components/HomeLesson.tsx) and show once a
+ * system besides Digestion is public (or in a `?preview=1` session): the guided lesson "One roti,
+ * one walk" as the first call to action, once the systems it pauses on are public, and a static list
+ * of the body systems. Until then Home is v2.1's.
  */
 export default function Home() {
   const { t, i18n } = useTranslation()
   // The race and its numbers load after the first paint (every page's first download is shared with
   // the stage, whose budget is tight); its box keeps the room meanwhile, and a failed load leaves it empty.
   const [Race, setRace] = useState<ComponentType | null>(null)
+  const [V3, setV3] = useState<typeof import('../components/HomeLesson.tsx') | null>(null)
   useEffect(() => {
     import('../components/HomeRace.tsx').then(
       (m) => setRace(() => m.default),
+      () => {},
+    )
+    import('../components/HomeLesson.tsx').then(
+      (m) => setV3(() => m),
       () => {},
     )
   }, [])
@@ -33,6 +43,7 @@ export default function Home() {
         <div>
           <h1 className="home-title">{t('home.promise')}</h1>
           <p className="mt-6 max-w-[60ch] text-lg leading-relaxed text-ink-muted">{t('home.intro')}</p>
+          {V3 && <V3.Lesson />}
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/sim" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">
               {t('home.cta')}
@@ -55,6 +66,8 @@ export default function Home() {
         </h2>
         {Race ? <Race /> : <div className="aspect-[2/1]" />}
       </section>
+
+      {V3 && <V3.Systems />}
 
       <section aria-labelledby="how" className="border-t border-border py-12">
         <h2 id="how" className="mb-6 text-h2 font-extrabold">

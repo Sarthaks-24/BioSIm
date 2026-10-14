@@ -1,8 +1,11 @@
 import { useEffect, useState, type MouseEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { MODEL_VERSION } from '@lifepeek/engine'
 import { useTranslation } from 'react-i18next'
-import { LESSONS, TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { TASKS, presetHref, type Lesson } from '../lib/presets.ts'
+import { shownChapters, type TeachLesson } from '../lib/lessons.ts'
+import { FLAGSHIP, LESSON_STATE, flagshipHref, flagshipShown, isPreview } from '../lib/flagship.ts'
+import { systemOf } from '../systems/registry.ts'
 import { QR_PATH } from '../lib/qrPath.ts'
 import { SITE_URL } from '../lib/site.ts'
 import { setProjector } from '../hooks/useProjector.ts'
@@ -28,12 +31,16 @@ const opensElsewhere = (e: MouseEvent) => e.button !== 0 || e.metaKey || e.ctrlK
  * link, or one opened in a new tab, is a plain link: the same meals and time, in whatever mode
  * the reader uses.
  */
-function openLesson(e: MouseEvent, l: Lesson) {
+function openLesson(e: MouseEvent, l: Pick<TeachLesson, 'system' | 'slot'>) {
   if (opensElsewhere(e)) return
   // Only where the stage has a projector size (from 1024 px up).
   if (window.matchMedia('(min-width: 64rem)').matches) setProjector(true)
-  useStripTab.getState().show(l.slot)
+  // Its graph in front, also when its system lights only once its pack is here (X-1).
+  useStripTab.setState({ tab: l.slot, next: { layer: l.system, slot: l.slot } })
 }
+
+/** The guided lesson (X-1): projector-friendly as the ready lessons; its link's `state` brings the bar. */
+const openFlagship = (e: MouseEvent) => openLesson(e, { system: FLAGSHIP.layer, slot: 'gut' })
 
 /** A question starts on the first graph: a lesson's graph left in front would point at the answer. */
 function openTask(e: MouseEvent) {
@@ -67,23 +74,35 @@ type Offline = 'unknown' | 'saved' | 'not' | 'saving' | 'failed'
  * every lesson needs the same files (lib/offlineSave.ts), so saving one saves them all; each
  * lesson still says its own state, ready for lessons that need different parts (v3 packs).
  */
-function useOffline() {
+function useOffline(lessons: readonly { key: string; packs: readonly string[] }[]) {
   const [state, setState] = useState<Record<string, Offline>>({})
+  const packsOf = (keys: string[]) => [...new Set(lessons.filter((l) => keys.includes(l.key)).flatMap((l) => l.packs))]
   const check = () =>
-    Promise.all(LESSONS.map(async (l) => [l.key, (await isSaved(LESSON_PACKS)) ? 'saved' : 'not'] as const)).then((all) =>
+    Promise.all(lessons.map(async (l) => [l.key, (await isSaved([...l.packs])) ? 'saved' : 'not'] as const)).then((all) =>
       setState(Object.fromEntries(all)),
     )
+  const ids = lessons.map((l) => l.key).join()
   useEffect(() => {
     if (canSave()) void check()
-  }, [])
+    // Checked again only when the lessons shown change.
+  }, [ids])
   const run = async (keys: string[]) => {
     setState((s) => ({ ...s, ...Object.fromEntries(keys.map((k) => [k, 'saving'])) }))
-    const ok = await save(LESSON_PACKS).catch(() => false)
+    const ok = await save(packsOf(keys)).catch(() => false)
     if (ok) await check()
     else setState((s) => ({ ...s, ...Object.fromEntries(keys.map((k) => [k, 'failed'])) }))
   }
   return { state, run }
 }
+
+/** The packs the guided lesson needs offline: the stage's parts, 3D, and each system it pauses on (skin's once public). */
+const flagshipPacks = (preview: boolean) => [
+  ...LESSON_PACKS,
+  'breathing',
+  'circulation',
+  'kidneys',
+  ...(preview || systemOf('skin')?.public ? ['effort'] : []),
+]
 
 const SAVE_BUTTON = 'min-h-11 shrink-0 rounded-full border border-border px-4 font-semibold hover:bg-surface-sunk lg:min-h-9'
 
@@ -91,9 +110,14 @@ const ROW = 'group flex items-center gap-4 py-3 pr-1 hover:bg-surface-sunk focus
 
 export default function Teach() {
   const { t, i18n } = useTranslation()
-  const offline = useOffline()
+  const preview = isPreview(useLocation().search)
+  const chapters = shownChapters(preview)
+  const lessons = chapters.flatMap((c) => c.lessons)
+  const flagship = flagshipShown(preview)
+  const offline = useOffline([...(flagship ? [{ key: FLAGSHIP.key, packs: flagshipPacks(preview) }] : []), ...lessons])
+  const keys = [...(flagship ? [FLAGSHIP.key] : []), ...lessons.map((l) => l.key)]
   const saveable = canSave()
-  const allSaved = LESSONS.every((l) => offline.state[l.key] === 'saved')
+  const allSaved = keys.every((k) => offline.state[k] === 'saved')
   const offlineText: Record<Offline, string> = {
     unknown: '',
     saved: t('teach.offline.saved'),
@@ -106,6 +130,30 @@ export default function Teach() {
     l.kept?.length
       ? t('home.example', { meal: shortMealNames(l.meal, i18n.language), kept: shortMealNames(l.kept, i18n.language) })
       : shortMealNames(l.meal, i18n.language)
+  const time = (min: number) => (min % 60 === 0 ? t('units.h', { n: min / 60 }) : t('units.min', { n: min }))
+  const classes = (list: readonly number[]) => list.map((n) => t('teach.classTag', { n })).join(' · ')
+  /** A lesson's offline state, and its Save button when it is not saved. */
+  const saveState = (key: string, name: string) => {
+    const state = offline.state[key]
+    if (!saveable || !state || state === 'unknown') return null
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-3 text-sm sm:px-3 sm:-mx-3">
+        <span role="status" className={state === 'saved' ? 'font-semibold text-ink' : 'text-ink-muted'}>
+          {offlineText[state]}
+        </span>
+        {(state === 'not' || state === 'failed') && (
+          <button
+            type="button"
+            onClick={() => void offline.run([key])}
+            aria-label={`${t('teach.offline.save')}: ${name}`}
+            className={SAVE_BUTTON}
+          >
+            {t('teach.offline.save')}
+          </button>
+        )}
+      </div>
+    )
+  }
   return (
     <PageShell>
       <h1 className="text-display font-extrabold tracking-tight text-balance">{t('teach.title')}</h1>
@@ -116,6 +164,37 @@ export default function Teach() {
           {t('teach.scienceLink')}
         </Link>
       </p>
+
+      {flagship && (
+        // The guided lesson at the top of Teach (ui-ux §8.1), once every system it pauses on is public.
+        <section
+          aria-labelledby="flagship"
+          data-flagship=""
+          data-release={FLAGSHIP.release}
+          className="mt-8 rounded-frame border border-border bg-surface-raised p-5"
+        >
+          <h2 id="flagship" className="text-h2 font-extrabold text-balance">
+            {t('teach.flagship.title')}
+          </h2>
+          <p className="mt-1 text-sm font-semibold text-ink-muted">{classes([7, 10])}</p>
+          <p className="mt-3 text-ink-muted">{t('teach.flagship.lead')}</p>
+          <p className="mt-4">
+            <Link
+              to={flagshipHref(preview)}
+              state={LESSON_STATE}
+              onClick={openFlagship}
+              className="inline-block rounded-full bg-ink px-6 py-3 font-semibold text-white"
+            >
+              {t('teach.flagship.start')}
+            </Link>
+          </p>
+          <details className="mt-4">
+            <summary className="cursor-pointer font-semibold">{t('teach.flagship.exit')}</summary>
+            <p className="mt-1 text-ink-muted">{t('teach.flagship.exitAnswer')}</p>
+          </details>
+          <div className="mt-2">{saveState(FLAGSHIP.key, t('teach.flagship.title'))}</div>
+        </section>
+      )}
 
       <h2 className="mt-10 mb-3 text-h2 font-extrabold">{t('teach.plan')}</h2>
       <ol className="list-decimal space-y-3 pl-6">
@@ -131,52 +210,45 @@ export default function Teach() {
           <p className="basis-full text-ink-muted">{t('teach.offline.lead')}</p>
           <button
             type="button"
-            disabled={allSaved || LESSONS.some((l) => offline.state[l.key] === 'saving')}
-            onClick={() => void offline.run(LESSONS.map((l) => l.key))}
+            disabled={allSaved || keys.some((k) => offline.state[k] === 'saving')}
+            onClick={() => void offline.run(keys)}
             className={`${SAVE_BUTTON} disabled:opacity-60`}
           >
             {t('teach.offline.saveAll')}
           </button>
         </div>
       )}
-      <ul className="divide-y divide-border border-y border-border">
-        {LESSONS.map((l) => (
-          <li key={l.key} data-lesson={l.key}>
-            <Link to={presetHref(l)} onClick={(e) => openLesson(e, l)} className={ROW}>
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
-                <span className="block text-ink-muted">
-                  {meals(l)} ·{' '}
-                  {t('teach.opensAt', {
-                    time: l.t % 60 === 0 ? t('units.h', { n: l.t / 60 }) : t('units.min', { n: l.t }),
-                    graph: t(`stage.strips.${l.slot}`),
-                  })}
-                </span>
-                {/* What the class should see, where the graph alone could mislead (council round 3). */}
-                {l.key === 'colaFour' && <span className="mt-1 block text-ink-muted">{t('teach.lessonNotes.colaFour')}</span>}
-              </span>
-              <Chevron />
-            </Link>
-            {saveable && offline.state[l.key] && offline.state[l.key] !== 'unknown' && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-3 text-sm sm:px-3 sm:-mx-3">
-                <span role="status" className={offline.state[l.key] === 'saved' ? 'font-semibold text-ink' : 'text-ink-muted'}>
-                  {offlineText[offline.state[l.key]!]}
-                </span>
-                {(offline.state[l.key] === 'not' || offline.state[l.key] === 'failed') && (
-                  <button
-                    type="button"
-                    onClick={() => void offline.run([l.key])}
-                    aria-label={`${t('teach.offline.save')}: ${t(`teach.lessons.${l.key}`)}`}
-                    className={SAVE_BUTTON}
-                  >
-                    {t('teach.offline.save')}
-                  </button>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+      {/* By NCERT chapter (R15): Class 10's Life Processes in its order, then moving and body heat. */}
+      {chapters.map((c, i) => (
+        <section key={c.key} aria-labelledby={`chapter-${c.key}`} data-chapter={c.key} className="mt-6">
+          {c.c10 && !chapters[i - 1]?.c10 && <p className="mb-2 text-sm font-semibold text-ink-muted">{t('teach.chapters.c10')}</p>}
+          <h3 id={`chapter-${c.key}`} className="mb-2 text-lg font-extrabold">
+            {t(`teach.chapters.${c.key}`)}
+          </h3>
+          <ul className="divide-y divide-border border-y border-border">
+            {c.lessons.map((l) => (
+              <li key={l.key} data-lesson={l.key} data-release={l.release}>
+                <Link to={l.href(preview)} onClick={(e) => openLesson(e, l)} className={ROW}>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-lg font-semibold">{t(`teach.lessons.${l.key}`)}</span>
+                    <span className="block text-ink-muted">
+                      {l.preset ? meals(l.preset) : t(`teach.lessonQuestions.${l.key}`)} ·{' '}
+                      {l.preset
+                        ? t('teach.opensAt', { time: time(l.t), graph: t(`stage.strips.${l.slot}`) })
+                        : t('teach.opensAtTime', { time: time(l.t) })}
+                    </span>
+                    <span className="block text-sm text-ink-muted">{classes(l.classes)}</span>
+                    {/* What the class should see, where the graph alone could mislead (council round 3). */}
+                    {l.key === 'colaFour' && <span className="mt-1 block text-ink-muted">{t('teach.lessonNotes.colaFour')}</span>}
+                  </span>
+                  <Chevron />
+                </Link>
+                {saveState(l.key, t(`teach.lessons.${l.key}`))}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
 
       <h2 className="mt-10 mb-2 text-h2 font-extrabold">{t('teach.questionsTitle')}</h2>
       <p className="mb-3 text-ink-muted">{t('teach.questionsLead')}</p>
