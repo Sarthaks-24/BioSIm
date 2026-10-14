@@ -21,6 +21,8 @@ export const BREATHING: SystemDef = {
   slots: [],
   knownLimits: [],
   draw: 'layer',
+  // Its 3D lungs (A-3, v3.1): a lazy chunk, loaded the first time Breathing is lit on a device with WebGL.
+  layer3d: () => import('../../three/layers/breathing.ts'),
   pack: 'breathing',
   inputs: ['meal', 'activity'],
   rhythms: [],

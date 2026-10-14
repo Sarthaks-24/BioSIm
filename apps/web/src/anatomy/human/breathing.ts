@@ -180,3 +180,17 @@ export const LABELS: Readonly<Record<BreathingLabel, Callout>> = {
   lungs: { anchor: v(-0.55, 1.5, 0.2), at: v(-1.0, 1.72, 0.1), side: 'left' },
   diaphragm: { anchor: v(0.5, 0.92, 0.2), at: v(0.95, 0.62, 0.1), side: 'right' },
 }
+
+/**
+ * Depth for the 3D lungs (A-3; three/layers/breathing.ts builds them from the outlines above), scene z,
+ * + towards the viewer. The windpipe is in front of the food pipe; the lungs are deeper behind (they
+ * wrap round the back of the chest) than in front; the person's left lung is shown cut open down the
+ * front (`cut`), so its bronchi show on the cut face, as a book's figure shows them. The diaphragm's
+ * rim reaches further down at the back than at the front.
+ */
+export const DEPTH = {
+  windpipe: 0.06,
+  foodPipe: -0.1,
+  lungs: { mid: -0.06, front: 0.32, back: 0.38, cut: 0.03 },
+  diaphragm: { front: 0.47, back: 0.42 },
+} as const

@@ -76,7 +76,11 @@ const ALLOWED: Record<string, readonly string[]> = {
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */
 const PACK_FOLDERS: Record<string, readonly string[]> = Object.fromEntries(
-  PACK_SECTIONS.map((name) => [name, (PACK_SYSTEMS as Record<string, string[]>)[name.slice('sys.'.length)]!.map((s) => `systems/${s}/`)]),
+  // A system's 3D layer (three/layers/<system>.ts, A-3) draws only once its system is lit, so after its pack.
+  PACK_SECTIONS.map((name) => [
+    name,
+    (PACK_SYSTEMS as Record<string, string[]>)[name.slice('sys.'.length)]!.flatMap((s) => [`systems/${s}/`, `three/layers/${s}.`]),
+  ]),
 )
 
 /** The section a key's text is in: `sys.<packId>` for a pack's key, else its first segment. */
