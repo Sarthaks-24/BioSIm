@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -20,6 +21,18 @@ const HINDI = ENV.VITE_HINDI === '1'
 /** The production address, the one build constant (scripts/site-url.mjs): VITE_SITE_URL or the planned name. */
 const SITE_URL = siteUrl(ENV.VITE_SITE_URL)
 
+/**
+ * The headers the deployed site sends with every path (vercel.json, the "/(.*)" block): the
+ * Content-Security-Policy and the rest. `vite preview` sends them too, so the e2e tests run under
+ * the same policy as production (R120 #10).
+ */
+const VERCEL = JSON.parse(fs.readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8')) as {
+  headers: { source: string; headers: { key: string; value: string }[] }[]
+}
+const SITE_HEADERS = Object.fromEntries(
+  VERCEL.headers.filter((h) => h.source === '/(.*)').flatMap((h) => h.headers.map(({ key, value }) => [key, value])),
+)
+
 /** Which built files the service worker saves at install, and which on first use (R71, scripts/cache-tiers.mjs). */
 const tiers = cacheTiersPlugin()
 /** The caching policy (R71, scripts/cache-policy.mjs); its globIgnores get the lazy tier's files once the bundle is written. */
@@ -27,6 +40,18 @@ const WORKBOX = workboxPolicy({ hindi: HINDI, tiers })
 
 export default defineConfig({
   plugins: [
+    // The deployed site's headers, CSP included (vercel.json), on every preview response (the e2e
+    // tests): first of the plugins, as `preview.headers` and prerender-head's own middleware (it
+    // answers /sim, /teach… with their built HTML) would leave those pages without them.
+    {
+      name: 'lifepeek-site-headers',
+      configurePreviewServer(server) {
+        server.middlewares.use((_req, res, next) => {
+          for (const [key, value] of Object.entries(SITE_HEADERS)) res.setHeader(key, value)
+          next()
+        })
+      },
+    },
     react(),
     tailwindcss(),
     // English page texts load with their pages, not with every page (scripts/i18n-sections.mjs).
