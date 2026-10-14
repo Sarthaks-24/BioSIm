@@ -6,6 +6,7 @@ import i18nSections from './scripts/i18n-sections.mjs'
 import prerenderHead from './scripts/prerender-head.mjs'
 import cacheTiersPlugin, { LAZY_CACHE } from './scripts/cache-tiers.mjs'
 import { siteUrl } from './scripts/site-url.mjs'
+import qrCode from './scripts/qr-code.mjs'
 
 /**
  * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
@@ -28,6 +29,8 @@ export default defineConfig({
     i18nSections(),
     // Each page's head in the built HTML, the 404 page, sitemap.xml and robots.txt (T12a).
     prerenderHead({ site: SITE_URL }),
+    // Teach's QR code, a picture of this build's address (scripts/qr-code.mjs, R79).
+    qrCode({ site: SITE_URL }),
     // dist/pack-manifest.json and the precache list: the core only (scripts/cache-tiers.mjs).
     tiers,
     VitePWA({

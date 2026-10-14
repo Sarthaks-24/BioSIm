@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { decodeMeal, simulate, valueAt, type MealItem } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
 import { runMoments } from './moments.ts'
-import { LESSONS, PRESETS, QR_PATH, TASKS } from './presets.ts'
+import { LESSONS, PRESETS, TASKS } from './presets.ts'
+import { QR_PATH } from './qrPath.ts'
 
 const run = (items: MealItem[]) => simulate({ items }, { lookup: lookupFood, particles: 0 })
 const moments = (items: MealItem[] | undefined) => (items?.length ? runMoments(run(items)).map((m) => m.atMin) : [])

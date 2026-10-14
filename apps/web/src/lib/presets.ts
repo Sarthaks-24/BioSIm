@@ -66,13 +66,5 @@ export const TASKS: readonly Task[] = [
   { key: 'energyAt3h', meal: one('cola'), kept: one('cheeseburger', 'fries') },
 ]
 
-/**
- * Where the Teach page's QR code goes (council round 3): the screen questions 1 to 3 start from,
- * cola alone at 0 min (presets.test.ts checks it against TASKS). The SVG is made from it, with
- * SITE_URL in front: `npx --yes qrcode@1.5.4 -t svg -e M -q 4 -o apps/web/src/assets/lifepeek-qr.svg
- * "https://lifepeek.vercel.app/sim?v=2&a=cola:1"`.
- */
-export const QR_PATH = '/sim?v=2&a=cola:1'
-
 export const presetHref = (p: Preset) =>
   `/sim?${encodeShareState({ a: p.meal, b: p.kept ?? [], t: p.t ?? 0, ...(p.layer ? { layer: p.layer } : {}) })}`

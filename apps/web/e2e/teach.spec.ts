@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-import { LESSONS, QR_PATH, TASKS, presetHref } from '../src/lib/presets.ts'
+import { LESSONS, TASKS, presetHref } from '../src/lib/presets.ts'
+import { QR_PATH } from '../src/lib/qrPath.ts'
 import en from '../src/i18n/en.json' with { type: 'json' }
 import { SIM_BODY, checkAxe, onlyIn } from './helpers/gate.ts'
 
