@@ -1,16 +1,18 @@
 # Release checklist (v3.0.0)
 
+> **Branch (R118):** this release ships from the local branch `release/3.0`, made from tag `v3.0-rc`. The `v3` branch tip already holds later work (3.1/3.2), so do not merge `v3` itself.
+
 v3.0 is "Class 10 Life Processes, complete": breathing, heart and blood, kidneys and water,
 muscles, skin, and bones and lymph as drawings, the guided lesson, worksheets and the "Why
-different?" cards. Model version 3 is sealed (R103). The code side is done on the `v3` branch and
-its checks are enforced (H-1). What is left are **your** steps, in this order. Tick each box.
+different?" cards. Model version 3 is sealed (R103). The code side is done on the local branch `release/3.0` (tag `v3.0-rc`
+plus the final audit's fixes that apply to 3.0, R120) and its checks are enforced (H-1). What is left are **your** steps, in this order. Tick each box.
 
 Every command is for **Git Bash**, run from the main checkout `/e/BioSim`. Pushes go **by name
 only**: never `git push --tags`, never `--force`.
 
 ## 0. Where it stands
 
-    cd /e/BioSim && git checkout v3 && npm ci && npm run release-gate
+    cd /e/BioSim && git checkout release/3.0 && npm ci && npm run release-gate
 
 On the H-1 build it says `NOT READY` and lists only your items (the same as for v2.1, plus one):
 
@@ -35,26 +37,26 @@ v3.0 goes out only after v2.1.0 is tagged and in production (R103).
       git -C /e/BioSim tag -l v2.1.0                                   # prints v2.1.0
       curl -s https://lifepeek.vercel.app/sim | grep -o "<title>[^<]*</title>"
 
-## 2. Bring `main` into `v3`, then check `v3`
+## 2. Bring `main` into `release/3.0`, then check `release/3.0`
 
-Your v2.1 text items are on `main`; `v3` needs them before it can pass the release gate.
+Your v2.1 text items are on `main`; `release/3.0` needs them before it can pass the release gate.
 
 - [ ] Merge:
 
-      cd /e/BioSim && git checkout v3
-      cd /e/BioSim && git merge main -m "Merge main (v2.1.0) into v3"
+      cd /e/BioSim && git checkout release/3.0
+      cd /e/BioSim && git merge main -m "Merge main (v2.1.0) into release/3.0"
 
   If git reports conflicts, stop and ask (they are usually the CHANGELOG, `en.json` or a `v=2`
   e2e link that should be `v=3`, R63).
-- [ ] All green on `v3` (the e2e run takes about 30 minutes; it builds its own test site):
+- [ ] All green on `release/3.0` (the e2e run takes about 30 minutes; it builds its own test site):
 
       cd /e/BioSim && npm ci && npm run check
       cd /e/BioSim && CI=1 npm run e2e -w @lifepeek/web
       cd /e/BioSim && npm run release-gate        # now lists only the CHANGELOG heading
 
-## 3. Merge `v3` into `main` (model version 3 reaches production here)
+## 3. Merge `release/3.0` into `main` (model version 3 reaches production here)
 
-- [ ] In `CHANGELOG.md` change the heading `## 3.0.0 (unreleased)` to `## 3.0.0`. Commit it on `v3`:
+- [ ] In `CHANGELOG.md` change the heading `## 3.0.0 (unreleased)` to `## 3.0.0`. Commit it on `release/3.0`:
 
       cd /e/BioSim && git commit -am "v3.0.0: changelog"
       cd /e/BioSim && npm run release-gate        # must say READY
@@ -62,7 +64,7 @@ Your v2.1 text items are on `main`; `v3` needs them before it can pass the relea
 - [ ] Merge into `main`:
 
       cd /e/BioSim && git checkout main
-      cd /e/BioSim && git merge --no-ff v3 -m "Merge v3: LifePeek 3.0 (model version 3, sealed)"
+      cd /e/BioSim && git merge --no-ff release/3.0 -m "Merge release/3.0: LifePeek 3.0 (model version 3, sealed)"
       cd /e/BioSim && npm ci && npm run check && npm run release-gate
 
 ## 4. Tag v3.0.0
