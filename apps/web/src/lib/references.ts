@@ -1,4 +1,5 @@
 import { SOURCES } from '@lifepeek/engine'
+import { NERVE_SOURCES } from '@lifepeek/engine/demo'
 
 /**
  * Fuller citations than the engine's source registry keeps (packages/engine/src/core/sources.ts),
@@ -32,9 +33,11 @@ const FULL_CITATION: Record<string, string> = {
 
 /**
  * Every model reference, in one place: each registered source (its ID is the anchor the graphs'
- * "How we know" links to, /science#freckmann2007) plus Elashoff 1982, which the v1 model notes cite.
+ * "How we know" links to, /science#freckmann2007), the nerve demo's (V-7: its own registry, in the
+ * demo's lazy entry, not the engine's main one) and Elashoff 1982, which the v1 model notes cite.
  */
 export const REFERENCES: { id: string; citation: string; url?: string }[] = [
   ...Object.entries(SOURCES).map(([id, s]) => ({ id, citation: FULL_CITATION[id] ?? s.citation, ...('url' in s ? { url: s.url } : {}) })),
+  ...Object.entries(NERVE_SOURCES).map(([id, s]) => ({ id, citation: s.citation, url: s.url })),
   { id: 'elashoff1982', citation: FULL_CITATION.elashoff1982! },
 ].sort((a, b) => a.citation.localeCompare(b.citation, 'en'))
