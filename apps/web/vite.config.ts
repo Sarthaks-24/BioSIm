@@ -127,7 +127,7 @@ export default defineConfig({
             // U-4: the kidneys row too (alone it was a 0.2 KB chunk of its own on /sim, measured).
             {
               name: 'clock',
-              test: /src[\\/](state[\\/]clock|lib[\\/]time|systems[\\/](registry|digestion[\\/]def|breathing[\\/]row|kidneys[\\/]row|lymph[\\/]def))\.ts$|engine[\\/]src[\\/]core[\\/]signal\.ts$|zustand[\\/]esm[\\/]middleware/,
+              test: /src[\/](state[\/]clock|lib[\/]time|systems[\/](registry|digestion[\/]def|breathing[\/]row|circulation[\/]row|kidneys[\/]row|lymph[\/]def))\.ts$|engine[\/]src[\/]core[\/]signal\.ts$|zustand[\/]esm[\/]middleware/,
               includeDependenciesRecursively: false,
             },
           ],

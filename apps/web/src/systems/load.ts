@@ -28,7 +28,11 @@ export interface PackDef {
 
 /** A pack's parts as one lazy module (systems/<packId>/pack.ts): one file to fetch, one entry in the first download. */
 interface PackModule {
-  ROWS: readonly CatalogRow[]
+  /**
+   * Its rows, or a loader of them from the engine's chunk, which every run has loaded already
+   * (circulation's: a pack importing a rows file splits it out of the engine chunk, +0.3 KB measured).
+   */
+  ROWS: readonly CatalogRow[] | (() => Promise<readonly CatalogRow[]>)
   UIS: { readonly [S in SystemId]?: SystemUi }
   DEFS: { readonly [S in SystemId]?: SystemParts }
   TEXT: Record<string, unknown>
@@ -38,7 +42,7 @@ interface PackModule {
 /** A PackDef whose loaders each take their part of one module. */
 function onePack(load: () => Promise<PackModule>): PackDef {
   return {
-    rows: () => load().then((m) => ({ default: m.ROWS })),
+    rows: () => load().then(async (m) => ({ default: typeof m.ROWS == 'function' ? await m.ROWS() : m.ROWS })),
     ui: () => load().then((m) => ({ default: m.UIS, DEFS: m.DEFS })),
     text: () => load().then((m) => ({ default: m.TEXT })),
     drawing: () => load().then((m) => ({ default: m.DRAWINGS })),
@@ -59,6 +63,9 @@ export const LAZY_PACKS: { readonly [P in PackId]?: PackDef } = {
   // U-2: its rows, words and moments, its English (with the signal and unit texts its graphs name)
   // and its flat lungs, one lazy module under systems/breathing/ (cache-tiers.mjs: lazy tier).
   breathing: onePack(() => import('./breathing/pack.ts')),
+  // U-3: Heart & blood's rows (and its one moment), words and moments, its English and its flat
+  // heart, one lazy module under systems/circulation/ (cache-tiers.mjs finds it: lazy tier).
+  circulation: onePack(() => import('./circulation/pack.ts')),
   // U-4: its rows and moments, words, English (with the signal and unit texts) and flat kidneys and
   // bladder, one lazy module under systems/kidneys/ (cache-tiers.mjs: lazy tier).
   kidneys: onePack(() => import('./kidneys/pack.ts')),

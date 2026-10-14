@@ -76,7 +76,7 @@ describe('systems registry (architecture §5.2)', () => {
       slots: [
         { id: 'gut', signals: ['gut.stomach.contentG'], unit: 'g' },
         // S-4's engine signal: the kidneys pack registers its row, not the control pack.
-        { id: 'blood', signals: ['kidney.filtrationRate' as never], unit: 'L/min', letter: 'b' },
+        { id: 'blood', signals: ['kidney.filtrationRate' as never], unit: 'kcal/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
         { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
@@ -92,7 +92,7 @@ describe('systems registry (architecture §5.2)', () => {
       'hormones: 5 graph slots: at most 3 (keys 1–3)',
       'hormones: two slots share an id',
       'hormones: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
-      'hormones: slot 2 (blood) unit L/min has no text (registry/units.ts)',
+      'hormones: slot 2 (blood) unit kcal/min has no text (registry/units.ts)',
       'hormones: slot 2 (blood) signal kidney.filtrationRate has no row registered by its pack',
       "hormones: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
       'hormones: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
@@ -194,7 +194,6 @@ describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
 
 describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   const walk: ActivityBout[] = [{ kind: 'walk', startMin: 30, durMin: 20 }]
-  const hidden: SystemDef = { ...DIGESTION, id: 'breathing', i18nKey: 'systems.breathing', pack: 'breathing', public: false }
 
   it('a public system opens; an unknown or hidden one opens Digestion (the link notes say so)', () => {
     expect(systemForLink('digestion', [], false)).toBe('digestion')
@@ -209,7 +208,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('breathing', [], false)).toBe('digestion')
     expect(systemForLink('breathing', [], true)).toBe('breathing')
     expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
-    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'kidneys', 'lymph'])
+    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing', 'circulation', 'kidneys', 'lymph'])
   })
 
   it('kidneys & water is hidden until the v3.0 release gate (H-1) too, and its graphs show 0–12 h', () => {
@@ -221,7 +220,8 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
 
   it('‹ › and [ ] step round the picker’s rows', () => {
     expect(stepSystem('digestion', true, 1)).toBe('breathing')
-    expect(stepSystem('breathing', true, 1)).toBe('kidneys')
+    expect(stepSystem('breathing', true, 1)).toBe('circulation')
+    expect(stepSystem('circulation', true, 1)).toBe('kidneys')
     expect(stepSystem('kidneys', true, 1)).toBe('lymph')
     expect(stepSystem('lymph', true, 1)).toBe('digestion')
     expect(stepSystem('digestion', true, -1)).toBe('lymph')
@@ -229,23 +229,30 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('digestion', false, 1)).toBe('digestion')
   })
 
-  it('a link with activity but no layer opens Heart & blood only once that row is public (R39)', () => {
+  it('Heart & blood is hidden until the v3.0 release gate (H-1): only ?preview=1 opens it', () => {
+    expect(systemOf('circulation')?.public).toBe(false)
+    expect(systemForLink('circulation', walk, false)).toBe('digestion')
+    expect(systemForLink('circulation', [], true)).toBe('circulation')
+  })
+
+  it('a link with activity but no layer opens Heart & blood once that row is public, or in a preview (R39)', () => {
+    // Hidden (until H-1): Digestion, as before; a preview session already opens Heart & blood.
     expect(defaultSystemFor(walk)).toBe('digestion')
-    withSystem({ ...hidden, id: 'circulation', pack: 'circulation' }, () => expect(defaultSystemFor(walk)).toBe('digestion'))
-    withSystem({ ...hidden, id: 'circulation', pack: 'circulation', public: true }, () => {
+    expect(systemForLink(undefined, walk, false)).toBe('digestion')
+    expect(defaultSystemFor(walk, true)).toBe('circulation')
+    expect(systemForLink(undefined, walk, true)).toBe('circulation')
+    expect(systemForLink(undefined, [], true)).toBe('digestion')
+    // An asked-for layer wins over the default.
+    expect(systemForLink('breathing', walk, true)).toBe('breathing')
+    // Public (the flag H-1 flips): every such link opens Heart & blood; without activity, Digestion.
+    const row = systemOf('circulation')!
+    row.public = true
+    try {
       expect(defaultSystemFor(walk)).toBe('circulation')
+      expect(systemForLink(undefined, walk, false)).toBe('circulation')
       expect(defaultSystemFor([])).toBe('digestion')
-    })
+    } finally {
+      row.public = false
+    }
   })
 })
-
-/** Runs `fn` with `extra` added to the registry's systems (a made-up row; the registry is a list). */
-function withSystem(extra: SystemDef, fn: () => void) {
-  const list = SYSTEMS as SystemDef[]
-  list.push(extra)
-  try {
-    fn()
-  } finally {
-    list.pop()
-  }
-}

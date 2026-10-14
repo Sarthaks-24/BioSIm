@@ -23,13 +23,22 @@
         "simEngineRatchetKB": 197.838
       },
       {
+        "wp": "U-3",
+        "at": "2026-10-14",
+        "on": "v3 6201885 + U-3: Heart & blood's row in the registry, the slot that shows one line at a time beside a kept plan (GraphColumn), litres a minute to one decimal (formatNumber), its pack loader, its name and its moment's name in the core text: /sim +0.275, engine +0.007 (its rows stay in the engine chunk)",
+        "simKB": 187.151,
+        "engineKB": 10.669,
+        "simRatchetKB": 187.351,
+        "simEngineRatchetKB": 198.12
+      },
+      {
         "wp": "U-4",
         "at": "2026-10-14",
-        "on": "v3 6201885 + U-4 (/sim +0.440: the 0–12 h graph window on the graphs, dock and clock with its \"48 h ›\" button, the kidneys row in the clock group, the background-line hook, systems.kidneys and dock words; engine +0.367: the kidneys catalog rows become a chunk shared with the kidneys pack, as breathing's)",
-        "simKB": 187.316,
-        "engineKB": 11.029,
-        "simRatchetKB": 187.516,
-        "simEngineRatchetKB": 198.645
+        "on": "v3 64228a6 + U-4: the 0–12 h graph window (lib/time.ts bar end, the clock stops there, graphs and dock drawn to it, the dock’s \"0–12 h shown · 48 h ›\" button), Kidneys & water’s row in the clock group, the background-line hook (GraphColumn), its name and the dock words in the core text: /sim +0.398, engine +0.015 (its rows stay in the engine chunk)",
+        "simKB": 187.549,
+        "engineKB": 10.684,
+        "simRatchetKB": 187.749,
+        "simEngineRatchetKB": 198.533
       }
     ]
   },

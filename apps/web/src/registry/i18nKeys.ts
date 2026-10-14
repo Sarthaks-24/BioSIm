@@ -1,11 +1,27 @@
-import { ACTIVE_SIGNAL_IDS, EVENTS, PROFILES, SIGNALS, type SignalMeta, type SignalStatus } from '@lifepeek/engine'
+import {
+  ACTIVE_SIGNAL_IDS,
+  EVENTS,
+  PROFILES,
+  SIGNALS,
+  type EventMeta,
+  type RunEventId,
+  type SignalMeta,
+  type SignalStatus,
+} from '@lifepeek/engine'
 import BREATHING_ROWS from '@lifepeek/engine/catalog/breathing'
+import CIRCULATION_ROWS from '@lifepeek/engine/catalog/circulation'
 import KIDNEY_ROWS from '@lifepeek/engine/catalog/kidneys'
 import { ORGANISMS } from './index.ts'
 import { tabKey, type SystemDef } from '../systems/registry.ts'
 
 /** The built packs' lazy rows (each U-n adds its pack's): their texts load with the pack. */
-const PACK_ROWS: readonly SignalMeta[] = [...BREATHING_ROWS, ...KIDNEY_ROWS.filter((r): r is SignalMeta => r.unit !== 'min')]
+const PACK_ROWS: readonly SignalMeta[] = [
+  ...BREATHING_ROWS,
+  ...CIRCULATION_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+  ...KIDNEY_ROWS.filter((r): r is SignalMeta => 'kind' in r),
+]
+/** Their moments (Heart & blood's gut-flow peak, the kidneys' first urge and half the meal's water): the dock names them (`signals.event.*.name`). */
+const PACK_EVENTS = [...CIRCULATION_ROWS, ...KIDNEY_ROWS].filter((r): r is EventMeta<RunEventId> => !('kind' in r))
 
 /**
  * The i18n keys the screen builds from the catalog and the registry (`${i18nKey}.name` …), which
@@ -30,13 +46,11 @@ export function catalogKeys(): KeyUse {
     if (row.band) required.add(`${row.band.i18nKey}.name`)
     if (row.limitKey) required.add(row.limitKey)
   }
-  for (const row of Object.values(EVENTS)) {
+  for (const row of [...Object.values(EVENTS), ...PACK_EVENTS]) {
     if (row.shipsIn !== 'v2.0' && row.shipsIn !== 'v3.0') continue
     required.add(`${row.i18nKey}.name`)
     optional.add(`${row.i18nKey}.desc`)
   }
-  // A pack's moments (U-4: the kidneys'), named in the dock like the lean catalog's.
-  for (const row of KIDNEY_ROWS) if (row.unit === 'min') required.add(`${row.i18nKey}.name`)
   required.add('signals.event.never')
   for (const s of SIGNAL_STATUSES) for (const sub of ['label', 'help']) required.add(`status.${s}.${sub}`)
   required.add('status.howWeKnow')

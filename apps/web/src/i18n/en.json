@@ -236,11 +236,15 @@
       "breathsPerMin": "breaths in and out in one minute",
       "mL": "millilitres (1000 mL = 1 litre)",
       "mLPerMin": "millilitres each minute",
+      "beatsPerMin": "heartbeats in one minute",
+      "LPerMin": "litres each minute",
       "mLPerH": "millilitres each hour"
     },
     "breathsPerMin": "{{n}} breaths a minute",
     "mL": "{{n}} mL",
     "mLPerMin": "{{n}} mL a minute",
+    "beatsPerMin": "{{n}} beats a minute",
+    "LPerMin": "{{n}} L a minute",
     "mLPerH": "{{n}} mL an hour"
   },
   "anatomy": {
@@ -502,6 +506,18 @@
         },
         "summary": "Blood sugar starts at about {{start}} mg/dL, is highest at about {{peak}} mg/dL after {{peakTime}}, and is back near the before-meal level by {{backTime}}.",
         "summaryNone": "Blood sugar stays near {{start}} mg/dL: this meal has almost no sugar or starch."
+      },
+      "flow": {
+        "gut": {
+          "name": "Blood to the gut",
+          "short": "Gut",
+          "desc": "The blood flowing to the stomach and intestines each minute. It rises while the gut takes in a meal, and falls in hard exercise, when the muscles need more."
+        },
+        "muscle": {
+          "name": "Blood to the muscles",
+          "short": "Muscles",
+          "desc": "The blood flowing to the muscles each minute. Walking and running send much more; a meal does not change it."
+        }
       }
     },
     "energy": {
@@ -565,6 +581,9 @@
       "activityEnd": {
         "name": "Activity ends"
       },
+      "gutFlowPeak": {
+        "name": "Most blood to the gut"
+      },
       "never": "Not within 48 h",
       "bladderFirstUrge": {
         "name": "Bladder starts to feel full"
@@ -600,6 +619,23 @@
         "name": "Carbon dioxide for each oxygen",
         "short": "CO₂ for each O₂",
         "desc": "How much carbon dioxide is made for each unit of oxygen used: about 0.8 at rest, nearer 1 when the body runs mostly on sugar."
+      }
+    },
+    "heart": {
+      "rate": {
+        "name": "Heart beats a minute",
+        "short": "Heartbeats",
+        "desc": "How many times a minute the heart beats. The model works it out from the blood pumped a minute and the blood pushed out with each beat: more work needs more blood, and the heart beats faster and harder to send it."
+      },
+      "output": {
+        "name": "Blood pumped a minute",
+        "short": "Blood pumped",
+        "desc": "How much blood the heart pumps each minute, in litres. Moving muscles need more oxygen, so the heart pumps more; digesting a meal adds a little."
+      },
+      "strokeVolume": {
+        "name": "Blood per beat",
+        "short": "Blood per beat",
+        "desc": "How much blood the heart pushes out with each beat. It grows when you walk or run, up to about 1.4 times, and a little after a meal."
       }
     },
     "kidney": {
@@ -645,6 +681,12 @@
     "gasExchange": "Oxygen used and carbon dioxide made are worked out from the energy the body uses (Weir’s formula, without protein). The air in the lungs is taken to keep the same carbon dioxide, so the blood’s oxygen and carbon dioxide do not change here.",
     "breathSplit": "How the extra air is shared between faster and deeper breaths is a rule picked by hand (a model estimate): real people differ.",
     "breathAdult": "The numbers are for a typical grown-up. Children usually breathe faster.",
+    "heartSplit": "How a faster heart is shared between more beats and more blood per beat is a rule from studies of grown-ups (a model estimate); after a meal the share is from one small study. Fitness, posture and age are not in the model, and the rule “220 minus age” is not for children.",
+    "heartOutput": "Blood pumped a minute is worked out from the oxygen the body uses (about 5.5 litres more blood for each extra litre of oxygen), from small studies of grown-ups. Blood pressure is not worked out: 120/80 is a book value, held.",
+    "gutFlow": "How much more blood goes to the gut after a meal is fitted to one study of a very big meal, so small drinks barely move it. In hard exercise the gut gives some of its blood to the muscles (OpenStax Anatomy and Physiology 2e, Table 20.3).",
+    "heartAdult": "The numbers are for a typical grown-up. Children’s hearts usually beat faster.",
+    "heartRecovery": "After a walk or a run the model’s heart slows back almost to resting within a few minutes. Real hearts slow quickly at first, then stay a little fast for longer: recovery is simplified here.",
+    "heartDrawing": "In the drawing the blood’s dashes run at most twice as fast as at rest; in a run the heart really pumps about 3.5 times as much blood. The beat is enlarged to be seen.",
     "waterSteadyDay": "We assume a steady day: about 1.5 L of urine a day from other food and drink. The body is always well watered, so sweat is drunk back over about 90 minutes.",
     "bladderEmpties": "At about 150 mL the bladder starts to feel full, and we can usually wait. Here it empties at 300 mL; a person chooses when.",
     "gfrFixed": "The kidneys filter about 125 mL a minute all day here (90–140 in grown men). This model does not sleep: urine is not slower at night.",
@@ -665,12 +707,16 @@
     "digestion": {
       "name": "Digestion"
     },
-    "lymph": {
-      "name": "Lymph & germ defence"
-    },
     "breathing": {
       "name": "Breathing",
       "what": "lungs"
+    },
+    "circulation": {
+      "name": "Heart & blood",
+      "what": "heart and blood"
+    },
+    "lymph": {
+      "name": "Lymph & germ defence"
     },
     "kidneys": {
       "name": "Kidneys & water",
@@ -1028,6 +1074,104 @@
       "lesson": {
         "title": "Why do you breathe faster when you run?",
         "question": "How many breaths a minute during the run, and at rest?"
+      }
+    },
+    "circulation": {
+      "strips": {
+        "beats": "Heart beats a minute",
+        "pumped": "Blood pumped a minute",
+        "where": "Where blood goes"
+      },
+      "label": {
+        "heart": "Heart",
+        "aorta": "Aorta (to the body)",
+        "venaCava": "Vena cava (back to the heart)",
+        "pulmonaryArtery": "Pulmonary artery (to the lungs)",
+        "pulmonaryVein": "Pulmonary vein (from the lungs)",
+        "legs": "To and from the legs"
+      },
+      "key": {
+        "rich": "Oxygen-rich",
+        "poor": "Oxygen-poor",
+        "convention": "Blue is a convention: blood is always red."
+      },
+      "doing": {
+        "rest": "resting",
+        "walk": "walking",
+        "walkBrisk": "brisk walking",
+        "run": "running"
+      },
+      "now": {
+        "organ": "Heart",
+        "rate": "{{n}} a minute",
+        "kept": "Kept: {{n}} a minute",
+        "shares": "Blood each minute: {{gut}} L to the gut · {{muscle}} L to the muscles · {{rest}} L to the rest of the body"
+      },
+      "chip": {
+        "who": "typical adult, {{doing}}",
+        "speed": "shown at its true speed",
+        "slowed": "animation slowed",
+        "info": "About the heart’s speed",
+        "why": "The clock moves hours in seconds. The heart is drawn at its true speed for {{time}}, up to 150 beats a minute. Its beat is enlarged to be seen, and the blood’s dashes run at most twice as fast as at rest."
+      },
+      "moves": "Moves mostly with walking or running; a meal moves it a little.",
+      "book": "Older NCERT Class 7 book (2024-25) says: 72–80 beats a minute",
+      "children": "Most children your age (12–15): 62–96 a minute at rest",
+      "bp": {
+        "value": "Blood pressure 120/80: book value, held.",
+        "held": "About the same all day in this model: it is not worked out here.",
+        "source": "Source: NCERT Class 10 Science, Life Processes."
+      },
+      "pick": {
+        "label": "Show",
+        "gut": "Gut",
+        "muscle": "Muscles"
+      },
+      "why": {
+        "open": "Why different? ›",
+        "title": "Why does the model differ from the book?",
+        "book": "The book says",
+        "model": "This model says",
+        "reason": "Why they differ",
+        "rest": {
+          "what": "Heart at rest",
+          "book": "72–80 beats a minute (older NCERT Class 7 book, 2024-25)",
+          "model": "about 66 beats a minute (model estimate)",
+          "why": "Worked out from the oxygen one resting grown-up uses and the blood pushed out with each beat, not tuned to the book. Resting grown-ups differ (60–100); children’s hearts beat faster."
+        },
+        "run": {
+          "what": "Heart in a run",
+          "book": "no number for running",
+          "model": "about 160 beats a minute in a 10-minute run (model estimate)",
+          "why": "The model follows studies of grown-ups exercising hard. The drawing slows above 150 a minute; the number does not."
+        },
+        "after": {
+          "what": "After the run",
+          "book": "no number",
+          "model": "almost back to resting within a few minutes",
+          "why": "Recovery is simplified here: real hearts slow quickly at first, then stay a little fast for longer (no slow after-exercise rise in this model)."
+        },
+        "exam": "In the exam, write the book’s value.",
+        "ask": "Count your pulse at rest, then after running on the spot for a minute. How long does it take to slow down again?"
+      },
+      "summary": {
+        "rest": "At rest, the heart stays at about {{n}} beats a minute after this meal.",
+        "restReason": "The heart moves mostly with walking or running. Try a walk.",
+        "meal": "After this meal, up to {{up}} beats a minute more: about {{n}}, at {{time}}.",
+        "mealReason": "While the gut takes in the food, more blood flows to it.",
+        "peak": "Fastest during the {{doing}}: about {{n}} beats a minute (rest {{rest}}).",
+        "pumped": "The heart pumps about {{to}} L of blood a minute then (rest {{from}} L), most of the extra to the muscles.",
+        "slowed": "The drawing slows above 150 a minute; the number stays true.",
+        "compare": "Fastest: about {{run}} beats a minute with this plan, {{kept}} with the kept one.",
+        "same": "The heart is about the same in both: about {{n}} beats a minute at the most."
+      },
+      "graph": {
+        "flat": "{{name}}: about {{value}} all the way.",
+        "peak": "{{name}}: {{start}} at the start, {{peak}} at the most, at {{time}}."
+      },
+      "lesson": {
+        "title": "Where does the blood go after a meal, and in a walk?",
+        "question": "How much blood goes to the muscles during the walk, and at rest?"
       }
     },
     "kidneys": {

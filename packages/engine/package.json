@@ -11,6 +11,7 @@
     "./run": "./src/run.ts",
     "./catalog/core": "./src/core/catalog/core.ts",
     "./catalog/breathing": "./src/core/catalog/breathing.ts",
+    "./catalog/circulation": "./src/core/catalog/circulation.ts",
     "./catalog/kidneys": "./src/core/catalog/kidneys.ts"
   },
   "scripts": {

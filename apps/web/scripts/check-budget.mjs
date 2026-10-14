@@ -173,6 +173,11 @@
 //   186.515 KB on v3 94aa67e (+1.23; the title alone +0.55). The pack and the picker share no module
 //   with the stage (props, written-out helpers; a vite group keeps the clock and the registry one
 //   chunk): a shared module is otherwise split out of the route chunk (+1.9 KB measured).
+//   U-3 (2026-10-14, branch v3): Heart & blood's row, the "one line at a time beside a kept plan" slot
+//   (Where blood goes: Gut | Muscles), litres a minute to one decimal, its pack loader, its name and its
+//   moment's name in the core text: /sim 186.876 → 187.151 KB on v3 6201885 (+0.28; its new utility
+//   classes are inline styles, as Tailwind's CSS is in /sim). The pack (15.1 KB) takes its rows from the
+//   engine chunk: importing the rows file split it out of the engine chunk (+0.3 KB on /sim + engine).
 //   FIX-V3 (2026-10-14, branch v3; R93): focus goes back to the chip that opened the meal sheet (its
 //   logic loads with the sheet) and to a sensible chip after ✕, the bout marks' download is tried
 //   again, links name the layer with bouts: /sim 186.520 → 186.876 KB on v3 a2354c5 (+0.36), engine

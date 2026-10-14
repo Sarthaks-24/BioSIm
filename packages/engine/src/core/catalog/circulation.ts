@@ -9,7 +9,7 @@
  * assumptions (D9), and the resting a–v O2 difference, the gut-flow K and the carbohydrate weight
  * are calibrations (V-3). The pack's one event row is lazy too (core/catalog.ts PackEventId).
  */
-import type { EventMeta, SignalMeta } from '../catalog.ts'
+import type { EventMeta, RunEventId, SignalMeta } from '../catalog.ts'
 
 export const CIRCULATION_SIGNAL_IDS = ['heart.rate', 'heart.output', 'heart.strokeVolume', 'blood.flow.gut', 'blood.flow.muscle'] as const
 export type CirculationSignalId = (typeof CIRCULATION_SIGNAL_IDS)[number]
@@ -129,3 +129,10 @@ export const CIRCULATION_EVENTS: { readonly [Id in CirculationEventId]: EventMet
     shipsIn: 'v3.0',
   },
 }
+
+/**
+ * The pack's rows, as `registerSignals` takes them (the web's `rows` loader of the `circulation`
+ * pack, U-3): its signals and its one moment.
+ */
+const rows: readonly (SignalMeta | EventMeta<RunEventId>)[] = [...Object.values(CIRCULATION_SIGNALS), ...Object.values(CIRCULATION_EVENTS)]
+export default rows

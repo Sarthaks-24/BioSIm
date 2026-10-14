@@ -81,13 +81,12 @@ test('the dock shows 0–12 h; “48 h ›” widens it to the whole bar and bac
   await expect(page.getByRole('slider', { name: /time/i }).first()).toHaveAttribute('aria-valuemax', '2880')
   await page.locator('[data-window]').click()
   await expect(page.locator('[data-window="720"]')).toBeVisible()
-  // Back on Digestion the bar is 48 h with no window button.
+  // On the row before (Heart & blood) the bar is 48 h with no window button.
   await page.locator('body').click({ position: { x: 5, y: 5 } })
   await page.keyboard.press('[')
-  await expect(page.locator('[data-system-title="breathing"]')).toBeVisible()
-  await page.keyboard.press('[')
-  await expect(page.locator('[data-system-title="digestion"]')).toBeVisible()
+  await expect(page.locator('[data-system-title="circulation"]')).toBeVisible()
   await expect(page.locator('[data-window]')).toHaveCount(0)
+  await expect(page.getByRole('slider', { name: /time/i }).first()).toHaveAttribute('aria-valuemax', '2880')
 })
 
 test('the ureters’ drops move in pulses on the real clock; reduced motion stands still with arrows', async ({ page }) => {
