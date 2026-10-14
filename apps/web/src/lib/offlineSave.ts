@@ -57,7 +57,8 @@ const lazyUrls = (m: PackManifest) => m.entries.filter((e) => e.tier === 'lazy')
 
 /**
  * Takes out of lp-saved what no pack of this version names (a past version's files: lp-saved never
- * expires by itself). `keep`: the versions whose files stay. Once per page load from `isSaved`.
+ * expires by itself). `keep`: the versions whose files stay. Once per page load from `isSaved`, and
+ * not while a new version waits (its files, saved by `save`, are not this page's version's).
  */
 async function prune(cache: string, keep: PackManifest[]) {
   const wanted = new Set(keep.flatMap(lazyUrls))
@@ -72,7 +73,9 @@ export async function isSaved(packs: readonly string[]): Promise<boolean> {
   try {
     const m = await packManifest()
     const { cache, core, lazy } = files(m, packs)
-    pruned ??= prune(cache, [m]).catch(() => undefined)
+    pruned ??= waitingWorker()
+      .then((waiting) => (waiting ? undefined : prune(cache, [m])))
+      .catch(() => undefined)
     await pruned
     const saved = await caches.open(cache)
     const found = await Promise.all([
@@ -87,14 +90,66 @@ export async function isSaved(packs: readonly string[]): Promise<boolean> {
   }
 }
 
-/** Saves a lesson's lazy files and asks the browser to keep them; true once all of the lesson is saved. */
+/** A new version's service worker, installed and waiting to take over (UpdateToast's "new version"), or null. */
+async function waitingWorker(): Promise<ServiceWorker | null> {
+  try {
+    return (await navigator.serviceWorker.getRegistration())?.waiting ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The deployed version's pack-manifest.json, from the server (the page's own copy is this version's,
+ * from the precache): an address the service worker has no route for, never from a cache.
+ */
+async function deployedManifest(): Promise<PackManifest> {
+  const r = await fetch(`/pack-manifest.json?deployed=${Date.now()}`, { cache: 'no-store' })
+  if (!r.ok) throw new Error(`pack-manifest.json: ${r.status}`)
+  return r.json() as Promise<PackManifest>
+}
+
+/**
+ * Lets the waiting version take over and reloads the page in it, as UpdateToast's "Reload" does
+ * (vite-plugin-pwa's prompt mode: the worker skips waiting on this message). Other LifePeek tabs
+ * that were told of the new version reload too.
+ */
+function applyUpdate(waiting: ServiceWorker) {
+  return new Promise<void>((done) => {
+    const reload = () => {
+      done()
+      location.reload()
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true })
+    // A worker that does not take over: the page still reloads, into whichever version is active.
+    setTimeout(reload, 10_000)
+    waiting.postMessage({ type: 'SKIP_WAITING' })
+  })
+}
+
+/**
+ * Saves a lesson's lazy files and asks the browser to keep them; true once all of the lesson is saved.
+ *
+ * A new version waiting (R120 #16): its files are the ones class will need (it takes over the next
+ * time the app opens), and this version's lazy files may be gone from the server. So the files of
+ * the deployed version's manifest are saved, then the new version takes over and the page reloads
+ * in it ("apply the update first"); the reloaded Teach page says the lesson is ready.
+ */
 export async function save(packs: readonly string[]): Promise<boolean> {
   if (!canSave()) return false
   // The browser decides; saved files work offline either way, persist only protects them from clean-up.
   navigator.storage?.persist?.().catch(() => false)
-  const m = await packManifest()
+  const waiting = await waitingWorker()
+  const current = await packManifest()
+  const m = waiting ? await deployedManifest() : current
   const { cache, lazy } = files(m, packs)
   await (await caches.open(cache)).addAll(lazy)
+  if (waiting) {
+    // The old version's saved files go once the new one runs (prune keeps both until then).
+    await prune(cache, [current, m])
+    await applyUpdate(waiting)
+    return true
+  }
   // The core comes with the service worker's install, which may still be running on a first visit.
   await Promise.race([navigator.serviceWorker.ready, new Promise((r) => setTimeout(r, 30_000))])
   return isSaved(packs)

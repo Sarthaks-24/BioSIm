@@ -185,6 +185,36 @@ test('a saved lesson stays saved after browsing 200 other lazy files: lp-saved i
   }
 })
 
+// R120 #16: saving while a new version waits saved the old version's files, which the new one (it
+// takes over the next time the app opens) does not use. Now the save takes the deployed version's
+// list, then lets that version take over and reloads, and the reloaded page says the lesson is ready.
+// The "new version" is the same worker under another address, as in the update-note tests below.
+test('saving while a new version waits: the new version takes over, and the lesson is ready in it', async ({ page }) => {
+  onlyIn('desktop')
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/teach')
+  await installed(page)
+  await page.reload()
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller)
+  const lessons = page.locator('[data-lesson]')
+  await expect(lessons.first().getByText('Not saved for offline')).toBeVisible()
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/sw.js?next=1')
+  })
+  await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.waiting, null, { timeout: 30_000 })
+  const deployed = page.waitForRequest(/\/pack-manifest\.json\?deployed=\d+$/)
+  await Promise.all([
+    page.waitForEvent('load', { timeout: 30_000 }),
+    lessons
+      .first()
+      .getByRole('button', { name: /^Save for class offline: / })
+      .click(),
+  ])
+  await deployed
+  await page.waitForFunction(() => navigator.serviceWorker.controller?.scriptURL.includes('next=1'), null, { timeout: 30_000 })
+  await expect(lessons.first().getByText('Ready for class offline ✓')).toBeVisible({ timeout: 30_000 })
+})
+
 test.describe('a stale file after a deploy (vite:preloadError)', () => {
   // The service worker would answer from its cache; the test needs the file to fail.
   test.use({ serviceWorkers: 'block' })
