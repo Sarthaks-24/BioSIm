@@ -559,3 +559,20 @@ html[data-motion='reduce'] .race-reveal {
   position: absolute;
   inset: -0.5rem -0.25rem;
 }
+
+/*
+ * W-2: a run the engine worker takes over 300 ms on keeps the old run on show: its graphs and Now
+ * line dim under "Working it out…" (the graph column's data-working, pages/Simulator.tsx).
+ */
+[data-working] > section,
+[data-stage]:has([data-working]) [data-now] {
+  opacity: 0.5;
+}
+[data-working]::after {
+  content: attr(data-working);
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-surface-raised);
+}

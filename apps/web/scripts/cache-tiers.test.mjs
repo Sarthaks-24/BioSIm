@@ -20,7 +20,13 @@ const manifest = {
     ],
   },
   '_shared-a.js': { file: 'assets/shared-a.js' },
-  'src/pages/Simulator.tsx': { file: 'assets/Simulator-a.js', imports: ['index.html', '_clock-a.js'], isDynamicEntry: true },
+  // W-2: the stage's chunk names the engine worker's file (its address): an asset of the chunk.
+  'src/pages/Simulator.tsx': {
+    file: 'assets/Simulator-a.js',
+    imports: ['index.html', '_clock-a.js'],
+    isDynamicEntry: true,
+    assets: ['assets/engine-worker-AAAAAAAW.js'],
+  },
   '_clock-a.js': { file: 'assets/clock-a.js', imports: ['index.html'] },
   ...Object.fromEntries(
     ['Teach', 'Science', 'About', 'Privacy', 'Stats'].map((p) => [
@@ -47,6 +53,7 @@ const files = [
   'font-latin-400-normal-a.woff2',
   'font-latin-400-normal-a.woff',
   'font-latin-ext-400-normal-a.woff2',
+  'engine-worker-AAAAAAAW.js',
 ]
 
 describe('cache tiers', () => {
@@ -68,8 +75,16 @@ describe('cache tiers', () => {
       expect(tiers.core.has(f), f).toBe(true)
   })
 
-  it('lazy: the 3D body, the stage parts used on demand, the update note, latin-ext; never a .woff', () => {
-    for (const f of ['assets/BodyCanvas-a.js', 'assets/Sheets-a.js', 'assets/UpdateToast-a.js', 'assets/font-latin-ext-400-normal-a.woff2'])
+  it('lazy: the 3D body, the stage parts used on demand, the update note, latin-ext, the engine worker; never a .woff', () => {
+    expect(tiers.core.has('assets/engine-worker-AAAAAAAW.js')).toBe(false)
+    expect(LAZY_URL.test('/assets/engine-worker-AAAAAAAW.js')).toBe(true)
+    for (const f of [
+      'assets/engine-worker-AAAAAAAW.js',
+      'assets/BodyCanvas-a.js',
+      'assets/Sheets-a.js',
+      'assets/UpdateToast-a.js',
+      'assets/font-latin-ext-400-normal-a.woff2',
+    ])
       expect(tiers.lazy.has(f), f).toBe(true)
     expect([...tiers.core, ...tiers.lazy].some((f) => f.endsWith('.woff'))).toBe(false)
     expect([...tiers.core].filter((f) => tiers.lazy.has(f))).toEqual([])
@@ -83,6 +98,8 @@ describe('cache tiers', () => {
     // The legs and poses: a bout poses the body (R93 #6).
     expect(LESSON_PACKS.stage.roots).toContain(LIMBS)
     expect(tiers.packs.stage.files).toContain('assets/limbs-a.js')
+    // The engine worker (W-2): saved with the stage, so a saved class runs off the page offline too.
+    expect(tiers.packs.stage.files).toContain('assets/engine-worker-AAAAAAAW.js')
     for (const pack of Object.values(tiers.packs)) for (const f of pack.files) expect(tiers.lazy.has(f), f).toBe(true)
   })
 

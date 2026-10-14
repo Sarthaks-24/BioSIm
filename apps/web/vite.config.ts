@@ -96,6 +96,12 @@ export default defineConfig({
   server: {
     proxy: { '/api': 'http://localhost:8787' },
   },
+  // The engine worker (W-2, src/engine-worker.ts): one classic script, since old Android Chrome
+  // has no module workers (architecture §3.2). Lazy, in lp-lazy (scripts/cache-tiers.mjs).
+  worker: {
+    format: 'iife',
+    rolldownOptions: { output: { entryFileNames: 'assets/[name]-[hash].js' } },
+  },
   build: {
     // Vite warns about any chunk over 500 kB (minified, not gzipped). The one over it is the lazy 3D
     // body (three.js and @react-three, about 970 kB, 260 kB gzipped), downloaded only by a device

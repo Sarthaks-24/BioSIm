@@ -13,7 +13,8 @@
     "./catalog/breathing": "./src/core/catalog/breathing.ts",
     "./catalog/circulation": "./src/core/catalog/circulation.ts",
     "./catalog/kidneys": "./src/core/catalog/kidneys.ts",
-    "./demo": "./src/demo/nerve.ts"
+    "./demo": "./src/demo/nerve.ts",
+    "./worker": "./src/worker.ts"
   },
   "scripts": {
     "test": "vitest run --exclude test/perf.test.ts && vitest run test/perf.test.ts",

@@ -93,6 +93,7 @@ test('"Save for class offline" on /teach: each lesson says so, and a lesson then
   await installed(page)
   const lessons = page.locator('[data-lesson]')
   // Every chapter's lessons (all public since H-1), once the list is drawn.
+  // v3.1 Teach step: the hot-pan reflex lesson joins Control and coordination (R109).
   await expect(lessons).toHaveCount(11)
   const count = await lessons.count()
   expect(count).toBeGreaterThan(0)

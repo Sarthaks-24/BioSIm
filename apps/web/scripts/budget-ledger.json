@@ -138,6 +138,15 @@
         "engineKB": 11.974,
         "simRatchetKB": 189.107,
         "simEngineRatchetKB": 201.181
+      },
+      {
+        "wp": "W-2",
+        "at": "2026-10-14",
+        "on": "v3 2a96599 + W-2 (re-measured after merging v3 591b0b7, FIX-31): the engine worker. /sim takes the worker file's address, the async run in hooks/useRun.ts (each run through connectWorker: the worker once ready, else the page; the last run stays on show) and \"Working it out…\" over the dimmed old run (a CSS label, one announcement): /sim 188.907 -> 189.179 (+0.272; 189.182 with FIX-31). The run chunk gains the worker's page side (connectWorker, fromWire; its worker side, handle/serve/toWire, is the @lifepeek/engine/worker entry, only in the worker): engine 11.974 -> 12.470 (+0.496). The worker file (12.3 KB gz / 41.3 raw) is lazy, saved with the stage lesson, never precached (precache 835.3 KB raw: only the stage, CSS and run chunk grow, +2.2 KB raw).",
+        "simKB": 189.182,
+        "engineKB": 12.47,
+        "simRatchetKB": 189.382,
+        "simEngineRatchetKB": 201.952
       }
     ]
   },

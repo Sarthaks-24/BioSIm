@@ -39,3 +39,6 @@ export { computeEvents } from './events.ts'
 export { makeParticles } from './particles.ts'
 export { bluntingFactor, glucoseCurve } from './glucose.ts'
 export { energySignals, type EnergySeries } from './energy/energyBalance.ts'
+// The engine worker's page side (W-2, architecture §3.2): runs go to the worker once it is ready.
+// Its worker side (handle, serve, toWire) is the `@lifepeek/engine/worker` entry, never in this chunk.
+export { connectWorker, type WorkerPort, type WorkerRunner } from './worker.ts'

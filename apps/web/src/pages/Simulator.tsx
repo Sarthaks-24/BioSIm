@@ -110,8 +110,12 @@ const ACTIONS: Record<KeyAction, () => void> = {
  */
 export default function Simulator() {
   const { t } = useTranslation()
-  const { run } = useRun('current')
-  const { run: kept } = useRun('kept')
+  const { run, working } = useRun('current')
+  const { run: kept, working: keptWorking } = useRun('kept')
+  // A run the engine worker takes over 300 ms on: the old run's graphs and Now line dim under
+  // "Working it out…" (W-2; styles.css), said once by a screen reader.
+  const slow = useLater(working || keptWorking, WORKING_AFTER_MS) && t('stage.working')
+  useEffect(() => void (slow && announce(slow)), [slow])
   useMealClock()
   useLinkSync()
   // The guided lesson (X-1) when Home or Teach started it (their link's `state`, lib/flagship.ts); otherwise none.
@@ -181,7 +185,9 @@ export default function Simulator() {
          * tab changes), a share of the screen's height (styles.css). The body gets the rest of the
          * first screen, never less than its own minimum: under that the page scrolls (FP-1).
          */}
-        <div className="flex min-h-0 [&>section]:flex-1">{run && <GraphColumn key={end} run={run} kept={kept} />}</div>
+        <div data-working={slow || undefined} className="relative flex min-h-0 [&>section]:flex-1">
+          {run && <GraphColumn key={end} run={run} kept={kept} />}
+        </div>
         {projector && <div ref={setWords} className="border-l border-border bg-surface-raised" />}
         {/* The dock shares the stage's two columns, so its timeline sits right under the graphs. */}
         <div className="lg:col-span-2 lg:grid lg:grid-cols-subgrid">
@@ -236,6 +242,18 @@ function useMedia(query: string) {
 /** How long the engine may take before the stage says it is on its way (architecture §3.1). */
 const WORKING_AFTER_MS = 300
 
+/** `on`, once it has been on for `ms`. */
+function useLater(on: boolean, ms: number) {
+  const [late, setLate] = useState(false)
+  useEffect(() => {
+    setLate(false)
+    if (!on) return
+    const id = setTimeout(() => setLate(true), ms)
+    return () => clearTimeout(id)
+  }, [on, ms])
+  return on && late
+}
+
 /**
  * In the body's place until the engine is here (E-2): nothing for the first 300 ms (it usually
  * arrives sooner), then "Working it out…", said once by a screen reader. If it does not arrive,
@@ -244,11 +262,7 @@ const WORKING_AFTER_MS = 300
 function EngineWait() {
   const { t } = useTranslation()
   const { failed, attempts } = useEngineState()
-  const [slow, setSlow] = useState(false)
-  useEffect(() => {
-    const id = setTimeout(() => setSlow(true), WORKING_AFTER_MS)
-    return () => clearTimeout(id)
-  }, [])
+  const slow = useLater(true, WORKING_AFTER_MS)
   return (
     <div data-engine-wait="" className="grid min-h-40 place-items-center p-4 text-center">
       {failed ? (
