@@ -16,7 +16,7 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { DEFAULT_SYSTEM, systemForLink, systemOf, type SystemId } from '../systems/registry.ts'
+import { DEFAULT_SYSTEM, systemForLink, systemOf, useTeacherSwitch, type SystemId } from '../systems/registry.ts'
 import { loadPack } from '../systems/load.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
@@ -254,3 +254,9 @@ export function linkQuery(
   if (run.preview) query.set('preview', '1')
   return query.toString()
 }
+
+// The teacher switch going off while its row is lit: back to Digestion (components/stage/KeysHelp.tsx).
+useTeacherSwitch.subscribe(({ on }) => {
+  const { layer, setLayer } = useRunStore.getState()
+  if (!on && systemOf(layer)?.teacherSwitch) setLayer(DEFAULT_SYSTEM)
+})

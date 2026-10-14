@@ -24,7 +24,8 @@ import {
   stepSystem,
   systemForLink,
   systemOf,
-  teacherSwitch,
+  setTeacherSwitch,
+  useTeacherSwitch,
   type PackId,
   type SystemDef,
 } from './registry.ts'
@@ -243,10 +244,8 @@ describe('the effort pack (U-1): muscles, skin and the bones card', () => {
   })
 })
 
-/** The settings sheet's setter, without its storage (components/stage/KeysHelp.tsx `setGrowingUp`). */
-const setSwitch = (on: boolean) => {
-  teacherSwitch.on = on
-}
+/** The settings sheet's setter (components/stage/KeysHelp.tsx). */
+const setSwitch = setTeacherSwitch
 
 describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   const walk: ActivityBout[] = [{ kind: 'walk', startMin: 30, durMin: 20 }]
@@ -260,7 +259,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   })
 
   it('the teacher switch (R-1, R117): off by default; off, its row is in no list and no link; on, every session offers it last', () => {
-    expect(teacherSwitch.on).toBe(false)
+    expect(useTeacherSwitch.getState().on).toBe(false)
     // Public since R117: the per-session switch is its only gate.
     expect(systemOf('reproduction')).toMatchObject({ teacherSwitch: true, public: true })
     for (const preview of [false, true]) {
@@ -270,7 +269,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     setSwitch(true)
     try {
-      expect(teacherSwitch.on).toBe(true)
+      expect(useTeacherSwitch.getState().on).toBe(true)
       // On, without ?preview=1 too: the last row, and a link opens it.
       for (const preview of [false, true]) {
         expect(pickerSystems(preview).at(-1)!.id).toBe('reproduction')

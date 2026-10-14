@@ -5,7 +5,7 @@ import type { RunResult } from '@lifepeek/engine'
 import { activityKindAt } from '../lib/bouts.ts'
 import { formatSignal } from '../lib/formatSignal.ts'
 import { useRunStore } from '../state/run.ts'
-import { pickerSystems, stepSystem, systemOf } from '../systems/registry.ts'
+import { pickerSystems, stepSystem, systemOf, useTeacherSwitch } from '../systems/registry.ts'
 import { announce } from './graphs/StripAnnouncer.tsx'
 import { LoadBoundary, LoadFailedBox, lazyWithRetry } from './LoadBoundary.tsx'
 import { ChevronDownIcon } from './kit/index.ts'
@@ -50,6 +50,8 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const layer = useRunStore((s) => s.layer)
   const preview = useRunStore((s) => s.preview)
   const switching = useRunStore((s) => s.switching)
+  // The rows follow the teacher switch (pickerSystems reads it).
+  useTeacherSwitch((s) => s.on)
   const open = usePicker((s) => s.open)
   const button = useRef<HTMLButtonElement>(null)
   const [attempt, setAttempt] = useState(0)
