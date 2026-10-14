@@ -4,12 +4,62 @@ All notable changes to LifePeek. Data corrections are listed here so teachers ca
 
 ## 3.0.0 (unreleased)
 
+**Class 10 Life Processes, complete.** Lymph graphs, insulin and the nerve demo come in v3.1;
+plants are not covered.
+
+The same meal now shows what every body system does with it, and a walk or a run can be added to
+see the body work harder.
+
+What students and teachers will notice:
+
+- **Seven more body systems**, picked from the title above the body (or with `[` and `]`, and `L`
+  for the list): **Breathing** (lungs breathing at the model's rate, breaths a minute, air per
+  breath, oxygen used and carbon dioxide made), **Heart & blood** (the heart beating, both loops
+  of blood, beats a minute, blood pumped, and where the blood goes: gut or muscles), **Kidneys &
+  water** (the bladder filling, urine made per hour, water in the body; these graphs show the
+  first 12 hours, and "48 h ›" shows the rest), **Muscles**, **Skin & temperature** (sweat), and
+  **Bones** and **Lymph & germ defence** as drawings only, with no graphs yet.
+- **A walk, a brisk walk or a run** can be added to the meal, and kept to compare. Breathing, the
+  heart, the muscles, sweat and the kidneys change with it; digestion and blood sugar do not. A
+  link with a walk or run that names no system opens on Heart & blood.
+- **The guided lesson "One roti, one walk: what does every system do?"**: five pauses, from the
+  stomach to the kidneys, each with its question, the book's line and the model's answer. Next and
+  Back, or a clicker's Page Down and Page Up. It is the first thing on Home and on Teach.
+- **"Why different?"** next to each book value: the book's number with its NCERT chapter and page,
+  the model's number, why they differ, and which one to write in the exam.
+- **Teach** lists the lessons by NCERT chapter (Nutrition, Respiration, Transport, Excretion,
+  Movement), with the classes each fits. Each lesson has a **printable A4 worksheet** with a QR
+  code, a sketching question with empty axes, and a teacher's copy with the answers. "Save for
+  class offline" now saves a system lesson's drawings too.
+- **Count yours**: a 15-second timer for counting your own breaths or pulse. Nothing you count is
+  typed in or saved.
+- **Home** shows the systems, and **Science** lists the sources behind each system.
+- **Phones**: a graph with two lines (Energy, Urine made per hour) no longer runs under the play
+  bar on a small phone with a kept meal.
+
 Model:
 
 - **Model version 3 is sealed.** Its numbers are final: every output (each graph line, each key
   moment) is pinned by a check that runs on every change, so a link made with `v=3` gives the same
   picture in every later 3.x release. A change to any of them would be model version 4, listed
   here with what changed and why.
+- Compared with version 2, the small intestine takes in 90 % of the water (was 80 %), 97 % of the
+  carbohydrate (was 95 %) and 95 % of the protein (was 90 %), as the textbook says. Energy coming
+  in is about 2–3 % higher; blood sugar peaks are at most 1 mg/dL higher; times in the stomach did
+  not change. Links made with version 2 still open, with a note that some numbers may differ.
+- The new systems are one resting grown-up (65 kg) in a simple model: each value says where it
+  comes from, and "How we know" lists its limits.
+
+Known limits:
+
+- Lymph & germ defence and Bones are drawings only in this release: the lymph graphs come in v3.1,
+  with insulin and the nerve demo. Plants are not covered.
+- The new systems are flat drawings on every device; the 3D body shows digestion.
+- Body temperature is held at 37 °C, not worked out: the model works out the sweat instead. The
+  heart is back to resting within a few minutes of stopping; a real one stays a little fast for longer. Air breathed out is shown as the
+  book's numbers only.
+- Only walking, brisk walking and running can be added.
+- Hindi is still paused: the site is English only.
 
 ## 2.1.0 (unreleased)
 

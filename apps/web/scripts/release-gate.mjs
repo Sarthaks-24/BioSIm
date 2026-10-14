@@ -254,7 +254,7 @@ check(
 
 // Report.
 const failed = results.filter((r) => r.problems.length)
-console.log('\nRelease gate (file checks). Human steps: docs/RELEASE-v2.1.md\n')
+console.log('\nRelease gate (file checks). Human steps: docs/RELEASE-v2.1.md, then docs/RELEASE-v3.0.md\n')
 if (!HINDI) console.log('Hindi is paused (R47): the Hindi review check runs only with VITE_HINDI=1.\n')
 for (const r of results) {
   console.log(`${r.problems.length ? '[ ]' : '[x]'} ${r.title}`)
