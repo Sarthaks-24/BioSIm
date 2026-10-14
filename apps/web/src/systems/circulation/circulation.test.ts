@@ -255,8 +255,8 @@ describe('the book, the children’s band and "Why does the model differ from th
     // Recovery is simplified (R82, R86): within 5 minutes of the end, within 3 beats of resting.
     expect(rate(r, 45)).toBeLessThan(rate(r, 0) + 3)
     expect(t('sys.circulation.why.after.why')).toContain('no slow after-exercise rise')
-    expect(t('sys.circulation.why.exam')).toBe('In the exam, write the book’s value.')
-    expect(t('sys.circulation.why.title')).toBe('Why does the model differ from the book?')
+    expect(t('why.exam')).toBe('In the exam, write the book’s value.')
+    expect(t('why.title')).toBe('Why does the model differ from the book?')
   })
 })
 

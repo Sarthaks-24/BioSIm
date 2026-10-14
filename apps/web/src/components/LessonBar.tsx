@@ -11,6 +11,7 @@ import type { useRunStore } from '../state/run.ts'
 import type { useStripTab } from '../state/stripTab.ts'
 import { CloseIcon, IconButton } from './kit/index.ts'
 import Overlay from './Overlay.tsx'
+import WhyCard from './WhyCard.tsx'
 
 addEnglish(flagshipText)
 
@@ -25,6 +26,12 @@ export interface LessonBarProps {
 
 /** Where typing or a dialog has the keys (the "?" sheet scrolls with Page Down). */
 const OWN_KEYS = 'input, select, textarea, [contenteditable="true"], dialog, [role="dialog"]'
+
+/**
+ * A pause's "Why does the model differ from the book?" card (X-4, components/WhyCard.tsx): its
+ * system's pack's (lit by the pause, so its words are there), or Digestion's, which comes with the card.
+ */
+const whyOf = (system: Pause['system']) => (system === 'digestion' ? 'why.digestion' : `sys.${systemOf(system)!.pack}.why`)
 
 /** ‹ and ›, drawn like the kit's icons. */
 const Chevron = ({ back = false }: { back?: boolean }) => (
@@ -52,9 +59,9 @@ const Chevron = ({ back = false }: { back?: boolean }) => (
  *
  * `Step 2 of 5 · Heart & blood` with Back, Next and End; from 1024 px up the question (in title type,
  * larger on the projector), then the book's line and the model's one sentence (book first, R9: the
- * book is named, never "your book"). On a phone one line, and "?" opens the question and answer in
- * a sheet. A presentation clicker's Page Down / Page Up are Next / Back while the bar is up (the
- * stage's own key moments otherwise). Each pause lights its system at its time on its graph, and the
+ * book is named, never "your book"; "Why different? ›" opens the system's card, X-4). On a phone one
+ * line, and "?" opens the question and answer in a sheet. A presentation clicker's Page Down / Page
+ * Up are Next / Back while the bar is up (the stage's own key moments otherwise). Each pause lights its system at its time on its graph, and the
  * next pause's pack is fetched meanwhile, so Next is quick in class.
  */
 export default function LessonBar({ lesson, run, tabs, loadPack, className = '' }: LessonBarProps) {
@@ -119,10 +126,13 @@ export default function LessonBar({ lesson, run, tabs, loadPack, className = '' 
   const question = t(`flagship.pauses.${pause.key}.question`)
   const answer = (
     <>
-      <p>
-        <span className="font-semibold text-ink">{t('flagship.book')}: </span>
-        {t(`flagship.pauses.${pause.key}.book`)}
-      </p>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <p>
+          <span className="font-semibold text-ink">{t('flagship.book')}: </span>
+          {t(`flagship.pauses.${pause.key}.book`)}
+        </p>
+        <WhyCard key={pause.key} text={whyOf(pause.system)} />
+      </div>
       <p>
         <span className="font-semibold text-ink">{t('flagship.model')}: </span>
         {t(`flagship.pauses.${pause.key}.model`)}

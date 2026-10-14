@@ -81,6 +81,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   lifeProcess: ['components/SystemPicker.tsx', 'registry/i18nKeys.ts'],
   count: ['components/CountYours.tsx'],
   flagship: ['components/LessonBar.tsx'],
+  // The lesson bar names Digestion's card, which comes with the card's own file (X-4).
+  why: ['components/WhyCard.tsx', 'components/LessonBar.tsx'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

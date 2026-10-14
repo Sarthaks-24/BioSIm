@@ -118,6 +118,9 @@ export const PAGE_SECTIONS = {
   // X-1: the guided lesson's bar brings its own words (components/LessonBar.tsx, lazy); Home and
   // Teach name the lesson in their own sections.
   flagship: [],
+  // X-4: "Why different? ›" brings the cards' shared words and Digestion's card (components/WhyCard.tsx,
+  // in the chunk of the pack or lesson bar that shows it); each other card's rows are in its pack's section.
+  why: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */
