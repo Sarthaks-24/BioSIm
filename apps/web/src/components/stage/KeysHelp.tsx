@@ -1,9 +1,9 @@
-import { useId } from 'react'
+import { useId, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useKeys } from '../../lib/keys.ts'
 import { useMotion } from '../../state/motion.ts'
 import { useRunStore } from '../../state/run.ts'
-import { setTeacherSwitch, systemOf, useTeacherSwitch } from '../../systems/registry.ts'
+import { setTeacherSwitch, systemOf, teacherSwitch } from '../../systems/registry.ts'
 import Sheet from './Sheet.tsx'
 
 /** The key map's rows, in the order of lib/keys.ts, each with what it does. */
@@ -31,7 +31,7 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
  * - Reduce motion (`lifepeek:reduceMotion`, state/motion.ts): follows the device until chosen
  *   here, since school computers rarely let pupils change the system setting.
  * - Growing up (R-1, ui-ux §10): the teacher switch that adds the Reproduction row, off by default
- *   and for this tab only (systems/registry.ts `useTeacherSwitch` says why). Listed only once that row
+ *   and for this tab only (systems/registry.ts `teacherSwitch` says why). Listed only once that row
  *   may be offered at all (public since R117, or a `?preview=1` session); switched off while lit or
  *   on its way, the stage goes back to Digestion (state/run.ts).
  * Opened with ? or the dock's settings button; downloaded the first time (pages/Simulator.tsx).
@@ -43,7 +43,7 @@ export default function KeysHelp() {
   const choice = useMotion((s) => s.choice)
   const preview = useRunStore((s) => s.preview)
   const repro = systemOf('reproduction')
-  const growingUp = useTeacherSwitch((s) => s.on)
+  const growingUp = useSyncExternalStore(teacherSwitch.subscribe, () => teacherSwitch.on)
   return (
     <Sheet title={t('keys.title')}>
       <section aria-labelledby="keys-settings" className="flex flex-col gap-3">

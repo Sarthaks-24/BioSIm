@@ -5,7 +5,7 @@ import type { RunResult } from '@lifepeek/engine'
 import { activityKindAt } from '../lib/bouts.ts'
 import { formatSignal } from '../lib/formatSignal.ts'
 import { useRunStore } from '../state/run.ts'
-import { pickerSystems, stepSystem, systemOf, useTeacherSwitch } from '../systems/registry.ts'
+import { pickerSystems, stepSystem, systemOf, teacherSwitch } from '../systems/registry.ts'
 import { announce } from './graphs/StripAnnouncer.tsx'
 import { LoadBoundary, LoadFailedBox, lazyWithRetry } from './LoadBoundary.tsx'
 import { ChevronDownIcon } from './kit/index.ts'
@@ -53,16 +53,9 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   const layer = useRunStore((s) => s.layer)
   const preview = useRunStore((s) => s.preview)
   const switching = useRunStore((s) => s.switching)
-  // The rows follow the teacher switch (pickerSystems reads it). Switched off, the graphs' live
-  // region says the system now shown, so its last words never name the row behind it (R120 #3).
-  useTeacherSwitch((s) => s.on)
-  useEffect(
-    () =>
-      useTeacherSwitch.subscribe(({ on }) => {
-        if (!on) announce(t(`systems.${useRunStore.getState().layer}.name`))
-      }),
-    [t],
-  )
+  // Switched off, the graphs' live region says the system now shown, so its last words never name
+  // the row behind the switch (state/run.ts has already gone back to Digestion; R120 #3).
+  useEffect(() => teacherSwitch.subscribe((on) => on || announce(t(`systems.${useRunStore.getState().layer}.name`))), [t])
   const open = usePicker((s) => s.open)
   const button = useRef<HTMLButtonElement>(null)
   const [attempt, setAttempt] = useState(0)
@@ -78,8 +71,8 @@ export default function SystemTitle({ run }: { run: RunResult }) {
     return () => ids.forEach(clearTimeout)
   }, [switching])
   // A switch that takes the focused control away (the 3D view's "Whole body" when a flat-only row
-  // is lit, a graph tab of the old row) puts focus on the title, not on the page (R120 #19). Its
-  // new view may come a little later (a lazy pack), so the check waits for the page to change.
+  // is lit, a graph tab of the old row) puts focus on the title, not on the page (R120 #19). The
+  // row is lit once its pack is in, so its view comes in the same render.
   const focused = useRef<Element | null>(null)
   useEffect(
     () =>
@@ -91,20 +84,7 @@ export default function SystemTitle({ run }: { run: RunResult }) {
   useEffect(() => {
     const was = focused.current
     focused.current = null
-    if (!was || was === document.body) return
-    const check = () => {
-      if (was.isConnected) return false
-      if (document.activeElement === document.body || !document.activeElement) button.current?.focus({ preventScroll: true })
-      return true
-    }
-    if (check()) return
-    const watch = new MutationObserver(() => check() && watch.disconnect())
-    watch.observe(document.body, { childList: true, subtree: true })
-    const stop = setTimeout(() => watch.disconnect(), 5000)
-    return () => {
-      watch.disconnect()
-      clearTimeout(stop)
-    }
+    if (was && !was.isConnected && document.activeElement === document.body) button.current?.focus()
   }, [layer])
   const rows = pickerSystems(preview)
   const many = rows.length > 1

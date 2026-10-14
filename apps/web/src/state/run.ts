@@ -16,7 +16,7 @@ import {
   type ShareLang,
 } from '@lifepeek/engine'
 import { lookupFood } from '../data/foods.ts'
-import { DEFAULT_SYSTEM, behindSwitch, systemForLink, systemOf, useTeacherSwitch, type SystemId } from '../systems/registry.ts'
+import { DEFAULT_SYSTEM, behindSwitch, systemForLink, systemOf, teacherSwitch, type SystemId } from '../systems/registry.ts'
 import { loadPack } from '../systems/load.ts'
 import { DEFAULT_PRESET } from '../lib/presets.ts'
 import { useClock } from './clock.ts'
@@ -262,7 +262,7 @@ export function linkQuery(
 
 // The teacher switch going off while its row is lit, on its way or failed to arrive: back to
 // Digestion, and the pack that arrives later lights nothing (components/stage/KeysHelp.tsx; R120 #3).
-useTeacherSwitch.subscribe(({ on }) => {
+teacherSwitch.subscribe((on) => {
   const { layer, switching, setLayer } = useRunStore.getState()
   if (!on && (behindSwitch(layer) || behindSwitch(switching?.to))) setLayer(DEFAULT_SYSTEM)
 })

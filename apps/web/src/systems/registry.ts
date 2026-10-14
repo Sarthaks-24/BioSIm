@@ -1,5 +1,4 @@
 import type { ComponentType, RefObject } from 'react'
-import { create } from 'zustand'
 import type { TFunction } from 'i18next'
 import type {
   ActiveSignalId,
@@ -238,7 +237,7 @@ export interface SystemDef {
    * a drawing-only row may be public with empty `slots` (R11). Hidden rows open only with `?preview=1`.
    */
   public: boolean
-  /** Shown only when a teacher switches it on (reproduction, v3.2+): `useTeacherSwitch`. */
+  /** Shown only when a teacher switches it on (reproduction, v3.2+): `teacherSwitch`. */
   teacherSwitch?: boolean
   /**
    * A row with no graphs: the tag the picker shows for it. Without one a row with no inputs is
@@ -281,18 +280,26 @@ const isPublic = (id: SystemId) => !!systemOf(id)?.public
  * components/stage/KeysHelp.tsx): a shared class computer forgets it when the tab is closed
  * (council: a per-device setting would stay on for the next class). No link carries it: a shared
  * link opens without the row (its note does not name it) unless whoever opens it has switched it
- * on, so a student's device never turns it on by itself. A small store, so whatever lists the rows
+ * on, so a student's device never turns it on by itself. A tiny store, so whatever lists the rows
  * follows it (state/run.ts drops a lit or loading row behind it when it goes off: R120 #3).
  */
-export const useTeacherSwitch = create<{ on: boolean }>(() => {
-  try {
-    return { on: sessionStorage.getItem('lifepeek:growingUp') === '1' }
-  } catch {
-    // No storage (a locked-down browser, or a test): off, as by default.
-    return { on: false }
-  }
-})
-
+let switchOn = false
+try {
+  switchOn = sessionStorage.getItem('lifepeek:growingUp') === '1'
+} catch {
+  // No storage (a locked-down browser, or a test): off, as by default.
+}
+const switchHeard = new Set<(on: boolean) => void>()
+/** The switch now, and who hears it change (no zustand here: it would split a chunk off /sim). */
+export const teacherSwitch = {
+  get on() {
+    return switchOn
+  },
+  subscribe(hear: (on: boolean) => void): () => void {
+    switchHeard.add(hear)
+    return () => void switchHeard.delete(hear)
+  },
+}
 /** Turns the teacher switch on or off for this tab. */
 export function setTeacherSwitch(on: boolean): void {
   try {
@@ -301,11 +308,12 @@ export function setTeacherSwitch(on: boolean): void {
   } catch {
     // Kept for this page only (a blocked browser): the switch still works until it is closed.
   }
-  useTeacherSwitch.setState({ on })
+  switchOn = on
+  switchHeard.forEach((hear) => hear(on))
 }
 
 /** A row behind the teacher switch while it is off: never lit, loaded, listed, linked or named. */
-export const behindSwitch = (id: string | undefined): boolean => !!systemOf(id)?.teacherSwitch && !useTeacherSwitch.getState().on
+export const behindSwitch = (id: string | undefined): boolean => !!systemOf(id)?.teacherSwitch && !switchOn
 
 /** Whether this session offers a row: public, or a preview's; behind the teacher switch, only while it is on. */
 const offered = (s: SystemDef, preview: boolean) => (s.public || preview) && !behindSwitch(s.id)

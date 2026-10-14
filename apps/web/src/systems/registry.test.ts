@@ -25,7 +25,7 @@ import {
   systemForLink,
   systemOf,
   setTeacherSwitch,
-  useTeacherSwitch,
+  teacherSwitch,
   type PackId,
   type SystemDef,
 } from './registry.ts'
@@ -259,7 +259,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
   })
 
   it('the teacher switch (R-1, R117): off by default; off, its row is in no list and no link; on, every session offers it last', () => {
-    expect(useTeacherSwitch.getState().on).toBe(false)
+    expect(teacherSwitch.on).toBe(false)
     // Public since R117: the per-session switch is its only gate.
     expect(systemOf('reproduction')).toMatchObject({ teacherSwitch: true, public: true })
     for (const preview of [false, true]) {
@@ -269,7 +269,7 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(stepSystem('skin', true, 1)).toBe('digestion')
     setSwitch(true)
     try {
-      expect(useTeacherSwitch.getState().on).toBe(true)
+      expect(teacherSwitch.on).toBe(true)
       // On, without ?preview=1 too: the last row, and a link opens it.
       for (const preview of [false, true]) {
         expect(pickerSystems(preview).at(-1)!.id).toBe('reproduction')
