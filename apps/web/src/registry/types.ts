@@ -31,6 +31,10 @@ export interface LayerProps {
   /** The picture's size in CSS px. */
   width: number
   height: number
+  /** Motion is reduced (state/motion.ts): one still frame, no ticker. */
+  reduced: boolean
+  /** Projector mode: the heavier outlines (flat/look.ts FLAT_LOOK.projector). */
+  projector: boolean
 }
 /** A layer drawn over the base body. */
 export type LayerComponent = ComponentType<LayerProps>

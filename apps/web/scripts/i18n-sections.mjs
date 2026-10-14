@@ -90,6 +90,10 @@ export const PAGE_SECTIONS = {
   // a bout's chip words and the "Try:" hint.
   mealSheet: [],
   activity: ['kinds', 'bout', 'edit', 'try'],
+  // U-2: the picker's own words and its groups' names (NCERT's life processes) load with the picker
+  // (components/SystemPicker.tsx, lazy); the stage keeps each system's name for the title.
+  picker: [],
+  lifeProcess: [],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */

@@ -148,7 +148,9 @@ export default function FlatBody({
     >
       <canvas ref={still} aria-hidden="true" className="absolute" />
       <canvas ref={moving} aria-hidden="true" className="absolute" />
-      {!organs && Layer && w > 0 && h > 0 && <Layer sim={sim} label={label} view={view} band={band} width={w} height={h} />}
+      {!organs && Layer && w > 0 && h > 0 && (
+        <Layer sim={sim} label={label} view={view} band={band} width={w} height={h} reduced={reduced} projector={projector} />
+      )}
       {overlay}
     </div>
   )

@@ -13,17 +13,20 @@
 
 /** The fastest rhythm drawn, in cycles per second (150 a minute). */
 export const MAX_DRAWN_HZ = 2.5
+/** The fastest breath drawn (48 a minute; ui-ux §4, architecture §1.7): a run's 33 a minute is 0.55 Hz. */
+export const MAX_BREATH_HZ = 0.8
 
 /** The phase a still (reduced motion) rhythm is drawn at: mid-way, as the plan's still frames are. */
 export const STILL_PHASE = 0.5
 
 /**
  * How fast a rhythm of `perMin` (beats or breaths a minute, from the run) is drawn: its rate in
- * Hz, capped at MAX_DRAWN_HZ, and whether it was slowed (the chip then says "animation slowed").
+ * Hz, capped at `max` (MAX_DRAWN_HZ; breaths MAX_BREATH_HZ), and whether it was slowed (the chip
+ * then says "animation slowed").
  */
-export function drawnRate(perMin: number): { hz: number; slowed: boolean } {
+export function drawnRate(perMin: number, max = MAX_DRAWN_HZ): { hz: number; slowed: boolean } {
   const hz = Math.max(0, perMin) / 60
-  return hz > MAX_DRAWN_HZ ? { hz: MAX_DRAWN_HZ, slowed: true } : { hz, slowed: false }
+  return hz > max ? { hz: max, slowed: true } : { hz, slowed: false }
 }
 
 /**

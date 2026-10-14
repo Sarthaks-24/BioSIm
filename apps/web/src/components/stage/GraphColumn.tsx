@@ -5,7 +5,7 @@ import { useProjector } from '../../hooks/useProjector.ts'
 import { ORGANISMS } from '../../registry/index.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
-import { systemOf, type GraphSlotDef } from '../../systems/registry.ts'
+import { systemOf, tabKey, type GraphSlotDef } from '../../systems/registry.ts'
 import { useSystemUi } from '../../systems/ui.ts'
 import { Segmented } from '../kit/index.ts'
 import StripStack, { RunStrip } from '../graphs/StripStack.tsx'
@@ -68,7 +68,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
   const keptRun = useRunStore((s) => s.kept)
   const { organism } = ORGANISMS[DEFAULT_ORGANISM]
   const slots = useSlots(run)
-  const { stripSummary } = useSystemUi()
+  const { stripSummary, note: Note } = useSystemUi()
   // The picked tab lives in a store, so the key map can switch it too (1–3, and S, B, E: lib/keys.ts).
   const tab = useStripTab((s) => s.tab)
   const [column, tabbed] = useTabbed()
@@ -92,7 +92,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
       {tabbed && (
         <Segmented
           label={t('stage.graphs')}
-          options={slots.map((s) => ({ id: s.id, label: t(`stage.strips.${s.id}`) }))}
+          options={slots.map((s) => ({ id: s.id, label: t(tabKey(s)) }))}
           value={shown ?? ''}
           onChange={useStripTab.getState().show}
           // On the projector the tab is the graph's only title (the strip hides its own): title size,
@@ -110,7 +110,8 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
               summarize={stripSummary}
               series={run.signals.get(id) as ChartableSeries}
               second={secondId ? run.signals.get(secondId) : null}
-              range={organism.signalOverrides[id]?.displayRange}
+              range={slot.range ?? organism.signalOverrides[id]?.displayRange}
+              note={Note && <Note slot={slot} />}
               run={run}
               kept={kept}
               runName={runName}

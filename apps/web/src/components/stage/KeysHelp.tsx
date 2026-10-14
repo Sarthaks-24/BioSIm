@@ -15,6 +15,8 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
   { keys: ['T'], what: 'keys.table', letter: true },
   { keys: ['1', '2', '3'], what: 'keys.slots', letter: true },
   { keys: ['S', 'B', 'E'], what: 'keys.strips', letter: true },
+  { keys: ['[', ']'], what: 'keys.systems', letter: true },
+  { keys: ['L'], what: 'keys.picker', letter: true },
   { keys: ['?'], what: 'keys.help', letter: true },
 ]
 

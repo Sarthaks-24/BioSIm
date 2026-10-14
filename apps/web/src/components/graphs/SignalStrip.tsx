@@ -49,6 +49,8 @@ interface Props {
   /** The activity bouts of this run and of the kept one: a hatched column each, the kept ones dashed (ui-ux §5). */
   bouts?: readonly ActivityBout[]
   keptBouts?: readonly ActivityBout[]
+  /** A range drawn as a pale band across the plot (most children's breaths, R57); its key is in the footer. */
+  reference?: { low: number; high: number }
 }
 
 /**
@@ -119,6 +121,7 @@ export default function SignalStrip({
   clock = RUN_CLOCK,
   bouts = NO_BOUTS,
   keptBouts = NO_BOUTS,
+  reference,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
@@ -409,6 +412,16 @@ export default function SignalStrip({
                 <rect x="-3.5" y="-3" width="7" height="6" className="fill-surface-raised" />
                 <path d="M-6.5 4 L-1.5 -4 M1.5 4 L6.5 -4" className="fill-none stroke-ink-muted" strokeWidth="1.5" strokeLinecap="round" />
               </g>
+              {reference && (
+                <rect
+                  data-reference=""
+                  x="0"
+                  width={width}
+                  y={yAt(reference.high, domain, height)}
+                  height={yAt(reference.low, domain, height) - yAt(reference.high, domain, height)}
+                  style={{ fill: 'var(--color-ink)', fillOpacity: 0.1 }}
+                />
+              )}
               {paths.band && <path data-line="band" d={paths.band} className="fill-run [fill-opacity:var(--strip-band-opacity)]" />}
               {paths.kept && (
                 <path

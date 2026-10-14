@@ -8,6 +8,7 @@ import { UNIT_KEYS } from '../registry/units.ts'
 import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
 import { FLAT_CALLOUTS, flatProblems, systemProblems, type CheckContext } from './check.ts'
 import type { ToneSet } from '../anatomy/tones/base.ts'
+import type { Callout } from '../anatomy/callouts.ts'
 import { TONES as LYMPH_TONES } from '../anatomy/tones/lymph.ts'
 import { PACKS } from './packs.ts'
 import {
@@ -20,7 +21,9 @@ import {
   registerSignals,
   rowsOf,
   signalRow,
+  stepSystem,
   systemForLink,
+  systemOf,
   type PackId,
   type SystemDef,
 } from './registry.ts'
@@ -36,9 +39,11 @@ vi.mock('../i18n/index.ts', () => ({
 const text = (json: unknown, key: string): unknown =>
   key.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), json)
 
-// Each built pack's rows, registered as the stage registers them when the pack loads.
+// Each built pack's rows, registered as the stage registers them when the pack loads, and the rest
+// of its systems' rows (their graphs, rhythms and limits: the UI module's DEFS), as loadPack merges them.
 for (const [pack, def] of Object.entries(PACKS) as [PackId, NonNullable<(typeof PACKS)[PackId]>][]) {
   registerSignals(pack, (await def.rows()).default)
+  for (const [id, parts] of Object.entries((await def.ui?.())?.DEFS ?? {})) Object.assign(systemOf(id)!, parts)
 }
 
 const ctx: CheckContext = {
@@ -59,35 +64,38 @@ describe('systems registry (architecture §5.2)', () => {
   })
 
   it('names the missing piece', () => {
-    const breathing: SystemDef = {
+    const kidneys: SystemDef = {
       ...DIGESTION,
-      id: 'breathing',
-      i18nKey: 'systems.breathing',
-      lifeProcess: 'respiration',
-      pack: 'breathing',
+      id: 'kidneys',
+      i18nKey: 'systems.kidneys',
+      lifeProcess: 'excretion',
+      pack: 'kidneys',
       public: false,
       slots: [
         { id: 'gut', signals: ['gut.stomach.contentG'], unit: 'g' },
-        // S-2's engine signal, but no pack has registered its row yet (the breathing pack is U-2's).
-        { id: 'blood', signals: ['lungs.tidalVolume' as never], unit: 'mL/min', letter: 'b' },
+        // S-4's engine signal, but no pack has registered its row yet (the kidneys pack is U-4's).
+        { id: 'blood', signals: ['kidney.filtrationRate' as never], unit: 'L/min', letter: 'b' },
         { id: 'energy', signals: ['energy.inRate'], unit: 'g' },
         // A reserved name: no engine module provides it.
         { id: 'gut', signals: ['brain.glucoseUse' as never], unit: 'mg/dL' },
+        // A pack's graph names its tab from the pack's own words.
+        { id: 'urine', tab: 'sys.kidneys.strips.urine', signals: ['gut.stomach.contentG'], unit: 'g' },
       ],
-      organs: ['lungs' as never],
+      organs: ['kidney' as never],
     }
-    expect(systemProblems(breathing, ctx)).toEqual([
-      'breathing: pack breathing has no PackDef (systems/packs.ts)',
-      'breathing: its name has no English text systems.breathing.name',
-      "breathing: organ lungs is not one of the organism's organs",
-      'breathing: 4 graph slots: at most 3 (keys 1–3)',
-      'breathing: two slots share an id',
-      'breathing: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
-      'breathing: slot 2 (blood) unit mL/min has no text (registry/units.ts)',
-      'breathing: slot 2 (blood) signal lungs.tidalVolume has no row registered by its pack',
-      "breathing: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
-      'breathing: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
-      'breathing: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
+    expect(systemProblems(kidneys, ctx)).toEqual([
+      'kidneys: pack kidneys has no PackDef (systems/packs.ts)',
+      'kidneys: its name has no English text systems.kidneys.name',
+      "kidneys: organ kidney is not one of the organism's organs",
+      'kidneys: 5 graph slots: at most 3 (keys 1–3)',
+      'kidneys: two slots share an id',
+      'kidneys: slot 2 (blood) has a letter alias: only digestion has them, in v3.0',
+      'kidneys: slot 2 (blood) unit L/min has no text (registry/units.ts)',
+      'kidneys: slot 2 (blood) signal kidney.filtrationRate has no row registered by its pack',
+      "kidneys: slot 3 (energy) signal energy.inRate is in kcal/h, not the slot's g",
+      'kidneys: slot 4 (gut) signal brain.glucoseUse is not provided by the engine (PROVIDES)',
+      'kidneys: slot 4 (gut) signal brain.glucoseUse has no row registered by its pack',
+      "kidneys: slot 5 (urine)'s tab has no English text sys.kidneys.strips.urine",
     ])
   })
 
@@ -136,9 +144,12 @@ describe('systems registry (architecture §5.2)', () => {
 
 describe('flat registry (A-0; anatomy plan §1, §2.0, §5)', () => {
   it.each(SYSTEMS.map((s) => [s.id, s] as const))('%s has a flat drawing, a VIEW, checked outlines and callouts', async (_id, s) => {
-    // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download).
+    // Its tones are anatomy/tones/<id>.ts (they load with its pack, never with the first download);
+    // a layer's label places are in its own anatomy file (anatomy/human/<id>.ts LABELS).
     const { TONES } = (await import(`../anatomy/tones/${s.id}.ts`)) as { TONES: ToneSet }
-    expect(flatProblems(s, TONES)).toEqual([])
+    const labels =
+      s.draw === 'layer' ? ((await import(`../anatomy/human/${s.id}.ts`)) as { LABELS: Record<string, Callout> }).LABELS : undefined
+    expect(flatProblems(s, TONES, undefined, labels)).toEqual([])
   })
 
   it('names what is wrong with a row', () => {
@@ -182,17 +193,24 @@ describe('links and the release gate (architecture §2 and §5.2, R39)', () => {
     expect(systemForLink('digestion', [], false)).toBe('digestion')
     expect(systemForLink('nonsense', [], false)).toBe('digestion')
     expect(systemForLink(undefined, [], false)).toBe('digestion')
-    // No hidden row is built yet: a SystemId with no row opens Digestion even with ?preview=1.
-    expect(systemForLink('breathing', [], true)).toBe('digestion')
+    // A SystemId with no row yet opens Digestion even with ?preview=1.
+    expect(systemForLink('kidneys', [], true)).toBe('digestion')
   })
 
-  it('a hidden row opens only with ?preview=1, and the layer switch shows it only then', () => {
-    withSystem(hidden, () => {
-      expect(systemForLink('breathing', [], false)).toBe('digestion')
-      expect(systemForLink('breathing', [], true)).toBe('breathing')
-      expect(pickerSystems('digestion').map((s) => s.id)).toEqual(['digestion'])
-      expect(pickerSystems('breathing').map((s) => s.id)).toEqual(['digestion', 'breathing'])
-    })
+  it('breathing is hidden until the v3.0 release gate (H-1): only ?preview=1 opens it, and only then does the picker offer it', () => {
+    expect(systemOf('breathing')?.public).toBe(false)
+    expect(systemForLink('breathing', [], false)).toBe('digestion')
+    expect(systemForLink('breathing', [], true)).toBe('breathing')
+    expect(pickerSystems(false).map((s) => s.id)).toEqual(['digestion'])
+    expect(pickerSystems(true).map((s) => s.id)).toEqual(['digestion', 'breathing'])
+  })
+
+  it('‹ › and [ ] step round the picker’s rows', () => {
+    expect(stepSystem('digestion', true, 1)).toBe('breathing')
+    expect(stepSystem('breathing', true, 1)).toBe('digestion')
+    expect(stepSystem('digestion', true, -1)).toBe('breathing')
+    // One row: stepping stays on it.
+    expect(stepSystem('digestion', false, 1)).toBe('digestion')
   })
 
   it('a link with activity but no layer opens Heart & blood only once that row is public (R39)', () => {

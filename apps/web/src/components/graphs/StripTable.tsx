@@ -9,7 +9,7 @@ import { formatDuration } from '../../lib/time.ts'
 import { useRunStore } from '../../state/run.ts'
 import { useStripTab } from '../../state/stripTab.ts'
 import { Segmented } from '../kit/index.ts'
-import type { GraphSlotDef, SystemUi } from '../../systems/registry.ts'
+import { tabKey, type GraphSlotDef, type SystemUi } from '../../systems/registry.ts'
 import Sheet from '../stage/Sheet.tsx'
 import { shortMealNames } from '../stage/mealText.ts'
 
@@ -60,7 +60,7 @@ export default function StripTable({
     return Array.isArray(v) ? formatBand(v[0], v[1], c.series.meta, t, lang) : formatSignal(v, c.series.meta, t, lang)
   }
   const graphName = (signals: readonly ActiveSignalId[]) =>
-    signals.length > 1 ? t('stage.strips.energy') : t(`${run.signals.get(signals[0]!)?.meta.i18nKey}.name`)
+    signals.length > 1 && current ? t(tabKey(current)) : t(`${run.signals.get(signals[0]!)?.meta.i18nKey}.name`)
   const moments = momentRows(ui.moments, run, kept)
   // "Half the energy has left…" for a meal with energy, "Half has left…" for water: when the two
   // meals would be named differently, the row takes the moment's plain catalog name.
@@ -84,7 +84,7 @@ export default function StripTable({
       {slots.length > 1 && (
         <Segmented
           label={t('stage.graphs')}
-          options={slots.map((s) => ({ id: s.id, label: t(`stage.strips.${s.id}`) }))}
+          options={slots.map((s) => ({ id: s.id, label: t(tabKey(s)) }))}
           value={current?.id ?? ''}
           onChange={(id) => {
             setPicked(id)

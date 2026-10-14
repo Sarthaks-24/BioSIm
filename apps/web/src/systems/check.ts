@@ -1,7 +1,7 @@
 import { isChartable, type SignalMeta, type Unit } from '@lifepeek/engine'
-import { PACK_OF, type CatalogRow, type PackId, type SystemDef, type SystemId } from './registry.ts'
+import { PACK_OF, tabKey, type CatalogRow, type PackId, type SystemDef, type SystemId } from './registry.ts'
 import { FRAMINGS, type View } from '../anatomy/human/base.ts'
-import { CALLOUTS, type CalloutId } from '../anatomy/callouts.ts'
+import { CALLOUTS, type Callout } from '../anatomy/callouts.ts'
 import type { ToneSet } from '../anatomy/tones/base.ts'
 import { FLAT_LOOK, outlineOf, rgb } from '../flat/look.ts'
 import { CVD_MIN, LINE_MIN, NORMAL_MIN, contrast, cvdDeltaE, deltaE } from '../lib/colorCheck.ts'
@@ -59,7 +59,7 @@ export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
   s.slots.forEach((slot, i) => {
     const at = `slot ${i + 1} (${slot.id})`
     if (slot.letter && s.id !== 'digestion') say(`${at} has a letter alias: only digestion has them, in v3.0`)
-    needText(`stage.strips.${slot.id}`, `${at}'s tab`)
+    needText(tabKey(slot), `${at}'s tab`)
     const unitKey = ctx.unitKey(slot.unit)
     if (!unitKey) say(`${at} unit ${slot.unit} has no text (registry/units.ts)`)
     else needText(unitKey, `${at} unit ${slot.unit}`)
@@ -89,8 +89,10 @@ export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
  * must sit inside its framing. Here, not in the row, so the first download does not carry the list;
  * a new system adds its labels here with its drawing.
  */
-export const FLAT_CALLOUTS: { readonly [S in SystemId]?: readonly CalloutId[] } = {
+export const FLAT_CALLOUTS: { readonly [S in SystemId]?: readonly string[] } = {
   digestion: ['esophagus', 'stomach', 'smallIntestine', 'largeIntestine', 'liver', 'pancreas'],
+  // Its own labels' places are in anatomy/human/breathing.ts (LABELS), which load with its pack.
+  breathing: ['nasal', 'trachea', 'lungs', 'diaphragm'],
 }
 
 /** A tone's outline in the flat body (flat/look.ts), as hex, for the contrast checks. */
@@ -103,9 +105,15 @@ const flatInk = (hex: string, look: keyof typeof FLAT_LOOK) =>
  * The flat registry's rules (A-0; anatomy plan §1, §2.0, §5): a system's row has a flat drawing (the
  * body's own for Digestion, a lazy layer for every other), a framing with a VIEW, tones whose
  * outlines stand out from the page and from each other where organs touch, and labels that sit
- * inside its picture. `tones` is the row's tone set (anatomy/tones/<id>.ts, loaded with its pack).
+ * inside its picture. `tones` is the row's tone set (anatomy/tones/<id>.ts, loaded with its pack);
+ * `table` where its labels are placed (Digestion's anatomy/callouts.ts, or the pack's own anatomy file).
  */
-export function flatProblems(s: SystemDef, tones: ToneSet, callouts: readonly string[] = FLAT_CALLOUTS[s.id] ?? []): string[] {
+export function flatProblems(
+  s: SystemDef,
+  tones: ToneSet,
+  callouts: readonly string[] = FLAT_CALLOUTS[s.id] ?? [],
+  table: Readonly<Record<string, Callout>> = CALLOUTS,
+): string[] {
   const out: string[] = []
   const say = (what: string) => out.push(`${s.id}: ${what}`)
   const view = (FRAMINGS as Partial<Record<string, View>>)[s.camera.framing]
@@ -137,7 +145,7 @@ export function flatProblems(s: SystemDef, tones: ToneSet, callouts: readonly st
   if (callouts.length === 0) say('has no labels (systems/check.ts FLAT_CALLOUTS)')
   const inside = (p: { x: number; y: number }) => !!view && p.x >= view.minX && p.x <= view.maxX && p.y >= view.minY && p.y <= view.maxY
   for (const id of callouts) {
-    const c = (CALLOUTS as Partial<Record<string, (typeof CALLOUTS)[CalloutId]>>)[id]
+    const c = (table as Partial<Record<string, Callout>>)[id]
     if (!c) say(`label ${id} has no callout (anatomy/callouts.ts)`)
     else if (!inside(c.anchor) || !inside(c.at)) say(`label ${id} is outside its ${s.camera.framing} framing`)
   }

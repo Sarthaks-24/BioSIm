@@ -30,7 +30,13 @@ const ALLOWED: Record<string, readonly string[]> = {
   update: ['components/UpdateToast.tsx'],
   lesson: ['pages/Science.tsx'],
   // The panel, and the files that only name limits for it: it reads them when it draws (HowWeKnow's Say).
-  limits: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx', 'systems/digestion/def.ts'],
+  limits: [
+    'components/graphs/HowWeKnowPanel.tsx',
+    'components/graphs/StripStack.tsx',
+    'systems/digestion/def.ts',
+    // Breathing's graphs name their limits for the panel, as digestion's def does (U-2).
+    'systems/breathing/ui.tsx',
+  ],
   stages: ['components/stage/StageMore.tsx'],
   keys: ['components/stage/KeysHelp.tsx'],
   table: ['components/graphs/StripTable.tsx'],
@@ -39,11 +45,14 @@ const ALLOWED: Record<string, readonly string[]> = {
   // The rings' notes are passed to the panel and read when it draws (Say), like the limits.
   graph: ['components/graphs/HowWeKnowPanel.tsx', 'components/graphs/StripStack.tsx'],
   // unitInWords is called by the panel only.
-  units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts'],
+  units: ['components/graphs/HowWeKnowPanel.tsx', 'lib/formatSignal.ts', 'registry/units.ts'],
   profiles: ['components/graphs/HowWeKnowPanel.tsx', 'components/stage/MealActions.tsx'],
   disclaimer: ['pages/Science.tsx'],
   mealSheet: ['components/stage/FoodSearch.tsx', 'components/stage/Sheets.tsx'],
   activity: ['components/ActivitySheet.tsx'],
+  picker: ['components/SystemPicker.tsx'],
+  // registry/i18nKeys.ts is the tests' list of keys (never in a download).
+  lifeProcess: ['components/SystemPicker.tsx', 'registry/i18nKeys.ts'],
 }
 
 /** The folders whose files come with a pack's section: its systems' (`sys.effort`: muscles, skin, bones). */

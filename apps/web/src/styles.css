@@ -508,3 +508,12 @@ html[data-motion='reduce'] .race-reveal {
     line-height: inherit;
   }
 }
+
+/* A small control over the body (the system title, the rhythm chip's ⓘ) with a finger-sized target
+   round it (U-2): the ::after takes the presses, so the control's own box, which covers the body,
+   stays small (the body gate counts boxes). Its element is `relative`. */
+[data-hit]::after {
+  content: '';
+  position: absolute;
+  inset: -0.5rem -0.25rem;
+}
