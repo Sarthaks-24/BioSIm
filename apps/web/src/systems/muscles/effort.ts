@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ActivityBout, ActivityKind, RunResult, Series, SignalMeta } from '@lifepeek/engine'
+import { PARAMS, type ActivityBout, type ActivityKind, type RunResult, type Series, type SignalMeta } from '@lifepeek/engine'
 import type { TFunction } from 'i18next'
 import { MAX_DROPS } from '../../anatomy/human/skin.ts'
 
@@ -22,6 +22,15 @@ export type Doing = ActivityKind | 'rest'
 export function doingAt(bouts: readonly ActivityBout[], min: number): Doing {
   return bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)?.kind ?? 'rest'
 }
+
+/**
+ * Light activity: a kind below 3 MET, the 2024 Compendium's light band (sitting in class, 1.8; the
+ * pose's band is rest: anatomy/human/bands.ts). Its summaries say so in words, with no "×" and no
+ * sweat figure: the model puts all of its small extra energy on the muscles and sweat (R120 #9).
+ * The engine's output is the same; only the words change.
+ */
+export const LIGHT_MET = 3
+export const isLight = (kind: Doing): boolean => kind !== 'rest' && PARAMS.activity.met[kind] < LIGHT_MET
 
 /**
  * The kind of the bout going on at `min`, or of the last one that ended before it: the muscles that

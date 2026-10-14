@@ -1822,6 +1822,7 @@
           "rest": "At rest, muscles use about the same energy all day; the meal does not change it.",
           "restReason": "Muscles work harder only with activity. Try a walk.",
           "peak": "While {{doing}}, muscles use about {{k}}× their resting energy; most ends up as heat.",
+          "light": "While {{doing}} (light activity), muscles work only a little harder than at rest.",
           "compare": "At the most, muscles use about {{run}}× their resting energy with this plan, {{kept}}× with the kept one.",
           "same": "Muscles work about the same in both plans.",
           "compareRest": "At the most, muscles use about {{most}}× their resting energy with {{which}}; with the other they stay at rest.",
@@ -1854,6 +1855,7 @@
           "rest": "At rest the skin makes no sweat from moving; the meal does not change that.",
           "restReason": "Sweat comes only with activity here. Try a walk.",
           "peak": "Most sweat while {{doing}}: about {{value}}.",
+          "light": "While {{doing}} (light activity), there is only a little sweat from moving, much less than in a walk or a game.",
           "total": "About {{value}} of sweat in all. Sweat is water and salt, not fat leaving.",
           "compare": "Sweat in all: about {{run}} with this plan, {{kept}} with the kept one.",
           "same": "Sweat is about the same in both: about {{value}} in all."

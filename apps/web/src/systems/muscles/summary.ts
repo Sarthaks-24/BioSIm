@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import type { ActiveSignalId, RunResult } from '@lifepeek/engine'
 import { formatDuration } from '../../lib/time.ts'
 import type { Summary } from '../registry.ts'
-import { doingAt, isFlat, peakOf, restOf, seriesOf, timesRest, valueText, whole } from './effort.ts'
+import { doingAt, isFlat, isLight, peakOf, restOf, seriesOf, timesRest, valueText, whole } from './effort.ts'
 
 /**
  * Muscles' and skin's sentences (U-1; ui-ux §6, §7): the summary under the body and each graph's
@@ -31,7 +31,7 @@ function peakTimes(run: RunResult) {
 
 /**
  * Muscles' summary: at rest, about the same all day (the meal does not change it) and try a walk;
- * in a walk or run, how many times their resting energy and that most ends up as heat; beside a kept
+ * in light activity (sitting in class) a little harder than at rest, in words; in a walk or run, how many times their resting energy and that most ends up as heat; beside a kept
  * plan, both highest, or that they are the same.
  */
 export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunction, lang: string): Summary | null {
@@ -57,6 +57,8 @@ export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunct
   const kind = boutAt(run, now.atMin)
   if (kind === 'rest' || now.flat || now.k < 2)
     return { headline: t('sys.effort.muscles.summary.rest'), reason: t('sys.effort.muscles.summary.restReason') }
+  // Light activity (sitting in class): a line in words, no "×" (R120 #9).
+  if (isLight(kind)) return { headline: t('sys.effort.muscles.summary.light', { doing: t(`sys.effort.doing.${kind}`) }) }
   const text = whole(now.k, lang)
   return {
     headline: t('sys.effort.muscles.summary.peak', { doing: t(`sys.effort.doing.${kind}`), k: text }),
@@ -65,8 +67,8 @@ export function musclesSummary(run: RunResult, kept: RunResult | null, t: TFunct
 }
 
 /**
- * Skin's summary: at rest, no sweat from moving (the meal does not change that) and try a walk; in a
- * walk or run the most sweat an hour and in which bout, then the sweat in all ("Sweat is water and
+ * Skin's summary: at rest, no sweat from moving (the meal does not change that) and try a walk; in
+ * light activity (sitting in class) only a little, in words; in a walk or run the most sweat an hour and in which bout, then the sweat in all ("Sweat is water and
  * salt, not fat leaving."); beside a kept plan, both totals, or that they are the same.
  */
 export function skinSummary(run: RunResult, kept: RunResult | null, t: TFunction, lang: string): Summary | null {
@@ -90,6 +92,8 @@ export function skinSummary(run: RunResult, kept: RunResult | null, t: TFunction
   const kind = boutAt(run, peak.atMin)
   if (kind === 'rest' || peak.value < 1)
     return { headline: t('sys.effort.skin.summary.rest'), reason: t('sys.effort.skin.summary.restReason') }
+  // Light activity (sitting in class): a line in words, no sweat figure (R120 #9).
+  if (isLight(kind)) return { headline: t('sys.effort.skin.summary.light', { doing: t(`sys.effort.doing.${kind}`) }) }
   const text = valueText(peak.value, rate.meta, t, lang)
   return {
     headline: t('sys.effort.skin.summary.peak', { doing: t(`sys.effort.doing.${kind}`), value: text }),
