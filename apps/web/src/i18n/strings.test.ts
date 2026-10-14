@@ -91,7 +91,7 @@ describe('never "your book" on screen (R9)', () => {
  * body", "your age"), and not every number is cited: some are the model's estimates, marked so.
  */
 describe('a model, not yours (R120 #13, #14, #20)', () => {
-  const YOURS = /your body/i
+  const YOURS = /\byour body\b/i
 
   it('no English string says "your body"; About says the body is a model, not yours', () => {
     expect(strings(en).filter((s) => YOURS.test(s))).toEqual([])
@@ -101,5 +101,11 @@ describe('a model, not yours (R120 #13, #14, #20)', () => {
   it('no page description says it either (the built pages’ meta, lib/routeMeta.ts)', async () => {
     const { ROUTE_DESCRIPTIONS } = await import('../lib/routeMeta.ts')
     expect(Object.values(ROUTE_DESCRIPTIONS).filter((s) => YOURS.test(s))).toEqual([])
+  })
+
+  it('"every number is cited" always adds "or marked as a model estimate"', () => {
+    const cited = strings(en).filter((s) => /every number[^.]*\bcited\b/i.test(s))
+    expect(cited.length).toBeGreaterThan(0)
+    for (const s of cited) expect(s).toMatch(/cited or marked as a model estimate/)
   })
 })

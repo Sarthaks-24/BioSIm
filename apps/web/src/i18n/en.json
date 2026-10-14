@@ -706,7 +706,7 @@
     "tagline": "LifePeek: peek inside living things",
     "lead": "Compare what happens to two meals inside a typical healthy body (a model, not yours). Free, no login, works offline once loaded.",
     "makerTitle": "Who made it",
-    "maker": "LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources.",
+    "maker": "LifePeek is made by {{name}}. Every number in it is cited or marked as a model estimate, and every report of a mistake is checked against published sources.",
     "medicalTitle": "Not medical advice",
     "medical": "LifePeek is an educational model of a typical healthy adult. It does not model children, pregnancy, diabetes or digestive illness. Its numbers are typical ranges, not measurements of any person, and must not be used to choose a diet, treat an illness or change medicine. If you have diabetes or any health concern, talk to a doctor or a qualified dietitian.",
     "sourcesTitle": "Where the numbers come from",
