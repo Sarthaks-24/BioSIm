@@ -121,6 +121,21 @@ const v3 = {
 describe("cache tiers with v3's packs (W-1; R71 load on demand)", () => {
   const tiers = cacheTiers(v3, files)
 
+  it("finds a pack's English section by the key a real build gives it (a lazy entry, no hash), and keeps Home's words in the core (I-1)", () => {
+    const built = cacheTiers(
+      {
+        ...v3,
+        'lifepeek-en-sys.kidneys': { file: 'assets/_lifepeek-en-sys.kidneys-AAAAAAAN.js', isDynamicEntry: true },
+        'lifepeek-en-home': { file: 'assets/_lifepeek-en-home-AAAAAAAO.js', isDynamicEntry: true },
+      },
+      files,
+    )
+    expect(built.packs.kidneys).toEqual({ webgl: false, files: ['assets/_lifepeek-en-sys.kidneys-AAAAAAAN.js'] })
+    expect(built.packs.breathing).toEqual(tiers.packs.breathing)
+    expect(built.core.has('assets/_lifepeek-en-home-AAAAAAAO.js')).toBe(true)
+    expect(built.lazy.has('assets/_lifepeek-en-home-AAAAAAAO.js')).toBe(false)
+  })
+
   it('puts the engine (with the core rows) in the core: a cold offline start of the core simulator', () => {
     for (const f of ['assets/run-AAAAAAAE.js', 'assets/rows-core-AAAAAAAF.js']) expect(tiers.core.has(f), f).toBe(true)
   })

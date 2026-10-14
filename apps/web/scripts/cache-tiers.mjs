@@ -122,9 +122,18 @@ function packRoots(manifest, pack) {
     (k) =>
       (manifest[k].isDynamicEntry &&
         (systems.some((s) => k.startsWith(`src/systems/${s}/`)) || k === `../../packages/engine/src/core/catalog/${pack}.ts`)) ||
-      (/^_*lifepeek-(en|hi)-sys\./.test(k) && k.replace(/^_+/, '').slice('lifepeek-en-sys.'.length).startsWith(`${pack}-`)),
+      // `lifepeek-en-sys.<pack>` when only the pack's loader imports it (a real build: I-1),
+      // `__lifepeek-en-sys.<pack>-<hash>.js` when it is a chunk shared by several.
+      new RegExp(`^_*lifepeek-(en|hi)-sys\\.${pack}(-|$)`).test(k),
   )
 }
+
+/**
+ * Home's words (I-1): a page section "/" loads with the app before its first draw (main.tsx), a
+ * lazy entry of its own (`lifepeek-en-home`), so the core holds it like the shell. A pack's
+ * section (`sys.<packId>`) stays with its pack, lazy.
+ */
+const homeWords = (manifest) => Object.keys(manifest).filter((k) => /^_*lifepeek-en-home(-|$)/.test(k))
 
 /**
  * The tiers of a build: `core` (precache) and `lazy` (runtime cache), as dist-relative paths
@@ -133,7 +142,7 @@ function packRoots(manifest, pack) {
  * names are in the manifest too, but this catches anything else). Nothing is in both tiers.
  */
 export function cacheTiers(manifest, assetFiles) {
-  const roots = [...CORE_ROOTS, ...(manifest[ENGINE] ? [ENGINE] : []), ...packRoots(manifest, 'core')]
+  const roots = [...CORE_ROOTS, ...(manifest[ENGINE] ? [ENGINE] : []), ...packRoots(manifest, 'core'), ...homeWords(manifest)]
   const core = closure(manifest, roots, coreFont)
   const all = new Set([...Object.values(manifest).map((c) => c.file), ...assetFiles.map((f) => `assets/${f}`)])
   for (const chunk of Object.values(manifest)) for (const css of chunk.css ?? []) all.add(css)
