@@ -1,6 +1,8 @@
 // The model seal (MODEL D12, E-3a): no production deploy carries a model version that is not
-// sealed yet. Model version 3 is built over several steps on the `v3` branch (E-3a, E-3b, S-1…S-4)
-// and its numbers may still move until `MODEL_SEALED = true` in packages/engine/src/params.ts.
+// sealed yet. Model version 3 was built over several steps on the `v3` branch (E-3a, E-3b, S-1…S-4)
+// and is sealed (R103): `MODEL_SEALED = true` in packages/engine/src/params.ts, and its outputs are
+// pinned by packages/engine/test/sealed/v3.json (test/seal.test.ts, D13 iii, runs in `npm test`).
+// A later version (4, …) is unsealed while it is built and blocked here until its own seal.
 //
 // Runs in `npm run build` before vite (so a Vercel production build fails) and as check 7 of the
 // release gate:
@@ -16,6 +18,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 export const PARAMS_FILE = path.join(root, 'packages', 'engine', 'src', 'params.ts')
+/** The seal file of a sealed version: a hash of every output over a fixed grid (D13 iii). */
+export const sealFileOf = (version) => path.join(root, 'packages', 'engine', 'test', 'sealed', `v${version}.json`)
 
 /** MODEL_VERSION and MODEL_SEALED as written in params.ts. */
 export function readSeal(text) {
@@ -25,12 +29,21 @@ export function readSeal(text) {
   return { version: Number(version[1]), sealed: sealed ? sealed[1] === 'true' : true }
 }
 
-/** Why this build must stop, or null. `production`: a production deploy or a release. */
-export function sealProblem({ version, sealed }, production) {
-  if (sealed || !production) return null
+/**
+ * Why this build must stop, or null. `production`: a production deploy or a release. `hasSealFile`:
+ * whether test/sealed/v<version>.json exists (a sealed version without it has no D13 iii guard).
+ */
+export function sealProblem({ version, sealed }, production, hasSealFile = true) {
+  if (!production) return null
+  if (sealed && !hasSealFile)
+    return (
+      `Model version ${version} is marked sealed but packages/engine/test/sealed/v${version}.json is missing: ` +
+      'run npm run calibrate -w @lifepeek/engine -- --seal (D13 iii).'
+    )
+  if (sealed) return null
   return (
     `Model version ${version} is not sealed (MODEL_SEALED = false in packages/engine/src/params.ts): ` +
-    'it may not go to production. Seal it after E-3b and S-1…S-4 (MODEL D12), or deploy a sealed branch.'
+    'it may not go to production. Seal it when all its steps are in (MODEL D12), or deploy a sealed branch.'
   )
 }
 
@@ -38,7 +51,7 @@ export function sealProblem({ version, sealed }, production) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const seal = readSeal(fs.readFileSync(PARAMS_FILE, 'utf8'))
   const production = process.argv.includes('--release') || process.env.VERCEL_ENV === 'production'
-  const problem = sealProblem(seal, production)
+  const problem = sealProblem(seal, production, fs.existsSync(sealFileOf(seal.version)))
   if (problem) {
     console.error(`model-seal: ${problem}`)
     process.exit(1)

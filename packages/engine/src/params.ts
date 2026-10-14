@@ -11,13 +11,14 @@ import type { PackParams } from './packParams.ts'
 export const MODEL_VERSION = 3
 
 /**
- * Whether MODEL_VERSION is final (MODEL D12). Version 3 is built over several steps (E-3a water and
- * absorbed fractions, E-3b activity, S-1…S-4) and is sealed only after all of them: until then its
- * numbers may still move, so no production deploy may carry it. apps/web/scripts/model-seal.mjs
- * fails a production build (and the release gate) while this is false. After the seal, any change
- * to an existing output is a new version.
+ * Whether MODEL_VERSION is final (MODEL D12). Version 3 was built over several steps (E-3a water and
+ * absorbed fractions, E-3b activity, S-1…S-4) and is now sealed (R103): test/sealed/v3.json pins a
+ * hash of every output over a fixed grid, and test/seal.test.ts fails on any change to one of them
+ * (D13 iii). A new module or signal may only add outputs; any change to an existing output is
+ * MODEL_VERSION 4, unsealed (false here) until its own seal. apps/web/scripts/model-seal.mjs fails a
+ * production build (and the release gate) while this is false.
  */
-export const MODEL_SEALED = false
+export const MODEL_SEALED = true
 
 export const PARAMS = {
   eating: {

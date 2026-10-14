@@ -2,6 +2,15 @@
 
 All notable changes to LifePeek. Data corrections are listed here so teachers can see what changed.
 
+## 3.0.0 (unreleased)
+
+Model:
+
+- **Model version 3 is sealed.** Its numbers are final: every output (each graph line, each key
+  moment) is pinned by a check that runs on every change, so a link made with `v=3` gives the same
+  picture in every later 3.x release. A change to any of them would be model version 4, listed
+  here with what changed and why.
+
 ## 2.1.0 (unreleased)
 
 The first public release of the new screen (2.0.0 below was never released on its own). It fixes

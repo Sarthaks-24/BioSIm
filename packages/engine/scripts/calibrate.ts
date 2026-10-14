@@ -8,12 +8,16 @@
  *   npm run calibrate -w @lifepeek/engine -- --diff scripts/calibration/v2.json scripts/calibration/v3.json
  *       a Markdown table, old vs new, for the reviewer (docs/MODEL-V3-DIFF.md is its output);
  *   npm run calibrate -w @lifepeek/engine -- --pins
- *       the PINNED block for test/regression.test.ts, from this model.
+ *       the PINNED block for test/regression.test.ts, from this model;
+ *   npm run calibrate -w @lifepeek/engine -- --seal
+ *       once MODEL_SEALED is true: test/sealed/v<N>.json, a hash of every output over a fixed grid
+ *       (D13 iii; test/seal.test.ts fails on any change to an output in it).
  */
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  MODEL_SEALED,
   MODEL_VERSION,
   buildMeal,
   decodeMeal,
@@ -26,6 +30,7 @@ import {
 } from '../src/index.ts'
 import { simulate } from '../src/run.ts'
 import { lookup as fixtureLookup } from '../test/fixtures.ts'
+import { makeSeal, sealFile } from '../test/seal.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const dir = resolve(here, '../../../content/foods')
@@ -224,6 +229,14 @@ if (args[0] === '--snapshot') {
   else console.log(text)
 } else if (args[0] === '--pins') {
   console.log(pins())
+} else if (args[0] === '--seal') {
+  if (!MODEL_SEALED) throw new Error(`model version ${MODEL_VERSION} is not sealed: set MODEL_SEALED = true in params.ts first`)
+  const file = sealFile(MODEL_VERSION)
+  if (existsSync(file) && !args.includes('--force'))
+    throw new Error(`${file} exists: a sealed version is never re-sealed (a change to an output is a new MODEL_VERSION)`)
+  mkdirSync(dirname(file), { recursive: true })
+  writeFileSync(file, `${JSON.stringify(makeSeal(MODEL_VERSION), null, 2)}\n`)
+  console.log(`wrote ${file}`)
 } else {
   const ref = iauc(run('glucose-50:1'))
   for (const [meal, target] of CALIBRATION) {

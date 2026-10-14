@@ -20,6 +20,8 @@ describe('model seal (MODEL D12)', () => {
     expect(sealProblem({ version: 3, sealed: false }, true)).toMatch(/not sealed/)
     expect(sealProblem({ version: 3, sealed: false }, false)).toBeNull()
     expect(sealProblem({ version: 3, sealed: true }, true)).toBeNull()
+    expect(sealProblem({ version: 3, sealed: true }, true, false)).toMatch(/sealed\/v3\.json is missing/)
+    expect(sealProblem({ version: 3, sealed: true }, false, false)).toBeNull()
   })
 
   it('the script on this params.ts: unsealed fails a Vercel production build and the release gate; a preview passes', () => {

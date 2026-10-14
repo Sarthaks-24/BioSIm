@@ -19,8 +19,9 @@
 //      without the flag hi.json does not ship, so check 1 skips it too;
 //   5. GOVERNANCE.md exists;
 //   6. CHANGELOG.md's newest entry is not marked "unreleased" and has no `<…>` left in it;
-//   7. the model version is sealed (MODEL_SEALED in packages/engine/src/params.ts, MODEL D12):
-//      model version 3 stays unsealed on the `v3` branch until E-3b and S-1…S-4 are in.
+//   7. the model version is sealed (MODEL_SEALED in packages/engine/src/params.ts, MODEL D12) and
+//      has its seal file (packages/engine/test/sealed/v<N>.json, the D13 iii guard): model version 3
+//      is sealed (R103); a later version is blocked until its own seal.
 //   8. the privacy page's contact is a real email address (shown as a mailto: link, T12b);
 //   9. the production build settings: no committed file turns on the test-only pseudo-locale, and
 //      Hindi only together with check 4 (R47);
@@ -31,13 +32,12 @@
 // This is the production run (no VITE_HINDI, no VITE_PSEUDO, as Vercel builds). Before the
 // maintainer's own items are done it fails on exactly those: the project email, the launch date,
 // the INDB sent date, GOVERNANCE.md, the changelog's fps and classroom lines (docs/RELEASE-v2.1.md).
-// On the `v3` branch it also fails on the model seal (check 7) until model version 3 is sealed.
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readTexts, reviewRows, syncReview, REVIEW_FILE } from './hi-review.mjs'
-import { PARAMS_FILE, readSeal, sealProblem } from './model-seal.mjs'
+import { PARAMS_FILE, readSeal, sealFileOf, sealProblem } from './model-seal.mjs'
 import { USER_PLACEHOLDERS, VERIFY_MARKS } from './lint-placeholders.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
@@ -194,7 +194,8 @@ check(
 
 // 7. The model seal (MODEL D12): no release carries a version whose numbers may still move.
 {
-  const problem = sealProblem(readSeal(fs.readFileSync(PARAMS_FILE, 'utf8')), true)
+  const seal = readSeal(fs.readFileSync(PARAMS_FILE, 'utf8'))
+  const problem = sealProblem(seal, true, fs.existsSync(sealFileOf(seal.version)))
   check('The model version is sealed (MODEL_SEALED in packages/engine/src/params.ts)', problem ? [problem] : [])
 }
 

@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { MODEL_VERSION, buildMeal, decodeMeal, parseFood, type ActiveSignalId, type EventId } from '../src/index.ts'
+import { MODEL_VERSION, buildMeal, decodeMeal, parseFood, type ActiveSignalId, type RunEventId } from '../src/index.ts'
 import { simulate } from '../src/run.ts'
 
 /**
@@ -23,11 +23,11 @@ const lookup = (id: string) => foods.find((f) => f.id === id)
 const run = (meal: string) => simulate(buildMeal(decodeMeal(meal), lookup))
 
 type Moment = number | null | [low: number, typical: number, high: number]
-type Pin = { moments: Partial<Record<EventId, Moment>> } & Record<30 | 60 | 120 | 240, Partial<Record<ActiveSignalId, number>>>
+type Pin = { moments: Partial<Record<RunEventId, Moment>> } & Record<30 | 60 | 120 | 240, Partial<Record<ActiveSignalId, number>>>
 
-/** Values at minutes 30, 60, 120 and 240 (rounded to 0.001) and every event. Model version 3
- * (E-3a: set from the reviewed diff docs/MODEL-V3-DIFF.md; regenerate with
- * `npm run calibrate -w @lifepeek/engine -- --pins`). */
+/** Values at minutes 30, 60, 120 and 240 (rounded to 0.001) and every event. Model version 3,
+ * frozen at the seal (R103; E-3a set them from the reviewed diff docs/MODEL-V3-DIFF.md, the seal
+ * added the v3 moments). Every other output is pinned byte for byte by test/seal.test.ts. */
 const PINNED: Record<string, Pin> = {
   'cola:1': {
     moments: {
@@ -36,6 +36,11 @@ const PINNED: Record<string, Pin> = {
       'event.glucoseBackToBase': 88,
       'event.mostlyAbsorbed': 77,
       'event.firstLeftovers': null,
+      'event.activityStart': null,
+      'event.activityEnd': null,
+      'event.gutFlowPeak': 33,
+      'event.bladderFirstUrge': 68,
+      'event.halfMealWaterPassed': 91,
     },
     30: {
       'gut.stomach.contentG': 196.947,
@@ -101,6 +106,11 @@ const PINNED: Record<string, Pin> = {
       'event.glucoseBackToBase': 528,
       'event.mostlyAbsorbed': 498,
       'event.firstLeftovers': [952, 1612, 2134],
+      'event.activityStart': null,
+      'event.activityEnd': null,
+      'event.gutFlowPeak': 78,
+      'event.bladderFirstUrge': 135,
+      'event.halfMealWaterPassed': 338,
     },
     30: {
       'gut.stomach.contentG': 232.795,
@@ -166,6 +176,11 @@ const PINNED: Record<string, Pin> = {
       'event.glucoseBackToBase': 200,
       'event.mostlyAbsorbed': 195,
       'event.firstLeftovers': [932, 1592, 2114],
+      'event.activityStart': null,
+      'event.activityEnd': null,
+      'event.gutFlowPeak': 61,
+      'event.bladderFirstUrge': 114,
+      'event.halfMealWaterPassed': 169,
     },
     30: {
       'gut.stomach.contentG': 212.502,
@@ -231,6 +246,11 @@ const PINNED: Record<string, Pin> = {
       'event.glucoseBackToBase': null,
       'event.mostlyAbsorbed': null,
       'event.firstLeftovers': null,
+      'event.activityStart': null,
+      'event.activityEnd': null,
+      'event.gutFlowPeak': null,
+      'event.bladderFirstUrge': 62,
+      'event.halfMealWaterPassed': 77,
     },
     30: {
       'gut.stomach.contentG': 71.483,
@@ -310,7 +330,7 @@ describe('regression pin (model version 3)', () => {
           if (!close(actual, expected)) misses.push(`${id} @${t} min: ${actual} (pinned ${expected})`)
         }
       }
-      for (const [id, expected] of Object.entries(pin.moments) as [EventId, Moment][]) {
+      for (const [id, expected] of Object.entries(pin.moments) as [RunEventId, Moment][]) {
         const p = sim.moments.get(id)!
         const actual: Moment = p.atMin === null ? null : p.low !== undefined ? [p.low, p.atMin, p.high!] : p.atMin
         const same =
