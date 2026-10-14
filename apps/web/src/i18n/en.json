@@ -704,7 +704,7 @@
   "about": {
     "title": "About LifePeek",
     "tagline": "LifePeek: peek inside living things",
-    "lead": "Compare what happens to two meals inside your body. Free, no login, works offline once loaded.",
+    "lead": "Compare what happens to two meals inside a typical healthy body (a model, not yours). Free, no login, works offline once loaded.",
     "makerTitle": "Who made it",
     "maker": "LifePeek is made by {{name}}. Every number in it is cited, and every report of a mistake is checked against published sources.",
     "medicalTitle": "Not medical advice",
@@ -1852,7 +1852,7 @@
           "model": "held near 37 °C, not worked out; the extra heat of moving leaves as sweat, about 170 mL in a 10-minute run (model estimate)",
           "why": "The body keeps its temperature in a narrow range, so the model holds it steady and works out the sweat instead. The book says 37.0 °C is an average of many healthy people: a person’s normal can be a little different."
         },
-        "ask": "Why do you sweat in a run, when your body temperature hardly changes?"
+        "ask": "Why do you sweat in a run, when body temperature hardly changes?"
       }
     },
     "kidneys": {
