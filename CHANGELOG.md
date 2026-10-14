@@ -4,6 +4,12 @@ All notable changes to LifePeek. Data corrections are listed here so teachers ca
 
 ## 3.2.0 (unreleased)
 
+**Games, growing up, and a body with legs in 3D.** Four new activities, Class 8 to 10
+reproduction behind a teacher switch, and the 3D body standing on its own legs. Plants are still
+not covered.
+
+What students and teachers will notice:
+
 - **Four more activities**: football, cricket, badminton and sitting in class can be added to a
   meal, as well as a walk, a brisk walk or a run. The activity sheet groups them as "Walking and
   running", "Games" and "Sitting". Each uses its value from the 2024 Adult Compendium of Physical
@@ -27,17 +33,52 @@ All notable changes to LifePeek. Data corrections are listed here so teachers ca
   9 years and 120 cm: 160 cm). The hormone points are middle values from a study of 85 women
   (Anckaert and others, 2021), moved from their 29-day cycle to the book's 28 days with the egg on
   day 14 (NCERT Class 9: cycles of 21–35 days, often about 28). Switched off, the row is in no
-  list, on Home, on Science or in a link. These are fixed pictures, not model output: version 3's
-  numbers do not change.
+  list, on Home, on Science, on Teach or in a link. These are fixed pictures, not model output:
+  version 3's numbers do not change. A "Why different?" card by the panel's book line compares
+  the book's cycle with the panel's, and the two books' days of menstruation (Class 9: 3 to 7;
+  Class 10: about two to eight).
+- **3D legs and "Whole body"**: on devices that draw 3D, the body gets legs and posed arms during
+  an activity, in the same still pose as the flat body (walking, brisk walking or running); at
+  rest Digestion's 3D body is as before. A new **Whole body** button (top right of the body) moves
+  the view out to the whole standing body, with a faint skeleton on stronger devices, in every 3D
+  system; pressed again, back to the system's view. On phones the view comes closer to the part
+  that is working (the legs in an activity, the chest at rest). The flat drawing is unchanged and
+  shows the same numbers.
+- **Teach** has two new lessons, each with a printable A4 worksheet (QR code and teacher's copy)
+  and a "Why different?" card:
+  - **"Football or a walk: what do the heart and lungs do?"** (Respiration, after the run): 20
+    minutes of football against a 20-minute walk. In the game the model breathes about 30 times a
+    minute and the heart beats about 130 times; in the walk about 24 and 95. Breathing's card gets
+    a football row (the older Class 7 book says up to 25 breaths a minute in heavy exercise).
+  - **"Why does the lining of the uterus build up every month?"** in a new chapter,
+    **Reproduction and growing up** (Classes 8, 9 and 10). It is listed only while the teacher
+    switch is on in that tab; switched off, the chapter and its worksheet are not on Teach. The
+    worksheet asks only about the book's typical cycle and the panel (NCERT Class 9 Exploration,
+    Ch 11, p. 221; Class 10, Ch 7, p. 124): no dates, and nothing about anyone's own cycle.
+- **Save for class offline** now saves every system the guided lesson stops at, including the
+  blood-fat stop (it was left out, so that stop needed internet).
+
+Model:
+
+- **Model version stays 3.** Every number from 3.0 and 3.1 is unchanged (the seal check still
+  passes). The new activities use values the model already had; the reproduction panels are book
+  and study data, not model output.
 
 Known limits:
 
-- Sitting in class and the three games have no pose of their own yet.
+- Sitting in class and the three games have no pose of their own yet; football is drawn as a run.
+- The model plays a game at one steady effort (its average value); a real game of football or
+  badminton comes in bursts.
 - The ready plans are still the three walks and runs.
 - Reproduction shows the book's typical cycle only: no dates, no tracker and no way to enter
   anyone's own cycle or height, by design. The line between the study's points is drawn, and the
-  three hormones are not on one scale. Its lesson ("Why does the lining of the uterus build up
-  every month?") is not listed on Teach yet.
+  three hormones are not on one scale. A worksheet's QR code opens the panel only on a device
+  where the teacher switch is on.
+- 3D muscles and skin are still flat; the 3D arms and legs hold still poses (no swing).
+- Waiting for a named physiology reviewer, so not in this release: the liver and glycogen loop,
+  and the change to how fast solid food leaves the stomach. Both would change the model's
+  numbers (a new model version).
+- Hindi is still paused: the site is English only.
 
 ## 3.1.0 (unreleased)
 
