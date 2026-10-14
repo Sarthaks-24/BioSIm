@@ -133,11 +133,11 @@
       {
         "wp": "U-6",
         "at": "2026-10-14",
-        "on": "v3 0d2e1d7 (U-7, /sim 188.832) + U-6: Hormones' row in the clock chunk group (alone it was a 0.2 KB chunk of its own), its name in the core text, the × before eating and g-an-hour unit keys (lib/formatSignal.ts), a pack's lines under Blood sugar beside the medical note (StripStack); its graphs, words, flat pancreas and lesson are in the lazy control pack beside Brain & nerves (pack 18.3 KB gz with its shared files, <= 20; the pack brings its graph's and moment's names as sys.control.sig.* instead of the 2.8 KB signals section): /sim 188.832 -> 188.976 (+0.144), engine 11.974 unchanged",
-        "simKB": 188.976,
+        "on": "v3 7453e09 (U-7 + U-5, /sim 188.785 measured) + U-6: Hormones' row in the clock chunk group (alone it was a 0.2 KB chunk of its own), its name in the core text, the × before eating and g-an-hour unit keys (lib/formatSignal.ts), a pack's lines under Blood sugar beside the medical note (StripStack); its graphs, words, flat pancreas and lesson are in the lazy control pack beside Brain & nerves (pack 18.3 KB gz with its shared files, <= 20; the pack brings its graph's and moment's names as sys.control.sig.* instead of the 2.8 KB signals section): /sim 188.785 -> 188.907 (+0.122), engine 11.974 unchanged",
+        "simKB": 188.907,
         "engineKB": 11.974,
-        "simRatchetKB": 189.176,
-        "simEngineRatchetKB": 201.25
+        "simRatchetKB": 189.107,
+        "simEngineRatchetKB": 201.181
       }
     ]
   },
