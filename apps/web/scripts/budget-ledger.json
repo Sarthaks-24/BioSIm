@@ -17,10 +17,10 @@
         "wp": "FIX-V3",
         "at": "2026-10-14",
         "on": "v3 a2354c5 + FIX-V3 (v3 alone: /sim 186.520, engine 10.662)",
-        "simKB": 186.865,
+        "simKB": 186.876,
         "engineKB": 10.662,
-        "simRatchetKB": 187.065,
-        "simEngineRatchetKB": 197.827
+        "simRatchetKB": 187.076,
+        "simEngineRatchetKB": 197.838
       }
     ]
   },

@@ -175,9 +175,9 @@
 //   chunk): a shared module is otherwise split out of the route chunk (+1.9 KB measured).
 //   FIX-V3 (2026-10-14, branch v3; R93): focus goes back to the chip that opened the meal sheet (its
 //   logic loads with the sheet) and to a sensible chip after ✕, the bout marks' download is tried
-//   again, links name the layer with bouts: /sim 186.520 → 186.865 KB on v3 a2354c5 (+0.35), engine
-//   10.662 KB. New enforced checks: the v3 ratchets (ledger `v3`: /sim 187.065, /sim + engine
-//   197.827 KB), the system-chunk imports, and every lazy JS file in a pack-manifest entry (the legs'
+//   again, links name the layer with bouts: /sim 186.520 → 186.876 KB on v3 a2354c5 (+0.36), engine
+//   10.662 KB. New enforced checks: the v3 ratchets (ledger `v3`: /sim 187.076, /sim + engine
+//   197.838 KB), the system-chunk imports, and every lazy JS file in a pack-manifest entry (the legs'
 //   chunk was in none) or on the allow-list.
 import fs from 'node:fs'
 import path from 'node:path'
