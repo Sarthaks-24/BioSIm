@@ -148,6 +148,15 @@ describe('share links: activity (act, bact; E-3b-eng, architecture §2)', () => 
     expect(more).toEqual([{ param: 'bact', asked: 'walk.160.20' }])
   })
 
+  it('R84: a bout must end by minute 2880; one that starts at 2880 or runs past the end is dropped and named', () => {
+    const changes: { param: string; asked: string }[] = []
+    expect(decodeActivity('walk.2880.5,run.2870.20,walk.2875.5', 'act', changes)).toEqual([{ kind: 'walk', startMin: 2875, durMin: 5 }])
+    expect(changes).toEqual([
+      { param: 'act', asked: 'walk.2880.5' },
+      { param: 'act', asked: 'run.2870.20' },
+    ])
+  })
+
   it('a huge act is not read part by part, and never throws', () => {
     const changes: { param: string; asked: string }[] = []
     expect(decodeActivity(Array.from({ length: 5000 }, () => 'walk.0.5').join(','), 'act', changes)).toEqual([
@@ -284,7 +293,7 @@ describe('share links: what changed on load (changes)', () => {
       ],
       act: [
         ['', 'walk.120.20', 'walk.30.20,run.240.10', 'walkBrisk.0.5,walk.5.120'],
-        ['football.0.30', 'walk.0.4', 'walk.2881.20', 'walk.0.20,run.10.10', 'jog.1.10', 'walk.30', '<x>'],
+        ['football.0.30', 'walk.0.4', 'walk.2881.20', 'walk.2880.5', 'run.2870.20', 'walk.0.20,run.10.10', 'jog.1.10', 'walk.30', '<x>'],
       ],
       bact: [
         ['', 'run.0.30'],

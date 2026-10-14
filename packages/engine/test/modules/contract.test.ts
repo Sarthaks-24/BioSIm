@@ -164,7 +164,7 @@ describe('ctx.get / ctx.put keep a module to what it declared', () => {
       'event.activityEnd',
       'event.gutFlowPeak',
       'event.bladderFirstUrge',
-      'event.mostMealWaterPassed',
+      'event.halfMealWaterPassed',
     ])
     expect(sim.moments.size).toBe(10)
     // Resting: the activity moments do not happen.

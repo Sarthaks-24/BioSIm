@@ -110,9 +110,9 @@ const FROZEN: Record<string, string> = {
   'kidney.urineRate': 'mL/h',
   'kidney.urineTotal': 'mL',
   'kidney.bladderMl': 'mL',
-  'water.mealExtraMl': 'mL',
+  'water.bodyExtraMl': 'mL',
   'event.bladderFirstUrge': 'min',
-  'event.mostMealWaterPassed': 'min',
+  'event.halfMealWaterPassed': 'min',
   // S-3, the circulation pack (core/catalog/circulation.ts). heart.rate keeps its reserved unit.
   'heart.output': 'L/min',
   'heart.strokeVolume': 'mL',
@@ -241,11 +241,12 @@ describe('pack rows (architecture §1.3 lazy rows)', () => {
       expect(row.validRange!.low, id).toBeLessThan(row.validRange!.high)
     }
     expect(CIRCULATION_SIGNALS['heart.rate']).toMatchObject({ unit: 'beats/min', kind: 'level', validRange: { low: 40, high: 191 } })
-    expect(CIRCULATION_SIGNALS['heart.strokeVolume'].validRange).toMatchObject({ low: 55, high: 100, basis: 'cited' })
-    // A meal moves heart rate, output and gut flow, never stroke volume or muscle flow (model §2.3).
+    expect(CIRCULATION_SIGNALS['heart.strokeVolume'].validRange).toMatchObject({ low: 55, high: 130, basis: 'cited' })
+    // A meal moves heart rate, output, stroke volume (R80) and gut flow, never muscle flow (model §2.3).
     expect(CIRCULATION_SIGNAL_IDS.filter((id) => CIRCULATION_SIGNALS[id].reactsToMeal)).toEqual([
       'heart.rate',
       'heart.output',
+      'heart.strokeVolume',
       'blood.flow.gut',
     ])
     expect(CIRCULATION_EVENTS['event.gutFlowPeak']).toMatchObject({ status: 'assumption', foundOn: 'blood.flow.gut', shipsIn: 'v3.0' })
