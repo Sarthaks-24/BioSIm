@@ -124,8 +124,11 @@ export interface SystemUi {
   moments: (run: RunResult) => Moment[]
   /** A rhythm system's chip over the body ("≋ 15 a minute · typical adult, resting · shown at its true speed"; ui-ux §4). */
   chip?: ComponentType<{ run: RunResult }>
-  /** Lines under one of its graphs: what moves it, the book's value, a reference band's key (ui-ux §6, R10, R29, R57). */
-  note?: ComponentType<{ slot: GraphSlotDef }>
+  /**
+   * Lines under one of its graphs: what moves it, the book's value, a reference band's key (ui-ux §6,
+   * R10, R29, R57), and "Count yours" beside the book line (X-2; it names the run's own value).
+   */
+  note?: ComponentType<{ slot: GraphSlotDef; run: RunResult }>
   /** Its lessons (each with its release, R18), for Teach once the row is public (X-1). */
   lessons?: readonly SystemLesson[]
   /** A Drawing-only row's card (R11), shown in the graph column's place: lymph's germ defence. */

@@ -1,4 +1,4 @@
-import type { ActivityBout, RunResult, Series } from '@lifepeek/engine'
+import { valueAt, type ActivityBout, type RunResult, type Series } from '@lifepeek/engine'
 import { MAX_BREATH_HZ, drawnRate } from '../../flat/rhythm.ts'
 
 /**
@@ -46,4 +46,35 @@ export const seriesOf = (run: RunResult, id: string): Series | undefined => run.
 export function doingAt(bouts: readonly ActivityBout[], min: number): 'rest' | 'walk' | 'walkBrisk' | 'run' {
   const b = bouts.find((x) => min >= x.startMin && min < x.startMin + x.durMin)
   return b && (b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run') ? b.kind : 'rest'
+}
+
+/** The bouts that change breathing (doingAt's kinds), in clock order. */
+const activeBouts = (bouts: readonly ActivityBout[]) =>
+  bouts.filter((b) => b.kind === 'walk' || b.kind === 'walkBrisk' || b.kind === 'run').sort((a, b) => a.startMin - b.startMin)
+
+/**
+ * The model's breaths a minute for "Count yours" (X-2, content §8.3): at rest (the first minute with
+ * no bout), and in the activity: at the clock's minute if a bout is on, else in the middle of the
+ * run's first bout. No `active` when the plan has no walk or run.
+ */
+export function countModel(
+  run: RunResult,
+  min: number,
+): { rest: number; active?: { n: number; doing: 'walk' | 'walkBrisk' | 'run' } } | null {
+  const rate = seriesOf(run, 'lungs.breathRate')
+  if (!rate) return null
+  const at = (m: number) => Math.round(valueAt(rate, m, run.stepMin))
+  const bouts = activeBouts(run.activity)
+  // The first resting minute: 0, or the end of the bout (or chain of bouts) that starts there.
+  let restMin = 0
+  for (const b of bouts) if (restMin >= b.startMin && restMin < b.startMin + b.durMin) restMin = b.startMin + b.durMin
+  const doing = doingAt(run.activity, min)
+  const first = bouts[0]
+  const active =
+    doing !== 'rest'
+      ? { n: at(min), doing }
+      : first
+        ? { n: at(first.startMin + first.durMin / 2), doing: first.kind as 'walk' | 'walkBrisk' | 'run' }
+        : undefined
+  return { rest: at(restMin), ...(active && { active }) }
 }

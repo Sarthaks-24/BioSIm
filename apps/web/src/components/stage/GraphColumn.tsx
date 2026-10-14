@@ -115,7 +115,7 @@ export default function GraphColumn({ run, kept }: { run: RunResult; kept: RunRe
                   series={run.signals.get(id) as ChartableSeries}
                   second={secondId ? run.signals.get(secondId) : null}
                   range={slot.range ?? organism.signalOverrides[id]?.displayRange}
-                  note={Note && <Note slot={slot} />}
+                  note={Note && <Note slot={slot} run={run} />}
                   run={run}
                   kept={kept}
                   runName={runName}

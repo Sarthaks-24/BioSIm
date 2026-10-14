@@ -89,6 +89,8 @@ export const LESSON_PACKS = {
       'src/components/stage/BoutMarks.tsx',
       // U-2: the body-system picker (the title in the first paint opens it).
       'src/components/SystemPicker.tsx',
+      // X-2: "Count yours", the 15-second timer by Breathing's (and the heart's) book line.
+      'src/components/CountYours.tsx',
       // A bout poses the body (and Digestion's `full` framing shows the legs): R93 #6.
       LIMBS,
     ],

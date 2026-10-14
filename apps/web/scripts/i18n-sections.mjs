@@ -94,6 +94,9 @@ export const PAGE_SECTIONS = {
   // (components/SystemPicker.tsx, lazy); the stage keeps each system's name for the title.
   picker: [],
   lifeProcess: [],
+  // X-2: "Count yours" brings its own words (components/CountYours.tsx, lazy); the stage keeps the
+  // button's name, which Breathing and the heart show beside their book line.
+  count: ['open'],
 }
 
 /** The kept keys of one section (`*.leaf`: that leaf of every entry). */
