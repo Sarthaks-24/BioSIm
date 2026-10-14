@@ -27,6 +27,7 @@ import {
   HUMAN_MODEL,
   HUMAN_MODULES,
   KIDNEY_SIGNAL_IDS,
+  LYMPH_SIGNAL_IDS,
   RUN_EVENT_IDS,
   energySignals,
   runModules,
@@ -83,6 +84,7 @@ describe('signal table', () => {
       ...EFFORT_SIGNAL_IDS,
       ...KIDNEY_SIGNAL_IDS,
       ...CIRCULATION_SIGNAL_IDS,
+      ...LYMPH_SIGNAL_IDS,
     ])
     for (const [id, s] of sim.signals) {
       const w = out.signals.get(id)!

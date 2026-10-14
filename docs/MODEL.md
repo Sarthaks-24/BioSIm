@@ -184,7 +184,7 @@ A walk gives about 330 mL/h, a run about 980 mL/h. Digesting a meal makes heat t
 
 ## Kidneys and water (model version 3, S-4)
 
-The `water` module runs last in today's order, after effort and circulation, and nothing reads what it writes. All five signals are *assumption* ("Model estimate"); their catalog rows and the two kidney moments are lazy (`core/catalog/kidneys.ts`), so the Digestion dock never lists the moments. This is a teaching model of a hormone delay and a washout up to the kidney's ceiling, not a model of osmolality or salt.
+The `water` module runs after effort and circulation (only lymph comes later, v3.1), and nothing reads what it writes. All five signals are *assumption* ("Model estimate"); their catalog rows and the two kidney moments are lazy (`core/catalog/kidneys.ts`), so the Digestion dock never lists the moments. This is a teaching model of a hormone delay and a washout up to the kidney's ceiling, not a model of osmolality or salt.
 
 **A steady background day** (model D17). The person drinks their usual amount on an ordinary day, which balances the usual 1.5 L of urine (OpenStax A&P 2e §26.2), the unnoticed losses (breath, skin) and the water metabolism makes at rest (0.12 mL per kcal: 180 mL a day for the reference man; IOM 2005 p85 gives 15, 10.5 and 11.1 g per 100 kcal for carbohydrate, protein and fat). None of that is drawn; only the body water above that normal day, `E` (`water.bodyExtraMl`), moves. Being always well watered also means sweat is drunk back: the model assumes the background drinks replace it as a steady first-order top-up over about 90 min (τ = 90 min, a labelled assumption, R81), `D` = sweat not yet drunk back:
 
@@ -226,6 +226,30 @@ The `circulation` module runs after muscles and skin. It reads the oxygen used (
 
 **Limits.** Studies were small and mostly lying down or seated; the meal's HR/SV split comes from one study of heart patients (Kelbaek 1989) and is the same for every meal; Sidery 1994 saw a 1 MJ meal raise CO by 2.19 L/min, far more than the model gives a meal that size; recovery is simplified: the heart follows the MET's 50 s off lag, with no slow EPOC and no slower heart-rate recovery, so it is nearly back to rest 3 min after a bout; no baroreflex, posture, fitness, blood volume or blood pressure; the CO slope is for steady bouts (non-linear in ramp tests, Stringer 2005); the gut gives up blood in every bout, though Eriksen 1994 found it held in reclining exercise after a meal; 220 − age is ±10–12 beats and not for children.
 
+## Lymph fat and blood fat (v3.1, S-5)
+
+The `lymph` module runs last (model D4). It reads only the fat the gut absorbs (`gut.absorbRate.fat`) and writes two rows and one event; nothing reads them, so adding it leaves every other signal, band and moment byte-identical (D13 iii, checked by hashing all outputs of 34 meals × 9 activity plans with and without it). Both rows are *assumption* ("Model estimate"); the rows, the event and the numbers are lazy (`core/catalog/lymph.ts`, `packParams.ts`). They ship in v3.1 as new signals only, with no model-version change. Sources were read in V-5.
+
+Fat is "too big" for the blood capillaries of the gut: it is packed into chyle and enters the lacteals, then reaches the blood through the lymph (OpenStax §21.1, §23.7). The model takes this as one lag and one plasma pool:
+
+    dL/dt = (fat absorbed per min − L) / τ_pack       L = lymph.fatFlowRate (g/min)
+    dP/dt = L − P / τ_clear                           P = the meal's fat in the plasma (g)
+    blood.triglyceride = 80 + P × 1000 / 29 mg/dL
+
+29 dL of plasma is 5.5 L of blood × 53 % plasma (OpenStax §18.1: men "about 5 to 6 liters", plasma "approximately 53"). 80 mg/dL fasting is Liu 2022's 0.91 mmol/L (× 88, Nordestgaard 2016's factor). τ_clear = 10 min is calibrated: everyday meals of 15–30 g fat and up to 500 kcal then rise by about 22–32 mg/dL, highest 1.7–5 h after eating (Nordestgaard 2016: "maximal mean changes at 1-6 h after habitual meals", +18 to +26 mg/dL in adults). τ_pack = 30 min is hand-picked: no page read gives it, and 20 or 45 min moves those rises by under 5 mg/dL and their peaks by under half an hour. The packing step is a pool that the absorbed fat fills, so the fat delivered is always what was absorbed minus what is still on its way. `event.triglyceridePeak` is the first minute blood fat is highest (none if it rises under 1 mg/dL). Blood fat has **no band and no threshold line**: a rise after a meal is normal.
+
+| Meal | Fat | Rise | Highest at |
+|---|---|---|---|
+| Milk, 2 glasses | 16.8 g | +32 mg/dL | 2.7 h |
+| Fries, 1 portion | 18.1 g | +22 mg/dL | 5.0 h |
+| Gribok 2016's fat shake | 51 g | +67 mg/dL | 4.2 h |
+| O'Doherty 2018's fat drink | 75.4 g | +64 mg/dL | 6.5 h |
+| Cola, water | 0 g | 0 | none |
+
+**Tests** (`test/lymph.test.ts`): fat delivered never more than absorbed, ≥ 99 % by 48 h (I); no fat, no rise and no peak (P); more of the same food, a higher peak (P); the Nordestgaard calibration above (C); hold-out: Gribok's 51 g fat drink peaks 2–5 h after drinking, and it and O'Doherty's 75 g drink are back within 10 mg/dL of fasting by 14 h (O'Doherty 2018: "peaking at 3–4 h and returning to baseline 6–8 h later"); 60–400 mg/dL in a 40-plan fuzz; ≤ 2 ms. Two known limits (`golden.fails`), both from the stomach: O'Doherty's own 823 kcal drink peaks at about 6.5 h (it empties at about 2.1 kcal/min), and everyday meals of 15–30 g fat with more than 500 kcal of solid food (2 cheeseburgers; 4 roti and 2 dal) peak after 7 h (solids leave at a fixed 1.4 kcal/min). Liu 2022's 1500 kcal meal (back near fasting by 10 h) stays a `todo`: the model needs about 18 h to empty it. The lymph time constants are never tuned to hide this; the deferred emptying change fixes it.
+
+**Limits.** All fat goes by lymph (short- and medium-chain fat really goes straight to the blood); fat the liver makes and sends out (VLDL) is left out, so fasting blood fat is one fixed value; blood fat does not change fuel use or RQ (model D5 C10); one lumped plasma pool, a grown-up man's plasma volume; activity does not change it. Fasting blood fat differs between people: in Indian adults it is often higher than 80 mg/dL (ICMR-INDIAB, Joshi 2014: geometric mean 116 mg/dL, 29.5 % at 150 or more). About 3 L of lymph a day flows back to the blood (OpenStax §21.1: 20 L leave the capillaries, 17 L are taken back): a caption, not a signal.
+
 ## Signals
 
 Every number the app shows is one of these IDs (`packages/engine/src/core/catalog.ts`). `simulate()` returns them as `signals` (ID → series, one value per minute) and `moments` (event ID → minute). The table is written by hand from the catalog; the catalog wins if they disagree.
@@ -257,6 +281,8 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `heart.output` | L/min | assumption | resting O2 ÷ 50 mL/L + 5.5 × extra O2 of moving + the gut's rise (circulation pack row) | OpenStax §19.4, Stringer 2005, Cook 2005, Eriksen 1994, Waaler 1991 |
 | `heart.rate`, `heart.strokeVolume` | beats/min, mL | assumption | SV 65 mL up to 1.4× with moving, and 73 % of a meal's rise; HR = CO ÷ SV, at most 191 | OpenStax §19.4, Higginbotham 1986, Kelbaek 1989 |
 | `blood.flow.gut`, `blood.flow.muscle` | mL/min | assumption | 24 % / 21 % of resting CO + the meal's rise / 90 % of the moving rise; in a bout the gut gives some to the muscles | OpenStax Table 20.3, Sieber 1992 |
+| `lymph.fatFlowRate` | g/min | assumption | the absorbed fat after a 30-min packing lag (lymph pack row, v3.1) | OpenStax §21.1 (identity: delivered ≤ absorbed) |
+| `blood.triglyceride` | mg/dL | assumption | 80 + the meal's fat in 29 dL of plasma, cleared with τ 10 min; no band (lymph pack row, v3.1) | Nordestgaard 2016, O'Doherty 2018, Liu 2022 |
 
 | Event | Meaning | Checked against |
 |---|---|---|
@@ -268,6 +294,7 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 | `event.bladderFirstUrge` | the bladder first holds 150 mL (kidneys pack, lazy) | OpenStax §25.2 |
 | `event.halfMealWaterPassed` | half the meal's water has left as urine (extra urine; kidneys pack, lazy) | Maughan 2016, Crowe 1987 |
 | `event.gutFlowPeak` | gut blood flow is highest after a meal (circulation pack, lazy row) | Waaler 1991 |
+| `event.triglyceridePeak` | blood fat is highest after a meal (none if it rises under 1 mg/dL; lymph pack, lazy) | Nordestgaard 2016, O'Doherty 2018 |
 
 "% of the meal in the stomach", "rise above fasting" and "where the meal is" are helpers computed from these (`core/derive.ts`), not IDs. `test/contract.test.ts` fails if an active ID has no golden test naming a source, and `test/regression.test.ts` pins today's numbers so the model cannot change by accident.
 
@@ -342,6 +369,12 @@ Every number the app shows is one of these IDs (`packages/engine/src/core/catalo
 52. Poole DC, Jones AM. Oxygen uptake kinetics. *Compr Physiol* 2012;2:933–996.
 53. Kelbaek H, Gjørup T, Christensen NJ, Munck O, Godtfredsen J. Central hemodynamic changes after ingestion of a meal in patients with coronary artery disease. *Arch Intern Med* 1989;149:363–365.
 54. Kelbaek H, Munck O, Christensen NJ, Godtfredsen J. Autonomic nervous control of postprandial hemodynamic changes at rest and upright exercise. *J Appl Physiol* 1987;63:1862–1865.
+55. OpenStax. *Anatomy and Physiology 2e*, ch. 18 (§18.1 An Overview of Blood). Rice University.
+56. OpenStax. *Anatomy and Physiology 2e*, ch. 21 (§21.1 Anatomy of the Lymphatic and Immune Systems). Rice University.
+57. Liu L, et al. Oral fat tolerance testing identifies abnormal pancreatic β-cell function and insulin resistance in individuals with normal glucose tolerance. *J Diabetes Investig* 2022;13:1805–1813.
+58. Nordestgaard BG, et al. Fasting is not routinely required for determination of a lipid profile: a joint consensus statement from the European Atherosclerosis Society and European Federation of Clinical Chemistry and Laboratory Medicine. *Eur Heart J* 2016;37:1944–1958.
+59. O'Doherty AF, et al. The repeatability of the abbreviated (4-h) Oral Fat Tolerance Test and influence of prior acute aerobic exercise. *Eur J Nutr* 2018;57:309–318.
+60. Joshi SR, et al. Prevalence of dyslipidemia in urban and rural India: the ICMR–INDIAB study. *PLoS One* 2014;9:e96808.
 
 The food data comes from:
 
