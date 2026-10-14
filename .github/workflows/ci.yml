@@ -137,6 +137,14 @@ jobs:
           (cd apps/web && npx vite preview --port 4392 --strictPort &)
           for i in $(seq 60); do curl -sf http://localhost:4391 >/dev/null && curl -sf http://localhost:4392 >/dev/null && break; sleep 1; done
           npm run cpu-ratio -w @lifepeek/web -- --base http://localhost:4391 --pr http://localhost:4392 --rounds 6 --ms 3000 --enforce
+      # The 3D layers (R104), base vs PR with each lit in the 3D body: software WebGL, one page at a
+      # time (--webgl is isolated). Report only: SwiftShader's frame times are noisier than the flat stage's.
+      - name: CPU ratio, 3D layers (report)
+        run: |
+          for layer in digestion breathing circulation kidneys; do
+            npm run cpu-ratio -w @lifepeek/web -- --base http://localhost:4391 --pr http://localhost:4392 --webgl --rounds 4 --ms 3000 \
+              --base-path "/sim?v=3&a=roti:1&act=walk.30.20&layer=$layer" --pr-path "/sim?v=3&a=roti:1&act=walk.30.20&layer=$layer"
+          done
 
   # WebKit and Firefox (qa-fixes §3.1): on main and nightly, report-only for their first week.
   engines:
