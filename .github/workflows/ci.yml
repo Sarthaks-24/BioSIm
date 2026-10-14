@@ -83,7 +83,7 @@ jobs:
         env:
           CI: 'true'
 
-  # The 30 fps report (6× CPU) and the absolute CPU per frame, alone on a runner.
+  # The engine's time gates (strict), the 30 fps report (6× CPU) and the absolute CPU per frame, alone on a runner.
   perf:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
@@ -94,6 +94,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # The engine's time gates at their real limits (R110): only here, alone on the runner. `npm test`
+      # (the check job, a laptop) runs them with wider limits, as other work shares its CPU.
+      - name: Engine time gates (strict)
+        run: npm run test:perf -w @lifepeek/engine
+        env:
+          ENGINE_PERF: strict
       - run: npx playwright install --with-deps chromium
       - name: fps and CPU per frame (report)
         run: npm run e2e -w @lifepeek/web -- --project=perf --no-deps
