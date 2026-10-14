@@ -547,7 +547,7 @@ const el = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, 
  * bottom left beside the body) and, with motion reduced, an arrow on each main vessel of both loops,
  * the way its blood goes. Moved with the picture each frame it draws.
  */
-function heartOverlay(host: HTMLElement, { reduced, t, register }: OverlayProps) {
+function heartOverlay(host: HTMLElement, { reduced, t, register, keepOut }: OverlayProps) {
   const key = document.createElement('div')
   key.dataset.bloodKey = ''
   key.className =
@@ -569,6 +569,13 @@ function heartOverlay(host: HTMLElement, { reduced, t, register }: OverlayProps)
   caption.textContent = t('sys.circulation.key.convention')
   key.append(row, caption)
   host.append(key)
+  // No organ label over the key (R107: "Vena cava" lay on it at 1280×800 in a long language): its
+  // box, with a little room, measured when it or the picture changes size.
+  const ro = new ResizeObserver(() =>
+    keepOut(key.offsetWidth ? { x: key.offsetLeft - 2, y: key.offsetTop - 2, w: key.offsetWidth + 4, h: key.offsetHeight + 4 } : null),
+  )
+  ro.observe(key)
+  ro.observe(host)
 
   const arrows = reduced ? VESSELS.filter((v) => v.arrow) : []
   const root = el('svg', { 'aria-hidden': 'true', class: 'pointer-events-none absolute inset-0 h-full w-full overflow-visible' })
@@ -608,6 +615,7 @@ function heartOverlay(host: HTMLElement, { reduced, t, register }: OverlayProps)
   })
   return () => {
     stop()
+    ro.disconnect()
     key.remove()
     root.remove()
   }

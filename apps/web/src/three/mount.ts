@@ -126,7 +126,7 @@ const bases = new Map<Tier, Base>()
 /** The base meshes for this tier: built once, kept for the visit (≈ 0.4 MB). */
 function base(tier: Tier): Base {
   let b = bases.get(tier)
-  if (!b) bases.set(tier, (b = { shell: buildShell(), particles: buildParticles(), pins: 0 }))
+  if (!b) bases.set(tier, (b = { shell: buildShell(tier), particles: buildParticles(), pins: 0 }))
   return b
 }
 

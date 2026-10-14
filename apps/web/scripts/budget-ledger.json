@@ -115,7 +115,7 @@
       {
         "wp": "A-0 + A-3 + A-5 + A-6 (3D)",
         "at": "2026-10-14",
-        "on": "v3 9943cfe (S-7) + wp/a6-kidneys3d (A-0 3D plumbing, A-3 lungs, A-5 heart, A-6 kidneys), merged: three/mount.ts and kit.ts in the first 3D view (259.7 -> 262.2 KB, enforced <= 270), breathing, circulation and kidneys 3D layers each a lazy chunk (6.3 / 7.4 / 6.9 KB); /sim 188.479 -> 188.674 (+0.195: BodyView hands the row's layer to the 3D body, the rhythm and rate hooks in flat/rate.ts, flat/rhythm.ts and the three rows' 3D layer names), engine 11.974 unchanged",
+        "on": "v3 9943cfe (S-7) + wp/a6-kidneys3d (A-0 3D plumbing, A-3 lungs, A-5 heart, A-6 kidneys), merged: three/mount.ts and kit.ts in the first 3D view (259.7 -> 262.2 KB, enforced <= 270), breathing, circulation and kidneys 3D layers each a lazy chunk (6.3 / 7.4 / 6.9 KB); /sim 188.479 -> 188.674 (+0.195, re-measured per file in FIX-31, R108: the clock group +0.094, the breathing, circulation and kidneys rows' lazy 3D layer loaders; the Simulator route +0.104, its packs' preload lists naming five shared lazy chunks the 3D layers split out (rate, drives, breathing, circulation, CountYoursButton) in place of one (rhythm), BodyView handing the row's layer to the 3D body, and geometryTier (+0.018) riding in /sim with three/quality.ts, which the flat body imports; digestion's pack +0.004, the app -0.007. The rate and rhythm code itself stays in lazy chunks), engine 11.974 unchanged",
         "simKB": 188.674,
         "engineKB": 11.974,
         "simRatchetKB": 188.874,

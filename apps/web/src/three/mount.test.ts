@@ -4,6 +4,7 @@ import { LayerCache, LRU_BYTES, geometryBytes, mountLayer, pinLayer, releaseLaye
 import { KIT_3D } from './kit.ts'
 import { LAYER_ATTRIBUTES, type Layer3d } from './layer.ts'
 import { DIGESTION_3D } from './layers/digestion.ts'
+import { buildShell } from './geometry.ts'
 
 /** A stand-in layer whose mesh is `vertices` points (A-0 3D: the cache is the same for every layer). */
 function fakeLayer(id: string, vertices = 10): Layer3d {
@@ -125,5 +126,14 @@ describe('digestion layer (A-0 3D: shared attributes, uFill[N])', () => {
     expect(key(mountLayer(fakeLayer('lungs'), 'high').tissue)).not.toBe(key(m.tissue))
     pinLayer(m)
     releaseLayer(m)
+  })
+
+  it('the 2 GB tier (R99) has half the sides round each part: about half the triangles, the same attributes', () => {
+    const tris = (g: BufferGeometry) => g.index!.count / 3
+    const low = DIGESTION_3D.build('low', KIT_3D)
+    expect(Object.keys(low.attributes).sort()).toEqual(Object.keys(geo.attributes).sort())
+    expect(tris(low) / tris(geo)).toBeGreaterThan(0.4)
+    expect(tris(low) / tris(geo)).toBeLessThan(0.55)
+    expect(tris(buildShell('low')) / tris(buildShell('high'))).toBeLessThan(0.5)
   })
 })

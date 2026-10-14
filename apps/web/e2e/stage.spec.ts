@@ -387,6 +387,23 @@ test('digestion, breathing, the heart and the kidneys swap their 3D layers in on
   expect(after.bytes).toBeLessThanOrEqual(4_000_000)
 })
 
+test('the 3D body on a 2 GB phone: the light digestion mesh and skin, half the sides round (R99), at most 50k triangles', async ({
+  page,
+}) => {
+  onlyIn('phone')
+  await page.addInitScript(() => Object.defineProperty(navigator, 'deviceMemory', { get: () => 2 }))
+  await page.addInitScript(() => localStorage.setItem('lifepeek:medicalNoteSeen', '1'))
+  await page.goto('/sim?v=3&a=roti:1&t=60')
+  await expect(page.locator('[data-body="3d"][data-layer="digestion"][data-ready]')).toBeVisible({ timeout: 30_000 })
+  await page.waitForTimeout(800)
+  expect((await gpu(page)).layers).toEqual(['low:digestion'])
+  // The lit layer is drawn twice (tissue, ink outline), the skin once, then the food: the high tier
+  // draws ≈ 89k (2 × 36.3k + 10.4k + 6.4k), the low one ≈ 47k (2 × 17.9k + 4.4k + 6.4k).
+  const gl = await rendered(page)
+  expect(gl.triangles).toBeLessThanOrEqual(50_000)
+  expect(gl.calls).toBeLessThanOrEqual(20)
+})
+
 test('no WebGL: breathing is drawn flat and its 3D layer never loads (R43)', async ({ page }) => {
   onlyIn('nowebgl')
   const loaded: string[] = []
