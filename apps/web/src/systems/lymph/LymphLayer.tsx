@@ -183,18 +183,10 @@ export function paintLymph(
     vessels.push([...along(curve, 0.93, 0.06, 40, inner), node(7, side)])
     vessels.push(along(curve, 0.78, 0.5, 12, (u) => legRadius(u) * side * (0.45 - 0.75 * ((0.78 - u) / 0.28))))
   }
-  for (const { side, parts } of limbs.arms) {
-    const pts =
-      limbs.band === 'rest'
-        ? along(base.ARM, 0.9, 0.16, 30).map(([x, y]) => [x * side, y] as Pt)
-        : parts
-            .flatMap(({ curve, range: [from, to] }) => {
-              // The stretch of ARM from the armpit (0.16) to the hand (0.9) that this part covers.
-              const a = Math.max(0.16, from)
-              const b = Math.min(0.9, to)
-              return b > a ? along(curve, (a - from) / (to - from), (b - from) / (to - from), 16) : []
-            })
-            .reverse()
+  for (const { side, curve } of limbs.arms) {
+    // A posed arm is one curve, shoulder (0) to fingertips (1) (U-1a): its vessel runs from the
+    // hand up to the armpit, as the resting arm's does along ARM.
+    const pts = limbs.band === 'rest' ? along(base.ARM, 0.9, 0.16, 30).map(([x, y]) => [x * side, y] as Pt) : along(curve, 0.9, 0.07, 30)
     vessels.push([...pts, node(2, side)])
   }
 
