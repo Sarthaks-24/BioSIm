@@ -1,7 +1,9 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useKeys } from '../../lib/keys.ts'
 import { useMotion } from '../../state/motion.ts'
+import { useRunStore } from '../../state/run.ts'
+import { DEFAULT_SYSTEM, systemOf, teacherSwitch } from '../../systems/registry.ts'
 import Sheet from './Sheet.tsx'
 
 /** The key map's rows, in the order of lib/keys.ts, each with what it does. */
@@ -28,6 +30,10 @@ const ROWS: readonly { keys: readonly string[]; what: string; letter?: boolean }
  *   and End keep working: a clicker needs them.
  * - Reduce motion (`lifepeek:reduceMotion`, state/motion.ts): follows the device until chosen
  *   here, since school computers rarely let pupils change the system setting.
+ * - Growing up (R-1, ui-ux §10): the teacher switch that adds the Reproduction row, off by default
+ *   and for this tab only (systems/registry.ts `teacherSwitch` says why). Listed only once that row
+ *   may be offered at all (public since R117, or a `?preview=1` session); switched off while lit,
+ *   the stage goes back to Digestion.
  * Opened with ? or the dock's settings button; downloaded the first time (pages/Simulator.tsx).
  */
 export default function KeysHelp() {
@@ -35,6 +41,15 @@ export default function KeysHelp() {
   const keysOff = useKeys((s) => s.off)
   const reduced = useMotion((s) => s.reduced)
   const choice = useMotion((s) => s.choice)
+  const preview = useRunStore((s) => s.preview)
+  const repro = systemOf('reproduction')
+  const [growingUp, setOn] = useState(teacherSwitch.on)
+  const switchGrowingUp = (on: boolean) => {
+    setGrowingUp(on)
+    setOn(on)
+    const { layer, setLayer } = useRunStore.getState()
+    if (!on && systemOf(layer)?.teacherSwitch) setLayer(DEFAULT_SYSTEM)
+  }
   return (
     <Sheet title={t('keys.title')}>
       <section aria-labelledby="keys-settings" className="flex flex-col gap-3">
@@ -57,6 +72,9 @@ export default function KeysHelp() {
           </button>
         )}
         <Switch on={!keysOff} onChange={(on) => useKeys.getState().setOff(!on)} label={t('keys.letters')} help={t('keys.lettersHelp')} />
+        {repro && (repro.public || preview) && (
+          <Switch on={growingUp} onChange={switchGrowingUp} label={t('keys.growingUp')} help={t('keys.growingUpHelp')} />
+        )}
       </section>
       {/* No key list on a touch screen (U10): it has no keys, and Reduce motion comes first there. */}
       <section aria-labelledby="keys-list" className="mt-4 border-t border-border pt-3 pointer-coarse:hidden">
@@ -88,6 +106,17 @@ export default function KeysHelp() {
       </section>
     </Sheet>
   )
+}
+
+/** Turns the teacher switch on or off for this tab (its state: systems/registry.ts `teacherSwitch`). */
+function setGrowingUp(on: boolean) {
+  teacherSwitch.on = on
+  try {
+    if (on) sessionStorage.setItem('lifepeek:growingUp', '1')
+    else sessionStorage.removeItem('lifepeek:growingUp')
+  } catch {
+    // Kept for this page only (a blocked browser): the switch still works until it is closed.
+  }
 }
 
 /** An on/off switch: its name, a line saying what it does, and the state in words and shape. */

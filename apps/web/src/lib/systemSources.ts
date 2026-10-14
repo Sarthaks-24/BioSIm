@@ -61,4 +61,7 @@ export const SYSTEM_SOURCES: { readonly [S in SystemId]?: readonly string[] } = 
     'jain2015',
     'isoardo2026',
   ],
+  // R-1: the panels' static data (systems/reproduction/data.ts REPRO_SOURCE_IDS; their citations load
+  // with Science only while the row is on: pages/Science.tsx).
+  reproduction: ['anckaert2021', 'ncert-9-exploration-11', 'ncert-8-ch7', 'ncert-10-ch7'],
 }

@@ -47,7 +47,8 @@
         "bones": "A drawing of the skeleton.",
         "skin": "Sweat made.",
         "nerves": "A hot pan: the reflex against the route through the brain, in thousandths of a second.",
-        "hormones": "Insulin after the meal, and what other hormones do."
+        "hormones": "Insulin after the meal, and what other hormones do.",
+        "reproduction": "Two book panels: hormones over one cycle, and how height grows."
       }
     }
   },
@@ -190,7 +191,8 @@
       "sweatRun": "Where does the heat of a run go?",
       "fatRoad": "How does fat reach the blood?",
       "reflexHotPan": "Why do you pull your hand back before you feel the pain?",
-      "insulinCola": "Who keeps blood sugar steady?"
+      "insulinCola": "Who keeps blood sugar steady?",
+      "cycleHormones": "Why does the lining of the uterus build up every month?"
     },
     "lessonNotes": {
       "colaFour": "What to see: both reach the same highest point, about 121 mg/dL, but after four colas blood sugar stays raised about 3 h 15 min longer."
@@ -223,7 +225,8 @@
       "sweatRun": "How much sweat does the skin make in the run, and how much at rest?",
       "fatRoad": "How high does blood fat go after a cheeseburger with fries, and after two rotis?",
       "reflexHotPan": "How many milliseconds does the reflex take, and the route through the brain?",
-      "insulinCola": "How high does insulin go after a glass of cola, and after a glass of water?"
+      "insulinCola": "How high does insulin go after a glass of cola, and after a glass of water?",
+      "cycleHormones": "Which hormone rises just before the egg is released, and which rises after it?"
     },
     "flagship": {
       "title": "One roti, one walk: what does every system do?",
@@ -1240,6 +1243,10 @@
     "hormones": {
       "name": "Hormones",
       "what": "pancreas"
+    },
+    "reproduction": {
+      "name": "Reproduction",
+      "what": "panels"
     }
   },
   "lifeProcess": {
@@ -1437,7 +1444,9 @@
     "offNote": "off",
     "typing": "Keys typed in a search box or a form are never taken as shortcuts.",
     "systems": "Previous or next body system",
-    "picker": "Pick a body system"
+    "picker": "Pick a body system",
+    "growingUp": "Growing up (Classes 8 to 10)",
+    "growingUpHelp": "Adds a last row, Reproduction, with two panels from the books: hormones over one cycle, and how height grows. The teacher chooses when to show it. It turns off again when this tab is closed."
   },
   "update": {
     "ready": "A new version of LifePeek is ready.",
@@ -2091,6 +2100,55 @@
         },
         "ask": "Hours after a meal, blood sugar is back near 90 mg/dL. What brought it down?"
       }
+    },
+    "reproduction": {
+      "now": "Two panels from the books, beside the body: nothing is drawn on the body. A different clock: days of a cycle, not the meal clock.",
+      "panels": "Reproduction panels",
+      "cycle": {
+        "title": "Hormones over one cycle",
+        "days": "Days of the cycle",
+        "day": "Day {{n}}",
+        "high": "High",
+        "low": "Low",
+        "estrogen": "Estrogen",
+        "lh": "LH",
+        "progesterone": "Progesterone",
+        "lhWho": "LH comes from the pituitary; estrogen and progesterone from the ovary.",
+        "menstruation": "Days 1–5: menstruation (the book's diagram)",
+        "egg": "Day 14: an egg is released (ovulation)",
+        "alt": "Estrogen rises to its highest around day 14, falls, then rises a little again around day 22. LH rises sharply to its highest on day 14 and is back down within a few days. Progesterone stays low until day 14, rises to its highest around day 22, and falls before the next cycle.",
+        "differ": "Cycles differ: NCERT Class 9 says 21–35 days, often about 28. Menstruation usually lasts 3 to 7 days.",
+        "relative": "Each line is drawn against its own highest level. The three are measured in different units, so compare when they rise and fall, not how tall the lines are.",
+        "clock": "The meal clock does not move these panels.",
+        "study": "The points are middle values from a study of 85 women (Anckaert and others, 2021), moved from their 29-day cycle (egg on day 15) to the book's 28 days (egg on day 14). The line between the points is drawn.",
+        "tableTitle": "As a table",
+        "phase": "Part of the cycle",
+        "around": "Around day {{n}}",
+        "share": "{{pct}} %",
+        "shareNote": "Each number is a share of that hormone's own highest level.",
+        "phases": {
+          "follicularEarly": "Early, before the egg",
+          "follicularMid": "Middle, before the egg",
+          "follicularLate": "Late, before the egg",
+          "ovulation": "Egg released",
+          "lutealEarly": "Early, after the egg",
+          "lutealMid": "Middle, after the egg",
+          "lutealLate": "Late, after the egg"
+        },
+        "under1": "under 1 %"
+      },
+      "height": {
+        "title": "How height grows",
+        "caption": "Share of full height reached at each age (older NCERT Class 8 book, 2024-25)",
+        "age": "Age (years)",
+        "boys": "Boys",
+        "girls": "Girls",
+        "pct": "{{pct}} %",
+        "example": "The book's example: a boy is 9 years old and 120 cm tall. At 9, boys have reached 75 % of their full height, so 120 × 100 ÷ 75 = {{cm}} cm.",
+        "vary": "The book says these figures are only representative, and there may be individual variations."
+      },
+      "sourcesTitle": "Sources",
+      "book": "From the book"
     }
   },
   "picker": {
@@ -2104,7 +2162,8 @@
       "football": "playing football",
       "cricket": "playing cricket",
       "badminton": "playing badminton"
-    }
+    },
+    "switchOn": "Teacher switch: on"
   },
   "count": {
     "open": "Count yours",

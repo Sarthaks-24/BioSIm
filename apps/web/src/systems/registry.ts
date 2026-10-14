@@ -25,6 +25,7 @@ import { LYMPH } from './lymph/def.ts'
 import { HORMONES } from './hormones/row.ts'
 import { BONES, MUSCLES, SKIN } from './muscles/row.ts'
 import { NERVES } from './nerves/row.ts'
+import { REPRODUCTION } from './reproduction/row.ts'
 
 /**
  * The systems registry (W-1, architecture §0, §5.1 and §5.2): every body system the stage can
@@ -176,7 +177,7 @@ export interface SystemUi {
  */
 export interface SystemLesson {
   key: string
-  release: 'v3.0' | 'v3.1'
+  release: 'v3.0' | 'v3.1' | 'v3.2'
   layer: SystemId
   slot: SlotId
   meal: MealItem[]
@@ -211,9 +212,11 @@ export interface SystemDef {
   /**
    * How the system is drawn. 'body': the organism's own body draws it (digestion). 'layer': a flat
    * layer over the base body, from its pack's drawing module (systems/load.ts `PackDef.drawing`), which
-   * loads with the pack when the system is first lit (A-0 flat registry; R71, R74).
+   * loads with the pack when the system is first lit (A-0 flat registry; R71, R74). 'panels': nothing
+   * is drawn on the body, which stands plain; the system is its panels in the graph column
+   * (reproduction, anatomy plan D6: "never on the body").
    */
-  draw: 'body' | 'layer'
+  draw: 'body' | 'layer' | 'panels'
   /**
    * Its 3D layer (v3.1+, optional per system: R43): a lazy chunk of ≤ 20 KB gz (three/layers/<id>.ts),
    * mounted by the 3D body in place of the last one (three/mount.ts). Without one the system is drawn
@@ -234,7 +237,7 @@ export interface SystemDef {
    * a drawing-only row may be public with empty `slots` (R11). Hidden rows open only with `?preview=1`.
    */
   public: boolean
-  /** Shown only when a teacher switches it on (reproduction, v3.2+). */
+  /** Shown only when a teacher switches it on (reproduction, v3.2+): `teacherSwitch`. */
   teacherSwitch?: boolean
   /**
    * A row with no graphs: the tag the picker shows for it. Without one a row with no inputs is
@@ -249,7 +252,19 @@ export interface SystemDef {
  * the title and the picker need them); its graphs, rhythms and limits arrive with its pack
  * (systems/load.ts), so the first download carries none of its signal IDs (check-budget's guard).
  */
-export const SYSTEMS: readonly SystemDef[] = [DIGESTION, BREATHING, CIRCULATION, KIDNEYS, LYMPH, NERVES, HORMONES, MUSCLES, BONES, SKIN]
+export const SYSTEMS: readonly SystemDef[] = [
+  DIGESTION,
+  BREATHING,
+  CIRCULATION,
+  KIDNEYS,
+  LYMPH,
+  NERVES,
+  HORMONES,
+  MUSCLES,
+  BONES,
+  SKIN,
+  REPRODUCTION,
+]
 
 export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTEMS.find((s) => s.id === id)
 
@@ -257,6 +272,24 @@ export const systemOf = (id: string | undefined): SystemDef | undefined => SYSTE
 export const DEFAULT_SYSTEM: SystemId = 'digestion'
 
 const isPublic = (id: SystemId) => !!systemOf(id)?.public
+
+/**
+ * The teacher switch "Growing up" (R-1; ui-ux §10, model §2.12): whether this tab offers the rows
+ * behind it (reproduction). Off by default, and for this tab only (sessionStorage
+ * `lifepeek:growingUp`, written by the settings sheet: components/stage/KeysHelp.tsx): a shared
+ * class computer forgets it when the tab is closed (council: a per-device setting would stay on for
+ * the next class). No link carries it: a shared link opens without the row (its note says so)
+ * unless whoever opens it has switched it on, so a student's device never turns it on by itself.
+ */
+export const teacherSwitch = { on: false }
+try {
+  teacherSwitch.on = sessionStorage.getItem('lifepeek:growingUp') === '1'
+} catch {
+  // No storage (a locked-down browser, or a test): off, as by default.
+}
+
+/** Whether this session offers a row: public, or a preview's; behind the teacher switch, only while it is on. */
+const offered = (s: SystemDef, preview: boolean) => (s.public || preview) && (!s.teacherSwitch || teacherSwitch.on)
 
 /**
  * The system a link with no `layer` opens: Heart & blood when it carries activity (R39), once that
@@ -273,7 +306,7 @@ export const defaultSystemFor = (activity: readonly ActivityBout[], preview = fa
  */
 export function systemForLink(asked: string | undefined, activity: readonly ActivityBout[], preview: boolean): SystemId {
   const s = systemOf(asked)
-  return s && (s.public || preview) ? s.id : defaultSystemFor(activity, preview)
+  return s && offered(s, preview) ? s.id : defaultSystemFor(activity, preview)
 }
 
 /** One catalog row as a pack registers it (a pack's moments too: Heart & blood's gut-flow peak). */
@@ -304,9 +337,10 @@ export const rowsOf = (pack: PackId): ReadonlySet<CatalogId> => REGISTERED.get(p
 
 /**
  * The rows the picker offers: the public ones, and in a preview session (`?preview=1`) the built
- * hidden ones too, so a preview can switch between them (architecture §5.2; never linked by the app).
+ * hidden ones too, so a preview can switch between them (architecture §5.2; never linked by the app);
+ * a row behind the teacher switch only while it is on. Home, Science and Teach list these too.
  */
-export const pickerSystems = (preview: boolean): SystemDef[] => SYSTEMS.filter((s) => s.public || preview)
+export const pickerSystems = (preview: boolean): SystemDef[] => SYSTEMS.filter((s) => offered(s, preview))
 
 /** The picker's row before (−1) or after (+1) the lit one, round the list (`‹ ›`, keys [ and ]; ui-ux §3.2). */
 export function stepSystem(lit: SystemId, preview: boolean, dir: 1 | -1): SystemId {

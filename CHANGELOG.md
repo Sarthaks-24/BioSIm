@@ -19,11 +19,25 @@ All notable changes to LifePeek. Data corrections are listed here so teachers ca
   whatever the pose.
 - Graph sentences now read "Fastest while running" (was "Fastest during the run"), so they fit
   every activity.
+- **Reproduction, behind a teacher switch**: Settings has "Growing up (Classes 8 to 10)", off by
+  default and only for the open tab (it turns off when the tab is closed; no link turns it on).
+  When a teacher switches it on, a last row, Reproduction, shows two panels beside the body (nothing
+  is drawn on the body): three hormones (estrogen, LH, progesterone) over one 28-day cycle, each
+  from low to its own highest, and the older NCERT Class 8 height table with its example (a boy of
+  9 years and 120 cm: 160 cm). The hormone points are middle values from a study of 85 women
+  (Anckaert and others, 2021), moved from their 29-day cycle to the book's 28 days with the egg on
+  day 14 (NCERT Class 9: cycles of 21–35 days, often about 28). Switched off, the row is in no
+  list, on Home, on Science or in a link. These are fixed pictures, not model output: version 3's
+  numbers do not change.
 
 Known limits:
 
 - Sitting in class and the three games have no pose of their own yet.
 - The ready plans are still the three walks and runs.
+- Reproduction shows the book's typical cycle only: no dates, no tracker and no way to enter
+  anyone's own cycle or height, by design. The line between the study's points is drawn, and the
+  three hormones are not on one scale. Its lesson ("Why does the lining of the uterus build up
+  every month?") is not listed on Teach yet.
 
 ## 3.1.0 (unreleased)
 

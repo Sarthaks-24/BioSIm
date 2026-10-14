@@ -8,6 +8,7 @@ import { LESSONS } from './presets.ts'
 import { SYSTEM_SOURCES } from './systemSources.ts'
 import { REFERENCES } from './references.ts'
 import { SHEETS, type SheetKey } from './worksheets.ts'
+import { REPRO_SOURCE_IDS } from '../systems/reproduction/data.ts'
 
 describe('Teach by NCERT chapter (X-1, R15)', () => {
   it('Class 10’s Life Processes in its order, then Control and coordination (v3.1), then moving and body heat; every v2 lesson stays under Nutrition', () => {
@@ -106,7 +107,8 @@ describe('Science: each system’s sources are its catalog rows’ (X-1, no new 
   })
 
   it('every one is in the page’s reference list (its anchor)', () => {
-    const ids = new Set(REFERENCES.map((r) => r.id))
+    // Reproduction's (R-1) join the list with its data, while its row is on (pages/Science.tsx).
+    const ids = new Set([...REFERENCES.map((r) => r.id), ...REPRO_SOURCE_IDS])
     for (const list of Object.values(SYSTEM_SOURCES)) for (const id of list) expect(ids.has(id), id).toBe(true)
   })
 })

@@ -22,7 +22,8 @@ const bodyCanvas = lazyWithRetry<ComponentProps<typeof BodyCanvasType>>(() => im
  * `sim` is the stage's current run: its signal table is what the bodies read through `valueAt`.
  * `band`: the activity band at this minute (lib/bouts.ts): the flat body's still pose (A-0).
  * A lit system with no 3D layer (every new system in v3.0, flat first: R43) is drawn flat on every
- * device, with no note: that is its picture, not a stand-in.
+ * device, with no note: that is its picture, not a stand-in. So is a panels row's plain body
+ * (reproduction: nothing on the body, R-1).
  */
 export default function BodyView({ sim, label, band }: { sim: RunResult; label: string; band?: ActivityBand }) {
   const [lost, setLost] = useState(false)
@@ -40,7 +41,7 @@ export default function BodyView({ sim, label, band }: { sim: RunResult; label: 
   )
   const BodyCanvas = bodyCanvas.Component
   const body =
-    system?.draw === 'layer' && !system.layer3d ? (
+    system && system.draw !== 'body' && !system.layer3d ? (
       <FlatBody sim={sim} label={label} band={band} system={system} layer={layer} final />
     ) : !hasWebGL() || lost ? (
       fallback('webgl')

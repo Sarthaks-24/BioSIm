@@ -156,6 +156,15 @@
         "engineKB": 12.47,
         "simRatchetKB": 189.498,
         "simEngineRatchetKB": 202.068
+      },
+      {
+        "wp": "R-1 + K-1 (merged)",
+        "at": "2026-10-14",
+        "on": "v3 284875d (T31 + K-1, /sim 189.298 measured on K-1) + R-1, measured after the merge: R-1 alone on a1e66ad + R115 measured /sim 189.182 -> 189.387 (+0.205: Reproduction's row in the clock chunk group, the teacher switch's sessionStorage read (its setter is in the lazy settings sheet), the row filter for picker, links, Home and Science, the reproduction pack's loader entry, the panels draw kind in BodyView, its name in the core text; panels, static data (Anckaert 2021 medians, NCERT height table), words and lesson stub are the lazy reproduction pack, 7.6 KB gz). Together K-1 (+0.116) and R-1 (+0.205) measure /sim 189.182 -> 189.490 (+0.308, gzip shares some of the two), engine 12.470 -> 12.471 (chunk names only).",
+        "simKB": 189.49,
+        "engineKB": 12.471,
+        "simRatchetKB": 189.69,
+        "simEngineRatchetKB": 202.261
       }
     ]
   },

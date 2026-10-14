@@ -113,6 +113,30 @@ const BANNED_EN = [
   'pee',
   'normal for you',
   'your heart rate is',
+  // Reproduction (R-1, model §2.12, content-i18n §6): the panels show the books' typical cycle, never
+  // a tracker, a fertile window, a prediction or anyone's own cycle, and no shame words (above).
+  'fertile window',
+  'fertile days',
+  'fertility window',
+  'fertility awareness',
+  'period tracker',
+  'cycle tracker',
+  'period app',
+  'track your period',
+  'track your cycle',
+  'safe days',
+  'safe period',
+  'unsafe days',
+  'ovulation calculator',
+  'ovulation predictor',
+  'period calculator',
+  'due date',
+  'your cycle',
+  'your period',
+  'your next period',
+  'your periods',
+  'your ovulation',
+  'next period',
 ]
 
 /**
@@ -124,6 +148,12 @@ const SCOPED: readonly { phrase: string; allowed: (path: string) => boolean }[] 
   { phrase: 'dehydrat*', allowed: (path) => path.startsWith('science.') || /(^|\.)limits\./.test(path) },
   // U-4: the kidneys' graph and moment texts too (their keys are fixed by the engine's catalog).
   { phrase: 'flush', allowed: (path) => !/^(sys\.kidneys|signals\.kidney|signals\.water)\./.test(path) },
+  // R-1: in Reproduction's words (its pack and its lesson), nothing that tracks, predicts or dates a
+  // cycle, and no fertility at all ("tracker" stays allowed in the privacy page's "any other tracker").
+  ...['fertil*', 'track*', 'predict*', 'calculat*', 'calendar*', 'date', 'dates', 'safe', 'unsafe', 'remind*'].map((phrase) => ({
+    phrase,
+    allowed: (path: string) => !/^(sys\.reproduction\.|teach\.(lessons|lessonQuestions)\.cycleHormones$|keys\.growingUp)/.test(path),
+  })),
 ]
 
 /**
@@ -329,6 +359,34 @@ describe('framing lint: stems, scoped words and the activity rule (content-i18n 
       'test › c',
       'test › d',
       'test › e',
+    ])
+  })
+
+  it('would catch a tracker, fertility or own-cycle word (R-1, model §2.12); the reproduction pack’s own lines pass', () => {
+    const planted: [string, string][] = [
+      ['a', 'Know your fertile window'],
+      ['b', 'Use a period tracker'],
+      ['c', 'Your next period comes on day 28'],
+      ['d', 'These are the safe days'],
+      ['sys.reproduction.x', 'Track the days'],
+      ['sys.reproduction.y', 'We predict the day'],
+      ['sys.reproduction.z', 'Fertility is highest here'],
+      ['privacy.analytics', 'We do not use any other tracker.'],
+      ...Object.entries(en.sys.reproduction.cycle)
+        .filter((e): e is [string, string] => typeof e[1] === 'string')
+        .map(([k, v]) => [`sys.reproduction.cycle.${k}`, v] as [string, string]),
+      ['sys.reproduction.height.example', en.sys.reproduction.height.example],
+    ]
+    expect([...new Set(findBanned('test', planted, ALL).map((hit) => hit.split(':')[0]))]).toEqual([
+      'test › a',
+      'test › b',
+      'test › c',
+      'test › d',
+    ])
+    expect([...new Set(findScoped('test', planted).map((hit) => hit.split(':')[0]))].sort()).toEqual([
+      'test › sys.reproduction.x',
+      'test › sys.reproduction.y',
+      'test › sys.reproduction.z',
     ])
   })
 })
