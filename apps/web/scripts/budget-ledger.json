@@ -66,6 +66,15 @@
         "engineKB": 10.684,
         "simRatchetKB": 188.062,
         "simEngineRatchetKB": 198.846
+      },
+      {
+        "wp": "X-1",
+        "at": "2026-10-14",
+        "on": "v3 ce63198 + X-1: the guided lesson's stage half (the lesson store, the lazy bar's slot in the Now line's place with its load boundary, the stage reading the lesson link's history state, a lit system's asked-for graph: stripTab `next`); the bar, its words and pauses, Home's lesson card and systems list, Teach's chapters and Science's per-system sources are all outside /sim: /sim 187.862 → 188.149 (+0.287), engine 10.684",
+        "simKB": 188.149,
+        "engineKB": 10.684,
+        "simRatchetKB": 188.349,
+        "simEngineRatchetKB": 199.133
       }
     ]
   },

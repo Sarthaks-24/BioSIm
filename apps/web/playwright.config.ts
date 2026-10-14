@@ -46,6 +46,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'effort.spec.ts',
       'count.spec.ts',
       'kidneys.spec.ts',
+      'flagship.spec.ts',
     ],
     use: { viewport: desktop, launchOptions: webgl },
   },
@@ -67,6 +68,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'effort.spec.ts',
       'count.spec.ts',
       'kidneys.spec.ts',
+      'flagship.spec.ts',
     ],
     use: {
       viewport: { width: 1280, height: 800 },
@@ -94,6 +96,7 @@ const projects: PlaywrightTestConfig['projects'] = [
       'effort.spec.ts',
       'count.spec.ts',
       'kidneys.spec.ts',
+      'flagship.spec.ts',
     ],
     use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, launchOptions: webgl },
   },

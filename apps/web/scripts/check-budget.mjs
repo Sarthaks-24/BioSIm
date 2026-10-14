@@ -189,6 +189,13 @@
 //   arm (R89; the arm test is in the legs' chunk): /sim 186.876 → 187.153 KB on v3 6201885 (+0.28),
 //   /sim + engine 197.815 KB. The pack takes its rows from the run chunk (a copy split them out of it:
 //   +0.3 KB measured). Effort pack 13.5 KB gz (its entry with texts 16.3 KB).
+//   X-1 (2026-10-14, branch v3): the flagship guided lesson. Its bar (components/LessonBar.tsx, with its
+//   words and pauses), Home's lesson card and systems list (components/HomeLesson.tsx, loaded after
+//   Home's first paint) and Teach's lessons by chapter are lazy; the stage keeps only the lesson store,
+//   the bar's slot and the asked-for graph of a lit system: /sim 187.862 → 188.149 KB (+0.287), Home
+//   144.6 → 145.0 KB. The bundler split the codec's meal and activity modules out of the entry when a
+//   lazy chunk imported the codec without lib/presets.ts (+1.3 KB measured): the lesson's link goes
+//   through presetHref (lib/flagship.ts).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
