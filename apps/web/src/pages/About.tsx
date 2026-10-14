@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import RichText from '../components/RichText.tsx'
 import { MAKER } from '../lib/credits.ts'
-import { REPO_URL } from '../lib/site.ts'
+import { REPO_URL, SITE_URL } from '../lib/site.ts'
 import { addEnglish } from '../i18n/index.ts'
 import aboutText from 'virtual:lifepeek-en/about'
 import feedbackText from 'virtual:lifepeek-en/feedback'
@@ -28,7 +28,11 @@ export default function About() {
 
   const licences: { text: string; href: string; label: string }[] = [
     { text: t('about.licenceCode'), href: file('LICENSE'), label: 'LICENSE' },
-    { text: t('about.licenceContent', { name: MAKER.name }), href: file('LICENSE-CONTENT.md'), label: 'LICENSE-CONTENT.md' },
+    {
+      text: t('about.licenceContent', { name: MAKER.name, site: SITE_URL }),
+      href: file('LICENSE-CONTENT.md'),
+      label: 'LICENSE-CONTENT.md',
+    },
     { text: t('about.licenceData'), href: file('DATA-SOURCES.md'), label: 'DATA-SOURCES.md' },
     { text: t('about.licenceName'), href: file('TRADEMARKS.md'), label: 'TRADEMARKS.md' },
   ]

@@ -137,13 +137,26 @@
 //   a5988f0); the cap 2600 → 1300 KB (a ratchet). Tier checks and each pack ≤ 20 / 70 KB are
 //   enforced; the lazy total is a report. The lazy-chunk check counts the lazy tier as offline.
 //   "reactsToMeal" (a catalog row's field) joins the engine-not-in-/sim guard.
+//   T12 (2026-10-14): load on demand, small cache (R71). The precache is the core only
+//   (scripts/cache-tiers.mjs): 47 entries / 1777.6 KB → 35 / 756.4 KB raw; the 3D body, the
+//   stage's on-use parts, the "new version" note and the latin-ext fonts are cached on first use
+//   (lp-lazy, 1040 KB). The precache cap goes 2600 → 1300 KB, a ratchet that only moves down, and
+//   "every lazy chunk is precached" becomes: every core file is precached, no lazy file is, nothing
+//   else hashed is. The lazy total is reported. With T12a's build the bundler moved react-router's
+//   hooks chunk into the entry (/sim 187.998 → 186.851 KB); the 3D body's slow, offline and failed
+//   notes and its Try again (R71) took it back up: /sim 187.998 → 187.321 KB on main 1c1bbd5 (−0.68).
+//   Merge of main adc6381 (T12) into v3 (2026-10-14): one caching implementation. scripts/cache-tiers.mjs
+//   is the one tier source (main's core/lazy split with v3's packs: the engine and digestion's pack
+//   join the core; every other pack, the 3D body, the stage's on-use parts, the update note and the
+//   latin-ext fonts are lazy) and scripts/cache-policy.mjs the one Workbox config; pack-manifest.mjs
+//   went into cache-tiers.mjs. v3's guards and main's precache-is-the-core check are kept.
 //   Home's 120 KB stays the goal (report): React, the router and i18next alone are about 100 KB, and
 //   every page shares one entry chunk with the stage's first-paint code (Layout, the English core text).
 import fs from 'node:fs'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
-import { ENGINE, PACK_SYSTEMS, SIM_ROOTS, packManifest, staticFiles as manifestFiles, tierProblems } from './pack-manifest.mjs'
+import { ENGINE, PACK_SYSTEMS, SIM_ROOTS, packManifest, staticFiles as manifestFiles, tierProblems, tiersOf } from './cache-tiers.mjs'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const KB = 1000
@@ -163,9 +176,12 @@ const BUDGETS = [
     max: 270 * KB,
     mode: 'enforce',
   },
-  // 1300 from W-1 (R71: only the core at install; the 3D body and the packs load on first use). It
-  // only goes down (a ratchet); a raise needs an explicit ruling (R74), written in the history above.
+  // 1300 since W-1 / T12d (R71: only the core at install; the 3D body, the stage's on-use parts and
+  // the other packs load on first use). It only goes down (a ratchet); a raise needs an explicit
+  // ruling (R74), written in the history above.
   { name: 'precache (raw)', precache: true, max: 1300 * KB, mode: 'enforce' },
+  // What loads on first use (lp-lazy): reported, not capped (R71).
+  { name: 'lazy total (raw)', lazyTotal: true, max: Infinity, mode: 'report' },
   // The engine (E-2): loaded with a plain import() when /sim mounts, on top of /sim's first download.
   { name: 'engine (lazy)', roots: [ENGINE], minus: SIM_ROOTS, max: 45 * KB, mode: 'report' },
 ]
@@ -199,9 +215,12 @@ function precacheFiles() {
   return [...new Set([...sw.matchAll(/url:"([^"]+)"/g)].map((m) => m[1]))]
 }
 
+const tiers = tiersOf(dist)
+
 const rows = BUDGETS.map((b) => {
   let bytes
   if (b.precache) bytes = precacheFiles().reduce((sum, f) => sum + size(f), 0)
+  else if (b.lazyTotal) bytes = [...tiers.lazy].reduce((sum, f) => sum + size(f), 0)
   else {
     const already = new Set(b.minus ? staticFiles(b.minus) : [])
     bytes = staticFiles(b.roots)
@@ -212,7 +231,7 @@ const rows = BUDGETS.map((b) => {
   return { ...b, bytes, over, failed: over && b.mode === 'enforce' }
 })
 
-const kb = (n) => `${(n / KB).toFixed(1)} KB`
+const kb = (n) => (n === Infinity ? '–' : `${(n / KB).toFixed(1)} KB`)
 const pad = (s, n) => String(s).padEnd(n)
 console.log(`${pad('Budget', 18)}${pad('Size', 12)}${pad('Max', 12)}${pad('Mode', 9)}Result`)
 for (const r of rows) {
@@ -253,48 +272,51 @@ let trackAOver = false
 }
 
 // Every lazy chunk works offline (plan qa-fixes §3.2, as R71 changed it): precached at install, or
-// in the pack-manifest's lazy tier, which the service worker keeps on first use ("lp-lazy").
-// Enforced since T10 (FP-9).
+// in the lazy tier, which the service worker keeps on first use ("lp-lazy"). Enforced since T10 (FP-9).
 let unprecached = 0
 {
   const precached = new Set(precacheFiles())
-  const lazyTier = new Set(packManifest(manifest).lazy.map((u) => u.slice(1)))
   const lazy = new Set()
   for (const chunk of Object.values(manifest)) for (const key of chunk.dynamicImports ?? []) if (manifest[key]) lazy.add(manifest[key].file)
-  const missing = [...lazy].filter((f) => !precached.has(f) && !lazyTier.has(f))
+  const missing = [...lazy].filter((f) => !precached.has(f) && !tiers.lazy.has(f))
   unprecached = missing.length
   console.log(
     `\nLazy chunks offline (precached or lazy tier): ${lazy.size - missing.length} of ${lazy.size}${missing.length ? ` (FAILS; neither: ${missing.join(', ')})` : ' ok'}`,
   )
 }
 
-// Tiers (W-1, R71 "load on demand, small cache"): dist/pack-manifest.json splits the files the stage
-// loads after its first paint into the precache tier (the engine, digestion's pack: a cold offline
-// start of the core simulator) and the lazy tier (the 3D body, every other pack, Hindi), which the
-// service worker keeps on first use. Enforced: every precache entry precached, nothing in both
-// tiers, every lazy URL saveable; each pack at most 20 KB gz / 70 KB raw. The lazy total is a report.
+// Tiers (R71 "load on demand, small cache"; scripts/cache-tiers.mjs, one source for main's T12d and
+// v3's W-1): the precache is the core tier exactly (the shell, every page, the engine and
+// digestion's pack: a cold offline start of the core simulator), and the lazy tier (the 3D body,
+// the stage's on-use parts, the update note, latin-ext fonts, every other pack, Hindi) is kept by
+// the service worker on first use. Enforced: every core file precached, no lazy or untiered hashed
+// file precached, nothing in both tiers, every lazy file saveable, dist/pack-manifest.json matches
+// this build; each system pack at most 20 KB gz / 70 KB raw. The lazy total is a report.
 const packProblems = []
 {
-  const packs = packManifest(manifest)
+  const precached = precacheFiles()
   const file = path.join(dist, 'pack-manifest.json')
   if (!fs.existsSync(file)) packProblems.push('dist/pack-manifest.json is missing (vite.config.ts writes it)')
-  else if (JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))) !== JSON.stringify(packs))
+  else if (JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))) !== JSON.stringify(packManifest(tiers)))
     packProblems.push('dist/pack-manifest.json does not match this build')
-  packProblems.push(...tierProblems(packs, precacheFiles(), (url) => fs.existsSync(path.join(dist, url))))
+  packProblems.push(...tierProblems(tiers, precached, (f) => fs.existsSync(path.join(dist, f))))
   const sizes = (files) => [files.reduce((n, f) => n + gzip(f), 0), files.reduce((n, f) => n + size(f), 0)]
-  console.log('\nTiers (pack-manifest.json; gz / raw; a pack at most 20 / 70 KB, enforce)')
-  for (const [id, e] of Object.entries(packs.entries)) {
+  console.log(
+    `\nPrecache: ${precached.length} files, the core's ${[...tiers.core].filter((f) => precached.includes(f)).length} of ${tiers.core.size}; lazy (lp-lazy): ${tiers.lazy.size} files.`,
+  )
+  console.log('Lazy entries (pack-manifest.json; gz / raw; a system pack at most 20 / 70 KB, enforce)')
+  for (const [id, e] of Object.entries(tiers.packs)) {
     const [gz, raw] = sizes(e.files)
-    const pack = id in PACK_SYSTEMS && id !== 'core'
+    const pack = id in PACK_SYSTEMS
     const over = pack && (gz > 20 * KB || raw > 70 * KB)
     if (over) packProblems.push(`pack ${id} is ${kb(gz)} gz / ${kb(raw)} raw, over 20 / 70 KB`)
-    console.log(`${pad(id, 14)}${pad(e.tier, 10)}${pad(kb(gz), 10)}${pad(kb(raw), 10)}${over ? 'OVER (fails)' : pack ? 'ok' : ''}`)
+    console.log(`${pad(id, 14)}${pad(kb(gz), 10)}${pad(kb(raw), 10)}${over ? 'OVER (fails)' : pack ? 'ok' : ''}`)
   }
-  const unbuilt = Object.keys(PACK_SYSTEMS).filter((id) => id !== 'core' && !packs.entries[id])
+  const unbuilt = Object.keys(PACK_SYSTEMS).filter((id) => id !== 'core' && !tiers.packs[id])
   if (unbuilt.length) console.log(`${pad('not built yet', 14)}${unbuilt.join(', ')}`)
-  const [lgz, lraw] = sizes(packs.lazy.map((u) => u.slice(1)))
+  const [lgz, lraw] = sizes([...tiers.lazy])
   console.log(
-    `${pad('lazy total', 24)}${pad(kb(lgz), 10)}${pad(kb(lraw), 10)}report: what a device fetches only when a part is first opened`,
+    `${pad('lazy total', 14)}${pad(kb(lgz), 10)}${pad(kb(lraw), 10)}report: what a device fetches only when a part is first opened`,
   )
   console.log(`Tier checks (enforce): ${packProblems.length ? 'FAILS' : 'ok'}`)
 }
@@ -332,7 +354,7 @@ const guardProblems = []
 }
 
 if (packProblems.length) {
-  console.error(`\nThe tier check failed:\n  ${packProblems.join('\n  ')}\nSee apps/web/scripts/pack-manifest.mjs.`)
+  console.error(`\nThe tier check failed:\n  ${packProblems.join('\n  ')}\nSee apps/web/scripts/cache-tiers.mjs.`)
   process.exit(1)
 }
 

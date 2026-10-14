@@ -2,22 +2,26 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import fs from 'node:fs'
-import path from 'node:path'
 import i18nSections from './scripts/i18n-sections.mjs'
+import prerenderHead from './scripts/prerender-head.mjs'
+import cacheTiersPlugin from './scripts/cache-tiers.mjs'
 import { workboxPolicy } from './scripts/cache-policy.mjs'
-import { packManifest } from './scripts/pack-manifest.mjs'
+import { siteUrl } from './scripts/site-url.mjs'
 
 /**
  * Hindi is in this build (R47: paused unless VITE_HINDI=1), read as import.meta.env reads it. Without
  * it the app never loads Hindi's font (i18n/index.ts), and its files are kept out of the precache too.
  */
-const HINDI = loadEnv('production', process.cwd(), 'VITE_').VITE_HINDI === '1'
+const ENV = loadEnv('production', process.cwd(), 'VITE_')
+const HINDI = ENV.VITE_HINDI === '1'
 
-/** The pack-manifest's lazy tier (URLs), known once the bundle is written: kept out of the precache. */
-const LAZY = new Set<string>()
-/** The caching policy (R71, scripts/cache-policy.mjs); its globIgnores get the lazy tier's files too. */
-const WORKBOX = workboxPolicy({ hindi: HINDI, lazy: LAZY })
+/** The production address, the one build constant (scripts/site-url.mjs): VITE_SITE_URL or the planned name. */
+const SITE_URL = siteUrl(ENV.VITE_SITE_URL)
+
+/** Which built files the service worker saves at install, and which on first use (R71, scripts/cache-tiers.mjs). */
+const tiers = cacheTiersPlugin()
+/** The caching policy (R71, scripts/cache-policy.mjs); its globIgnores get the lazy tier's files once the bundle is written. */
+const WORKBOX = workboxPolicy({ hindi: HINDI, tiers })
 
 export default defineConfig({
   plugins: [
@@ -25,21 +29,10 @@ export default defineConfig({
     tailwindcss(),
     // English page texts load with their pages, not with every page (scripts/i18n-sections.mjs).
     i18nSections(),
-    // dist/pack-manifest.json (scripts/pack-manifest.mjs, W-1): the engine's, the 3D body's and each
-    // pack's files in two tiers. Written before the service worker is made, which leaves the lazy tier
-    // out of the precache (R71) and precaches this file (/teach reads it offline).
-    {
-      name: 'lifepeek-pack-manifest',
-      apply: 'build',
-      writeBundle(options) {
-        const dir = options.dir!
-        const packs = packManifest(JSON.parse(fs.readFileSync(path.join(dir, '.vite', 'manifest.json'), 'utf8')))
-        LAZY.clear()
-        for (const url of packs.lazy) LAZY.add(url)
-        WORKBOX.globIgnores!.push(...packs.lazy.map((url) => url.slice(1)))
-        fs.writeFileSync(path.join(dir, 'pack-manifest.json'), `${JSON.stringify(packs, null, 2)}\n`)
-      },
-    },
+    // Each page's head in the built HTML, the 404 page, sitemap.xml and robots.txt (T12a).
+    prerenderHead({ site: SITE_URL }),
+    // dist/pack-manifest.json and the precache list: the core only (scripts/cache-tiers.mjs).
+    tiers,
     VitePWA({
       // No forced reloads: a new version takes over the next time the app is opened, never in the
       // middle of a lesson (autoUpdate reloaded the page on first visit and wiped what was typed).
@@ -47,7 +40,9 @@ export default defineConfig({
       // Registered by components/UpdateToast.tsx after the page has loaded, which also offers the
       // reload when a new version is waiting (council round 3): no extra script in index.html.
       injectRegister: false,
-      includeAssets: ['favicon.svg'],
+      // The icons and favicon are in the precache by globPatterns once each (these would add them twice).
+      includeAssets: [],
+      includeManifestIcons: false,
       manifest: {
         name: 'LifePeek — Digestion Simulator',
         short_name: 'LifePeek',
@@ -62,7 +57,8 @@ export default defineConfig({
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // Its mark inside the central safe zone, so a round or squircle mask never crops it (scripts/make-icons.mjs).
+          { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         // The install dialog's pictures of the stage (D-EXTRA, WP-19), made by scripts/make-share-images.mjs.
         screenshots: [
@@ -77,10 +73,12 @@ export default defineConfig({
         ],
         shortcuts: [{ name: 'For teachers', short_name: 'Teach', url: '/teach', icons: [{ src: '/icon-192.png', sizes: '192x192' }] }],
       },
-      // The caching policy (R71): scripts/cache-policy.mjs. The lazy tier is the pack-manifest's, filled below.
+      // The caching policy (R71): scripts/cache-policy.mjs, with the tiers of scripts/cache-tiers.mjs.
       workbox: WORKBOX,
     }),
   ],
+  // src/lib/site.ts reads it; set here so it always has the one value (scripts/site-url.mjs).
+  define: { 'import.meta.env.VITE_SITE_URL': JSON.stringify(SITE_URL) },
   resolve: {
     // three.js from its source modules instead of its one-file build, so the lazy 3D chunk (only
     // a device with WebGL downloads it) takes only the modules it uses. The pages import no

@@ -92,7 +92,8 @@ export function LoadFailed({ onRetry, attempt = 0, focus = false }: { onRetry: (
   return (
     <>
       <p className="text-caption text-ink-muted" role="alert">
-        {t('graph.loadFailed')}
+        {/* Offline, the part was never saved: it needs the internet once (R71). */}
+        {t(navigator.onLine ? 'graph.loadFailed' : 'sim.needsInternet')}
       </p>
       <span className="flex flex-wrap gap-2">
         <button type="button" onClick={onRetry} autoFocus={focus} className={button}>

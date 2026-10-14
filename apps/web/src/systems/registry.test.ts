@@ -5,7 +5,7 @@ import en from '../i18n/en.json'
 import hi from '../i18n/hi.json'
 import { HUMAN_ORGANS } from '../registry/human/organs.ts'
 import { UNIT_KEYS } from '../registry/units.ts'
-import { PACK_SYSTEMS } from '../../scripts/pack-manifest.mjs'
+import { PACK_SYSTEMS } from '../../scripts/cache-tiers.mjs'
 import { systemProblems, type CheckContext } from './check.ts'
 import { PACKS } from './packs.ts'
 import {

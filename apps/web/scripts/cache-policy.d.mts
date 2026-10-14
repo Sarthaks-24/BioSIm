@@ -1,4 +1,4 @@
 import type { GenerateSWOptions } from 'workbox-build'
+import type cacheTiersPlugin from './cache-tiers.mjs'
 
-export const LAZY_CACHE: string
-export function workboxPolicy(o: { hindi: boolean; lazy: ReadonlySet<string> }): Partial<GenerateSWOptions>
+export function workboxPolicy(o: { hindi: boolean; tiers: ReturnType<typeof cacheTiersPlugin> }): Partial<GenerateSWOptions>

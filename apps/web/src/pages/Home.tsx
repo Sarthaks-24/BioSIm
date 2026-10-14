@@ -9,6 +9,8 @@ import PageShell from '../components/PageShell.tsx'
 // Home links the picture and never runs the drawing code.
 import restingBody from '../assets/resting-body.svg'
 
+const MORE = 'rounded-full border border-border px-5 py-3 text-lg font-semibold hover:bg-surface-sunk'
+
 /**
  * Home (FP-8, R15): what LifePeek shows, in one line, beside the body it shows it in (the stage's
  * flat body, resting); then the race that proves it; then how it is built and examples to open.
@@ -34,6 +36,13 @@ export default function Home() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/sim" className="rounded-full bg-ink px-6 py-3 text-lg font-semibold text-white">
               {t('home.cta')}
+            </Link>
+            {/* Home ↔ Teach ↔ Science (T12a): the nav's names, no new text. */}
+            <Link to="/teach" className={MORE}>
+              {t('nav.teach')}
+            </Link>
+            <Link to="/science" className={MORE}>
+              {t('nav.science')}
             </Link>
           </div>
         </div>

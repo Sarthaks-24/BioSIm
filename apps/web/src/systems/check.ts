@@ -13,7 +13,7 @@ export interface CheckContext {
   organs: readonly string[]
   /** The packs with a PackDef (systems/packs.ts). */
   packs: readonly PackId[]
-  /** The packs pack-manifest.mjs knows. */
+  /** The packs scripts/cache-tiers.mjs knows. */
   manifestPacks: readonly string[]
   /** The IDs a pack registered (registerSignals), once its rows have loaded. */
   rowsOf: (pack: PackId) => ReadonlySet<string>
@@ -38,7 +38,7 @@ export function systemProblems(s: SystemDef, ctx: CheckContext): string[] {
 
   if (s.pack !== PACK_OF[s.id]) say(`pack ${s.pack} is not its frozen pack ${PACK_OF[s.id]} (architecture §0)`)
   if (!ctx.packs.includes(s.pack)) say(`pack ${s.pack} has no PackDef (systems/packs.ts)`)
-  if (!ctx.manifestPacks.includes(s.pack)) say(`pack ${s.pack} is not in scripts/pack-manifest.mjs`)
+  if (!ctx.manifestPacks.includes(s.pack)) say(`pack ${s.pack} is not in scripts/cache-tiers.mjs`)
   needText(`${s.i18nKey}.name`, 'its name')
   if (s.i18nKey !== `systems.${s.id}`) say(`i18nKey ${s.i18nKey} is not systems.${s.id}`)
   for (const o of s.organs) if (!ctx.organs.includes(o)) say(`organ ${o} is not one of the organism's organs`)
